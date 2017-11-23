@@ -1,0 +1,8 @@
+server {
+    server_name www.gefolge.org;
+
+    listen 80;
+    listen [::]:80;
+
+    return 301 $scheme://gefolge.org$request_uri;
+}

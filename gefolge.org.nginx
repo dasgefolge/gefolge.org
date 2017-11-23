@@ -1,0 +1,19 @@
+server {
+    server_name ~^(gefolge\.org|gefolge\.(dev\.)?(mercredi\.)?fenhl\.net)$;
+
+    listen 80;
+    listen [::]:80;
+    listen 443 ssl;
+    listen [::]:443 ssl;
+
+    ssl_certificate /etc/letsencrypt/live/gefolge.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/gefolge.org/privkey.pem;
+
+    root /var/www/gefolge.org;
+    index index.html;
+    charset utf-8;
+
+    location / {
+        try_files $uri $uri.html $uri/ =404;
+    }
+}
