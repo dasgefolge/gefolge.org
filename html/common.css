@@ -1,0 +1,8 @@
+.muted,
+.muted > a {
+    color: gray;
+}
+
+.muted > a:hover {
+    color: #2a6496;
+}
