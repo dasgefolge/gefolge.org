@@ -9,7 +9,7 @@ server {
     ssl_certificate /etc/letsencrypt/live/gefolge.org/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/gefolge.org/privkey.pem;
 
-    root /var/www/gefolge.org;
+    root /opt/git/github.com/dasgefolge/gefolge.org/master/html;
     index index.html;
     charset utf-8;
 
