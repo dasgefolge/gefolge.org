@@ -1,3 +1,7 @@
+upstream _gefolge {
+    server unix:/run/uwsgi/app/gefolge/socket;
+}
+
 server {
     server_name ~^(gefolge\.org|gefolge\.(dev\.)?(mercredi\.)?fenhl\.net)$;
 
@@ -9,11 +13,9 @@ server {
     ssl_certificate /etc/letsencrypt/live/gefolge.org/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/gefolge.org/privkey.pem;
 
-    root /opt/git/github.com/dasgefolge/gefolge.org/master/html;
-    index index.html;
-    charset utf-8;
-
     location / {
-        try_files $uri $uri.html $uri/ =404;
+        add_header Access-Control-Allow-Origin *;
+        include uwsgi_params;
+        uwsgi_pass _gefolge;
     }
 }
