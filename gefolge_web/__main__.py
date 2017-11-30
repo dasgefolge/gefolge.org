@@ -48,7 +48,7 @@ def index():
     """
 
 @application.route('/common.css')
-def logo():
+def css():
     return bottle.static_file('static/common.css', root=DOCUMENT_ROOT)
 
 @application.route('/gefolge.png')
