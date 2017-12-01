@@ -40,7 +40,7 @@ def setup(app, config):
         client_id=config['peter']['clientID'],
         client_secret=config['peter']['clientSecret'],
         scope='identify',
-        redirect_to='auth'
+        redirect_to='auth_callback'
     ), url_prefix='/login')
 
     login_manager = flask_login.LoginManager()
