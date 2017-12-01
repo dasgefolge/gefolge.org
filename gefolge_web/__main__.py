@@ -28,15 +28,22 @@ DOCUMENT_ROOT = os.environ.get('FLASK_ROOT_PATH', '/opt/git/github.com/dasgefolg
 app = application = flask.Flask('gefolge_web', root_path=DOCUMENT_ROOT, instance_path=DOCUMENT_ROOT)
 
 with app.app_context():
+    # load config
     if CONFIG_PATH.exists():
         with CONFIG_PATH.open() as config_f:
             flask.g.config = json.load(config_f)
     else:
         flask.g.config = {}
+    # set up Bootstrap
     flask_bootstrap.Bootstrap(app)
+    # set up Markdown
     md = flaskext.markdown.Markdown(app)
-    md.register_extension(pymdownx.emoji.EmojiExtension, {'emoji_generator': pymdownx.emoji.to_alt, 'emoji_index': pymdownx.emoji.twemoji})
+    emoji_ext = pymdownx.emoji.EmojiExtension()
+    emoji_ext.config['emoji_generator'] = pymdownx.emoji.to_alt
+    emoji_ext.config['emoji_index'] = pymdownx.emoji.twemoji
+    md._instance.registerExtensions([emoji_ext])
     md.register_extension(pymdownx.extra.ExtraExtension)
+    # set up submodules
     gefolge_web.login.setup(app, flask.g.config)
     gefolge_web.wiki.setup(app, md)
 
