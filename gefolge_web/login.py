@@ -22,11 +22,16 @@ class Mensch(flask_login.UserMixin):
         return 'gefolge_web.login.Mensch({!r})'.format(self.snowflake)
 
     def __str__(self):
-        return '{}#{}'.format(self.data['username'], self.data['discriminator'])
+        return '{}#{:04}'.format(self.data['username'], self.data['discriminator'])
 
     @property
     def data(self):
         return lazyjson.File(self.profile_path)
+
+    @property
+    def discrim(self):
+        """Returns the username discriminator as a string with leading zeroes."""
+        return '{:04}'.format(self.data['discriminator'])
 
     def get_id(self): # required by flask_login
         return str(self.snowflake)
