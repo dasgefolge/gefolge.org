@@ -27,7 +27,7 @@ class DiscordMentionExtension(markdown.Extension):
 def setup(app, md):
     md.register_extension(DiscordMentionExtension)
 
-    @app.route('/wiki/<article>')
+    @app.route('/wiki/<article_name>')
     @gefolge_web.login.member_required
     @gefolge_web.util.template('wiki')
     def wiki_article(article_name):
