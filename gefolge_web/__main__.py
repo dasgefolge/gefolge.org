@@ -5,6 +5,7 @@ gefolge.org
 """
 
 import flask
+import flask_bootstrap
 import flask_login
 import functools
 import json
@@ -25,6 +26,7 @@ with app.app_context():
     else:
         flask.g.config = {}
     gefolge_web.login.setup(app, flask.g.config)
+    flask_bootstrap.Bootstrap(app)
 
 def template(template_name=None):
     def decorator(f):
