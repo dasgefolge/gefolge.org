@@ -63,7 +63,7 @@ def index():
 @app.route('/me')
 @flask_login.login_required
 def me():
-    return flask.redirect(flask.url_for('/mensch/{}'.format(flask.g.user.snowflake)))
+    return flask.redirect(flask.url_for('mensch', snowflake=str(flask.g.user.snowflake)))
 
 @app.route('/mensch/<snowflake>')
 @flask_login.login_required
