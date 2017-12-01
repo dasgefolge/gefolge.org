@@ -37,10 +37,10 @@ class Mensch(flask_login.UserMixin):
 
     @property
     def name(self):
-        if 'nick' in self.data:
-            return self.data['nick'].value()
-        else:
+        if self.data.get('nick') is None:
             return self.data['username'].value()
+        else:
+            return self.data['nick'].value()
 
     @property
     def profile_path(self):
