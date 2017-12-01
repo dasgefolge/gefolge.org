@@ -37,7 +37,9 @@ def template(template_name=None):
             context = f(*args, **kwargs)
             if context is None:
                 context = {}
-            return flask.render_template(template_path, context)
+            elif not isinstance(context, dict):
+                return context
+            return flask.render_template(template_path, **context)
 
         return wrapper
 
