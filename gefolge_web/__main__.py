@@ -68,6 +68,9 @@ def me():
 @app.route('/mensch/<snowflake>')
 @flask_login.login_required
 def profile(snowflake):
+    if flask.g.user.is_active:
+        #TODO make this a decorator
+        return flask.make_response(('Sie haben keinen Zugriff auf diesen Inhalt, weil Sie nicht im Gefolge Discord server sind.', 403, []))
     mensch = gefolge_web.login.Mensch(snowflake)
     if not mensch.is_active:
         return flask.make_response(('Dieser Discord account existiert nicht oder ist nicht im Gefolge.', 404, []))
