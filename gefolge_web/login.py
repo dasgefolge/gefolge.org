@@ -4,6 +4,7 @@ import flask_login
 import functools
 import html
 import lazyjson
+import pathlib
 import urllib.parse
 
 class Mensch(flask_login.UserMixin):
