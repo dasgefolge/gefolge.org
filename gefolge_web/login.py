@@ -1,6 +1,7 @@
 import flask
 import flask_dance.contrib.discord
 import flask_login
+import urlparse
 
 class Mensch(flask_login.UserMixin):
     def __init__(self, flake):
@@ -24,10 +25,16 @@ class Mensch(flask_login.UserMixin):
             return False
         return super().is_authenticated
 
+def is_safe_url(target):
+    ref_url = urlparse.urlparse(flask.request.host_url)
+    test_url = urlparse.urlparse(urlparse.urljoin(flask.request.host_url, target))
+    return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
+
 def setup(app, config):
     if 'clientID' not in config.get('peter', {}) or 'clientSecret' not in config.get('peter', {}):
         return #TODO mount error messages at /login and /auth
     app.config['SECRET_KEY'] = config['peter']['clientSecret']
+    app.config['USE_SESSION_FOR_NEXT'] = True
 
     app.register_blueprint(flask_dance.contrib.discord.make_discord_blueprint(
         client_id=config['peter']['clientID'],
@@ -57,4 +64,10 @@ def setup(app, config):
             flask.flash('Hallo {}.'.format(response.json()['username']))
         else:
             flask.flash('Login fehlgeschlagen.')
-        #TODO redirect
+        next_url = flask.session.get('next')
+        if next_url is None:
+            return flask.redirect(flask.url_for('me'))
+        elif is_safe_url(next_url):
+            return flask.redirect(next_url)
+        else:
+            return flask.abort(400)
