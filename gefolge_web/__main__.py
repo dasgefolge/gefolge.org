@@ -12,13 +12,13 @@ import flask
 import flask_bootstrap
 import flask_login
 import flaskext.markdown
-import functools
 import json
 import os
 import pathlib
 import pymdownx.extra
 
 import gefolge_web.login
+import gefolge_web.util
 import gefolge_web.wiki
 
 CONFIG_PATH = pathlib.Path('/usr/local/share/fidera/config.json')
@@ -38,27 +38,8 @@ with app.app_context():
     gefolge_web.login.setup(app, flask.g.config)
     gefolge_web.wiki.setup(app, md)
 
-def template(template_name=None):
-    def decorator(f):
-        @functools.wraps(f)
-        def wrapper(*args, **kwargs):
-            if template_name is None:
-                template_path = '{}.html'.format(flask.request.endpoint.replace('.', '/'))
-            else:
-                template_path = '{}.html'.format(template_name.replace('.', '/'))
-            context = f(*args, **kwargs)
-            if context is None:
-                context = {}
-            elif not isinstance(context, dict):
-                return context
-            return flask.render_template(template_path, **context)
-
-        return wrapper
-
-    return decorator
-
 @app.route('/')
-@template('index')
+@gefolge_web.util.template('index')
 def index():
     pass
 
@@ -69,7 +50,7 @@ def me():
 
 @app.route('/mensch/<snowflake>')
 @gefolge_web.login.member_required
-@template()
+@gefolge_web.util.template()
 def profile(snowflake):
     mensch = gefolge_web.login.Mensch(snowflake)
     if not mensch.is_active:

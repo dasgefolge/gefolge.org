@@ -29,7 +29,7 @@ def setup(app, md):
 
     @app.route('/wiki/<article>')
     @gefolge_web.login.member_required
-    @template('wiki')
+    @gefolge_web.util.template('wiki')
     def wiki_article(article_name):
         return {
             'article_name': article_name,
