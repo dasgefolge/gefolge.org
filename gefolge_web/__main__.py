@@ -5,6 +5,7 @@ gefolge.org
 """
 
 import flask
+import flask_login
 import json
 import os
 import pathlib
