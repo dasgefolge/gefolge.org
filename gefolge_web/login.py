@@ -1,7 +1,7 @@
 import flask
 import flask_dance.contrib.discord
 import flask_login
-import urlparse
+import urllib.parse
 
 class Mensch(flask_login.UserMixin):
     def __init__(self, flake):
@@ -26,8 +26,8 @@ class Mensch(flask_login.UserMixin):
         return super().is_authenticated
 
 def is_safe_url(target):
-    ref_url = urlparse.urlparse(flask.request.host_url)
-    test_url = urlparse.urlparse(urlparse.urljoin(flask.request.host_url, target))
+    ref_url = urllib.parse.urlparse(flask.request.host_url)
+    test_url = urllib.parse.urlparse(urllib.parse.urljoin(flask.request.host_url, target))
     return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
 
 def setup(app, config):
