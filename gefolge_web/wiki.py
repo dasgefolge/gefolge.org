@@ -12,7 +12,7 @@ DISCORD_MENTION_REGEX = r'<@!?([0-9]+)>'
 WIKI_ROOT = pathlib.Path('/usr/local/share/fidera/wiki')
 
 class DiscordMentionPattern(markdown.inlinepatterns.LinkPattern):
-    def handle_match(self, m):
+    def handleMatch(self, m):
         mensch = gefolge_web.login.Mensch(m.group(1))
         el = markdown.util.etree.Element('a')
         el.text = '@{}'.format(mensch.name)
