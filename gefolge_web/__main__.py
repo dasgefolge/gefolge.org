@@ -26,7 +26,7 @@ with app.app_context():
         flask.g.config = {}
     gefolge_web.login.setup(app, flask.g.config)
 
-def template(template_name):
+def template(template_name=None):
     def decorator(f):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
