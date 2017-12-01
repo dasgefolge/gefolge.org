@@ -60,13 +60,13 @@ def index():
     </html>
     """
 
-@flask_login.login_required
 @app.route('/me')
+@flask_login.login_required
 def me():
     return flask.redirect(flask.url_for('/mensch/{}'.format(flask.g.user.snowflake)))
 
-@flask_login.login_required
 @app.route('/mensch/<snowflake>')
+@flask_login.login_required
 def profile(snowflake):
     #TODO error if no one in the Gefolge Discord guild has this snowflake
     return '{}'.format(snowflake) #TODO template, more user info
