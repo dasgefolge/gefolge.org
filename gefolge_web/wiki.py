@@ -22,7 +22,7 @@ class DiscordMentionPattern(markdown.inlinepatterns.LinkPattern):
 class DiscordMentionExtension(markdown.Extension):
     def extendMarkdown(self, md, md_globals):
         config = self.getConfigs()
-        md.inlinePatterns.add('discord-mention', DiscordMentionPattern(DISCORD_MENTION_REGEX, md), '<entity')
+        md.inlinePatterns.add('discord-mention', DiscordMentionPattern(DISCORD_MENTION_REGEX, md), '<reference')
 
 def setup(app, md):
     md.register_extension(DiscordMentionExtension)
