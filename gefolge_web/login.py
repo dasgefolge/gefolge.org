@@ -6,25 +6,22 @@ import urllib.parse
 
 class Mensch(flask_login.UserMixin):
     def __init__(self, flake):
-        #TODO check if valid
-        self.snowflake = flake
+        self.snowflake = int(flake)
 
     @classmethod
     def get(cls, user_id):
         try:
-            flake = int(user_id)
+            return cls(user_id)
         except ValueError:
             return None
-        return cls(flake) #TODO catch exceptions caused by invalid snowflakes
 
     def get_id(self): # required by flask_login
         return str(self.snowflake)
 
     @property
-    def is_authenticated(self):
-        if self.is_anonymous:
-            return False
-        return super().is_authenticated
+    def is_active(self):
+        with open('/usr/local/share/fidera/discord-snowflakes.txt') as snowflakes_f:
+            return any(int(line.strip()) == self.snowflake for line in snowflakes_f)
 
 def is_safe_url(target):
     ref_url = urllib.parse.urlparse(flask.request.host_url)

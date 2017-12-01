@@ -68,5 +68,7 @@ def me():
 @app.route('/mensch/<snowflake>')
 @flask_login.login_required
 def profile(snowflake):
-    #TODO error if no one in the Gefolge Discord guild has this snowflake
+    mensch = gefolge_web.login.Mensch(snowflake)
+    if not mensch.is_active:
+        return flask.make_response(('Dieser Discord account existiert nicht oder ist nicht im Gefolge.', 404, []))
     return '{}'.format(snowflake) #TODO template, more user info
