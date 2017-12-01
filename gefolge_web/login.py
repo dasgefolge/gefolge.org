@@ -3,6 +3,7 @@ import flask_dance.contrib.discord
 import flask_login
 import functools
 import html
+import lazyjson
 import urllib.parse
 
 class Mensch(flask_login.UserMixin):
@@ -16,13 +17,26 @@ class Mensch(flask_login.UserMixin):
         except ValueError:
             return None
 
+    def __repr__(self):
+        return 'gefolge_web.login.Mensch({!r})'.format(self.snowflake)
+
+    def __str__(self):
+        return '{}#{}'.format(self.data['username'], self.data['discriminator'])
+
+    @property
+    def data(self):
+        return lazyjson.File(self.profile_path)
+
     def get_id(self): # required by flask_login
         return str(self.snowflake)
 
     @property
     def is_active(self):
-        with open('/usr/local/share/fidera/discord-snowflakes.txt') as snowflakes_f:
-            return any(int(line.strip()) == self.snowflake for line in snowflakes_f)
+        return self.profile_path.exists()
+
+    @property
+    def profile_path(self):
+        return pathlib.Path('/usr/local/share/fidera/profiles/{}.json'.format(self.snowflake))
 
 def is_safe_url(target):
     ref_url = urllib.parse.urlparse(flask.request.host_url)

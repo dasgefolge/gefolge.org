@@ -1,5 +1,11 @@
 {% extends "base.html" %}
 
 {% block page_content %}
+    {% if mensch.data['nickname'] is None %}
+        <h1>{{mensch.data['username']}}<span class="muted">#{{mensch.data['discriminator']}}</span></h1>
+    {% else %}
+        <h1>{{mensch.data['nickname']}}</h1>
+        <h2>{{mensch.data['username']}}<span class="muted">#{{mensch.data['discriminator']}}</span></h1>
+    {% endif %}
     <p>Profil für Discord snowflake {{mensch.snowflake}}.</p>
 {% endblock %}
