@@ -4,6 +4,10 @@
 gefolge.org
 """
 
+import sys
+
+sys.path.append('/opt/py')
+
 import flask
 import flask_bootstrap
 import flask_login
