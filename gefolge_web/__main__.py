@@ -15,6 +15,7 @@ import flaskext.markdown
 import json
 import os
 import pathlib
+import pymdownx.emoji
 import pymdownx.extra
 
 import gefolge_web.login
@@ -34,6 +35,7 @@ with app.app_context():
         flask.g.config = {}
     flask_bootstrap.Bootstrap(app)
     md = flaskext.markdown.Markdown(app)
+    md.register_extension(pymdownx.emoji.EmojiExtension, {'emoji_generator': pymdownx.emoji.to_alt, 'emoji_index': pymdownx.emoji.twemoji})
     md.register_extension(pymdownx.extra.ExtraExtension)
     gefolge_web.login.setup(app, flask.g.config)
     gefolge_web.wiki.setup(app, md)
