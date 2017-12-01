@@ -22,9 +22,9 @@ with app.app_context():
             flask.g.config = json.load(config_f)
     else:
         flask.g.config = {}
-    gefolge_web.login.setup(application, flask.g.config)
+    gefolge_web.login.setup(app, flask.g.config)
 
-@application.route('/')
+@app.route('/')
 def index():
     return """<!DOCTYPE html>
     <html>
@@ -58,3 +58,14 @@ def index():
         </body>
     </html>
     """
+
+@flask_login.login_required
+@app.route('/me')
+def me():
+    return flask.redirect(flask.url_for('/mensch/{}'.format(flask.g.user.snowflake)))
+
+@flask_login.login_required
+@app.route('/mensch/<snowflake>')
+def profile(snowflake):
+    #TODO error if no one in the Gefolge Discord guild has this snowflake
+    return '{}'.format(snowflake) #TODO template, more user info

@@ -66,8 +66,12 @@ def setup(app, config):
             flask.flash('Login fehlgeschlagen.')
         next_url = flask.session.get('next')
         if next_url is None:
-            return flask.redirect(flask.url_for('index')) #TODO redirect to user profile instead
+            return flask.redirect(flask.url_for('me' if flask_dance.contrib.discord.discord.authorized else 'login'))
         elif is_safe_url(next_url):
             return flask.redirect(next_url)
         else:
             return flask.abort(400)
+
+    @app.before_request
+    def global_user():
+        flask.g.user = flask_login.current_user
