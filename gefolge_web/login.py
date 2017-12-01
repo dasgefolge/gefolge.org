@@ -1,6 +1,7 @@
 import flask
 import flask_dance.contrib.discord
 import flask_login
+import functools
 import html
 import urllib.parse
 
@@ -27,6 +28,15 @@ def is_safe_url(target):
     ref_url = urllib.parse.urlparse(flask.request.host_url)
     test_url = urllib.parse.urlparse(urllib.parse.urljoin(flask.request.host_url, target))
     return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
+
+def member_required(f):
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        if not flask.g.user.is_active:
+            return flask.make_response(('Sie haben keinen Zugriff auf diesen Inhalt, weil Sie nicht im Gefolge Discord server sind.', 403, [])) #TODO template
+        return f(*args, **kwargs)
+
+    return flask_login.login_required(wrapper)
 
 def setup(app, config):
     if 'clientID' not in config.get('peter', {}) or 'clientSecret' not in config.get('peter', {}):
@@ -62,7 +72,7 @@ def setup(app, config):
             flask_login.login_user(Mensch(response.json()['id']), remember=True)
             flask.flash('Hallo {}.'.format(response.json()['username']))
         else:
-            flask.flash('Login fehlgeschlagen.')
+            flask.flash('Login fehlgeschlagen.', 'error')
         next_url = flask.session.get('next')
         if next_url is None:
             return flask.redirect(flask.url_for('me' if flask_dance.contrib.discord.discord.authorized else 'discord.login'))

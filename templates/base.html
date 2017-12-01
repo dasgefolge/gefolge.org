@@ -1,0 +1,38 @@
+{% extends "bootstrap/base.html" %)
+
+{% block metas %}
+    <meta charset="utf-8" />
+    <meta name="description" content="Das Gefolge" />
+    <meta name="author" content="Fenhl & contributors" />
+    {{ super() }}
+{% endblock %}
+
+{% block title %}Das Gefolge{% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.css" />
+    <link rel="stylesheet" href="{{url_for('.static', filename='common.css')}}" />
+{% endblock %}
+
+{% block content %}
+    <div class="container" style="text-align: center;">
+        {% block flashes %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    {% if category == 'error' %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ message }}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endif %}
+                {% endif %}
+            {% endwith %}
+        {% endblock %}
+        {% block page_content %}
+        {% endblock %}
+    </div>
+{% endblock %}
