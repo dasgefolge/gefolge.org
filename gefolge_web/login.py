@@ -1,6 +1,7 @@
 import flask
 import flask_dance.contrib.discord
 import flask_login
+import html
 import urllib.parse
 
 class Mensch(flask_login.UserMixin):
@@ -60,7 +61,7 @@ def setup(app, config):
         if flask_dance.contrib.discord.discord.authorized:
             response = flask_dance.contrib.discord.discord.get('/apt/v6/users/@me')
             if not response.ok:
-                return flask.make_response(('Discord returned error {}: {!r}'.format(response.status_code, response.text), response.status_code, []))
+                return flask.make_response(('Discord returned error {} at {}: {}'.format(html.escape(response.url), response.status_code, html.escape(response.text)), response.status_code, []))
             flask_login.login_user(Mensch(response.json()['id']), remember=True)
             flask.flash('Hallo {}.'.format(response.json()['username']))
         else:
