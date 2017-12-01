@@ -41,7 +41,7 @@ with app.app_context():
     emoji_ext = pymdownx.emoji.EmojiExtension()
     emoji_ext.config['emoji_generator'] = pymdownx.emoji.to_alt
     emoji_ext.config['emoji_index'] = pymdownx.emoji.twemoji
-    md._instance.registerExtensions([emoji_ext])
+    md._instance.registerExtensions([emoji_ext], {})
     md.register_extension(pymdownx.extra.ExtraExtension)
     # set up submodules
     gefolge_web.login.setup(app, flask.g.config)
