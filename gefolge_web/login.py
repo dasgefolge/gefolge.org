@@ -44,9 +44,9 @@ def setup(app, config):
     ), url_prefix='/login')
 
     login_manager = flask_login.LoginManager()
-    login_manager.login_view = 'login'
+    login_manager.login_view = 'discord.login'
     login_manager.login_message = 'Du musst dich anmelden, um diese Seite sehen zu können.'
-    login_manager.refresh_view = 'login' #TODO separate view?
+    login_manager.refresh_view = 'discord.login' #TODO separate view?
     login_manager.login_message = 'Bitte melde dich nochmal an, um diese Änderungen zu bestätigen.'
 
     @login_manager.user_loader
@@ -66,7 +66,7 @@ def setup(app, config):
             flask.flash('Login fehlgeschlagen.')
         next_url = flask.session.get('next')
         if next_url is None:
-            return flask.redirect(flask.url_for('me' if flask_dance.contrib.discord.discord.authorized else 'login'))
+            return flask.redirect(flask.url_for('me' if flask_dance.contrib.discord.discord.authorized else 'discord.login'))
         elif is_safe_url(next_url):
             return flask.redirect(next_url)
         else:
