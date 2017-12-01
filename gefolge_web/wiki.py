@@ -13,7 +13,7 @@ WIKI_ROOT = pathlib.Path('/usr/local/share/fidera/wiki')
 
 class DiscordMentionPattern(markdown.inlinepatterns.LinkPattern):
     def handleMatch(self, m):
-        mensch = gefolge_web.login.Mensch(m.group(1))
+        mensch = gefolge_web.login.Mensch(m.group(2))
         el = markdown.util.etree.Element('a')
         el.text = '@{}'.format(mensch.name)
         el.set('href', flask.url_for('profile', snowflake=str(mensch.snowflake)))
