@@ -36,6 +36,13 @@ class Mensch(flask_login.UserMixin):
         return self.profile_path.exists()
 
     @property
+    def name(self):
+        if 'nick' in self.data:
+            return self.data['nick'].value()
+        else:
+            return self.data['username'].value()
+
+    @property
     def profile_path(self):
         return pathlib.Path('/usr/local/share/fidera/profiles/{}.json'.format(self.snowflake))
 

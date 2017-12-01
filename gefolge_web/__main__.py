@@ -11,12 +11,15 @@ sys.path.append('/opt/py')
 import flask
 import flask_bootstrap
 import flask_login
+import flaskext.markdown
 import functools
 import json
 import os
 import pathlib
+import pymdownx.extra
 
 import gefolge_web.login
+import gefolge_web.wiki
 
 CONFIG_PATH = pathlib.Path('/usr/local/share/fidera/config.json')
 DOCUMENT_ROOT = os.environ.get('FLASK_ROOT_PATH', '/opt/git/github.com/dasgefolge/gefolge.org/master')
@@ -29,8 +32,11 @@ with app.app_context():
             flask.g.config = json.load(config_f)
     else:
         flask.g.config = {}
-    gefolge_web.login.setup(app, flask.g.config)
     flask_bootstrap.Bootstrap(app)
+    md = flaskext.markdown.Markdown(app)
+    md.register_extension(pymdownx.extra.ExtraExtension)
+    gefolge_web.login.setup(app, flask.g.config)
+    gefolge_web.wiki.setup(app, md)
 
 def template(template_name=None):
     def decorator(f):
