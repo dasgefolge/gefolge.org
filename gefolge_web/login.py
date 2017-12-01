@@ -66,7 +66,7 @@ def setup(app, config):
             flask.flash('Login fehlgeschlagen.')
         next_url = flask.session.get('next')
         if next_url is None:
-            return flask.redirect(flask.url_for('me'))
+            return flask.redirect(flask.url_for('index')) #TODO redirect to user profile instead
         elif is_safe_url(next_url):
             return flask.redirect(next_url)
         else:
