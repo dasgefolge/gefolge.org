@@ -31,7 +31,7 @@ class Event:
 
     @property
     def data(self):
-        return lazyjson.File(self.profile_path)
+        return lazyjson.File(EVENTS_ROOT / '{}.json'.format(self.event_id))
 
     @property
     def end(self):
