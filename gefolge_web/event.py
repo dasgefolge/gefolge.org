@@ -44,8 +44,10 @@ class Event:
 
     @property
     def menschen(self):
-        for mensch in self.data['menschen']:
-            yield gefolge_web.login.Mensch(mensch['id'].value())
+        return [
+            gefolge_web.login.Mensch(mensch['id'].value())
+            for mensch in self.data['menschen']
+        ]
 
     @property
     def name(self):
