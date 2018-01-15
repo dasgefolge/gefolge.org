@@ -7,6 +7,8 @@ import lazyjson
 import pathlib
 import urllib.parse
 
+MENSCHEN = 386753710434287626 # role ID
+
 class Mensch(flask_login.UserMixin):
     def __init__(self, flake):
         self.snowflake = int(flake)
@@ -38,7 +40,7 @@ class Mensch(flask_login.UserMixin):
 
     @property
     def is_active(self):
-        return self.profile_path.exists()
+        return self.profile_path.exists() and MENSCHEN in self.data.get('roles')
 
     @property
     def name(self):

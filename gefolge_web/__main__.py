@@ -46,6 +46,7 @@ with app.app_context():
     # set up submodules
     gefolge_web.login.setup(app, flask.g.config)
     gefolge_web.wiki.setup(app, md)
+    gefolge_web.event.setup(app)
 
 @app.route('/')
 @gefolge_web.util.template('index')

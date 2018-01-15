@@ -5,6 +5,7 @@ import markdown.util
 import pathlib
 
 import gefolge_web.login
+import gefolge_web.util
 
 DISCORD_TAG_REGEX = r'@([^#]{2,32})#([0-9]{4}?)'
 DISCORD_MENTION_REGEX = r'<@!?([0-9]+)>'
