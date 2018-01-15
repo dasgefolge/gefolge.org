@@ -6,7 +6,7 @@
     {% if event.anzahlung is none %}
         <p>Coming soon™</p>
     {% else %}
-        <p>Um dich anzumelden, überweise bitte die Anzahlungsgebühr von {{event.anzahlung}} an:</p>
+        <p>Um dich anzumelden, überweise bitte die Anzahlung von {{event.anzahlung}} an:</p>
         <p>{{event.data['konto'].value() | nl2br}}</p>
         {% if event.ausfall.value > (event.data['menschen'] | length) * event.anzahlung.value %}
             <p>Wichtig: wir können erst buchen, wenn die Ausfallgebühr von {{event.ausfall}} gesichert ist. Dazu fehlen noch {{(event.ausfall.value / event.anzahlung.value - (event.data['menschen'] | length)) | round(0, 'ceil') | int}} Anmeldungen.</p>
