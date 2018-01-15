@@ -9,7 +9,7 @@
         <p>Um dich anzumelden, überweise bitte die Anzahlungsgebühr von {{event_data['anzahlung'].value()}}€ an:</p>
         <p>{{event_data['konto'].value()}}</p>
         {% if event_data['ausfall'].value() > (event_data['menschen'] | length) * event_data['anzahlung'].value() %}
-            <p>Wichtig: wir können erst buchen, wenn die Ausfallgebühr von {{event_data['ausfall'].value()}}€ gesichert ist. Dazu fehlen noch {{event_data['ausfall'].value() / event_data['anzahlung'].value() - (event_data['menschen'] | length) | round(method='ceil')}} Anmeldungen.</p>
+            <p>Wichtig: wir können erst buchen, wenn die Ausfallgebühr von {{event_data['ausfall'].value()}}€ gesichert ist. Dazu fehlen noch {{(event_data['ausfall'].value() / event_data['anzahlung'].value() - (event_data['menschen'] | length)) | round(0, 'ceil') | int}} Anmeldungen.</p>
         {% endif %}
     {% endif %}
 {% endblock %}
