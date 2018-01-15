@@ -43,6 +43,11 @@ class Event:
         return '{:%d.%m.%Y %H:%M}'.format(self.end)
 
     @property
+    def menschen(self):
+        for mensch in self.data['menschen']:
+            yield gefolge_web.login.Mensch(mensch['id'].value())
+
+    @property
     def name(self):
         return self.data['name'].value()
 
