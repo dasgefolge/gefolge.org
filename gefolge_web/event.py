@@ -30,4 +30,4 @@ def setup(app):
 def get_event_data(event_id):
     event_data_path = EVENTS_ROOT / '{}.json'.format(event_id)
     if event_data_path.exists():
-        return lazyjson.File(event_data)
+        return lazyjson.File(event_data_path)
