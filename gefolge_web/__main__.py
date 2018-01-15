@@ -18,6 +18,7 @@ import pathlib
 import pymdownx.emoji
 import pymdownx.extra
 
+import gefolge_web.event
 import gefolge_web.login
 import gefolge_web.util
 import gefolge_web.wiki
