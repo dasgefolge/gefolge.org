@@ -16,7 +16,7 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container" style="text-align: center;">
+    <div class="container">
         {% block flashes %}
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% for category, message in messages %}
