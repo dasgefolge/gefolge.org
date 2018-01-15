@@ -1,5 +1,28 @@
+import datetime
 import flask
 import functools
+import jinja2
+import pytz
+import re
+
+_paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
+
+def parse_iso_datetime(datetime_str, *, tz=pytz.utc):
+    if isinstance(datetime_str, datetime.datetime):
+        return datetime_str
+    return tz.localize(datetime.datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S'), is_dst=None)
+
+def setup(app):
+    app = Flask(__name__)
+
+    @app.template_filter()
+    @jinja2.evalcontextfilter
+    def nl2br(eval_ctx, value): #FROM http://flask.pocoo.org/snippets/28/
+        result = u'\n\n'.join(u'<p>%s</p>' % p.replace('\n', '<br>\n') \
+            for p in _paragraph_re.split(jinja2.escape(value)))
+        if eval_ctx.autoescape:
+            result = jinja2.Markup(result)
+        return result
 
 def template(template_name=None):
     def decorator(f):

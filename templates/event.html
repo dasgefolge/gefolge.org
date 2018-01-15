@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 
 {% block page_content %}
-    <p>{{event_data['name'].value()}} findet von {{event_data['start'].value()}} bis {{event_data['end'].value()}} {{event_data['location'].value()}} statt.</p>
+    <p><strong>{{event.name}}</strong> findet vom {{event.start_str}} bis zum {{event.end_str}} {{event.data['location'].value()}} statt.</p>
     <h1>Anmeldung</h1>
-    {% if event_data['anzahlung'].value() is none %}
+    {% if event.anzahlung is none %}
         <p>Coming soon™</p>
     {% else %}
-        <p>Um dich anzumelden, überweise bitte die Anzahlungsgebühr von {{event_data['anzahlung'].value()}}€ an:</p>
-        <p>{{event_data['konto'].value()}}</p>
-        {% if event_data['ausfall'].value() > (event_data['menschen'] | length) * event_data['anzahlung'].value() %}
-            <p>Wichtig: wir können erst buchen, wenn die Ausfallgebühr von {{event_data['ausfall'].value()}}€ gesichert ist. Dazu fehlen noch {{(event_data['ausfall'].value() / event_data['anzahlung'].value() - (event_data['menschen'] | length)) | round(0, 'ceil') | int}} Anmeldungen.</p>
+        <p>Um dich anzumelden, überweise bitte die Anzahlungsgebühr von {{event.anzahlung}} an:</p>
+        <p>{{event.data['konto'].value() | nl2br}}</p>
+        {% if event.ausfall.value > (event.data['menschen'] | length) * event.anzahlung.value %}
+            <p>Wichtig: wir können erst buchen, wenn die Ausfallgebühr von {{event.ausfall.value}} gesichert ist. Dazu fehlen noch {{(event.ausfall.value / event.anzahlung.value - (event.data['menschen'] | length)) | round(0, 'ceil') | int}} Anmeldungen.</p>
         {% endif %}
     {% endif %}
 {% endblock %}
