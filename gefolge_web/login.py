@@ -3,6 +3,7 @@ import flask_dance.contrib.discord
 import flask_login
 import functools
 import html
+import jinja2
 import lazyjson
 import pathlib
 import urllib.parse
@@ -91,6 +92,14 @@ def setup(app, config):
         return Mensch.get(user_id)
 
     login_manager.init_app(app)
+
+    @app.template_filter()
+    @jinja2.evalcontextfilter
+    def mention(eval_ctx, value):
+        result = '<a href="@{}">{}</a>'.format(flask.url_for('profile', snowflake=str(value.snowflake)), jinja2.escape(value.name))
+        if eval_ctx.autoescape:
+            result = jinja2.Markup(result)
+        return result
 
     @app.route('/auth')
     def auth_callback():

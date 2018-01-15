@@ -2,6 +2,14 @@
 
 {% block page_content %}
     <p><strong>{{event.name}}</strong> findet vom {{event.start_str}} bis zum {{event.end_str}} {{event.data['location'].value()}} statt.</p>
+    {% if event.menschen | length > 0 %}
+        <p>Aktuell {% if event.menschen | length > 1 %}sind{% else %}ist{% endif %} {{event.menschen | length}} Mensch{% if event.menschen | length > 1 %}en{% endif %} angemeldet:</p>
+        <ul>
+            {% for mensch in event.menschen %}
+                <li>{{mensch | mention}}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
     <h1>Anmeldung</h1>
     {% if g.user in event.menschen %}
         {% if event.anzahlung is none %}
