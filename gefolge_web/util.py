@@ -13,8 +13,6 @@ def parse_iso_datetime(datetime_str, *, tz=pytz.utc):
     return tz.localize(datetime.datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S'), is_dst=None)
 
 def setup(app):
-    app = Flask(__name__)
-
     @app.template_filter()
     @jinja2.evalcontextfilter
     def nl2br(eval_ctx, value): #FROM http://flask.pocoo.org/snippets/28/
