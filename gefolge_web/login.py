@@ -96,7 +96,7 @@ def setup(app, config):
     @app.template_filter()
     @jinja2.evalcontextfilter
     def mention(eval_ctx, value):
-        result = '<a href="@{}">{}</a>'.format(flask.url_for('profile', snowflake=str(value.snowflake)), jinja2.escape(value.name))
+        result = '<a href="{}">@{}</a>'.format(flask.url_for('profile', snowflake=str(value.snowflake)), jinja2.escape(value.name))
         if eval_ctx.autoescape:
             result = jinja2.Markup(result)
         return result
