@@ -18,7 +18,7 @@ def setup(app):
             ]
         }
 
-    @app.route('/event/<event_name>')
+    @app.route('/event/<event_id>')
     @gefolge_web.login.member_required
     @gefolge_web.util.template('event')
     def event_page(event_id):
