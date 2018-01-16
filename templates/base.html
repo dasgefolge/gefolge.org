@@ -21,7 +21,7 @@
         {% if g.path is none %}
             <span> / </span>
         {% else %}
-            {% for path_component in g.path %}
+            {% for path_component in g.path.components %}
                 {% if loop.index == loop.length %}
                     <span> / {{path_component.name}}</span>
                 {% else %}

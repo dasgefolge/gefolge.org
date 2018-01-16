@@ -16,10 +16,12 @@ class Path:
         self.name = name
         self.url_part = url_part
 
-    def __iter__(self):
-        if self.parent is not None:
-            yield from self.parent
-        yield self
+    @property
+    def components(self):
+        if self.parent is None:
+            return [self]
+        else:
+            return self.parent.components + [self]
 
     @property
     def url(self):
