@@ -15,6 +15,28 @@
     <link rel="stylesheet" href="{{url_for('.static', filename='common.css')}}" />
 {% endblock %}
 
+{% block navbar %}
+    <nav>
+        {% if g.config.get('is_dev') %}
+            <span><a href="{{url_for('index')}}" style="color: red;">[DEV]</a>.</span>
+            <span><a class="nolink" href="https://gefolge.org/"><img src="{{url_for('.static', filename='gefolge.png')}}" /></a></span>
+        {% else %}
+            <span><a class="nolink" href="{{url_for('index')}}"><img src="{{url_for('.static', filename='gefolge.png')}}" /></a></span>
+        {% endif %}
+        {% if g.path is none %}
+            <span> / </span>
+        {% else %}
+            {% for path_component in g.path %}
+                {% if loop.index == loop.length %}
+                    <span> / {{path_component.name}}</span>
+                {% else %}
+                    <span> / <a href="{{path_component.url}}">{{path_component.name}}</a></span>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    </nav>
+{% endblock %}
+
 {% block content %}
     <div class="container" {% block container_attrs %}{% endblock %}>
         {% block flashes %}

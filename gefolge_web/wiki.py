@@ -28,8 +28,15 @@ class DiscordMentionExtension(markdown.Extension):
 def setup(app, md):
     md.register_extension(DiscordMentionExtension)
 
+    @app.route('/wiki')
+    @gefolge_web.login.member_required
+    @gefolge_web.util.path('wiki')
+    def wiki_index():
+        raise NotImplementedError() #TODO
+
     @app.route('/wiki/<article_name>')
     @gefolge_web.login.member_required
+    @gefolge_web.util.path(lambda article_name: article_name, wiki_index)
     @gefolge_web.util.template('wiki')
     def wiki_article(article_name):
         return {

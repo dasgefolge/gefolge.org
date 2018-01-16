@@ -54,6 +54,10 @@ class Mensch(flask_login.UserMixin):
     def profile_path(self):
         return pathlib.Path('/usr/local/share/fidera/profiles/{}.json'.format(self.snowflake))
 
+    @property
+    def url_part(self):
+        return str(self.snowflake)
+
 def is_safe_url(target):
     ref_url = urllib.parse.urlparse(flask.request.host_url)
     test_url = urllib.parse.urlparse(urllib.parse.urljoin(flask.request.host_url, target))

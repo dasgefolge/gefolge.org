@@ -60,8 +60,15 @@ def index():
 def me():
     return flask.redirect(flask.url_for('profile', snowflake=str(flask.g.user.snowflake)))
 
+@app.route('/mensch')
+@gefolge_web.login.member_required
+@gefolge_web.util.path(('mensch', 'Menschen'))
+def menschen():
+    raise NotImplementedError() #TODO
+
 @app.route('/mensch/<snowflake>')
 @gefolge_web.login.member_required
+@gefolge_web.util.path(gefolge_web.login.Mensch, menschen)
 @gefolge_web.util.template()
 def profile(snowflake):
     mensch = gefolge_web.login.Mensch(snowflake)

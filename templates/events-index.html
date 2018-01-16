@@ -3,7 +3,7 @@
 {% block page_content %}
     <h1>Events</h1>
     <ul>
-    {% for (event_id, event_name) in events_list %}
-        <li><a href="{{url_for('event_page', event_id=event_id)}}">{{event_name}}</a></li>
+    {% for event in events_list %}
+        <li><a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a></li>
     {% endfor %}
 {% endblock %}
