@@ -27,7 +27,7 @@ class Path:
             result = '/'
         else:
             result = self.parent.url + '/'
-        if url_part is not None:
+        if self.url_part is not None:
             return result + self.url_part
         elif hasattr(self.name, url_part):
             return result + self.name.url_part
