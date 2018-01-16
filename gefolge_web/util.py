@@ -31,7 +31,7 @@ class Path:
             result = self.parent.url + '/'
         if self.url_part is not None:
             return result + self.url_part
-        elif hasattr(self.name, url_part):
+        elif hasattr(self.name, 'url_part'):
             return result + self.name.url_part
         else:
             return result + str(self.name)
