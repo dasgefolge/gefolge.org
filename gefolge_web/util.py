@@ -43,17 +43,13 @@ def path(name, parent=None):
     def decorator(f):
         def make_path(**kwargs):
             url_part = None
-            if callable(parent):
-                resolved_parent = parent(**kwargs)
-            else:
-                resolved_parent = parent
             if callable(name):
                 resolved_name = name(**kwargs)
             elif isinstance(name, tuple):
                 url_part, resolved_name = name
             else:
                 resolved_name = name
-            return Path(resolved_parent, resolved_name, url_part, **kwargs)
+            return Path(parent, resolved_name, url_part, **kwargs)
 
         @functools.wraps(f)
         def wrapper(**kwargs):
