@@ -8,11 +8,11 @@ import re
 _paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
 
 class Path:
-    def __init__(self, parent, name, *args):
+    def __init__(self, parent, name, **kwargs):
         if parent is None:
             self.parent = None
         else:
-            self.parent = parent.make_path(*args)
+            self.parent = parent.make_path(**kwargs)
         self.name = name
 
     def __iter__(self):
@@ -38,20 +38,20 @@ def parse_iso_datetime(datetime_str, *, tz=pytz.utc):
 
 def path(name, parent=None):
     def decorator(f):
-        def make_path(*args):
+        def make_path(**kwargs):
             url_part = None
             if callable(parent):
-                parent = parent(*args)
+                parent = parent(**kwargs)
             if callable(name):
-                name = name(*args)
+                name = name(**kwargs)
             elif isinstance(name, tuple):
                 url_part, name = name
-            return Path(parent, name, url_part, *args)
+            return Path(parent, name, url_part, **kwargs)
 
         @functools.wraps(f)
-        def wrapper(*args):
-            flask.g.path = wrapper.make_path(*args)
-            return f(*args)
+        def wrapper(**kwargs):
+            flask.g.path = wrapper.make_path(**kwargs)
+            return f(**kwargs)
 
         wrapper.make_path = make_path
         return wrapper
