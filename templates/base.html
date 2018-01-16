@@ -17,12 +17,7 @@
 
 {% block navbar %}
     <nav>
-        {% if g.config.get('is_dev') %}
-            <span><a href="{{url_for('index')}}" style="color: red;">[DEV]</a>.</span>
-            <span><a class="nolink" href="https://gefolge.org/"><img src="{{url_for('.static', filename='gefolge.png')}}" /></a></span>
-        {% else %}
-            <span><a class="nolink" href="{{url_for('index')}}"><img src="{{url_for('.static', filename='gefolge.png')}}" /></a></span>
-        {% endif %}
+        <span><a class="nolink" href="{{url_for('index')}}"><img src="{{url_for('.static', filename='gefolge.png')}}" /></a></span>
         {% if g.path is none %}
             <span> / </span>
         {% else %}
