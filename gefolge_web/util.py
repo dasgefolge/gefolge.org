@@ -39,6 +39,8 @@ def parse_iso_datetime(datetime_str, *, tz=pytz.utc):
 def path(name, parent=None):
     def decorator(f):
         def make_path(**kwargs):
+            nonlocal name, parent
+
             url_part = None
             if callable(parent):
                 parent = parent(**kwargs)
