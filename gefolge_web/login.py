@@ -11,8 +11,8 @@ import urllib.parse
 MENSCHEN = 386753710434287626 # role ID
 
 class Mensch(flask_login.UserMixin):
-    def __init__(self, flake):
-        self.snowflake = int(flake)
+    def __init__(self, snowflake):
+        self.snowflake = int(snowflake)
 
     @classmethod
     def get(cls, user_id):
