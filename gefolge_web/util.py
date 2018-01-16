@@ -8,12 +8,13 @@ import re
 _paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
 
 class Path:
-    def __init__(self, parent, name, **kwargs):
+    def __init__(self, parent, name, url_part, **kwargs):
         if parent is None:
             self.parent = None
         else:
             self.parent = parent.make_path(**kwargs)
         self.name = name
+        self.url_part = url_part
 
     def __iter__(self):
         if self.parent is not None:
@@ -26,7 +27,9 @@ class Path:
             result = '/'
         else:
             result = self.parent.url + '/'
-        if hasattr(self.name, url_part):
+        if url_part is not None:
+            return result + self.url_part
+        elif hasattr(self.name, url_part):
             return result + self.name.url_part
         else:
             return result + str(self.name)
