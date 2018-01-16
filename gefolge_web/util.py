@@ -39,16 +39,18 @@ def parse_iso_datetime(datetime_str, *, tz=pytz.utc):
 def path(name, parent=None):
     def decorator(f):
         def make_path(**kwargs):
-            nonlocal name, parent
-
             url_part = None
             if callable(parent):
-                parent = parent(**kwargs)
+                resolved_parent = parent(**kwargs)
+            else:
+                resolved_parent = parent
             if callable(name):
-                name = name(**kwargs)
+                resolved_name = name(**kwargs)
             elif isinstance(name, tuple):
-                url_part, name = name
-            return Path(parent, name, url_part, **kwargs)
+                url_part, resolved_name = name
+            else:
+                resolved_name = name
+            return Path(resolved_parent, resolved_name, url_part, **kwargs)
 
         @functools.wraps(f)
         def wrapper(**kwargs):
