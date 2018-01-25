@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block title %}{{mensch}} — Das Gefolge{% endblock %}
+
 {% block page_content %}
     {% if mensch.data['nick'].value() is none %}
         <h1>{{mensch.data['username']}}<span class="muted">#{{mensch.discrim}}</span></h1>

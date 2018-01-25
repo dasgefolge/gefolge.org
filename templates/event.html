@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block title %}{{event}}{% endblock %}
+
 {% block page_content %}
     <p><strong>{{event}}</strong> findet vom {{event.start_str}} bis zum {{event.end_str}} {{event.data['location'].value()}} statt.</p>
     {% if event.menschen | length > 0 %}

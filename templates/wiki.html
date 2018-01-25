@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block title %}{% if article_namespace == 'wiki' %}{{article_name}} — GefolgeWiki{% else %}{{article_namespace}}/{{article_name}} — GefolgeWiki{% endif %}{% endblock %}
+
 {% block page_content %}
     {{ article_source | markdown }}
 {% endblock %}
