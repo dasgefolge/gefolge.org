@@ -63,7 +63,7 @@ class Event:
 
     def orga(self, aufgabe):
         for mensch in self.data['menschen']:
-            if aufagbe in mensch.get('orga', []):
+            if aufgabe in mensch.get('orga', []):
                 return gefolge_web.login.Mensch(mensch['id'].value())
 
     @property
