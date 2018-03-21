@@ -30,6 +30,11 @@ class Event:
         else:
             return Euro()
 
+    def attendee_data(self, mensch):
+        for iter_data in self.data['menschen'].value():
+            if iter_data['id'] == mensch.snowflake:
+                return iter_data
+
     @property
     def ausfall(self):
         if 'ausfall' in self.data:
@@ -55,6 +60,11 @@ class Event:
             gefolge_web.login.Mensch(mensch['id'].value())
             for mensch in self.data['menschen']
         ]
+
+    def orga(self, aufgabe):
+        for mensch in self.data['menschen']:
+            if aufagbe in mensch.get('orga', []):
+                return gefolge_web.login.Mensch(mensch['id'].value())
 
     @property
     def start(self):
