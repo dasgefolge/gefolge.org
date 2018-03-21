@@ -26,7 +26,7 @@
         {% if event.anzahlung is none %}
             <p>Coming soon™</p>
         {% elif event.orga('Abrechnung') is none %}
-            <p>Das Orga-Team ist noch nicht vollständig, wir suchen noch jemanden für die Abrechnung. Wenn du das übernehmen möchtest, melde dich bitte bei {{g.config['web']['admin'] | mention}}.</p>
+            <p>Das Orga-Team ist noch nicht vollständig, wir suchen noch jemanden für die Abrechnung. Wenn du das übernehmen möchtest, melde dich bitte bei {{config['web']['admin'] | mention}}.</p>
         {% elif 'konto' not in event.attendee_data(event.orga('Abrechnung')) %}
             <p>{{event.orga('Abrechnung') | mention}} hat die Anmeldungen noch nicht eröffnet.</p>
         {% else %}

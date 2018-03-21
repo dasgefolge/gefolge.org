@@ -72,15 +72,15 @@ def member_required(f):
 
     return flask_login.login_required(wrapper)
 
-def setup(app, config):
-    if 'clientID' not in config.get('peter', {}) or 'clientSecret' not in config.get('peter', {}):
+def setup(app):
+    if 'clientID' not in app.config.get('peter', {}) or 'clientSecret' not in app.config.get('peter', {}):
         return #TODO mount error messages at /login and /auth
-    app.config['SECRET_KEY'] = config['peter']['clientSecret']
+    app.config['SECRET_KEY'] = app.config['peter']['clientSecret']
     app.config['USE_SESSION_FOR_NEXT'] = True
 
     app.register_blueprint(flask_dance.contrib.discord.make_discord_blueprint(
-        client_id=config['peter']['clientID'],
-        client_secret=config['peter']['clientSecret'],
+        client_id=app.config['peter']['clientID'],
+        client_secret=app.config['peter']['clientSecret'],
         scope='identify',
         redirect_to='auth_callback'
     ), url_prefix='/login')

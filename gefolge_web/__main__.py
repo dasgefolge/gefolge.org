@@ -32,9 +32,7 @@ with app.app_context():
     # load config
     if CONFIG_PATH.exists():
         with CONFIG_PATH.open() as config_f:
-            flask.g.config = json.load(config_f)
-    else:
-        flask.g.config = {}
+            app.config.update(json.load(config_f))
     # set up Bootstrap
     flask_bootstrap.Bootstrap(app)
     # set up Markdown
@@ -45,7 +43,7 @@ with app.app_context():
     md._instance.registerExtensions([emoji_ext], {})
     md.register_extension(pymdownx.extra.ExtraExtension)
     # set up submodules
-    gefolge_web.login.setup(app, flask.g.config)
+    gefolge_web.login.setup(app)
     gefolge_web.wiki.setup(app, md)
     gefolge_web.event.setup(app)
     gefolge_web.util.setup(app)
