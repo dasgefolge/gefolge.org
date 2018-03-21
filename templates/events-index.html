@@ -6,6 +6,6 @@
     <h1>Events</h1>
     <ul>
     {% for event in events_list %}
-        <li><a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a></li>
+        <li><a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a> ({{event.start.strftime('%d.%m.%Y')}}–{{event.end.strftime('%d.%m.%Y')}})</li>
     {% endfor %}
 {% endblock %}
