@@ -21,7 +21,7 @@ class Euro:
     def __str__(self):
         return '{:.2f}€'.format(self.value).replace('.', ',')
 
-class EuroField(wtforms.Field):
+class EuroField(wtforms.StringField):
     """A form field that validates to the Euro class. Some code derived from wtforms.DecimalField."""
     def _value(self):
         if self.raw_data:
@@ -34,7 +34,7 @@ class EuroField(wtforms.Field):
     def process_formdata(self, valuelist):
         if valuelist:
             try:
-                self.data = Euro(valuelist[0].replace(' ', '').replace(',', '.'))
+                self.data = Euro(valuelist[0].replace(' ', '').replace(',', '.').strip('€'))
             except (decimal.InvalidOperation, ValueError) as e:
                 self.data = None
                 raise ValueError('Ungültiger Eurobetrag') from e
