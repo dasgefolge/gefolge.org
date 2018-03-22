@@ -1,4 +1,5 @@
 import decimal
+import flask
 import flask_wtf
 import functools
 import lazyjson
@@ -148,6 +149,7 @@ def setup(app):
         event = Event(event_id)
         confirm_signup_form = ConfirmSignupForm()
         if confirm_signup_form.validate_on_submit():
+            #TODO move these checks to form validation
             match = re.fullmatch('Anzahlung {} ([0-9]+)'.format(event_id), confirm_signup_form.verwendungszweck.data)
             if not match:
                 raise ValueError('Verwendungszweck ist keine Anzahlung für dieses event')
