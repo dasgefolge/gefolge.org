@@ -1,5 +1,6 @@
 import decimal
 import flask_wtf
+import functools
 import lazyjson
 import pathlib
 import pytz
@@ -12,11 +13,23 @@ import gefolge_web.util
 
 EVENTS_ROOT = pathlib.Path('/usr/local/share/fidera/event')
 
+@functools.total_ordering
 class Euro:
     def __init__(self, value=0):
         self.value = decimal.Decimal(value)
         if self.value.quantize(decimal.Decimal('1.00')) != self.value:
             raise ValueError('Euro value contains fractional cents')
+
+    def __eq__(self, other):
+        return isinstance(other, Euro) and self.value == other.value
+
+    def __lt__(self, other):
+        if not isinstance(other, Euro):
+            return NotImplemented
+        return self.value < other.value
+
+    def __repr__(self):
+        return 'gefolge_web.event.Euro({!r})'.format(self.value)
 
     def __str__(self):
         return '{:.2f}€'.format(self.value).replace('.', ',')
@@ -46,6 +59,9 @@ class ConfirmSignupForm(flask_wtf.FlaskForm):
 class Event:
     def __init__(self, event_id):
         self.event_id = event_id
+
+    def __repr__(self):
+        return 'gefolge_web.event.Event({!r})'.format(self.event_id)
 
     def __str__(self):
         return self.data.get('name', self.event_id)
