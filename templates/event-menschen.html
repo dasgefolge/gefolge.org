@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Menschen — {{event}}{% endblock %}
+
+{% block page_content %}
+<p>Aktuell {% if event.menschen | length > 1 %}sind{% else %}ist{% endif %} {{event.menschen | length}} Mensch{% if event.menschen | length > 1 %}en{% endif %} für <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a> angemeldet:</p>
+<ul>
+    {% for mensch in event.menschen %}
+        <li>
+            {{mensch | mention}}
+            {% if event.attendee_data(g.user).get('orga', []) | length > 0 %}
+                (Orga: {{event.attendee_data(g.user)['orga'] | natjoin}})
+            {% endif %}
+        </li>
+    {% endfor %}
+</ul>
+{% endblock %}

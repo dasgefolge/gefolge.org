@@ -68,6 +68,18 @@ def path(name, parent=None):
 
 def setup(app):
     @app.template_filter()
+    def natjoin(value):
+        sequence = [str(elt) for elt in value]
+        if len(sequence) == 0:
+            raise IndexError('Tried to join empty sequence')
+        elif len(sequence) == 1:
+            return sequence[0]
+        elif len(sequence) == 2:
+            return '{} und {}'.format(sequence[0], sequence[1])
+        else:
+            return ', '.join(sequence[:-1]) + ' und {}'.format(sequence[-1])
+
+    @app.template_filter()
     @jinja2.evalcontextfilter
     def nl2br(eval_ctx, value): #FROM http://flask.pocoo.org/snippets/28/
         result = u'\n\n'.join(u'<p>%s</p>' % p.replace('\n', '<br>\n') \

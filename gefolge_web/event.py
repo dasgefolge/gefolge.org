@@ -169,3 +169,10 @@ def setup(app):
             'event': event,
             'confirm_signup_form': confirm_signup_form
         }
+
+    @app.route('/event/<event_id>/mensch')
+    @gefolge_web.login.member_required
+    @gefolge_web.util.path(('mensch', 'Menschen'), event_page)
+    @gefolge_web.util.template('event-menschen')
+    def event_menschen(event_id):
+        return {'event': Event(event_id)}
