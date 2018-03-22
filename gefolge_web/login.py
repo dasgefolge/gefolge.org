@@ -106,7 +106,7 @@ def setup(app):
     @app.template_filter()
     @jinja2.evalcontextfilter
     def mention(eval_ctx, value):
-        if not isinstance(value, Mensch):
+        if not hasattr(value, 'snowflake'):
             value = Mensch(value)
         result = '<a href="{}">@{}</a>'.format(flask.url_for('profile', snowflake=str(value.snowflake)), jinja2.escape(value.name))
         if eval_ctx.autoescape:
