@@ -53,9 +53,22 @@ class EuroField(wtforms.StringField):
                 self.data = None
                 raise ValueError('Ungültiger Eurobetrag') from e
 
-class ConfirmSignupForm(flask_wtf.FlaskForm):
-    betrag = EuroField('Betrag', [wtforms.validators.Required()])
-    verwendungszweck = wtforms.StringField('Verwendungszweck')
+def ConfirmSignupForm(event):
+    def validate_verwendungszweck(form, field):
+        match = re.fullmatch('Anzahlung {} ([0-9]+)'.format(event.event_id), field.data)
+        if not match:
+            raise flask.validators.ValidationError('Verwendungszweck ist keine Anzahlung für dieses event.')
+        mensch = gefolge_web.login.Mensch(match.group(1))
+        if not mensch.is_active:
+            raise flask.validators.ValidationError('Dieser Mensch ist nicht im Gefolge Discord server.')
+        if mensch in event.menschen:
+            raise flask.validators.ValidationError('Dieser Mensch ist bereits für dieses event angemeldet.')
+
+    class Form(flask_wtf.FlaskForm):
+        betrag = EuroField('Betrag', [wtforms.validators.InputRequired(), wtforms.validators.NumberRange(min=event.anzahlung, max=event.anzahlung)])
+        verwendungszweck = wtforms.StringField('Verwendungszweck', [validate_verwendungszweck])
+
+    return Form()
 
 class Event:
     def __init__(self, event_id):
@@ -147,21 +160,9 @@ def setup(app):
     @gefolge_web.util.template('event')
     def event_page(event_id):
         event = Event(event_id)
-        confirm_signup_form = ConfirmSignupForm()
+        confirm_signup_form = ConfirmSignupForm(event)
         if confirm_signup_form.validate_on_submit():
-            #TODO move these checks to form validation
-            match = re.fullmatch('Anzahlung {} ([0-9]+)'.format(event_id), confirm_signup_form.verwendungszweck.data)
-            if not match:
-                raise ValueError('Verwendungszweck ist keine Anzahlung für dieses event')
-            mensch = gefolge_web.login.Mensch(match.group(1))
-            if not mensch.is_active:
-                raise ValueError('Mensch mit dieser snowflake ist nicht im Gefolge Discord server')
-            if mensch in event.menschen:
-                raise ValueError('Dieser Mensch ist bereits für dieses event angemeldet')
-            if confirm_signup_form.betrag.data < event.anzahlung:
-                raise ValueError('Betrag der Anzahlung zu niedrig')
-            if confirm_signup_form.betrag.data > event.anzahlung:
-                raise ValueError('Betrag der Anzahlung zu hoch')
+            match = gefolge_web.login.Mensch(re.fullmatch('Anzahlung {} ([0-9]+)'.format(event_id), confirm_signup_form.verwendungszweck.data).group(1))
             event.signup(mensch)
             return flask.redirect(flask.url_for('event_page', event_id=event_id))
         return {
