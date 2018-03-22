@@ -132,7 +132,7 @@ def setup(app):
         event = Event(event_id)
         confirm_signup_form = ConfirmSignupForm()
         if confirm_signup_form.validate_on_submit():
-            match = re.fullmatch('Anzahlung {} ([0-9]+)'.format(event_id), form.verwendungszweck.data)
+            match = re.fullmatch('Anzahlung {} ([0-9]+)'.format(event_id), confirm_signup_form.verwendungszweck.data)
             if not match:
                 raise ValueError('Verwendungszweck ist keine Anzahlung für dieses event')
             mensch = gefolge_web.login.Mensch(match.group(1))
@@ -140,9 +140,9 @@ def setup(app):
                 raise ValueError('Mensch mit dieser snowflake ist nicht im Gefolge Discord server')
             if mensch in event.menschen:
                 raise ValueError('Dieser Mensch ist bereits für dieses event angemeldet')
-            if form.betrag.data < event.anzahlung:
+            if confirm_signup_form.betrag.data < event.anzahlung:
                 raise ValueError('Betrag der Anzahlung zu niedrig')
-            if form.betrag.data > event.anzahlung:
+            if confirm_signup_form.betrag.data > event.anzahlung:
                 raise ValueError('Betrag der Anzahlung zu hoch')
             event.signup(mensch)
             return flask.redirect(flask.url_for('event_page', event_id=event_id))
