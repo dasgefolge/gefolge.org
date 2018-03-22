@@ -37,7 +37,7 @@
 {% endmacro %}
 
 {% macro gen_form(form, submit_value, submit_label, post_url) %}
-    <form method="POST" role="form" action="{{post_url}}">
+    <form class="form-horizontal" method="POST" role="form" action="{{post_url}}">
         {{form.hidden_tag()}}
         {% for field in form %}
             {% if not bootstrap_is_hidden_field(field) %}
