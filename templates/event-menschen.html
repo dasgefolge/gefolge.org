@@ -8,8 +8,8 @@
     {% for mensch in event.menschen %}
         <li>
             {{mensch | mention}}
-            {% if event.attendee_data(g.user).get('orga', []) | length > 0 %}
-                (Orga: {{event.attendee_data(g.user)['orga'] | natjoin}})
+            {% if event.attendee_data(mensch).get('orga', []) | length > 0 %}
+                (Orga: {{event.attendee_data(mensch)['orga'] | natjoin}})
             {% endif %}
         </li>
     {% endfor %}
