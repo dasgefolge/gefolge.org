@@ -22,7 +22,7 @@ class Mensch(flask_login.UserMixin):
             return None
 
     def __eq__(self, other):
-        return isinstance(other, Mensch) and self.snowflake == other.snowflake
+        return hasattr(other, 'snowflake') and self.snowflake == other.snowflake
 
     def __hash__(self):
         return hash(self.snowflake)
