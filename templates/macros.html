@@ -1,0 +1,53 @@
+{% macro gen_field(form, field) %}
+    {#FROM https://github.com/wurstmineberg/wurstmineberg.de/blob/master/wurstmineberg_web/templates/preferences.html #}
+    {% if form.errors and field.short_name in form.errors %}
+        <div class="alert alert-danger col-sm-10 col-sm-offset-2" role="alert">
+            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+            <span class="sr-only">Error:</span>
+            {% for message in form.errors[field.short_name] %}
+                {{message}}
+            {% endfor %}
+        </div>
+    {% endif %}
+    <div class="form-group">
+        {% if field.type == 'BooleanField' %}
+            <div class="col-sm-offset-2 col-sm-10">
+                <div class="checkbox">
+                    <label>
+                        {{field()}} {{field.label}}
+                    </label>
+                </div>
+            </div>
+        {% else %}
+            <label for="input_description" class="col-sm-2 control-label">{{field.label}}</label>
+            <div class="col-sm-10">
+                {% if 'placeholder' in field.description %}
+                    {{field(class="form-control", placeholder=field.description['placeholder'])}}
+                {% else %}
+                    {{field(class="form-control")}}
+                {% endif %}
+            </div>
+        {% endif %}
+        {% if 'text' in field.description %}
+            <div class="col-sm-10 col-sm-offset-2">
+                <span class="muted">{{field.description['text']}}</span>
+            </div>
+        {% endif %}
+    </div>
+{% endmacro %}
+
+{% macro gen_form(form, submit_value, submit_label, post_url) %}
+    <form method="POST" role="form" action="{{post_url}}">
+        {{form.hidden_tag()}}
+        {% for field in form %}
+            {% if not bootstrap_is_hidden_field(field) %}
+                {{gen_field(form, field)}}
+            {% endif %}
+        {% endfor %}
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+                <button type="submit" class="btn btn-default" value="{{submit_value}}" name="save">{{submit_label}}</button>
+            </div>
+        </div>
+    </form>
+{% endmacro %}

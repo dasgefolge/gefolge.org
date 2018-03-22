@@ -21,10 +21,23 @@
         {% else %}
             <p>Deine Anzahlung ist angekommen. Damit bist du jetzt angemeldet.</p>
         {% endif %}
-        <p>Der Rest der Anmeldungsseite ist noch in Arbeit. Wenn sie fertig ist, wirst du auf Discord angepingt.</p>
+        <p>Der Rest der Anmeldungsseite ist noch in Arbeit. Wenn sie fertig ist, wirst du auf Discord angepingt.</p> {#TODO#}
+        {% if event.attendee_data(g.user).get('orga', []) | length > 0 %}
+            <h1>Orga</h1>
+            {% if event.orga('Abrechnung') == g.user %}
+                {% if 'konto' in event.attendee_data(g.user) %}
+                    <p>Bitte überprüfe regelmäßig dein Konto {{event.attendee_data(g.user)['konto']['iban']}} auf Anzahlungen.</p>
+                    {{gen_form(confirm_signup_form, 'confirm-signup', 'Anzahlung Bestätigen', url_for('event_page', event_id=event.event_id))}}
+                {% else %}
+                    <p>Um die Anmeldungen zu eröffnen, gib bitte {{config['web']['admin'] | mention}} deine Kontodaten.</p>
+                {% endif %}
+            {% else %}
+                <p>Coming soon™</p> {#TODO#}
+            {% endif %}
+        {% endif %}
     {% else %}
         {% if event.anzahlung is none %}
-            <p>Coming soon™</p>
+            <p>Coming soon™</p> {#TODO#}
         {% elif event.orga('Abrechnung') is none %}
             <p>Das Orga-Team ist noch nicht vollständig, wir suchen noch jemanden für die Abrechnung. Wenn du das übernehmen möchtest, melde dich bitte bei {{config['web']['admin'] | mention}}.</p>
         {% elif 'konto' not in event.attendee_data(event.orga('Abrechnung')) %}

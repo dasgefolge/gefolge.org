@@ -21,6 +21,12 @@ class Mensch(flask_login.UserMixin):
         except ValueError:
             return None
 
+    def __eq__(self, other):
+        return isinstance(other, Mensch) and self.snowflake == other.snowflake
+
+    def __hash__(self):
+        return hash(self.snowflake)
+
     def __repr__(self):
         return 'gefolge_web.login.Mensch({!r})'.format(self.snowflake)
 

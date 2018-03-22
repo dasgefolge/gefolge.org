@@ -36,7 +36,10 @@ class Path:
         else:
             return result + str(self.name)
 
-def parse_iso_datetime(datetime_str, *, tz=pytz.utc):
+def now(tz=pytz.timezone('Europe/Berlin')):
+    return pytz.utc.localize(datetime.datetime.utcnow()).astimezone(tz)
+
+def parse_iso_datetime(datetime_str, *, tz=pytz.timezone('Europe/Berlin')):
     if isinstance(datetime_str, datetime.datetime):
         return datetime_str
     return tz.localize(datetime.datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S'), is_dst=None)
