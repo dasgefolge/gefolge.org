@@ -57,12 +57,12 @@ def ConfirmSignupForm(event):
     def validate_verwendungszweck(form, field):
         match = re.fullmatch('Anzahlung {} ([0-9]+)'.format(event.event_id), field.data)
         if not match:
-            raise flask.validators.ValidationError('Verwendungszweck ist keine Anzahlung für dieses event.')
+            raise wtforms.validators.ValidationError('Verwendungszweck ist keine Anzahlung für dieses event.')
         mensch = gefolge_web.login.Mensch(match.group(1))
         if not mensch.is_active:
-            raise flask.validators.ValidationError('Dieser Mensch ist nicht im Gefolge Discord server.')
+            raise wtforms.validators.ValidationError('Dieser Mensch ist nicht im Gefolge Discord server.')
         if mensch in event.menschen:
-            raise flask.validators.ValidationError('Dieser Mensch ist bereits für dieses event angemeldet.')
+            raise wtforms.validators.ValidationError('Dieser Mensch ist bereits für dieses event angemeldet.')
 
     class Form(flask_wtf.FlaskForm):
         betrag = EuroField('Betrag', [wtforms.validators.InputRequired(), wtforms.validators.NumberRange(min=event.anzahlung, max=event.anzahlung)])
