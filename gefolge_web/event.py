@@ -126,7 +126,7 @@ class Event:
     def signup(self, mensch):
         self.data['menschen'].append({
             'id': mensch.snowflake,
-            'signup': '{:%Y-%M-%d %H:%M:%S}'.format(gefolge_web.util.now()) #TODO Datum der Überweisung verwenden
+            'signup': '{:%Y-%m-%d %H:%M:%S}'.format(gefolge_web.util.now()) #TODO Datum der Überweisung verwenden
         })
 
     @property
