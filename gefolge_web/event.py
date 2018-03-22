@@ -162,7 +162,7 @@ def setup(app):
         event = Event(event_id)
         confirm_signup_form = ConfirmSignupForm(event)
         if confirm_signup_form.validate_on_submit():
-            match = gefolge_web.login.Mensch(re.fullmatch('Anzahlung {} ([0-9]+)'.format(event_id), confirm_signup_form.verwendungszweck.data).group(1))
+            mensch = gefolge_web.login.Mensch(re.fullmatch('Anzahlung {} ([0-9]+)'.format(event_id), confirm_signup_form.verwendungszweck.data).group(1))
             event.signup(mensch)
             return flask.redirect(flask.url_for('event_page', event_id=event_id))
         return {
