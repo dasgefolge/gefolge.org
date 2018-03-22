@@ -124,7 +124,7 @@ def setup(app):
             ]
         }
 
-    @app.route('/event/<event_id>')
+    @app.route('/event/<event_id>', methods=['GET', 'POST'])
     @gefolge_web.login.member_required
     @gefolge_web.util.path(Event, events_index)
     @gefolge_web.util.template('event')
