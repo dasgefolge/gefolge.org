@@ -196,10 +196,10 @@ class Event:
             for guest in self.guests
             if 'signup' in self.attendee_data(guest)
         }
-        result += {
+        result.update({
             mensch: self.attendee_data(mensch)['signup'].value()
             for mensch in self.menschen
-        }
+        })
         return [person for person, signup in sorted(result.items(), key=lambda kv: kv[1])]
 
     @property
