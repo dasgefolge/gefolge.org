@@ -37,7 +37,7 @@
             {% if event.orga('Abrechnung') == g.user %}
                 {% if 'konto' in event.attendee_data(g.user) %}
                     <p>Bitte überprüfe regelmäßig dein Konto {{event.attendee_data(g.user)['konto']['iban']}} auf Anzahlungen.</p>
-                    {{gen_form(confirm_signup_form, 'confirm-signup', 'Anzahlung Bestätigen', url_for('event_page', event_id=event.event_id))}}
+                    {{gen_form(confirm_signup_form, 'confirm-signup', 'Anzahlung bestätigen', url_for('event_page', event_id=event.event_id))}}
                 {% else %}
                     <p>Um die Anmeldungen zu eröffnen, gib bitte {{config['web']['admin'] | mention}} deine Kontodaten.</p>
                 {% endif %}
