@@ -2,6 +2,7 @@ import datetime
 import flask
 import functools
 import jinja2
+import more_itertools
 import pytz
 import re
 
@@ -67,6 +68,13 @@ def path(name, parent=None):
     return decorator
 
 def setup(app):
+    @app.template_filter()
+    def length(value):
+        try:
+            return len(value)
+        except TypeError:
+            return more_itertools.ilen(value)
+
     @app.template_filter()
     def natjoin(value):
         sequence = [str(elt) for elt in value]
