@@ -108,6 +108,8 @@ def SignupGuestForm(event):
     class Form(flask_wtf.FlaskForm):
         name = wtforms.StringField('Name', [wtforms.validators.DataRequired(), validate_guest_name])
 
+    return Form()
+
 class Event:
     def __init__(self, event_id):
         self.event_id = event_id
