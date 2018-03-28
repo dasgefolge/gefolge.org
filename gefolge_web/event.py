@@ -188,7 +188,7 @@ class Event:
             'name': guest_name,
             'via': mensch.snowflake
         })
-        return guest_id
+        return Guest(self, guest_id)
 
     @property
     def signups(self):
@@ -264,8 +264,8 @@ def setup(app):
         signup_guest_form = SignupGuestForm(event)
         if signup_guest_form.validate_on_submit():
             guest_name = signup_guest_form.name.data.strip()
-            guest_id = event.signup_guest(flask.g.user, guest_name)
-            return flask.render_template('event-guest-confirm.html', event=event, guest_id=guest_id, guest_name=guest_name)
+            guest = event.signup_guest(flask.g.user, guest_name)
+            return flask.render_template('event-guest-confirm.html', event=event, guest=guest)
         else:
             return flask.render_template('event-guest-form.html', event=event, signup_guest_form=signup_guest_form)
 
