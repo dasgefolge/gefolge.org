@@ -50,6 +50,10 @@ class Mensch(flask_login.UserMixin):
         return self.profile_path.exists() and MENSCHEN in self.data.get('roles')
 
     @property
+    def is_guest(self):
+        return False
+
+    @property
     def name(self):
         if self.data.get('nick') is None:
             return self.data['username'].value()

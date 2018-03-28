@@ -3,15 +3,19 @@
 {% block title %}Menschen — {{event}}{% endblock %}
 
 {% block page_content %}
-<p>Aktuell {% if event.menschen | length > 1 %}sind{% else %}ist{% endif %} {{event.menschen | length}} Mensch{% if event.menschen | length > 1 %}en{% endif %} für <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a> angemeldet:</p>
-<ul>
-    {% for mensch in event.menschen %}
-        <li>
-            {{mensch | mention}}
-            {% if event.attendee_data(mensch).get('orga', []) | length > 0 %}
-                (Orga: {{event.attendee_data(mensch)['orga'] | natjoin}})
-            {% endif %}
-        </li>
-    {% endfor %}
-</ul>
+    <p>Aktuell {% if event.signups | length > 1 %}sind{% else %}ist{% endif %} {{event.signups | length}} Mensch{% if event.signups | length > 1 %}en{% endif %} für <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a> angemeldet:</p>
+    <ul>
+        {% for person in event.signups %}
+            <li>
+                {% if person is guest %}
+                    {{person}} (via {{person.via | mention}})
+                {% else %}
+                    {{person | mention}}
+                    {% if event.attendee_data(person).get('orga', []) | length > 0 %}
+                        (Orga: {{event.attendee_data(person)['orga'] | natjoin}})
+                    {% endif %}
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
 {% endblock %}

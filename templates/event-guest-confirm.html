@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Gast anmelden — {{event}}{% endblock %}
+
+{% block page_content %}
+    <p>Hier kannst du Gäste für <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a> anmelden.</p>
+    <p>Um die Anmeldung abzuschließen, muss {{guest}} noch die Anzahlung von {{event.anzahlung}} überweisen:</p>
+    <p>
+        Name: {{event.attendee_data(event.orga('Abrechnung'))['konto']['name']}}<br />
+        IBAN: {{event.attendee_data(event.orga('Abrechnung'))['konto']['iban']}}<br />
+        BIC: {{event.attendee_data(event.orga('Abrechnung'))['konto']['bic']}}<br />
+        Verwendungszweck: Anzahlung {{event.event_id}} {{guest.snowflake}}
+    </p>
+{% endblock %}

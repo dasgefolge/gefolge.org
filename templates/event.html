@@ -4,12 +4,12 @@
 
 {% block page_content %}
     <p><strong>{{event}}</strong> findet vom {{event.start_str}} bis zum {{event.end_str}} {{event.data['location'].value()}} statt.</p>
-    {% if event.menschen | length > 0 %}
-        <p>Aktuell {% if event.menschen | length > 1 %}sind{% else %}ist{% endif %} <a href="{{url_for('event_menschen', event_id=event.event_id)}}">{{event.menschen | length}} Mensch{% if event.menschen | length > 1 %}en{% endif %}</a> angemeldet.</p>
+    {% if event.signups | length > 0 %}
+        <p>Aktuell {% if event.signups | length > 1 %}sind{% else %}ist{% endif %} <a href="{{url_for('event_menschen', event_id=event.event_id)}}">{{event.signups | length}} Mensch{% if event.signups | length > 1 %}en{% endif %}</a> angemeldet.</p>
     {% else %}
         <p>Aktuell ist noch niemand angemeldet.</p>
     {% endif %}
-    <h1>Anmeldung</h1>
+    <h1 id="signup">Anmeldung</h1>
     {% if g.user in event.menschen %}
         {% if event.anzahlung is none %}
             <p>Du bist schon angemeldet.</p>
@@ -17,8 +17,23 @@
             <p>Deine Anzahlung ist angekommen. Damit bist du jetzt angemeldet.</p>
         {% endif %}
         <p>Der Rest der Anmeldungsseite ist noch in Arbeit. Wenn sie fertig ist, wirst du auf Discord angepingt.</p> {#TODO#}
+        {% if event.guests | selectattr("via", "equalto", g.user) | length > 0 %}
+            <h2>Gäste</h2>
+            <ul>
+                {% for guest in event.guests | selectattr("via", "equalto", g.user) %}
+                    {% if guest in event.signups %}
+                        <li>{{guest}}: Anmeldung bestätigt</li>
+                    {% else %}
+                        <li>{{guest}}: noch nicht angemeldet</li> {#TODO link to event-guest-confirm.html #}
+                    {% endif %}
+                {% endfor %}
+            </ul>
+            <p><a href="{{url_for('event_guest_form', event_id=event.event_id)}}">Weiteren Gast anmelden</a></p>
+        {% else %}
+            <p><a href="{{url_for('event_guest_form', event_id=event.event_id)}}">Gast anmelden</a></p>
+        {% endif %}
         {% if event.attendee_data(g.user).get('orga', []) | length > 0 %}
-            <h1>Orga</h1>
+            <h1 id="orga">Orga</h1>
             {% if event.orga('Abrechnung') == g.user %}
                 {% if 'konto' in event.attendee_data(g.user) %}
                     <p>Bitte überprüfe regelmäßig dein Konto {{event.attendee_data(g.user)['konto']['iban']}} auf Anzahlungen.</p>
@@ -45,8 +60,8 @@
                 BIC: {{event.attendee_data(event.orga('Abrechnung'))['konto']['bic']}}<br />
                 Verwendungszweck: Anzahlung {{event.event_id}} {{g.user.snowflake}}
             </p>
-            {% if event.ausfall.value > (event.data['menschen'] | length) * event.anzahlung.value %}
-                <p>Wichtig: wir können erst buchen, wenn die Ausfallgebühr von {{event.ausfall}} gesichert ist. Dazu fehlen noch {{(event.ausfall.value / event.anzahlung.value - (event.data['menschen'] | length)) | round(0, 'ceil') | int}} Anmeldungen.</p>
+            {% if event.ausfall.value > (event.signups | length) * event.anzahlung.value %}
+                <p>Wichtig: wir können erst buchen, wenn die Ausfallgebühr von {{event.ausfall}} gesichert ist. Dazu fehlen noch {{(event.ausfall.value / event.anzahlung.value - (event.signups | length)) | round(0, 'ceil') | int}} Anmeldungen.</p>
             {% endif %}
         {% endif %}
     {% endif %}
