@@ -3,7 +3,7 @@ upstream _gefolge {
 }
 
 server {
-    server_name ~^(gefolge\.org|gefolge\.(dev\.)?(mercredi\.)?fenhl\.net)$;
+    server_name gefolge.org;
 
     listen 80;
     listen [::]:80;
