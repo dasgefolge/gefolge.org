@@ -10,8 +10,8 @@ server {
     listen 443 ssl;
     listen [::]:443 ssl;
 
-    ssl_certificate /etc/letsencrypt/live/gefolge.org/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/gefolge.org/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/inwx/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/inwx/privkey.pem;
 
     location / {
         add_header Access-Control-Allow-Origin *;
