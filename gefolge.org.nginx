@@ -13,6 +13,10 @@ server {
     ssl_certificate /etc/letsencrypt/live/inwx/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/inwx/privkey.pem;
 
+    if ($scheme = http) {
+        return 301 https://$host$request_uri;
+    }
+
     location / {
         add_header Access-Control-Allow-Origin *;
         include uwsgi_params;
