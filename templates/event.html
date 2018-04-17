@@ -3,7 +3,7 @@
 {% block title %}{{event}}{% endblock %}
 
 {% block page_content %}
-    <p><strong>{{event}}</strong> findet vom {{event.start_str}} bis zum {{event.end_str}} {{event.location.prefix}}{{event.location}} statt.</p>
+    <p><strong>{{event}}</strong> findet vom {{event.start | dmy_hm}} bis zum {{event.end | dmy_hm}} {{event.location.prefix}}{{event.location}} statt.</p>
     {% if event.signups | length > 0 %}
         <p>Aktuell {% if event.signups | length > 1 %}sind{% else %}ist{% endif %} <a href="{{url_for('event_menschen', event_id=event.event_id)}}">{{event.signups | length}} Mensch{% if event.signups | length > 1 %}en{% endif %}</a> angemeldet.</p>
     {% else %}
@@ -14,7 +14,7 @@
         {% if event.anzahlung is none %}
             <p>Du bist schon angemeldet.</p>
         {% else %}
-            <p>Deine Anzahlung ist angekommen. Damit bist du jetzt angemeldet.</p>
+            <p>Deine Anzahlung von {{event.anzahlung}} ist am {{event.attendee_data(g.user)['signup'] | dmy}} angekommen. Damit bist du jetzt angemeldet.</p>
         {% endif %}
         <p>Der Rest der Anmeldungsseite ist noch in Arbeit. Wenn sie fertig ist, wirst du auf Discord angepingt.</p> {#TODO#}
         {% if event.guests | selectattr("via", "equalto", g.user) | length > 0 %}

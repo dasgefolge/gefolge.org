@@ -124,10 +124,6 @@ class Event:
         return gefolge_web.util.parse_iso_datetime(self.data['end'].value())
 
     @property
-    def end_str(self):
-        return '{:%d.%m.%Y %H:%M}'.format(self.end)
-
-    @property
     def guests(self):
         return [
             Guest(self, person['id'].value())
@@ -189,10 +185,6 @@ class Event:
     @property
     def start(self):
         return gefolge_web.util.parse_iso_datetime(self.data['start'].value())
-
-    @property
-    def start_str(self):
-        return '{:%d.%m.%Y %H:%M}'.format(self.start)
 
     @property
     def url_part(self):

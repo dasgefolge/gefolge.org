@@ -40,6 +40,11 @@ class Path:
 def now(tz=pytz.timezone('Europe/Berlin')):
     return pytz.utc.localize(datetime.datetime.utcnow()).astimezone(tz)
 
+def parse_iso_date(date_str):
+    if isinstance(date_str, datetime.date):
+        return date_str
+    return datetime.date(*map(int, date_str.split('-')))
+
 def parse_iso_datetime(datetime_str, *, tz=pytz.timezone('Europe/Berlin')):
     if isinstance(datetime_str, datetime.datetime):
         return datetime_str
@@ -68,6 +73,22 @@ def path(name, parent=None):
     return decorator
 
 def setup(app):
+    @app.template_filter()
+    def dmy(value):
+        if isinstance(value, lazyjson.Node):
+            value = value.value()
+        if isinstance(value, str):
+            value = parse_iso_date(value)
+        return '{:%d.%m.%Y}'.format(value)
+
+    @app.template_filter()
+    def dmy_hm(value):
+        if isinstance(value, lazyjson.Node):
+            value = value.value()
+        if isinstance(value, str):
+            value = parse_iso_datetime(value)
+        return '{:%d.%m.%Y %H:%M}'.format(value)
+
     @app.template_filter()
     def length(value):
         try:
