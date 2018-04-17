@@ -80,6 +80,10 @@ class Location:
     def data(self):
         return lazyjson.File(LOCATIONS_ROOT / '{}.json'.format(self.loc_id))
 
+    @property
+    def prefix(self):
+        return self.data.get('prefix', 'in')
+
 class Event:
     def __init__(self, event_id):
         self.event_id = event_id
