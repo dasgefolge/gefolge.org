@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% macro render_person() -%}
+    {%- if person is guest -%}
+        {{person}}
+    {%- else -%}
+        {{person | mention}}
+    {%- endif -%}
+{%- endmacro %}
+
+{% block title %}{{person}} — {{event}}{% endblock %}
+
+{% block page_content %}
+    <h1>Profil für {{render_person()}} auf <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a></h1>
+    {% if person is guest %}
+        <p>{{person}} ist Gast und wurde von {{person.via | mention}} angemeldet.</p>
+    {% endif %}
+    {% if person in event.signups %}
+        {% if event.attendee_data(person).get('orga', []) | length > 0 %}
+            <p>{{render_person()}} ist im Orga-Team und organisiert {{event.attendee_data(person)['orga'] | natjoin}}.</p>
+        {% endif %}
+        <p>Coming soon™</p> {#TODO#}
+    {% else %}
+        <p>{{render_person()}} ist nicht für {{event}} angemeldet.</p>
+    {% endif %}
+{% endblock %}

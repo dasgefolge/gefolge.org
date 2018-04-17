@@ -15,6 +15,7 @@
                         (Orga: {{event.attendee_data(person)['orga'] | natjoin}})
                     {% endif %}
                 {% endif %}
+                — <a href="{{url_for('event_profile', event_id=event.event_id, snowflake=person.snowflake)}}">Details</a>
             </li>
         {% endfor %}
     </ul>

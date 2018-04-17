@@ -302,3 +302,19 @@ def setup(app):
     @gefolge_web.util.template('event-menschen')
     def event_menschen(event_id):
         return {'event': Event(event_id)}
+
+    @app.route('/event/<event_id>/mensch/<snowflake>')
+    @gefolge_web.login.member_required
+    @gefolge_web.util.path(gefolge_web.login.Mensch, event_menschen)
+    @gefolge_web.util.template('event-profile')
+    def event_profile(event_id, snowflake):
+        if snowflake < 100:
+            person = Guest(event, snowflake)
+        else:
+            person = gefolge_web.login.Mensch(snowflake)
+            if not person.is_active:
+                return flask.make_response(('Dieser Discord account existiert nicht oder ist nicht im Gefolge.', 404, []))
+        return {
+            'event': Event(event_id),
+            'person': person
+        }
