@@ -1,6 +1,7 @@
 import datetime
 import flask
 import functools
+import inspect
 import jinja2
 import lazyjson
 import more_itertools
@@ -56,7 +57,12 @@ def path(name, parent=None):
         def make_path(**kwargs):
             url_part = None
             if callable(name):
-                resolved_name = name(**kwargs)
+                filtered_kwargs = {
+                    param_name: kwargs[param_name]
+                    for param_name in inspect.signature(name).parameters
+                    if param_name in kwargs
+                }
+                resolved_name = name(**filtered_kwargs)
             elif isinstance(name, tuple):
                 url_part, resolved_name = name
             else:

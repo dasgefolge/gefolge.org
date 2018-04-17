@@ -305,7 +305,7 @@ def setup(app):
 
     @app.route('/event/<event_id>/mensch/<snowflake>')
     @gefolge_web.login.member_required
-    @gefolge_web.util.path(lambda event_id, snowflake: gefolge_web.login.Mensch(snowflake), event_menschen)
+    @gefolge_web.util.path(gefolge_web.login.Mensch, event_menschen)
     @gefolge_web.util.template('event-profile')
     def event_profile(event_id, snowflake):
         if snowflake < 100:
