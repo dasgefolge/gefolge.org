@@ -308,7 +308,7 @@ def setup(app):
     @gefolge_web.util.path(gefolge_web.login.Mensch, event_menschen)
     @gefolge_web.util.template('event-profile')
     def event_profile(event_id, snowflake):
-        if snowflake < 100:
+        if int(snowflake) < 100:
             person = Guest(event, snowflake)
         else:
             person = gefolge_web.login.Mensch(snowflake)
