@@ -123,9 +123,11 @@ class Event:
     @property
     def anzahlung(self):
         if 'anzahlung' in self.data:
+            if self.data['anzahlung'].value() is None:
+                return None
             return Euro(self.data['anzahlung'].value())
         else:
-            return Euro()
+            return None
 
     def attendee_data(self, person):
         for iter_data in self.data['menschen']:
