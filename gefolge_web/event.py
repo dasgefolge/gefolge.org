@@ -2,6 +2,7 @@ import decimal
 import flask
 import flask_wtf
 import functools
+import jinja2
 import lazyjson
 import pathlib
 import pytz
@@ -14,6 +15,7 @@ import gefolge_web.login
 import gefolge_web.util
 
 EVENTS_ROOT = pathlib.Path('/usr/local/share/fidera/event')
+LOCATIONS_ROOT = pathlib.Path('/usr/local/share/fidera/loc')
 
 @functools.total_ordering
 class Euro:
@@ -57,58 +59,26 @@ class Guest:
     def via(self):
         return gefolge_web.login.Mensch(self.event.attendee_data(self)['via'].value())
 
-class EuroField(wtforms.StringField):
-    """A form field that validates to the Euro class. Some code derived from wtforms.DecimalField."""
-    def _value(self):
-        if self.raw_data:
-            return self.raw_data[0]
-        elif self.data is not None:
-            return str(self.data.value)
+class Location:
+    def __init__(self, loc_id):
+        self.loc_id = loc_id
+
+    def __html__(self):
+        website = self.data.get('website')
+        if website is None:
+            return jinja2.escape(str(self))
         else:
-            return ''
+            return jinja2.Markup('<a href="{}">{}</a>'.format(jinja2.escape(website), self))
 
-    def process_formdata(self, valuelist):
-        if valuelist:
-            try:
-                self.data = Euro(valuelist[0].replace(' ', '').replace(',', '.').strip('€'))
-            except (decimal.InvalidOperation, ValueError) as e:
-                self.data = None
-                raise ValueError('Ungültiger Eurobetrag') from e
+    def __repr__(self):
+        return 'gefolge_web.event.Location({!r})'.format(self.loc_id)
 
-def ConfirmSignupForm(event):
-    def validate_verwendungszweck(form, field):
-        match = re.fullmatch('Anzahlung {} ([0-9]+)'.format(event.event_id), field.data)
-        if not match:
-            raise wtforms.validators.ValidationError('Verwendungszweck ist keine Anzahlung für dieses event.')
-        if len(match.group(1)) < 3:
-            guest = Guest(event, match.group(1))
-            if guest not in event.guests:
-                raise wtforms.validators.ValidationError('Es ist kein Gast mit dieser Nummer für dieses event eingetragen.')
-            if guest in event.signups:
-                raise wtforms.validators.ValidationError('Dieser Gast ist bereits für dieses event angemeldet.')
-        else:
-            mensch = gefolge_web.login.Mensch(match.group(1))
-            if not mensch.is_active:
-                raise wtforms.validators.ValidationError('Dieser Mensch ist nicht im Gefolge Discord server.')
-            if mensch in event.menschen:
-                raise wtforms.validators.ValidationError('Dieser Mensch ist bereits für dieses event angemeldet.')
+    def __str__(self):
+        return self.data.get('name', self.loc_id)
 
-    class Form(flask_wtf.FlaskForm):
-        betrag = EuroField('Betrag', [wtforms.validators.InputRequired(), wtforms.validators.NumberRange(min=event.anzahlung, max=event.anzahlung)])
-        verwendungszweck = wtforms.StringField('Verwendungszweck', [validate_verwendungszweck])
-
-    return Form()
-
-def SignupGuestForm(event):
-    def validate_guest_name(form, field):
-        name = field.data.strip()
-        if any(str(guest) == name for guest in event.guests):
-            raise wtforms.validators.ValidationError('Ein Gast mit diesem Namen ist bereits angemeldet.')
-
-    class Form(flask_wtf.FlaskForm):
-        name = wtforms.StringField('Name', [wtforms.validators.DataRequired(), validate_guest_name])
-
-    return Form()
+    @property
+    def data(self):
+        return lazyjson.File(LOCATIONS_ROOT / '{}.json'.format(self.loc_id))
 
 class Event:
     def __init__(self, event_id):
@@ -160,6 +130,12 @@ class Event:
             for person in self.data['menschen']
             if 'via' in person
         ]
+
+    @property
+    def location(self):
+        loc_id = self.data.get('location')
+        if loc_id is not None:
+            return Location(loc_id)
 
     @property
     def menschen(self):
@@ -217,6 +193,59 @@ class Event:
     @property
     def url_part(self):
         return self.event_id
+
+class EuroField(wtforms.StringField):
+    """A form field that validates to the Euro class. Some code derived from wtforms.DecimalField."""
+    def _value(self):
+        if self.raw_data:
+            return self.raw_data[0]
+        elif self.data is not None:
+            return str(self.data.value)
+        else:
+            return ''
+
+    def process_formdata(self, valuelist):
+        if valuelist:
+            try:
+                self.data = Euro(valuelist[0].replace(' ', '').replace(',', '.').strip('€'))
+            except (decimal.InvalidOperation, ValueError) as e:
+                self.data = None
+                raise ValueError('Ungültiger Eurobetrag') from e
+
+def ConfirmSignupForm(event):
+    def validate_verwendungszweck(form, field):
+        match = re.fullmatch('Anzahlung {} ([0-9]+)'.format(event.event_id), field.data)
+        if not match:
+            raise wtforms.validators.ValidationError('Verwendungszweck ist keine Anzahlung für dieses event.')
+        if len(match.group(1)) < 3:
+            guest = Guest(event, match.group(1))
+            if guest not in event.guests:
+                raise wtforms.validators.ValidationError('Es ist kein Gast mit dieser Nummer für dieses event eingetragen.')
+            if guest in event.signups:
+                raise wtforms.validators.ValidationError('Dieser Gast ist bereits für dieses event angemeldet.')
+        else:
+            mensch = gefolge_web.login.Mensch(match.group(1))
+            if not mensch.is_active:
+                raise wtforms.validators.ValidationError('Dieser Mensch ist nicht im Gefolge Discord server.')
+            if mensch in event.menschen:
+                raise wtforms.validators.ValidationError('Dieser Mensch ist bereits für dieses event angemeldet.')
+
+    class Form(flask_wtf.FlaskForm):
+        betrag = EuroField('Betrag', [wtforms.validators.InputRequired(), wtforms.validators.NumberRange(min=event.anzahlung, max=event.anzahlung)])
+        verwendungszweck = wtforms.StringField('Verwendungszweck', [validate_verwendungszweck])
+
+    return Form()
+
+def SignupGuestForm(event):
+    def validate_guest_name(form, field):
+        name = field.data.strip()
+        if any(str(guest) == name for guest in event.guests):
+            raise wtforms.validators.ValidationError('Ein Gast mit diesem Namen ist bereits angemeldet.')
+
+    class Form(flask_wtf.FlaskForm):
+        name = wtforms.StringField('Name', [wtforms.validators.DataRequired(), validate_guest_name])
+
+    return Form()
 
 def setup(app):
     @app.template_test('guest')
