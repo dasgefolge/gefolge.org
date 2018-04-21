@@ -97,9 +97,7 @@ def setup(app):
 
     login_manager = flask_login.LoginManager()
     login_manager.login_view = 'discord.login'
-    login_manager.login_message = 'Du musst dich anmelden, um diese Seite sehen zu können.'
-    login_manager.refresh_view = 'discord.login' #TODO separate view?
-    login_manager.login_message = 'Bitte melde dich nochmal an, um diese Änderungen zu bestätigen.'
+    login_manager.login_message = None # Because discord.login does not show flashes, any login message would be shown after a successful login. This would be confusing.
 
     @login_manager.user_loader
     def load_user(user_id):
