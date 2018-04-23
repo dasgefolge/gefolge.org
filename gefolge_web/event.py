@@ -275,7 +275,7 @@ def setup(app):
                 guest = Guest(event, snowflake)
                 event.attendee_data(guest)['signup'] = '{:%Y-%m-%d %H:%M:%S}'.format(gefolge_web.util.now()) #TODO Datum der Überweisung verwenden
             else:
-                mensch = gefolge_web.login.Mensch()
+                mensch = gefolge_web.login.Mensch(snowflake)
                 event.signup(mensch)
             return flask.redirect(flask.url_for('event_page', event_id=event_id))
         return {
