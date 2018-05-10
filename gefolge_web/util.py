@@ -39,6 +39,12 @@ class Path:
         else:
             return result + str(self.name)
 
+def date_range(start, end):
+    date = start
+    while date < end:
+        yield date
+        date += datetime.timedelta(days=1)
+
 def now(tz=pytz.timezone('Europe/Berlin')):
     return pytz.utc.localize(datetime.datetime.utcnow()).astimezone(tz)
 

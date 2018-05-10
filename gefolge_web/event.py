@@ -208,6 +208,14 @@ class EuroField(wtforms.StringField):
                 self.data = None
                 raise ValueError('Ungültiger Eurobetrag') from e
 
+class YesMaybeNoField(wtforms.RadioField):
+    """A form field that validates to yes, maybe, or no. Displayed as a horizontal button group."""
+
+    #TODO override widgets to improve formatting
+
+    def __init__(self, label, **kwargs):
+        super().__init__(label, choices=[('yes', 'Ja'), ('maybe', 'Vielleicht'), ('no', 'Nein')], **kwargs)
+
 def ConfirmSignupForm(event):
     def validate_verwendungszweck(form, field):
         match = re.fullmatch('Anzahlung {} ([0-9]+)'.format(event.event_id), field.data)
@@ -229,6 +237,15 @@ def ConfirmSignupForm(event):
     class Form(flask_wtf.FlaskForm):
         betrag = EuroField('Betrag', [wtforms.validators.InputRequired(), wtforms.validators.NumberRange(min=event.anzahlung, max=event.anzahlung)])
         verwendungszweck = wtforms.StringField('Verwendungszweck', [validate_verwendungszweck])
+
+    return Form()
+
+def ProfileForm(event, person):
+    class Form(flask_wtf.FlaskForm):
+        pass
+
+    for i, night in enumerate(gefolge_web.util.date_range(event.start.date(), event.end.date())):
+        setattr(Form, 'night{}'.format(i), YesMaybeNoField('{:%d.%m.}–{:%d.%m.}'.format(night, night + datetime.timedelta(days=1)), default='maybe', validators=[wtforms.validators.InputRequired()])) #TODO set default to saved value
 
     return Form()
 
@@ -318,3 +335,26 @@ def setup(app):
             'event': Event(event_id),
             'person': person
         }
+
+    @app.route('/event/<event_id>/mensch/<snowflake>/edit', methods=['GET', 'POST'])
+    @gefolge_web.login.member_required
+    @gefolge_web.util.path(('edit', 'bearbeiten'), event_profile)
+    @gefolge_web.util.template('event-profile-edit')
+    def event_profile_edit(event_id, snowflake):
+        event = Event(event_id)
+        if int(snowflake) < 100:
+            person = Guest(event, snowflake)
+        else:
+            person = gefolge_web.login.Mensch(snowflake)
+            if not person.is_active:
+                return flask.make_response(('Dieser Discord account existiert nicht oder ist nicht im Gefolge.', 404, []))
+        profile_form = ProfileForm(event, person)
+        if profile_form.validate_on_submit():
+            #TODO validate
+            return flask.redirect(flask.url_for('event_profile', snowflake=snowflake))
+        else:
+            return {
+                'event': event,
+                'person': person,
+                'event_attendee_edit_form': profile_form
+            }

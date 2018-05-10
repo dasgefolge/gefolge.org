@@ -35,7 +35,7 @@
                     </td>
                     <td>
                         <a href="{{url_for('event_profile', event_id=event.event_id, snowflake=person.snowflake)}}"><span class="fa fa-eye"></span></a>
-                        <span class="fa fa-edit"></span>
+                        <a href="{{url_for('event_profile_edit', event_id=event.event_id, snowflake=person.snowflake)}}"><span class="fa fa-edit"></span></a>
                     </td>
                 </tr>
             {% endfor %}
