@@ -1,22 +1,44 @@
 {% extends "base.html" %}
 
+{% macro render_person(person) -%}
+    {%- if person is guest -%}
+        {{person}}
+    {%- else -%}
+        {{person | mention}}
+    {%- endif -%}
+{%- endmacro %}
+
 {% block title %}Menschen — {{event}}{% endblock %}
 
 {% block page_content %}
     <p>Aktuell {% if event.signups | length > 1 %}sind{% else %}ist{% endif %} {{event.signups | length}} Mensch{% if event.signups | length > 1 %}en{% endif %} für <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a> angemeldet:</p>
-    <ul>
-        {% for person in event.signups %}
-            <li>
-                {% if person is guest %}
-                    {{person}} (via {{person.via | mention}})
-                {% else %}
-                    {{person | mention}}
-                    {% if event.attendee_data(person).get('orga', []) | length > 0 %}
-                        (Orga: {{event.attendee_data(person)['orga'] | natjoin}})
-                    {% endif %}
-                {% endif %}
-                — <a href="{{url_for('event_profile', event_id=event.event_id, snowflake=person.snowflake)}}">Details</a>
-            </li>
-        {% endfor %}
-    </ul>
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Zeitraum</th>
+                <th>Sonstiges</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for person in event.signups %}
+                <tr>
+                    <td>{{render_person(person)}}</td>
+                    <td>coming soon™</td>
+                    <td>
+                        {% if event.attendee_data(person).get('orga', []) | length > 0 %}
+                            Orga: {{event.attendee_data(person)['orga'] | natjoin}}
+                        {% elif person is guest %}
+                            (via {{person.via | mention}})
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{url_for('event_profile', event_id=event.event_id, snowflake=person.snowflake)}}"><span class="fa fa-eye"></span></a>
+                        <span class="fa fa-edit"></span>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock %}
