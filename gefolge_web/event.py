@@ -163,7 +163,7 @@ class Event:
 
     @property
     def nights(self):
-        return gefolge_web.util.date_range(event.start.date(), event.end.date())
+        return gefolge_web.util.date_range(self.start.date(), self.end.date())
 
     def orga(self, aufgabe):
         for mensch in self.data['menschen']:
