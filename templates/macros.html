@@ -21,15 +21,18 @@
         {% elif field.type == 'YesMaybeNoField' %}
             <label for="input_description" class="col-sm-2 control-label">{{field.label}}</label>
             <div class="col-sm-10 btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-success {% if field.choices[0].checked %}active{% endif %}">
-                    <input type="radio" name="{{field.choices[0].name}}" {% if field.choices[0].checked %}checked="checked"{% endif %}>ja
-                </label>
-                <label class="btn btn-warning {% if field.choices[1].checked %}active{% endif %}">
-                    <input type="radio" name="{{field.choices[1].name}}" {% if field.choices[1].checked %}checked="checked"{% endif %}>vielleicht
-                </label>
-                <label class="btn btn-danger {% if field.choices[2].checked %}active{% endif %}">
-                    <input type="radio" name="{{field.choices[2].name}}" {% if field.choices[1].checked %}checked="checked"{% endif %}>nein
-                </label>
+                {% for subfield in field %}
+                    {% if subfield.label.text == 'Ja' %}
+                        {% set btn_class = 'btn-success' %}
+                    {% elif subfield.label.text == 'Vielleicht' %}
+                        {% set btn_class = 'btn-warning' %}
+                    {% elif subfield.label.text == 'Nein' %}
+                        {% set btn_class = 'btn-danger' %}
+                    {% endif %}
+                    <label class="btn {{btn_class}} {% if subfield.checked %}active{% endif %}">
+                        <input type="radio" id="{{subfield.id}}" name="{{subfield.name}}" value="{{subfield.data}}" {% if subfield.checked %}checked="checked"{% endif %}>{{subfield.label.text}}</input>
+                    </label>
+               {% endfor %}
             </div>
         {% else %}
             <label for="input_description" class="col-sm-2 control-label">{{field.label}}</label>
