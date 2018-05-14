@@ -353,7 +353,7 @@ def setup(app):
         profile_form = ProfileForm(event, person)
         if profile_form.validate_on_submit():
             #TODO validate
-            return flask.redirect(flask.url_for('event_profile', snowflake=snowflake))
+            return flask.redirect(flask.url_for('event_profile', event_id=event_id, snowflake=snowflake))
         else:
             return {
                 'event': event,
