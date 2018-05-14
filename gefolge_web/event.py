@@ -171,6 +171,9 @@ class Event:
                 return gefolge_web.login.Mensch(mensch['id'].value())
 
     def signup(self, mensch):
+        gefolge_web.util.log('eventConfirmSignup', {
+            'id': mensch.snowflake
+        })
         self.data['menschen'].append({
             'id': mensch.snowflake,
             'signup': '{:%Y-%m-%d %H:%M:%S}'.format(gefolge_web.util.now()) #TODO Datum der Überweisung verwenden
@@ -181,10 +184,14 @@ class Event:
             raise ValueError('Duplicate guest name: {!r}'.format(guest_name))
         available_ids = [i for i in range(100) if not any(guest.snowflake == i for guest in self.guests)]
         guest_id = random.choice(available_ids)
-        self.data['menschen'].append({
+        gefolge_web.util.log('eventSignupGuest', {
             'id': guest_id,
             'name': guest_name,
             'via': mensch.snowflake
+        })
+        self.data['menschen'].append({
+            'id': guest_id,
+            'name': guest_name
         })
         return Guest(self, guest_id)
 
@@ -315,6 +322,9 @@ def setup(app):
             snowflake = int(re.fullmatch('Anzahlung {} ([0-9]+)'.format(event_id), confirm_signup_form.verwendungszweck.data).group(1))
             if snowflake < 100:
                 guest = Guest(event, snowflake)
+                gefolge_web.util.log('eventConfirmSignup', {
+                    'id': snowflake
+                })
                 event.attendee_data(guest)['signup'] = '{:%Y-%m-%d %H:%M:%S}'.format(gefolge_web.util.now()) #TODO Datum der Überweisung verwenden
             else:
                 mensch = gefolge_web.login.Mensch(snowflake)
@@ -389,7 +399,13 @@ def setup(app):
         profile_form = ProfileForm(event, person)
         if profile_form.validate_on_submit():
             person_data = event.attendee_data(person)
-            #TODO log changes
+            gefolge_web.util.log('eventProfileEdit', {
+                'id': person.snowflake,
+                'nights': {
+                    '{:%Y-%m-%d}'.format(night): getattr(profile_form, 'night{}'.format(i)).data
+                    for i, night in enumerate(event.nights)
+                }
+            })
             if 'nights' not in person_data:
                 person_data['nights'] = {}
             for i, night in enumerate(event.nights):

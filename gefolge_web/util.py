@@ -1,3 +1,4 @@
+import copy
 import datetime
 import flask
 import functools
@@ -8,7 +9,8 @@ import more_itertools
 import pytz
 import re
 
-_paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
+EDIT_LOG = lazyjson.File('/usr/local/share/fidera/log.json')
+PARAGRAPH_RE = re.compile(r'(?:\r\n|\r|\n){2,}')
 
 class Path:
     def __init__(self, parent, name, url_part, **kwargs):
@@ -44,6 +46,13 @@ def date_range(start, end):
     while date < end:
         yield date
         date += datetime.timedelta(days=1)
+
+def log(event_type, event):
+    event = copy.copy(event)
+    event['by'] = flask.g.user.snowflake
+    event['time'] = '{:%Y-%m-%d %H:%M:%S}'.format(now())
+    event['type'] = event_type
+    EDIT_LOG.append(event)
 
 def now(tz=pytz.timezone('Europe/Berlin')):
     return pytz.utc.localize(datetime.datetime.utcnow()).astimezone(tz)
@@ -141,7 +150,7 @@ def setup(app):
     @jinja2.evalcontextfilter
     def nl2br(eval_ctx, value): #FROM http://flask.pocoo.org/snippets/28/
         result = u'\n\n'.join(u'<p>%s</p>' % p.replace('\n', '<br>\n') \
-            for p in _paragraph_re.split(jinja2.escape(value)))
+            for p in PARAGRAPH_RE.split(jinja2.escape(value)))
         if eval_ctx.autoescape:
             result = jinja2.Markup(result)
         return result
