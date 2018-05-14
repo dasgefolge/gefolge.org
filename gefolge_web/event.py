@@ -161,6 +161,10 @@ class Event:
             if 'via' not in person
         ]
 
+    @property
+    def nights(self):
+        return gefolge_web.util.date_range(event.start.date(), event.end.date())
+
     def orga(self, aufgabe):
         for mensch in self.data['menschen']:
             if aufgabe in mensch.get('orga', []):
@@ -262,7 +266,7 @@ def ProfileForm(event, person):
         pass
 
     person_data = event.attendee_data(person).value()
-    for i, night in enumerate(gefolge_web.util.date_range(event.start.date(), event.end.date())):
+    for i, night in enumerate(event.nights):
         setattr(Form, 'night{}'.format(i), YesMaybeNoField(
             '{:%d.%m.}–{:%d.%m.}'.format(night, night + datetime.timedelta(days=1)),
             default=person_data.get('nights', {}).get('{:%Y-%m-%d}'.format(night), 'maybe'), #TODO set default to saved value
@@ -378,7 +382,7 @@ def setup(app):
             #TODO log changes
             if 'nights' not in person_data:
                 person_data['nights'] = {}
-            for i, night in enumerate(gefolge_web.util.date_range(event.start.date(), event.end.date())):
+            for i, night in enumerate(event.nights):
                 person_data['nights']['{:%Y-%m-%d}'.format(night)] = getattr(profile_form, 'night{}'.format(i)).data
             return flask.redirect(flask.url_for('event_profile', event_id=event_id, snowflake=snowflake))
         else:

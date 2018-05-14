@@ -87,6 +87,14 @@ def path(name, parent=None):
 
 def setup(app):
     @app.template_filter()
+    def dm(value):
+        if isinstance(value, lazyjson.Node):
+            value = value.value()
+        if isinstance(value, str):
+            value = parse_iso_date(value)
+        return '{:%d.%m.}'.format(value)
+
+    @app.template_filter()
     def dmy(value):
         if isinstance(value, lazyjson.Node):
             value = value.value()
