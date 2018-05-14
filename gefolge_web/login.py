@@ -110,7 +110,7 @@ def setup(app):
     def mention(eval_ctx, value):
         if not hasattr(value, 'snowflake'):
             value = Mensch(value)
-        result = '<a href="{}">@{}</a>'.format(flask.url_for('profile', snowflake=str(value.snowflake)), jinja2.escape(value.name))
+        result = '<a title="{}" href="{}">@{}</a>'.format(value, flask.url_for('profile', snowflake=str(value.snowflake)), jinja2.escape(value.name))
         if eval_ctx.autoescape:
             result = jinja2.Markup(result)
         return result
