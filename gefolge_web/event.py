@@ -339,12 +339,12 @@ def setup(app):
             return flask.render_template('event-guest-form.html', event=event, signup_guest_form=signup_guest_form)
 
     @app.route('/event/<event_id>/me')
-    @flask_login.login_required
+    @gefolge_web.login.member_required
     def event_me(event_id):
         return flask.redirect(flask.url_for('event_profile', event_id=event_id, snowflake=str(flask.g.user.snowflake)))
 
     @app.route('/event/<event_id>/me/edit')
-    @flask_login.login_required
+    @gefolge_web.login.member_required
     def event_me_edit(event_id):
         return flask.redirect(flask.url_for('event_profile_edit', event_id=event_id, snowflake=str(flask.g.user.snowflake)))
 

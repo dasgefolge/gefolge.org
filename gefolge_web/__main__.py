@@ -10,7 +10,6 @@ sys.path.append('/opt/py')
 
 import flask
 import flask_bootstrap
-import flask_login
 import flaskext.markdown
 import json
 import os
@@ -54,7 +53,7 @@ def index():
     pass
 
 @app.route('/me')
-@flask_login.login_required
+@gefolge_web.login.member_required
 def me():
     return flask.redirect(flask.url_for('profile', snowflake=str(flask.g.user.snowflake)))
 
