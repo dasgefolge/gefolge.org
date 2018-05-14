@@ -130,6 +130,14 @@ def setup(app):
             return ', '.join(sequence[:-1]) + ' und {}'.format(sequence[-1])
 
     @app.template_filter()
+    def next_date(value):
+        if isinstance(value, lazyjson.Node):
+           value = value.value()
+        if isinstance(value, str):
+           value = parse_iso_date(value)
+        return value + datetime.timedelta(days=1)
+
+    @app.template_filter()
     @jinja2.evalcontextfilter
     def nl2br(eval_ctx, value): #FROM http://flask.pocoo.org/snippets/28/
         result = u'\n\n'.join(u'<p>%s</p>' % p.replace('\n', '<br>\n') \

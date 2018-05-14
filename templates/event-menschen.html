@@ -16,36 +16,39 @@
         <thead>
             <tr>
                 <th rowspan="2">Name</th>
-                <th colspan="{{event.nights | length}}">Zeitraum</th>
+                <th colspan="{{(event.nights | length) * 2 + 2}}">Zeitraum</th>
                 <th rowspan="2">Sonstiges</th>
                 <th rowspan="2">Details</th>
             </tr>
             <tr>
                 {% for night in event.nights %}
-                    <th>{{night | dm}}</th>
+                    <th style="text-align: center;" colspan="2">{{night | dm}}</th>
                 {% endfor %}
+                <th style="text-align: center;" colspan="2">{{event.end | dm}}</th>
             </tr>
         </thead>
         <tbody>
             {% for person in event.signups %}
                 <tr>
                     <td>{{render_person(person)}}</td>
+                    <td></td>
                     {% for night in event.nights %}
                         {% set attending_night = event.attendee_data(person).get('nights', {}).get('{:%Y-%m-%d}'.format(night), 'maybe') %}
                         {% if attending_night == 'yes' %}
-                            <td class="success">
+                            <td style="text-align: center;" colspan="2" class="success" title="{{night | dm}}–{{night | next_date | dm}}">
                                 <span class="fa fa-check"></span>
                             </td>
                         {% elif attending_night == 'maybe' %}
-                            <td class="warning">
+                            <td style="text-align: center;" colspan="2" class="warning" title="{{night | dm}}–{{night | next_date | dm}}">
                                 <span class="fa fa-question"></span>
                             </td>
                         {% elif attending_night == 'no' %}
-                            <td class="danger">
+                            <td style="text-align: center;" colspan="2" class="danger" title="{{night | dm}}–{{night | next_date | dm}}">
                                 <span class="fa fa-times"></span>
                             </td>
                         {% endif %}
                     {% endfor %}
+                    <td></td>
                     <td>
                         {% if event.attendee_data(person).get('orga', []) | length > 0 %}
                             Orga: {{event.attendee_data(person)['orga'] | natjoin}}
