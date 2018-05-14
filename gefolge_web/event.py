@@ -374,6 +374,7 @@ def setup(app):
             return flask.redirect(flask.url_for('event_profile', event_id=event_id, snowflake=snowflake))
         profile_form = ProfileForm(event, person)
         if profile_form.validate_on_submit():
+            person_data = event.attendee_data(person)
             #TODO log changes
             if 'nights' not in person_data:
                 person_data['nights'] = {}
