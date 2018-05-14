@@ -12,5 +12,9 @@
 
 {% block page_content %}
     <h1>Profil für {{render_person()}} auf <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a></h1>
-    {{gen_form(event_attendee_edit_form, 'edit-event-attendee', 'Speichern', url_for('event_profile_edit', event_id=event.event_id, snowflake=person.snowflake))}}
+    {% if event.can_edit(g.user, person) %}
+        {{gen_form(event_attendee_edit_form, 'edit-event-attendee', 'Speichern', url_for('event_profile_edit', event_id=event.event_id, snowflake=person.snowflake))}}
+    {% else %}
+        <p>Du bist nicht berechtigt, dieses Profil zu bearbeiten.</p>
+    {% endif %}
 {% endblock %}

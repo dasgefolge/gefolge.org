@@ -116,6 +116,21 @@ class Event:
         else:
             return Euro()
 
+    def can_edit(self, editor, profile):
+        if len(self.attendee_data(editor).get('orga', [])) > 0:
+            # Orga darf alle bearbeiten
+            return True
+        if gefolge_web.util.now() > self.end:
+            # nach Ende des event darf nur noch die Orga bearbeiten
+            return False
+        if editor == profile:
+            # Menschen dürfen ihr eigenes Profil bearbeiten
+            return True
+        if profile.snowflake < 100 and profile.via == editor:
+            # Gastprofile dürfen von ihren proxies bearbeitet werden
+            return True
+        return False
+
     @property
     def data(self):
         return lazyjson.File(EVENTS_ROOT / '{}.json'.format(self.event_id))
@@ -246,9 +261,13 @@ def ProfileForm(event, person):
     class Form(flask_wtf.FlaskForm):
         pass
 
+    person_data = event.attendee_data(person).value()
     for i, night in enumerate(gefolge_web.util.date_range(event.start.date(), event.end.date())):
-        setattr(Form, 'night{}'.format(i), YesMaybeNoField('{:%d.%m.}–{:%d.%m.}'.format(night, night + datetime.timedelta(days=1)), default='maybe', validators=[wtforms.validators.InputRequired()])) #TODO set default to saved value
-
+        setattr(Form, 'night{}'.format(i), YesMaybeNoField(
+            '{:%d.%m.}–{:%d.%m.}'.format(night, night + datetime.timedelta(days=1)),
+            default=person_data.get('nights', {}).get('{:%Y-%m-%d}'.format(night), 'maybe'), #TODO set default to saved value
+            validators=[wtforms.validators.InputRequired()]
+        ))
     return Form()
 
 def SignupGuestForm(event):
@@ -350,9 +369,16 @@ def setup(app):
             person = gefolge_web.login.Mensch(snowflake)
             if not person.is_active:
                 return flask.make_response(('Dieser Discord account existiert nicht oder ist nicht im Gefolge.', 404, []))
+        if not event.can_edit(flask.g.user, person):
+            flask.flash('Du bist nicht berechtigt, dieses Profil zu bearbeiten.')
+            return flask.redirect(flask.url_for('event_profile', event_id=event_id, snowflake=snowflake))
         profile_form = ProfileForm(event, person)
         if profile_form.validate_on_submit():
-            #TODO validate
+            #TODO log changes
+            if 'nights' not in person_data:
+                person_data['nights'] = {}
+            for i, night in enumerate(gefolge_web.util.date_range(event.start.date(), event.end.date())):
+                person_data['nights']['{:%Y-%m-%d}'.format(night)] = getattr(profile_form, 'night{}'.format(i)).data
             return flask.redirect(flask.url_for('event_profile', event_id=event_id, snowflake=snowflake))
         else:
             return {
