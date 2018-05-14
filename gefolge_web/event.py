@@ -212,7 +212,8 @@ class EuroField(wtforms.StringField):
 class YesMaybeNoField(wtforms.RadioField):
     """A form field that validates to yes, maybe, or no. Displayed as a horizontal button group."""
 
-    #TODO override widgets to improve formatting
+    #TODO actually capture input
+    #TODO set default to maybe
 
     def __init__(self, label, **kwargs):
         super().__init__(label, choices=[('yes', 'Ja'), ('maybe', 'Vielleicht'), ('no', 'Nein')], **kwargs)

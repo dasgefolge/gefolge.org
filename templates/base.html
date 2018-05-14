@@ -14,6 +14,47 @@
     {{ super() }}
     <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.css" />
     <link rel="stylesheet" href="{{url_for('.static', filename='common.css')}}" />
+    <style>
+        .btn-group-toggle .btn + .btn {
+            margin-left: 0;
+        }
+
+        .btn-group-toggle .btn-success {
+            background-color: white;
+            border-color: #449d44;
+            color: #449d44;
+        }
+
+        .btn-group-toggle .btn-success.active {
+            background-color: #449d44;
+            border-color: #449d44;
+            color: white;
+        }
+
+        .btn-group-toggle .btn-warning {
+            background-color: white;
+            border-color: #d58512;
+            color: #d58512;
+        }
+
+        .btn-group-toggle .btn-warning.active {
+            background-color: #d58512;
+            border-color: #d58512;
+            color: white;
+        }
+
+        .btn-group-toggle .btn-danger {
+            background-color: white;
+            border-color: #ac2925;
+            color: #ac2925;
+        }
+
+        .btn-group-toggle .btn-danger.active {
+            background-color: #ac2925;
+            border-color: #ac2925;
+            color: white;
+        }
+    </style>
 {% endblock %}
 
 {% block navbar %}

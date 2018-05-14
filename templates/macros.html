@@ -18,6 +18,19 @@
                     </label>
                 </div>
             </div>
+        {% elif field.type == 'YesMaybeNoField' %}
+            <label for="input_description" class="col-sm-2 control-label">{{field.label}}</label>
+            <div class="col-sm-10 btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-success {% if field.choices[0].checked %}active{% endif %}">
+                    <input type="radio" name="{{field.choices[0].name}}" {% if field.choices[0].checked %}checked="checked"{% endif %}>ja
+                </label>
+                <label class="btn btn-warning {% if field.choices[1].checked %}active{% endif %}">
+                    <input type="radio" name="{{field.choices[1].name}}" {% if field.choices[1].checked %}checked="checked"{% endif %}>vielleicht
+                </label>
+                <label class="btn btn-danger {% if field.choices[2].checked %}active{% endif %}">
+                    <input type="radio" name="{{field.choices[2].name}}" {% if field.choices[1].checked %}checked="checked"{% endif %}>nein
+                </label>
+            </div>
         {% else %}
             <label for="input_description" class="col-sm-2 control-label">{{field.label}}</label>
             <div class="col-sm-10">
