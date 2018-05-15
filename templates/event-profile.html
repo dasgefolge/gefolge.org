@@ -12,10 +12,10 @@
 
 {% block page_content %}
     <h1>Profil für {{render_person()}} auf <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a> {% if event.can_edit(g.user, person) %}<a href="{{url_for('event_profile_edit', event_id=event.event_id, snowflake=person.snowflake)}}" class="btn btn-primary">Bearbeiten</a>{% endif %}</h1>
-    {% if person is guest %}
-        <p>{{person}} ist Gast und wurde von {{person.via | mention}} angemeldet.</p>
-    {% endif %}
     {% if person in event.signups %}
+        {% if person is guest %}
+            <p>{{person}} ist Gast und wurde von {{person.via | mention}} angemeldet.</p>
+        {% endif %}
         {% if event.attendee_data(person).get('orga', []) | length > 0 %}
             <p>{{render_person()}} ist im Orga-Team und organisiert {{event.attendee_data(person)['orga'] | natjoin}}.</p>
         {% endif %}

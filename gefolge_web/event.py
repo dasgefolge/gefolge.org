@@ -117,7 +117,11 @@ class Event:
             return Euro()
 
     def can_edit(self, editor, profile):
-        if len(self.attendee_data(editor).get('orga', [])) > 0:
+        editor_data = self.attendee_data(editor)
+        if editor_data is None:
+            # wer nicht angemeldet ist, darf nichts bearbeiten
+            return False
+        if len(editor_data.get('orga', [])) > 0:
             # Orga darf alle bearbeiten
             return True
         if gefolge_web.util.now() > self.end:
