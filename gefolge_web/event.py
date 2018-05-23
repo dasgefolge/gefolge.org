@@ -285,6 +285,12 @@ def ProfileForm(event, person):
         ))
     return Form()
 
+def ProgrammAddForm(event):
+    class Form(flask_wtf.FlaskForm):
+        name = wtforms.StringField('Titel', [wtforms.validators.InputRequired(), wtforms.validators.NoneOf(list(event.data['programm'].value()), message='Es gibt bereits einen Programmpunkt mit diesem Titel.')])
+
+    return Form()
+
 def SignupGuestForm(event):
     def validate_guest_name(form, field):
         name = field.data.strip()
@@ -334,9 +340,14 @@ def setup(app):
                 mensch = gefolge_web.login.Mensch(snowflake)
                 event.signup(mensch)
             return flask.redirect(flask.url_for('event_page', event_id=event_id))
+        programm_add_form = ProgrammAddForm(event)
+        if programm_add_form.validate_on_submit():
+            event.data['programm'][programm_add_form.name] = {'interesse': []}
+            #TODO redirect to Programm view/edit page
         return {
             'event': event,
-            'confirm_signup_form': confirm_signup_form
+            'confirm_signup_form': confirm_signup_form,
+            'programm_add_form': programm_add_form
         }
 
     @app.route('/event/<event_id>/guest', methods=['GET', 'POST'])
