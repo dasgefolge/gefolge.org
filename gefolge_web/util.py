@@ -100,6 +100,8 @@ def setup(app):
         if isinstance(value, lazyjson.Node):
             value = value.value()
         if isinstance(value, str):
+            if ' ' in value:
+                value = value.split(' ')[0]
             value = parse_iso_date(value)
         return '{:%d.%m.}'.format(value)
 
@@ -108,6 +110,8 @@ def setup(app):
         if isinstance(value, lazyjson.Node):
             value = value.value()
         if isinstance(value, str):
+            if ' ' in value:
+                value = value.split(' ')[0]
             value = parse_iso_date(value)
         return '{:%d.%m.%Y}'.format(value)
 
