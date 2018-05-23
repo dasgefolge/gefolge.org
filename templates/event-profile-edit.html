@@ -11,7 +11,7 @@
 {% block title %}{{person}} bearbeiten — {{event}}{% endblock %}
 
 {% block page_content %}
-    <h1>Profil für {{render_person()}} auf <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a></h1>
+    <h1>Profil für {{render_person()}} auf <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a> <a href="{{url_for('event_profile', event_id=event.event_id, snowflake=person.snowflake)}}" class="btn btn-danger">Abbrechen</a></h1>
     {% if event.can_edit(g.user, person) %}
         {{gen_form(event_attendee_edit_form, 'edit-event-attendee', 'Speichern', url_for('event_profile_edit', event_id=event.event_id, snowflake=person.snowflake))}}
     {% else %}
