@@ -60,8 +60,14 @@ def me():
 @app.route('/mensch')
 @gefolge_web.login.member_required
 @gefolge_web.util.path(('mensch', 'Menschen'))
+@gefolge_web.util.template('menschen-index')
 def menschen():
-    raise NotImplementedError() #TODO
+    return {
+        'menschen_list': [
+            gefolge_web.login.Mensch(profile_path.stem)
+            for profile_path in sorted(PROFILES_ROOT.iterdir())
+        ]
+    }
 
 @app.route('/mensch/<snowflake>')
 @gefolge_web.login.member_required

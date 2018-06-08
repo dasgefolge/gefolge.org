@@ -9,6 +9,7 @@ import pathlib
 import urllib.parse
 
 MENSCHEN = 386753710434287626 # role ID
+PROFILES_ROOT = pathlib.Path('/usr/local/share/fidera/profiles')
 
 class Mensch(flask_login.UserMixin):
     def __init__(self, snowflake):
@@ -62,7 +63,7 @@ class Mensch(flask_login.UserMixin):
 
     @property
     def profile_path(self):
-        return pathlib.Path('/usr/local/share/fidera/profiles/{}.json'.format(self.snowflake))
+        return PROFILES_ROOT / '{}.json'.format(self.snowflake)
 
     @property
     def url_part(self):
