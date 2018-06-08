@@ -65,7 +65,7 @@ def menschen():
     return {
         'menschen_list': [
             gefolge_web.login.Mensch(profile_path.stem)
-            for profile_path in sorted(PROFILES_ROOT.iterdir())
+            for profile_path in sorted(gefolge_web.login.PROFILES_ROOT.iterdir())
         ]
     }
 
