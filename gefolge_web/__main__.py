@@ -66,6 +66,7 @@ def menschen():
         'menschen_list': [
             gefolge_web.login.Mensch(profile_path.stem)
             for profile_path in sorted(gefolge_web.login.PROFILES_ROOT.iterdir(), key=lambda path: int(path.stem))
+            if gefolge_web.login.Mensch(profile_path.stem).is_active
         ]
     }
 
