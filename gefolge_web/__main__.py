@@ -28,6 +28,7 @@ DOCUMENT_ROOT = os.environ.get('FLASK_ROOT_PATH', '/opt/git/github.com/dasgefolg
 app = application = flask.Flask('gefolge_web', root_path=DOCUMENT_ROOT, instance_path=DOCUMENT_ROOT)
 
 with app.app_context():
+    app.url_map.strict_slashes = False
     # load config
     if CONFIG_PATH.exists():
         with CONFIG_PATH.open() as config_f:
