@@ -9,6 +9,11 @@
     {% else %}
         <p>Aktuell ist noch niemand angemeldet.</p>
     {% endif %}
+    {% if article_source is none %}
+        <p>Eventbeschreibung coming soon™</p>
+    {% else %}
+        {{ article_source | markdown }}
+    {% endif %}
     <h1 id="signup">Anmeldung</h1>
     {% if g.user in event.menschen %}
         {% if event.anzahlung is none %}

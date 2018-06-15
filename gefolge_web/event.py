@@ -43,6 +43,8 @@ class Guest:
     def __init__(self, event, guest_id):
         self.event = event
         self.snowflake = int(guest_id) # not actually a snowflake but uses this variable name for compatibility with the Mensch class
+        if not any('via' in person and person['id'].value() == self.snowflake for person in event.data['menschen']):
+            raise ValueError('Es gibt keinen Gast mit dieser ID.')
 
     def __eq__(self, other):
         return hasattr(other, 'snowflake') and self.snowflake == other.snowflake
@@ -174,6 +176,15 @@ class Event:
             if aufgabe in mensch.get('orga', []):
                 return gefolge_web.login.Mensch(mensch['id'].value())
 
+    def person(self, snowflake):
+        if int(snowflake) < 100:
+            result = Guest(event, snowflake)
+        else:
+            result = gefolge_web.login.Mensch(snowflake)
+            if not person.is_active:
+                raise ValueError('Dieser Discord account existiert nicht oder ist nicht im Gefolge.')
+        return result
+
     def signup(self, mensch):
         gefolge_web.util.log('eventConfirmSignup', {
             'id': mensch.snowflake
@@ -239,14 +250,20 @@ class EuroField(wtforms.StringField):
                 self.data = None
                 raise ValueError('Ungültiger Eurobetrag') from e
 
+class PersonField(wtforms.SelectField):
+    """A form field that validated to a Mensch or Guest. Displayed as a combobox."""
+
+    #TODO actually display as a combobox (text field with dropdown menu)
+
+    def __init__(self, event, label, **kwargs):
+        self.event = event
+        super().__init__(label, choices=[(person, str(person)) for person in event.signups], **kwargs)
+
 class YesMaybeNoField(wtforms.RadioField):
     """A form field that validates to yes, maybe, or no. Displayed as a horizontal button group."""
 
-    #TODO actually capture input
-    #TODO set default to maybe
-
-    def __init__(self, label, **kwargs):
-        super().__init__(label, choices=[('yes', 'Ja'), ('maybe', 'Vielleicht'), ('no', 'Nein')], **kwargs)
+    def __init__(self, label, default='maybe', **kwargs):
+        super().__init__(label, choices=[('yes', 'Ja'), ('maybe', 'Vielleicht'), ('no', 'Nein')], default=default, **kwargs)
 
 def ConfirmSignupForm(event):
     def validate_verwendungszweck(form, field):
@@ -280,7 +297,7 @@ def ProfileForm(event, person):
     for i, night in enumerate(event.nights):
         setattr(Form, 'night{}'.format(i), YesMaybeNoField(
             '{:%d.%m.}–{:%d.%m.}'.format(night, night + datetime.timedelta(days=1)),
-            default=person_data.get('nights', {}).get('{:%Y-%m-%d}'.format(night), 'maybe'), #TODO set default to saved value
+            default=person_data.get('nights', {}).get('{:%Y-%m-%d}'.format(night), 'maybe'),
             validators=[wtforms.validators.InputRequired()]
         ))
     return Form()
@@ -288,6 +305,8 @@ def ProfileForm(event, person):
 def ProgrammAddForm(event):
     class Form(flask_wtf.FlaskForm):
         name = wtforms.StringField('Titel', [wtforms.validators.InputRequired(), wtforms.validators.NoneOf(list(event.data['programm'].value()), message='Es gibt bereits einen Programmpunkt mit diesem Titel.')])
+        orga = PersonField(event)
+        description = wtforms.StringField('Beschreibung')
 
     return Form()
 
@@ -342,10 +361,21 @@ def setup(app):
             return flask.redirect(flask.url_for('event_page', event_id=event_id))
         programm_add_form = ProgrammAddForm(event)
         if programm_add_form.validate_on_submit():
-            event.data['programm'][programm_add_form.name] = {'interesse': []}
+            gefolge_web.util.log('eventProgrammAdd', {
+                'orga': programm_add_form.orga.data.snowflake,
+                'title': programm_add_form.name.data,
+                'description': programm_add_form.description.data
+            })
+            event.data['programm'][programm_add_form.name.data] = {
+                'description': programm_add_form.description.data,
+                'interesse': [],
+                'orga': programm_orga.snowflake
+            }
+            #TODO ping Programm orga on Discord
             #TODO redirect to Programm view/edit page
         return {
             'event': event,
+            'article_source': gefolge_web.wiki.get_article_source('event', event_id),
             'confirm_signup_form': confirm_signup_form,
             'programm_add_form': programm_add_form
         }
@@ -385,15 +415,9 @@ def setup(app):
     @gefolge_web.util.path(gefolge_web.login.Mensch, event_menschen)
     @gefolge_web.util.template('event-profile')
     def event_profile(event_id, snowflake):
-        if int(snowflake) < 100:
-            person = Guest(event, snowflake)
-        else:
-            person = gefolge_web.login.Mensch(snowflake)
-            if not person.is_active:
-                return flask.make_response(('Dieser Discord account existiert nicht oder ist nicht im Gefolge.', 404, []))
         return {
             'event': Event(event_id),
-            'person': person
+            'person': event.person(snowflake)
         }
 
     @app.route('/event/<event_id>/mensch/<snowflake>/edit', methods=['GET', 'POST'])
@@ -402,12 +426,7 @@ def setup(app):
     @gefolge_web.util.template('event-profile-edit')
     def event_profile_edit(event_id, snowflake):
         event = Event(event_id)
-        if int(snowflake) < 100:
-            person = Guest(event, snowflake)
-        else:
-            person = gefolge_web.login.Mensch(snowflake)
-            if not person.is_active:
-                return flask.make_response(('Dieser Discord account existiert nicht oder ist nicht im Gefolge.', 404, []))
+        person = event.person(snowflake)
         if not event.can_edit(flask.g.user, person):
             flask.flash('Du bist nicht berechtigt, dieses Profil zu bearbeiten.')
             return flask.redirect(flask.url_for('event_profile', event_id=event_id, snowflake=snowflake))
