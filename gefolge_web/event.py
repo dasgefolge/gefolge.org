@@ -181,7 +181,7 @@ class Event:
             result = Guest(event, snowflake)
         else:
             result = gefolge_web.login.Mensch(snowflake)
-            if not person.is_active:
+            if not result.is_active:
                 raise ValueError('Dieser Discord account existiert nicht oder ist nicht im Gefolge.')
         return result
 
