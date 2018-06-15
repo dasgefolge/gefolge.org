@@ -305,7 +305,7 @@ def ProfileForm(event, person):
 def ProgrammAddForm(event):
     class Form(flask_wtf.FlaskForm):
         name = wtforms.StringField('Titel', [wtforms.validators.InputRequired(), wtforms.validators.NoneOf(list(event.data['programm'].value()), message='Es gibt bereits einen Programmpunkt mit diesem Titel.')])
-        orga = PersonField(event)
+        orga = PersonField(event, 'Orga')
         description = wtforms.StringField('Beschreibung')
 
     return Form()
