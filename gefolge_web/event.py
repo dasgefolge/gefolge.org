@@ -257,7 +257,7 @@ class PersonField(wtforms.SelectField):
 
     def __init__(self, event, label, **kwargs):
         self.event = event
-        super().__init__(label, choices=[(person, str(person)) for person in event.signups], **kwargs)
+        super().__init__(label, choices=[(mensch.snowflake, str(mensch)) for person in event.menschen], coerce=event.person, **kwargs)
 
 class YesMaybeNoField(wtforms.RadioField):
     """A form field that validates to yes, maybe, or no. Displayed as a horizontal button group."""
