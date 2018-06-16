@@ -251,13 +251,45 @@ class EuroField(wtforms.StringField):
                 raise ValueError('Ungültiger Eurobetrag') from e
 
 class PersonField(wtforms.SelectField):
-    """A form field that validated to a Mensch or Guest. Displayed as a combobox."""
+    """A form field that validates to a Mensch or Guest. Displayed as a combobox."""
 
     #TODO actually display as a combobox (text field with dropdown menu)
 
-    def __init__(self, event, label, **kwargs):
+    def __init__(self, event, label, allow_guests=True, **kwargs):
         self.event = event
-        super().__init__(label, choices=[(mensch.snowflake, str(mensch)) for mensch in event.menschen], coerce=event.person, **kwargs)
+        self.allow_guests = allow_guests
+        super().__init__(label, choices=[(person.snowflake, str(person)) for person in self.people], **kwargs)
+
+    @property
+    def people(self):
+        if self.allow_guests:
+            return self.event.signups
+        else:
+            return self.event.menschen
+
+    def iter_choices(self):
+        for person in self.people:
+            yield person.snowflake, str(person), person == self.data
+
+    def process_data(self, value):
+        try:
+            self.data = None if value is None else self.event.person(value)
+        except (TypeErro, ValueError):
+            self.data = None
+
+    def process_formdata(self, valuelist):
+        if valuelist:
+            try:
+                self.data = self.event.person(valuelist[0])
+            except (ValueError, TypeError):
+                raise ValueError('Invalid choice: could not coerce')
+
+    def pre_validate(self, form):
+        for person in self.people:
+            if self.data == person:
+                break
+        else:
+            raise ValueError('Not a valid choice')
 
 class YesMaybeNoField(wtforms.RadioField):
     """A form field that validates to yes, maybe, or no. Displayed as a horizontal button group."""
@@ -305,7 +337,7 @@ def ProfileForm(event, person):
 def ProgrammAddForm(event):
     class Form(flask_wtf.FlaskForm):
         name = wtforms.StringField('Titel', [wtforms.validators.InputRequired(), wtforms.validators.NoneOf(list(event.data['programm'].value()), message='Es gibt bereits einen Programmpunkt mit diesem Titel.')])
-        orga = PersonField(event, 'Orga')
+        orga = PersonField(event, 'Orga', allow_guests=False)
         description = wtforms.StringField('Beschreibung')
 
     return Form()
@@ -369,7 +401,7 @@ def setup(app):
             event.data['programm'][programm_add_form.name.data] = {
                 'description': programm_add_form.description.data,
                 'interesse': [],
-                'orga': programm_orga.snowflake
+                'orga': programm_add_form.orga.data.snowflake
             }
             #TODO ping Programm orga on Discord
             #TODO redirect to Programm view/edit page
