@@ -99,6 +99,10 @@ class Programmpunkt:
         return self.name
 
     @property
+    def data(self):
+        return self.event.data['programm'][self.name]
+
+    @property
     def orga(self):
         orga_id = self.data['orga'].value()
         if orga_id is not None:
