@@ -206,7 +206,7 @@ class Event:
     def programm(self):
         return [
             Programmpunkt(self, name)
-            for name, programmpunkt_data in self.data['programm'].value()
+            for name in self.data['programm'].value()
         ]
 
     def signup(self, mensch):
