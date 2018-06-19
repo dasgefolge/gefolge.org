@@ -475,8 +475,9 @@ def setup(app):
     @gefolge_web.util.path(gefolge_web.login.Mensch, event_menschen)
     @gefolge_web.util.template('event-profile')
     def event_profile(event_id, snowflake):
+        event = Event(event_id)
         return {
-            'event': Event(event_id),
+            'event': event,
             'person': event.person(snowflake)
         }
 
