@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Programm — {{event}}{% endblock %}
+
+{% block page_content %}
+    <p>Aktuell {% if event.programm | length > 1 %}sind{% else %}ist{% endif %} {{event.programm | length}} Programmpunkt{% if event.programm | length > 1 %}e{% endif %} für <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a> geplant:</p>
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>Titel</th>
+                <th>Orga</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for programmpunkt in event.programm %}
+                <tr>
+                    <td>{{programmpunkt}}</td>
+                    <td>{{programmpunkt.orga | mention}}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

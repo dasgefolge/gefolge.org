@@ -87,6 +87,23 @@ class Location:
     def prefix(self):
         return self.data.get('prefix', 'in')
 
+class Programmpunkt:
+    def __init__(self, event, name):
+        self.event = event
+        self.name = name
+
+    def __repr__(self):
+        return 'gefolge_web.event.Programmpunkt({!r}, {!r})'.format(self.event, self.name)
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def orga(self):
+        orga_id = self.data['orga'].value()
+        if orga_id is not None:
+            return gefolge_web.login.Mensch(orga_id)
+
 class Event:
     def __init__(self, event_id):
         self.event_id = event_id
@@ -184,6 +201,13 @@ class Event:
             if not result.is_active:
                 raise ValueError('Dieser Discord account existiert nicht oder ist nicht im Gefolge.')
         return result
+
+    @property
+    def programm(self):
+        return [
+            Programmpunkt(self, name)
+            for name, programmpunkt_data in self.data['programm'].value()
+        ]
 
     def signup(self, mensch):
         gefolge_web.util.log('eventConfirmSignup', {
@@ -336,7 +360,7 @@ def ProfileForm(event, person):
 
 def ProgrammAddForm(event):
     class Form(flask_wtf.FlaskForm):
-        name = wtforms.StringField('Titel', [wtforms.validators.InputRequired(), wtforms.validators.NoneOf(list(event.data['programm'].value()), message='Es gibt bereits einen Programmpunkt mit diesem Titel.')])
+        name = wtforms.StringField('Titel', [wtforms.validators.InputRequired(), wtforms.validators.NoneOf([programmpunkt.name for programmpunkt in event.programm], message='Es gibt bereits einen Programmpunkt mit diesem Titel.')])
         orga = PersonField(event, 'Orga', allow_guests=False)
         description = wtforms.StringField('Beschreibung')
 
@@ -483,3 +507,10 @@ def setup(app):
                 'person': person,
                 'event_attendee_edit_form': profile_form
             }
+
+    @app.route('/event/<event_id>/programm')
+    @gefolge_web.login.member_required
+    @gefolge_web.util.path(('programm', 'Programm'), event_page)
+    @gefolge_web.util.template('event-programm')
+    def event_programm(event_id):
+        return {'event': Event(event_id)}

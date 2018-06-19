@@ -4,11 +4,7 @@
 
 {% block page_content %}
     <p><strong>{{event}}</strong> findet vom {{event.start | dmy_hm}} bis zum {{event.end | dmy_hm}} {{event.location.prefix}}{{event.location}} statt.</p>
-    {% if event.signups | length > 0 %}
-        <p>Aktuell {% if event.signups | length > 1 %}sind{% else %}ist{% endif %} <a href="{{url_for('event_menschen', event_id=event.event_id)}}">{{event.signups | length}} Mensch{% if event.signups | length > 1 %}en{% endif %}</a> angemeldet.</p>
-    {% else %}
-        <p>Aktuell ist noch niemand angemeldet.</p>
-    {% endif %}
+    <p>{% if event.signups | length > 0 %}Aktuell {% if event.signups | length > 1 %}sind{% else %}ist{% endif %} <a href="{{url_for('event_menschen', event_id=event.event_id)}}">{{event.signups | length}} Mensch{% if event.signups | length > 1 %}en{% endif %}</a> angemeldet{% else %}Aktuell ist noch niemand angemeldet{% endif %}{% if event.programm | length > 0 %} und <a href="{{url_for('event_programm', event_id=event.event_id)}}">{{event.programm | length}} Programmpunkt{% if event.programm | length > 1 %}e{% endif %}</a> {% if event.signups | length > 1 and event.programm | length == 1 %}ist {% elif event.signups | length < 2 and event.programm | length > 1 %}sind {% endif %}geplant{% endif %}.</p>
     {% if article_source is none %}
         <p>Eventbeschreibung coming soon™</p>
     {% else %}
