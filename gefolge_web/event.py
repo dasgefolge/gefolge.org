@@ -191,14 +191,14 @@ class Event:
     def night_maybes(self, night):
         return [
             person
-            for peron in self.signups
+            for person in self.signups
             if self.attendee_data(person).get('nights', {}).get('{:%Y-%m-%d}'.format(night), 'maybe') == 'maybe'
         ]
 
     def night_signups(self, night):
         return [
             person
-            for peron in self.signups
+            for person in self.signups
             if self.attendee_data(person).get('nights', {}).get('{:%Y-%m-%d}'.format(night), 'maybe') == 'yes'
         ]
 
