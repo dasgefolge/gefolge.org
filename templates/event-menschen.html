@@ -32,7 +32,7 @@
                 <th></th>
                 <th></th>
                 {% for night in event.nights %}
-                    <th colspan="2"><span class="text-success">{{event.night_signups(night) | sum}}</span>+<span class="text-warning">{{event.night_maybes(night) | sum}}</span></th>
+                    <th colspan="2"><span class="text-success">{{event.night_signups(night) | length}}</span>+<span class="text-warning">{{event.night_maybes(night) | length}}</span></th>
                 {% endfor %}
                 <th></th>
                 <th></th>
