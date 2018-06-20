@@ -27,6 +27,18 @@
                 <th style="text-align: center;" colspan="2">{{event.end | dm}}</th>
             </tr>
         </thead>
+        <tfoot>
+            <tr>
+                <th></th>
+                <th></th>
+                {% for night in event.nights %}
+                    <th colspan="2"><span class="text-success">{{event.night_signups(night) | sum}}</span>+<span class="text-warning">{{event.night_maybes(night) | sum}}</span></th>
+                {% endfor %}
+                <th></th>
+                <th></th>
+                <th></th>
+            </tr>
+        </tfoot>
         <tbody>
             {% for person in event.signups %}
                 <tr>

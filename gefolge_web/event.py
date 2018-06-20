@@ -188,6 +188,20 @@ class Event:
             if 'via' not in person
         ]
 
+    def night_maybes(self, night):
+        return [
+            person
+            for peron in self.signups
+            if self.attendee_data(person).get('nights', {}).get('{:%Y-%m-%d}'.format(night), 'maybe') == 'maybe'
+        ]
+
+    def night_signups(self, night):
+        return [
+            person
+            for peron in self.signups
+            if self.attendee_data(person).get('nights', {}).get('{:%Y-%m-%d}'.format(night), 'maybe') == 'yes'
+        ]
+
     @property
     def nights(self):
         return gefolge_web.util.date_range(self.start.date(), self.end.date())
