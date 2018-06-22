@@ -87,10 +87,19 @@ class Location:
     def prefix(self):
         return self.data.get('prefix', 'in')
 
+@functools.total_ordering
 class Programmpunkt:
     def __init__(self, event, name):
         self.event = event
         self.name = name
+
+    def __eq__(self, other):
+        return isinstance(other, Programmpunkt) and self.event == other.event and self.name == other.name
+
+    def __lt__(self, other):
+        if not isinstance(other, Programmpunkt):
+            return NotImplemented
+        return (self.event, self.name) < (other.event, other.name) #TODO sort by time
 
     def __repr__(self):
         return 'gefolge_web.event.Programmpunkt({!r}, {!r})'.format(self.event, self.name)
@@ -108,9 +117,18 @@ class Programmpunkt:
         if orga_id is not None:
             return gefolge_web.login.Mensch(orga_id)
 
+@functools.total_ordering
 class Event:
     def __init__(self, event_id):
         self.event_id = event_id
+
+    def __eq__(self, other):
+        return isinstance(other, Event) and self.event_id == other.event_id
+
+    def __lt__(self, other):
+        if not isinstance(other, Event):
+            return NotImplemented
+        return (self.start, self.end, self.event_id) < (other.start, other.end, other.event_id)
 
     def __repr__(self):
         return 'gefolge_web.event.Event({!r})'.format(self.event_id)
@@ -222,10 +240,10 @@ class Event:
 
     @property
     def programm(self):
-        return [
+        return sorted(
             Programmpunkt(self, name)
             for name in self.data['programm'].value()
-        ]
+        )
 
     def signup(self, mensch):
         gefolge_web.util.log('eventConfirmSignup', {
@@ -408,10 +426,10 @@ def setup(app):
     @gefolge_web.util.template('events-index')
     def events_index():
         return {
-            'events_list': [
+            'events_list': sorted(
                 Event(event_path.stem)
-                for event_path in sorted(EVENTS_ROOT.iterdir(), key=lambda event: lazyjson.File(event)['start'].value())
-            ]
+                for event_path in EVENTS_ROOT.iterdir()
+            )
         }
 
     @app.route('/event/<event_id>', methods=['GET', 'POST'])
