@@ -1,9 +1,27 @@
 {% extends "base.html" %}
 
+{% macro render_person(person) -%}
+    {%- if person is guest -%}
+        {{person}}
+    {%- else -%}
+        {{person | mention}}
+    {%- endif -%}
+{%- endmacro %}
+
 {% block title %}{{programmpunkt}} — {{event}}{% endblock %}
 
 {% block page_content %}
     <h1>Programmpunkt „{{programmpunkt}}“ auf <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a> {#{% if programmpunkt.can_edit(g.user) %}<a href="{{url_for('event_programmpunkt_edit', event_id=event.event_id, name=programmpunkt.name)}}" class="btn btn-primary">Bearbeiten</a>{% endif %}#}</h1> {#TODO enable edit button once edit page exists #}
-    <p>Dieser Programmpunkt wird von {{programmpunkt.orga | mention}} organisiert. Beschreibung:</p>
+    <p>Dieser Programmpunkt wird von {{programmpunkt.orga | mention}} organisiert.</p>
+    <h2>Beschreibung</h2>
     {{programmpunkt.data['description'].value() | markdown}}
+    <h2>{{programmpunkt.data.get('signupHeader', 'Interessiert')}}</h2>
+    <ul>
+        {% for person in programmpunkt.signups %}
+            <li>{{render_person(person)}}</li>
+        {% endfor %}
+    </ul>
+    {% if programmpunkt.can_signup(g.user) %}
+        <p><a href="{{url_for('event_programm_signup', event_id=event.event_id, name=programmpunkt.name, snowflake=g.user.snowflake)}}" class="btn btn-primary">{{programmpunkt.data.get('signupButton', 'Als interessiert markieren')}}</a></p>
+    {% endif %}
 {% endblock %}

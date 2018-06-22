@@ -119,6 +119,15 @@ class Programmpunkt:
     def can_edit(self, editor):
         return self.orga == editor or self.event.orga('Programm') == editor
 
+    def can_signup(self, editor, person):
+        return (
+            (editor == person or editor == self.event.orga('Programm'))
+            and person in self.event.signups
+            and person not in self.signups
+            and len(self.signups) < self.data.get('limit', float('inf'))
+            and not self.data.get('closed', False)
+        )
+
     @property
     def data(self):
         return self.event.data['programm'][self.name]
@@ -128,6 +137,21 @@ class Programmpunkt:
         orga_id = self.data['orga'].value()
         if orga_id is not None:
             return gefolge_web.login.Mensch(orga_id)
+
+    def signup(self, person):
+        gefolge_web.util.log('eventProgrammSignup', {
+            'event': self.event.event_id,
+            'programmpunkt': self.name,
+            'person': person.snowflake
+        })
+        self.data['signups'].append(person.snowflake)
+
+    @property
+    def signups(self):
+        return [
+            self.event.person(snowflake)
+            for snowflake in self.data['signups']
+        ]
 
 @functools.total_ordering
 class Event:
@@ -259,7 +283,8 @@ class Event:
 
     def signup(self, mensch):
         gefolge_web.util.log('eventConfirmSignup', {
-            'id': mensch.snowflake
+            'event': self.event_id,
+            'person': mensch.snowflake
         })
         self.data['menschen'].append({
             'id': mensch.snowflake,
@@ -272,7 +297,8 @@ class Event:
         available_ids = [i for i in range(100) if not any(guest.snowflake == i for guest in self.guests)]
         guest_id = random.choice(available_ids)
         gefolge_web.util.log('eventSignupGuest', {
-            'id': guest_id,
+            'event': self.event_id,
+            'person': guest_id,
             'name': guest_name,
             'via': mensch.snowflake
         })
@@ -460,7 +486,8 @@ def setup(app):
             if snowflake < 100:
                 guest = Guest(event, snowflake)
                 gefolge_web.util.log('eventConfirmSignup', {
-                    'id': snowflake
+                    'event': event_id,
+                    'person': snowflake
                 })
                 event.attendee_data(guest)['signup'] = '{:%Y-%m-%d %H:%M:%S}'.format(gefolge_web.util.now()) #TODO Datum der Überweisung verwenden
             else:
@@ -470,14 +497,15 @@ def setup(app):
         programm_add_form = ProgrammAddForm(event)
         if programm_add_form.validate_on_submit():
             gefolge_web.util.log('eventProgrammAdd', {
+                'event': event_id,
                 'orga': programm_add_form.orga.data.snowflake,
-                'title': programm_add_form.name.data,
+                'programmpunkt': programm_add_form.name.data,
                 'description': programm_add_form.description.data
             })
             event.data['programm'][programm_add_form.name.data] = {
                 'description': programm_add_form.description.data,
-                'interesse': [],
-                'orga': programm_add_form.orga.data.snowflake
+                'orga': programm_add_form.orga.data.snowflake,
+                'signups': []
             }
             #TODO ping Programm orga on Discord
             #TODO redirect to Programm view/edit page
@@ -543,7 +571,8 @@ def setup(app):
         if profile_form.validate_on_submit():
             person_data = event.attendee_data(person)
             gefolge_web.util.log('eventProfileEdit', {
-                'id': person.snowflake,
+                'event': event_id,
+                'person': person.snowflake,
                 'nights': {
                     '{:%Y-%m-%d}'.format(night): getattr(profile_form, 'night{}'.format(i)).data
                     for i, night in enumerate(event.nights)
@@ -578,3 +607,15 @@ def setup(app):
             'event': event,
             'programmpunkt': Programmpunkt(event, name)
         }
+
+    @app.route('/event/<event_id>/programm/<name>/signup/<snowflake>')
+    @gefolge_web.login.member_required
+    def event_programm_signup(event_id, name, snowflake):
+        event = Event(event_id)
+        programmpunkt = Programmpunkt(event, name)
+        person = event.person(snowflake)
+        if not programmpunkt.can_signup(flask.g.user, person):
+            flask.flash('Du bist nicht berechtigt, diese Person für diesen Programmpunkt anzumelden.')
+            return flask.redirect(flask.url_for('event_programmpunkt', event_id=event_id, name=name))
+        programmpunkt.signup(person)
+        return flask.redirect(flask.url_for('event_programmpunkt', event_id=event_id, name=name))
