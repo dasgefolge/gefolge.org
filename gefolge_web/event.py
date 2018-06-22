@@ -150,7 +150,7 @@ class Programmpunkt:
     def signups(self):
         return [
             self.event.person(snowflake)
-            for snowflake in self.data['signups']
+            for snowflake in self.data['signups'].value()
         ]
 
 @functools.total_ordering
