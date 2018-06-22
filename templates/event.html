@@ -54,15 +54,6 @@
             {% endif %}
             {% if event.orga('Programm') == g.user %}
                 <h2>Programm</h2>
-                {% if event.data['programm'] | length > 0 %}
-                    <ul>
-                        {% for programmpunkt in event.data['programm'] %}
-                            <li>{{programmpunkt.key}}</li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p>Noch keine Programmpunkte eingetragen.</p>
-                {% endif %}
                 <h3>Programmpunkt erstellen</h3>
                 {{gen_form(programm_add_form, 'programm-add', 'Programmpunkt erstellen', url_for('event_page', event_id=event.event_id))}}
             {% endif %}
