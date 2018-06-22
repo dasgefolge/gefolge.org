@@ -231,7 +231,7 @@ class Event:
 
     def person(self, snowflake):
         if int(snowflake) < 100:
-            result = Guest(event, snowflake)
+            result = Guest(self, snowflake)
         else:
             result = gefolge_web.login.Mensch(snowflake)
             if not result.is_active:
@@ -504,7 +504,7 @@ def setup(app):
 
     @app.route('/event/<event_id>/mensch/<snowflake>')
     @gefolge_web.login.member_required
-    @gefolge_web.util.path(gefolge_web.login.Mensch, event_menschen)
+    @gefolge_web.util.path(lambda event_id, name: Event(event_id).person(snowflake), event_menschen)
     @gefolge_web.util.template('event-profile')
     def event_profile(event_id, snowflake):
         event = Event(event_id)
