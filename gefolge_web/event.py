@@ -107,6 +107,9 @@ class Programmpunkt:
     def __str__(self):
         return self.name
 
+    def can_edit(self, editor):
+        return self.orga == editor or self.event.orga('Programm') == editor
+
     @property
     def data(self):
         return self.event.data['programm'][self.name]
@@ -551,3 +554,14 @@ def setup(app):
     @gefolge_web.util.template('event-programm')
     def event_programm(event_id):
         return {'event': Event(event_id)}
+
+    @app.route('/event/<event_id>/programm/<name>')
+    @gefolge_web.login.member_required
+    @gefolge_web.util.path(Programmpunkt, event_programm)
+    @gefolge_web.util.template('event-programmpunkt')
+    def event_programmpunkt(event_id, name):
+        event = Event(event_id)
+        return {
+            'event': event,
+            'programmpunkt': Programmpunkt(event, name)
+        }

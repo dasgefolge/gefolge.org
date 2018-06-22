@@ -14,7 +14,7 @@
         <tbody>
             {% for programmpunkt in event.programm %}
                 <tr>
-                    <td>{{programmpunkt}}</td>
+                    <td><a href="{{url_for('event_programmpunkt', event_id=event.event_id, name=programmpunkt.name)}}">{{programmpunkt}}</a></td>
                     <td>{{programmpunkt.orga | mention}}</td>
                 </tr>
             {% endfor %}
