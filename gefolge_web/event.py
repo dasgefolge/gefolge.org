@@ -89,9 +89,16 @@ class Location:
 
 @functools.total_ordering
 class Programmpunkt:
-    def __init__(self, event, name):
-        self.event = event
-        self.name = name
+    def __init__(self, event=None, name=None, *, event_id=None):
+        # event can be specified by event or event_id argument
+        if name is None:
+            raise TypeError('Missing name argument for Programmpunkt constructor')
+        else:
+            self.name = name
+        if event is not None:
+            self.event = event
+        elif event_id is not None:
+            self.event = Event(event_id)
 
     def __eq__(self, other):
         return isinstance(other, Programmpunkt) and self.event == other.event and self.name == other.name
