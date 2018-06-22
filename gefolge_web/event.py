@@ -408,7 +408,11 @@ def ProfileForm(event, person):
 
 def ProgrammAddForm(event):
     class Form(flask_wtf.FlaskForm):
-        name = wtforms.StringField('Titel', [wtforms.validators.InputRequired(), wtforms.validators.NoneOf([programmpunkt.name for programmpunkt in event.programm], message='Es gibt bereits einen Programmpunkt mit diesem Titel.')])
+        name = wtforms.StringField('Titel', [
+            wtforms.validators.InputRequired(),
+            wtforms.validators.NoneOf([programmpunkt.name for programmpunkt in event.programm], message='Es gibt bereits einen Programmpunkt mit diesem Titel.'),
+            wtforms.validators.Regexp('^[^/]+$', message='Schrägstriche können hier nicht verwendet werden, weil der Titel in der URL der Programmpunktseite steht.')
+        ])
         orga = PersonField(event, 'Orga', allow_guests=False)
         description = wtforms.StringField('Beschreibung')
 
