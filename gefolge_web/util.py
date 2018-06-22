@@ -13,7 +13,7 @@ EDIT_LOG = lazyjson.File('/usr/local/share/fidera/log.json')
 PARAGRAPH_RE = re.compile(r'(?:\r\n|\r|\n){2,}')
 
 class Path:
-    def __init__(self, parent, name, url_part, **kwargs):
+    def __init__(self, parent, name, url_part, kwargs):
         if parent is None:
             self.parent = None
         else:
@@ -82,7 +82,7 @@ def path(name, parent=None):
                 url_part, resolved_name = name
             else:
                 resolved_name = name
-            return Path(parent, resolved_name, url_part, **kwargs)
+            return Path(parent, resolved_name, url_part, kwargs)
 
         @functools.wraps(f)
         def wrapper(**kwargs):

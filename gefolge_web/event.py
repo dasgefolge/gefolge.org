@@ -99,6 +99,8 @@ class Programmpunkt:
             self.event = event
         elif event_id is not None:
             self.event = Event(event_id)
+        else:
+            raise TypeError('Missing event or event_id argument for Programmpunkt constructor')
 
     def __eq__(self, other):
         return isinstance(other, Programmpunkt) and self.event == other.event and self.name == other.name
