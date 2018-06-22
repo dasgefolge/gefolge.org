@@ -548,7 +548,7 @@ def setup(app):
 
     @app.route('/event/<event_id>/mensch/<snowflake>')
     @gefolge_web.login.member_required
-    @gefolge_web.util.path(lambda event_id, name: Event(event_id).person(snowflake), event_menschen)
+    @gefolge_web.util.path(lambda event_id, snowflake: Event(event_id).person(snowflake), event_menschen)
     @gefolge_web.util.template('event-profile')
     def event_profile(event_id, snowflake):
         event = Event(event_id)
