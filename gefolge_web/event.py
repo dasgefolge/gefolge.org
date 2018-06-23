@@ -376,14 +376,14 @@ class PersonField(wtforms.SelectField):
     def process_data(self, value):
         try:
             self.data = None if value is None else self.event.person(value)
-        except (TypeErro, ValueError):
+        except (TypeError, ValueError):
             self.data = None
 
     def process_formdata(self, valuelist):
         if valuelist:
             try:
                 self.data = self.event.person(valuelist[0])
-            except (ValueError, TypeError):
+            except (TypeError, ValueError):
                 raise ValueError('Invalid choice: could not coerce')
 
     def pre_validate(self, form):
