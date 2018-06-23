@@ -359,10 +359,10 @@ class PersonField(wtforms.SelectField):
 
     #TODO actually display as a combobox (text field with dropdown menu)
 
-    def __init__(self, event, label, allow_guests=True, **kwargs):
+    def __init__(self, event, label, validators=[], *, allow_guests=True, **kwargs):
         self.event = event
         self.allow_guests = allow_guests
-        super().__init__(label, choices=[(person.snowflake, str(person)) for person in self.people], **kwargs)
+        super().__init__(label, validators, choices=[(person.snowflake, str(person)) for person in self.people], **kwargs)
 
     @property
     def people(self):
@@ -451,8 +451,15 @@ def ProgrammAddForm(event):
     return Form()
 
 def ProgrammEditForm(programmpunkt):
+    def validate_orga(form, field):
+        if field.data == programmpunkt.orga:
+            return
+        if flask.g.user == programmpunkt.event.orga('Programm'):
+            return
+        raise wtforms.validators.ValidationError('Bitte wende dich an {}, wenn du die Orga für diesen Programmpunkt abgeben möchtest.'.format(programmpunkt.event.orga('Programm')))
+
     class Form(flask_wtf.FlaskForm):
-        orga = PersonField(programmpunkt.event, 'Orga', allow_guests=False, default=programmpunkt.orga)
+        orga = PersonField(programmpunkt.event, 'Orga', [validate_orga], allow_guests=False, default=programmpunkt.orga)
         description = wtforms.TextAreaField('Beschreibung', default=programmpunkt.data['description'].value())
 
     return Form()
