@@ -619,7 +619,7 @@ def setup(app):
             'programmpunkt': Programmpunkt(event, name)
         }
 
-    @app.route('/event/<event_id>/programm/<name>/edit')
+    @app.route('/event/<event_id>/programm/<name>/edit', methods=['GET', 'POST'])
     @gefolge_web.login.member_required
     @gefolge_web.util.path(('edit', 'bearbeiten'), event_programmpunkt)
     @gefolge_web.util.template('event-programmpunkt-edit')
