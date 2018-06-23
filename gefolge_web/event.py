@@ -270,6 +270,8 @@ class Event:
                 return gefolge_web.login.Mensch(mensch['id'].value())
 
     def person(self, snowflake):
+        if hasattr(snowflake, 'snowflake'):
+            snowflake = snowflake.snowflake
         if int(snowflake) < 100:
             result = Guest(self, snowflake)
         else:
