@@ -445,7 +445,7 @@ def ProgrammAddForm(event):
             wtforms.validators.NoneOf([programmpunkt.name for programmpunkt in event.programm], message='Es gibt bereits einen Programmpunkt mit diesem Titel.'),
             wtforms.validators.Regexp('^[^/]+$', message='Schrägstriche können hier nicht verwendet werden, weil der Titel in der URL der Programmpunktseite steht.')
         ])
-        orga = PersonField(event, 'Orga', allow_guests=False)
+        orga = PersonField(event, 'Orga', allow_guests=False, default=flask.g.user)
         description = wtforms.TextAreaField('Beschreibung')
 
     return Form()
