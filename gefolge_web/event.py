@@ -138,6 +138,10 @@ class Programmpunkt:
         if orga_id is not None:
             return gefolge_web.login.Mensch(orga_id)
 
+    @orga.setter
+    def orga(self, value):
+        self.data['orga'] = value.snowflake
+
     def signup(self, person):
         gefolge_web.util.log('eventProgrammSignup', {
             'event': self.event.event_id,
@@ -440,7 +444,14 @@ def ProgrammAddForm(event):
             wtforms.validators.Regexp('^[^/]+$', message='Schrägstriche können hier nicht verwendet werden, weil der Titel in der URL der Programmpunktseite steht.')
         ])
         orga = PersonField(event, 'Orga', allow_guests=False)
-        description = wtforms.StringField('Beschreibung')
+        description = wtforms.TextAreaField('Beschreibung')
+
+    return Form()
+
+def ProgrammEditForm(programmpunkt):
+    class Form(flask_wtf.FlaskForm):
+        orga = PersonField(programmpunkt.event, 'Orga', allow_guests=False, default=programmpunkt.orga)
+        description = wtforms.TextAreaField('Beschreibung', default=programmpunkt.data['description'].value())
 
     return Form()
 
@@ -607,6 +618,34 @@ def setup(app):
             'event': event,
             'programmpunkt': Programmpunkt(event, name)
         }
+
+    @app.route('/event/<event_id>/programm/<name>/edit')
+    @gefolge_web.login.member_required
+    @gefolge_web.util.path(('edit', 'bearbeiten'), event_programmpunkt)
+    @gefolge_web.util.template('event-programmpunkt-edit')
+    def event_programmpunkt_edit(event_id, name):
+        event = Event(event_id)
+        programmpunkt = Programmpunkt(event, name)
+        if not programmpunkt.can_edit(flask.g.user):
+            flask.flash('Du bist nicht berechtigt, diesen Programmpunkt zu bearbeiten.')
+            return flask.redirect(flask.url_for('event_programmpunkt', event_id=event_id, name=name))
+        programm_edit_form = ProgrammEditForm(programmpunkt)
+        if programm_edit_form.validate_on_submit():
+            gefolge_web.util.log('eventProgrammEdit', {
+                'event': event_id,
+                'programmpunkt': name,
+                'orga': programm_edit_form.orga.data.snowflake,
+                'description': programm_edit_form.description.data
+            })
+            programmpunkt.orga = programm_edit_form.orga.data
+            programmpunkt.data['description'] = programm_edit_form.description.data
+            return flask.redirect(flask.url_for('event_programmpunkt', event_id=event_id, name=name))
+        else:
+            return {
+                'event': event,
+                'programmpunkt': programmpunkt,
+                'programm_edit_form': programm_edit_form
+            }
 
     @app.route('/event/<event_id>/programm/<name>/signup/<snowflake>')
     @gefolge_web.login.member_required
