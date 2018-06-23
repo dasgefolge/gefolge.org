@@ -4,7 +4,32 @@
 
 {% block page_content %}
     <p><strong>{{event}}</strong> findet vom {{event.start | dmy_hm}} bis zum {{event.end | dmy_hm}} {{event.location.prefix}}{{event.location}} statt.</p>
-    <p>{% if event.signups | length > 0 %}Aktuell {% if event.signups | length > 1 %}sind{% else %}ist{% endif %} <a href="{{url_for('event_menschen', event_id=event.event_id)}}">{{event.signups | length}} Mensch{% if event.signups | length > 1 %}en{% endif %}</a> angemeldet{% else %}Aktuell ist noch niemand angemeldet{% endif %}{% if event.programm | length > 0 %} und <a href="{{url_for('event_programm', event_id=event.event_id)}}">{{event.programm | length}} Programmpunkt{% if event.programm | length > 1 %}e{% endif %}</a> {% if event.signups | length > 1 and event.programm | length == 1 %}ist {% elif event.signups | length < 2 and event.programm | length > 1 %}sind {% endif %}geplant{% endif %}.</p>
+    <p>
+        {% if event.signups | length > 0 %}
+            {# Programmpunkte #}
+            {% if event.programm | length > 0 %}
+                Aktuell {% if event.programm | length == 1 %}ist{% else %}sind{% endif %} <a href="{{url_for('event_programm', event_id=event.event_id)}}">{% if event.programm | length == 1 %}ein Programmpunkt{% else %}{{event.programm | length}} Programmpunkte{% endif %}</a> geplant und
+            {% else %}
+                Aktuell {% if event.signups | length == 1 %}ist{% else %}sind{% endif %}
+            {% endif %}
+            {# Menschen #}
+            <a href="{{url_for('event_menschen', event_id=event.event_id)}}">{% if event.signups | length %} == 1 %}ein Mensch{% else %}{{event.signups | length}} Menschen{% endif %}</a> {% if event.programm | length > 1 and event.signups | length < 2 %}sind{% elif event.programm | length == 1 and event.signups | length > 1 %}ist{% endif %} angemeldet.
+            {# freie Plätze #}
+            {% if 'capacity' in event.location.data %}
+                {% set capacity = event.location.data['capacity'].value() %}
+                {% set free = capacity - (event.signups | length) %}
+                {% if free > 0 %}
+                    Das Haus hat {{capacity}} Betten, es {% if free > 1 %}sind{% else %}ist{% endif %} also noch {{free}} Bett{% if free > 1 %}en{% endif %} frei.
+                {% elif free == 0 %}
+                    Damit ist das Haus exakt voll. Die Warteliste ist im Moment leer.
+                {% else %}
+                    Das Haus hat {{capacity}} Betten, es {% if free < -1 %}stehen{% else %}steht{% endif %} also {{-free}} Mensch{% if free < -1 %}en{% endif %} auf der Warteliste.
+                {% endif %}
+            {% endif %}
+        {% else %}
+            Aktuell ist noch niemand angemeldet.
+        {% endif %}
+    </p>
     {% if article_source is none %}
         <p>Eventbeschreibung coming soon™</p>
     {% else %}
@@ -63,6 +88,14 @@
             {% endif %}
         {% endif %}
     {% else %}
+        {% if 'capacity' in event.location.data and (event.signups | length) >= event.location.data['capacity'].value() %}
+            <div class="alert alert-warning">
+                <strong>Achtung:</strong> Das Haus ist schon voll. Du kannst dich trotzdem anmelden und kommst dann auf die Warteliste. Wenn jemand absagt, rückt der erste Mensch auf der Warteliste nach.
+                {% if event.anzahlung is not none %}
+                    Falls kein Platz für dich frei wird, bekommst du deine Anzahlung natürlich zurück.
+                {% endif %}
+            </div>
+        {% endif %}
         {% if event.anzahlung is none %}
             <p>Coming soon™</p> {#TODO#}
         {% elif event.orga('Abrechnung') is none %}

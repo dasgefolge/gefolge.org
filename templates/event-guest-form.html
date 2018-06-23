@@ -4,6 +4,14 @@
 
 {% block page_content %}
     <p>Hier kannst du Gäste für <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a> anmelden.</p>
+    {% if 'capacity' in event.location.data and (event.signups | length) >= event.location.data['capacity'].value() %}
+        <div class="alert alert-warning">
+            <strong>Achtung:</strong> Das Haus ist schon voll. Du kannst den Gast trotzdem anmelden. Er kommt dann auf die Warteliste. Wenn jemand absagt, rückt der erste Mensch auf der Warteliste nach.
+            {% if event.anzahlung is not none %}
+                Falls kein Platz frei wird, bekommt der Gast die Anzahlung natürlich zurück.
+            {% endif %}
+        </div>
+    {% endif %}
     {% if event.anzahlung is none %}
         <p>Coming soon™</p> {#TODO#}
     {% elif g.user in event.menschen %}
