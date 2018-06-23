@@ -11,7 +11,11 @@
 {% block title %}{{programmpunkt}} — {{event}}{% endblock %}
 
 {% block page_content %}
-    <h1>Programmpunkt „{{programmpunkt}}“ auf <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a> {% if programmpunkt.can_edit(g.user) %}<a href="{{url_for('event_programmpunkt_edit', event_id=event.event_id, name=programmpunkt.name)}}" class="btn btn-primary">Bearbeiten</a>{% endif %}</h1>
+    <h1>
+        Programmpunkt „{{programmpunkt}}“ auf <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a>
+        {% if programmpunkt.can_edit(g.user) %}<a href="{{url_for('event_programmpunkt_edit', event_id=event.event_id, name=programmpunkt.name)}}" class="btn btn-primary">Bearbeiten</a>{% endif %}
+        {% if g.user == event.orga('Programm') %}<a href="{{url_for('event_programmpunkt_delete', event_id=event.event_id, name=programmpunkt.name)}}" class="btn btn-danger">Löschen</a>{% endif %}
+    </h1>
     <p>Dieser Programmpunkt wird von {{programmpunkt.orga | mention}} organisiert.</p>
     <h2>Beschreibung</h2>
     {{programmpunkt.data['description'].value() | markdown}}

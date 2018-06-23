@@ -464,6 +464,9 @@ def ProgrammEditForm(programmpunkt):
 
     return Form()
 
+class ProgrammDeleteForm(flask_wtf.FlaskForm):
+    pass
+
 def SignupGuestForm(event):
     def validate_guest_name(form, field):
         name = field.data.strip()
@@ -654,6 +657,31 @@ def setup(app):
                 'event': event,
                 'programmpunkt': programmpunkt,
                 'programm_edit_form': programm_edit_form
+            }
+
+    @app.route('/event/<event_id>/programm/<name>/delete', methods=['GET', 'POST'])
+    @gefolge_web.login.member_required
+    @gefolge_web.util.path(('delete', 'löschen'), event_programmpunkt)
+    @gefolge_web.util.template('event-programmpunkt-delete')
+    def event_programmpunkt_delete(event_id, name):
+        event = Event(event_id)
+        programmpunkt = Programmpunkt(event, name)
+        if if g.user != event.orga('Programm'):
+            flask.flash('Du bist nicht berechtigt, diesen Programmpunkt zu löschen.')
+            return flask.redirect(flask.url_for('event_programmpunkt', event_id=event_id, name=name))
+        programm_delete_form = ProgrammDeleteForm(programmpunkt)
+        if programm_delete_form.validate_on_submit():
+            gefolge_web.util.log('eventProgrammDelete', {
+                'event': event_id,
+                'programmpunkt': name
+            })
+            del event.data['programm'][programmpunkt.name]
+            return flask.redirect(flask.url_for('event_programm', event_id=event_id))
+        else:
+            return {
+                'event': event,
+                'programmpunkt': programmpunkt,
+                'programm_delete_form': programm_delete_form
             }
 
     @app.route('/event/<event_id>/programm/<name>/signup/<snowflake>')
