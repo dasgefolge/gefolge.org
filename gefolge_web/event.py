@@ -666,7 +666,7 @@ def setup(app):
     def event_programmpunkt_delete(event_id, name):
         event = Event(event_id)
         programmpunkt = Programmpunkt(event, name)
-        if if g.user != event.orga('Programm'):
+        if g.user != event.orga('Programm'):
             flask.flash('Du bist nicht berechtigt, diesen Programmpunkt zu löschen.')
             return flask.redirect(flask.url_for('event_programmpunkt', event_id=event_id, name=name))
         programm_delete_form = ProgrammDeleteForm(programmpunkt)
