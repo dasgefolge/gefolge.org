@@ -55,6 +55,15 @@
                 </tr>
             </tbody>
         </table>
+        <h2>Programm</h2>
+        <p>{{render_person()}} ist an folgenden Programmpunkten interessiert:</p>
+        <ul>
+            {% for programmpunkt in event.programm %}
+                {% if person in programmpunkt.signups %}
+                    <li><a href="{{url_for('event_programmpunkt', event_id=event.event_id, name=programmpunkt.name)}}">{{programmpunkt}}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
     {% else %}
         <p>{{render_person()}} ist nicht für {{event}} angemeldet.</p>
     {% endif %}
