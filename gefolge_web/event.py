@@ -18,6 +18,8 @@ import gefolge_web.util
 EVENTS_ROOT = pathlib.Path('/usr/local/share/fidera/event')
 LOCATIONS_ROOT = pathlib.Path('/usr/local/share/fidera/loc')
 
+ORGA_ROLES = ['Abrechnung', 'Buchung', 'Essen', 'Programm', 'Schlüssel']
+
 @functools.total_ordering
 class Euro:
     def __init__(self, value=0):
@@ -268,6 +270,10 @@ class Event:
         for mensch in self.data['menschen']:
             if aufgabe in mensch.get('orga', []):
                 return gefolge_web.login.Mensch(mensch['id'].value())
+
+    @property
+    def orga_unassigned(self):
+        return [role for role in ORGA_ROLES if self.orga(role) is None]
 
     def person(self, snowflake):
         if hasattr(snowflake, 'snowflake'):
