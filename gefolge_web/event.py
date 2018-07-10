@@ -121,7 +121,10 @@ class Programmpunkt:
 
     @end.setter
     def end(self, value):
-        self.data['end'] = '{:%Y-%m-%d %H:%M:%S}'.format(value)
+        if value is None:
+            del self.data['end']
+        else:
+            self.data['end'] = '{:%Y-%m-%d %H:%M:%S}'.format(value)
 
     @end.deleter
     def end(self):
@@ -160,7 +163,10 @@ class Programmpunkt:
 
     @start.setter
     def start(self, value):
-        self.data['start'] = '{:%Y-%m-%d %H:%M:%S}'.format(value)
+        if value is None:
+            del self.data['start']
+        else:
+            self.data['start'] = '{:%Y-%m-%d %H:%M:%S}'.format(value)
 
     @start.deleter
     def start(self):
@@ -616,8 +622,8 @@ def setup(app):
                 'event': event_id,
                 'programmpunkt': name,
                 'orga': programm_edit_form.orga.data.snowflake,
-                'start': '{:%Y-%m-%d %H:%M:%S}'.format(programm_edit_form.start.data),
-                'end': '{:%Y-%m-%d %H:%M:%S}'.format(programm_edit_form.end.data),
+                'start': (None if programm_edit_form.start.data is None else '{:%Y-%m-%d %H:%M:%S}'.format(programm_edit_form.start.data)),
+                'end': (None if programm_edit_form.end.data is None else '{:%Y-%m-%d %H:%M:%S}'.format(programm_edit_form.end.data)),
                 'description': programm_edit_form.description.data
             })
             programmpunkt.orga = programm_edit_form.orga.data
