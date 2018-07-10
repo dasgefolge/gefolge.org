@@ -122,13 +122,14 @@ class Programmpunkt:
     @end.setter
     def end(self, value):
         if value is None:
-            del self.data['end']
+            del self.end
         else:
             self.data['end'] = '{:%Y-%m-%d %H:%M:%S}'.format(value)
 
     @end.deleter
     def end(self):
-        del self.data['end']
+        if 'end' in self.data:
+            del self.data['end']
 
     @property
     def orga(self):
@@ -164,13 +165,14 @@ class Programmpunkt:
     @start.setter
     def start(self, value):
         if value is None:
-            del self.data['start']
+            del self.start
         else:
             self.data['start'] = '{:%Y-%m-%d %H:%M:%S}'.format(value)
 
     @start.deleter
     def start(self):
-        del self.data['start']
+        if 'start' in self.data:
+            del self.data['start']
 
 @functools.total_ordering
 class Event:
