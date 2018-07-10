@@ -1,5 +1,6 @@
 import copy
 import datetime
+import decimal
 import flask
 import functools
 import inspect
