@@ -366,7 +366,7 @@ def ProfileForm(event, person):
         default=person_data.get('food', {}).get('animalProducts', 'yes'),
         validators=[wtforms.validators.InputRequired()]
     )
-    Form.allergies = wtforms.TextAreaField('Allergien/Unverträglichkeiten', default=person_data.get('food', {}).get('allergies', ''))
+    Form.allergies = wtforms.TextAreaField('Allergien, Unverträglichkeiten', default=person_data.get('food', {}).get('allergies', ''))
     return Form()
 
 def ProgrammAddForm(event):

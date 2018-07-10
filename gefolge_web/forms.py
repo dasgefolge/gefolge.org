@@ -87,8 +87,8 @@ class HorizontalButtonGroupField(wtforms.RadioField):
     def __init__(self, label, choices, default=None, **kwargs):
         super_choices = []
         self.choice_colors = []
-        for name, label, color in choices:
-            super_choices.append((name, label))
+        for name, choice_label, color in choices:
+            super_choices.append((name, choice_label))
             self.choice_colors.append((name, color))
         super().__init__(label, choices=super_choices, default=default, **kwargs)
         self.type = 'HorizontalButtonGroupField'
