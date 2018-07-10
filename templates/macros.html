@@ -10,7 +10,38 @@
         </div>
     {% endif %}
     <div class="form-group">
-        {% if field.type == 'BooleanField' %}
+        {% if field.type == 'FormSection' %}
+            <div class="col-sm-2"></div>
+            <h{{field.level}} class="col-sm-10">{{field.title}}</h{{field.level}}>
+        {% elif field.type == 'FormText' %}
+            <div class="col-sm-2"></div>
+            <p class="col-sm-10">{{field.text}}</p>
+        {% elif field.type == 'AnnotatedStringField' %}
+            <label for="input_description" class="col-sm-2 control-label">{{field.label}}</label>
+            <div class="col-sm-10">
+                {% if field.prefix is none and field.suffix is none %}
+                    {% if 'placeholder' in field.description %}
+                        {{field(class="form-control", placeholder=field.description['placeholder'])}}
+                    {% else %}
+                        {{field(class="form-control")}}
+                    {% endif %}
+                {% else %}
+                    <div class="input-group">
+                        {% if not field.prefix is none %}
+                            <span class="input-group-addon">{{field.prefix}}</span>
+                        {% endif %}
+                        {% if 'placeholder' in field.description %}
+                            {{field(class="form-control", placeholder=field.description['placeholder'])}}
+                        {% else %}
+                            {{field(class="form-control")}}
+                        {% endif %}
+                        {% if not field.suffix is none %}
+                            <span class="input-group-addon">{{field.suffix}}</span>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        {% elif field.type == 'BooleanField' %}
             <div class="col-sm-offset-2 col-sm-10">
                 <div class="checkbox">
                     <label>
@@ -18,18 +49,25 @@
                     </label>
                 </div>
             </div>
-        {% elif field.type == 'YesMaybeNoField' %}
+        {% elif field.type == 'HorizontalButtonGroupField' %}
             <label for="input_description" class="col-sm-2 control-label">{{field.label}}</label>
+            <style>
+                {% for choice, color in field.choice_colors %}
+                    .btn.hbgf-{{field.id}}-{{choice}} {
+                        color: {{color}};
+                        border-color: {{color}};
+                    }
+
+                    .btn.hbgf-{{field.id}}-{{choice}}.active {
+                        color: white;
+                        border-color: {{color}};
+                        background-color: {{color}};
+                    }
+                {% endfor %}
+            </style>
             <div class="col-sm-10 btn-group btn-group-toggle" data-toggle="buttons">
                 {% for subfield in field %}
-                    {% if subfield.label.text == 'Ja' %}
-                        {% set btn_class = 'btn-success' %}
-                    {% elif subfield.label.text == 'Vielleicht' %}
-                        {% set btn_class = 'btn-warning' %}
-                    {% elif subfield.label.text == 'Nein' %}
-                        {% set btn_class = 'btn-danger' %}
-                    {% endif %}
-                    <label class="btn {{btn_class}} {% if subfield.checked %}active{% endif %}">
+                    <label class="btn hbgf-{{field.id}}-{{subfield.data}} {% if subfield.checked %}active{% endif %}">
                         <input type="radio" id="{{subfield.id}}" name="{{subfield.name}}" value="{{subfield.data}}" {% if subfield.checked %}checked="checked"{% endif %}>{{subfield.label.text}}</input>
                     </label>
                {% endfor %}

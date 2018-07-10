@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 
-"""
-gefolge.org
-"""
-
 import sys
 
 sys.path.append('/opt/py')

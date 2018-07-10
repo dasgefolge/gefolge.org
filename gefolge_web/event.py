@@ -1,5 +1,4 @@
 import datetime
-import decimal
 import flask
 import flask_wtf
 import functools
@@ -12,6 +11,7 @@ import re
 import wtforms
 import wtforms.validators
 
+import gefolge_web.forms
 import gefolge_web.login
 import gefolge_web.util
 
@@ -19,27 +19,6 @@ EVENTS_ROOT = pathlib.Path('/usr/local/share/fidera/event')
 LOCATIONS_ROOT = pathlib.Path('/usr/local/share/fidera/loc')
 
 ORGA_ROLES = ['Abrechnung', 'Buchung', 'Essen', 'Programm', 'Schlüssel']
-
-@functools.total_ordering
-class Euro:
-    def __init__(self, value=0):
-        self.value = decimal.Decimal(value)
-        if self.value.quantize(decimal.Decimal('1.00')) != self.value:
-            raise ValueError('Euro value contains fractional cents')
-
-    def __eq__(self, other):
-        return isinstance(other, Euro) and self.value == other.value
-
-    def __lt__(self, other):
-        if not isinstance(other, Euro):
-            return NotImplemented
-        return self.value < other.value
-
-    def __repr__(self):
-        return 'gefolge_web.event.Euro({!r})'.format(self.value)
-
-    def __str__(self):
-        return '{:.2f}€'.format(self.value).replace('.', ',')
 
 class Guest:
     def __init__(self, event, guest_id):
@@ -183,7 +162,7 @@ class Event:
         if 'anzahlung' in self.data:
             if self.data['anzahlung'].value() is None:
                 return None
-            return Euro(self.data['anzahlung'].value())
+            return gefolge_web.util.Euro(self.data['anzahlung'].value())
         else:
             return None
 
@@ -195,9 +174,9 @@ class Event:
     @property
     def ausfall(self):
         if 'ausfall' in self.data:
-            return Euro(self.data['ausfall'].value())
+            return gefolge_web.util.Euro(self.data['ausfall'].value())
         else:
-            return Euro()
+            return gefolge_web.util.Euro()
 
     def can_edit(self, editor, profile):
         editor_data = self.attendee_data(editor)
@@ -342,71 +321,6 @@ class Event:
     def url_part(self):
         return self.event_id
 
-class EuroField(wtforms.StringField):
-    """A form field that validates to the Euro class. Some code derived from wtforms.DecimalField."""
-    def _value(self):
-        if self.raw_data:
-            return self.raw_data[0]
-        elif self.data is not None:
-            return str(self.data.value)
-        else:
-            return ''
-
-    def process_formdata(self, valuelist):
-        if valuelist:
-            try:
-                self.data = Euro(valuelist[0].replace(' ', '').replace(',', '.').strip('€'))
-            except (decimal.InvalidOperation, ValueError) as e:
-                self.data = None
-                raise ValueError('Ungültiger Eurobetrag') from e
-
-class PersonField(wtforms.SelectField):
-    """A form field that validates to a Mensch or Guest. Displayed as a combobox."""
-
-    #TODO actually display as a combobox (text field with dropdown menu)
-
-    def __init__(self, event, label, validators=[], *, allow_guests=True, **kwargs):
-        self.event = event
-        self.allow_guests = allow_guests
-        super().__init__(label, validators, choices=[(person.snowflake, str(person)) for person in self.people], **kwargs)
-
-    @property
-    def people(self):
-        if self.allow_guests:
-            return self.event.signups
-        else:
-            return self.event.menschen
-
-    def iter_choices(self):
-        for person in self.people:
-            yield person.snowflake, str(person), person == self.data
-
-    def process_data(self, value):
-        try:
-            self.data = None if value is None else self.event.person(value)
-        except (TypeError, ValueError):
-            self.data = None
-
-    def process_formdata(self, valuelist):
-        if valuelist:
-            try:
-                self.data = self.event.person(valuelist[0])
-            except (TypeError, ValueError):
-                raise ValueError('Invalid choice: could not coerce')
-
-    def pre_validate(self, form):
-        for person in self.people:
-            if self.data == person:
-                break
-        else:
-            raise ValueError('Not a valid choice')
-
-class YesMaybeNoField(wtforms.RadioField):
-    """A form field that validates to yes, maybe, or no. Displayed as a horizontal button group."""
-
-    def __init__(self, label, default='maybe', **kwargs):
-        super().__init__(label, choices=[('yes', 'Ja'), ('maybe', 'Vielleicht'), ('no', 'Nein')], default=default, **kwargs)
-
 def ConfirmSignupForm(event):
     def validate_verwendungszweck(form, field):
         match = re.fullmatch('Anzahlung {} ([0-9]+)'.format(event.event_id), field.data)
@@ -426,7 +340,7 @@ def ConfirmSignupForm(event):
                 raise wtforms.validators.ValidationError('Dieser Mensch ist bereits für dieses event angemeldet.')
 
     class Form(flask_wtf.FlaskForm):
-        betrag = EuroField('Betrag', [wtforms.validators.InputRequired(), wtforms.validators.NumberRange(min=event.anzahlung, max=event.anzahlung)])
+        betrag = gefolge_web.forms.EuroField('Betrag', [wtforms.validators.InputRequired(), wtforms.validators.NumberRange(min=event.anzahlung, max=event.anzahlung)])
         verwendungszweck = wtforms.StringField('Verwendungszweck', [validate_verwendungszweck])
 
     return Form()
@@ -435,13 +349,24 @@ def ProfileForm(event, person):
     class Form(flask_wtf.FlaskForm):
         pass
 
+    Form.section_nights = gefolge_web.util.FormSection('Zeitraum')
     person_data = event.attendee_data(person).value()
     for i, night in enumerate(event.nights):
-        setattr(Form, 'night{}'.format(i), YesMaybeNoField(
+        setattr(Form, 'night{}'.format(i), gefolge_web.forms.YesMaybeNoField(
             '{:%d.%m.}–{:%d.%m.}'.format(night, night + datetime.timedelta(days=1)),
             default=person_data.get('nights', {}).get('{:%Y-%m-%d}'.format(night), 'maybe'),
             validators=[wtforms.validators.InputRequired()]
         ))
+
+    Form.section_food = gefolge_web.forms.FormSection('Essen')
+    form.section_food_intro = gefolge_web.forms.FormText('Bitte trage hier Informationen zu deiner Ernährung ein. Diese Daten werden nur Fenhl und der Essensorga angezeigt.')
+    animal_products = gefolge_web.forms.HorizontalButtonGroupField(
+        'tierische Produkte',
+        choices=[('yes', 'uneingeschränkt', '#808080'), ('vegetarian', 'vegetarisch', '#aac912'), ('vegan', 'vegan', '#55a524')],
+        default=person_data.get('food', {}).get('animalProducts', 'yes'),
+        validators=[wtforms.validators.InputRequired()]
+    )
+    allergies = wtforms.TextAreaField('Allergien/Unverträglichkeiten', default=person_data.get('food', {}).get('allergies', ''))
     return Form()
 
 def ProgrammAddForm(event):
@@ -451,7 +376,7 @@ def ProgrammAddForm(event):
             wtforms.validators.NoneOf([programmpunkt.name for programmpunkt in event.programm], message='Es gibt bereits einen Programmpunkt mit diesem Titel.'),
             wtforms.validators.Regexp('^[^/]+$', message='Schrägstriche können hier nicht verwendet werden, weil der Titel in der URL der Programmpunktseite steht.')
         ])
-        orga = PersonField(event, 'Orga', allow_guests=False, default=flask.g.user)
+        orga = gefolge_web.forms.EventPersonField(event, 'Orga', allow_guests=False, default=flask.g.user)
         description = wtforms.TextAreaField('Beschreibung')
 
     return Form()
@@ -465,7 +390,7 @@ def ProgrammEditForm(programmpunkt):
         raise wtforms.validators.ValidationError('Bitte wende dich an {}, wenn du die Orga für diesen Programmpunkt abgeben möchtest.'.format(programmpunkt.event.orga('Programm')))
 
     class Form(flask_wtf.FlaskForm):
-        orga = PersonField(programmpunkt.event, 'Orga', [validate_orga], allow_guests=False, default=programmpunkt.orga)
+        orga = gefolge_web.forms.EventPersonField(programmpunkt.event, 'Orga', [validate_orga], allow_guests=False, default=programmpunkt.orga) #TODO disable (https://getbootstrap.com/docs/3.3/css/#forms-control-disabled) if not allowed to edit
         description = wtforms.TextAreaField('Beschreibung', default=programmpunkt.data['description'].value())
 
     return Form()
@@ -605,12 +530,20 @@ def setup(app):
                 'nights': {
                     '{:%Y-%m-%d}'.format(night): getattr(profile_form, 'night{}'.format(i)).data
                     for i, night in enumerate(event.nights)
+                },
+                'food': {
+                    'animalProducts': profile_form.animal_products.data,
+                    'allergies': profile_form.allergies.data
                 }
             })
             if 'nights' not in person_data:
                 person_data['nights'] = {}
             for i, night in enumerate(event.nights):
                 person_data['nights']['{:%Y-%m-%d}'.format(night)] = getattr(profile_form, 'night{}'.format(i)).data
+            if 'food' not in person_data:
+                person_data['food'] = {}
+            person_data['food']['animalProducts'] = profile_form.animal_products.data
+            person_data['food']['allergies'] = profile_form.allergies.data
             return flask.redirect(flask.url_for('event_profile', event_id=event_id, snowflake=snowflake))
         else:
             return {
