@@ -12,6 +12,9 @@ class AnnotatedStringField(wtforms.StringField):
 
 class EuroField(wtforms.StringField):
     """A form field that validates to the Euro class. Some code derived from wtforms.DecimalField."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, suffix='€', **kwargs)
+
     def _value(self):
         if self.raw_data:
             return self.raw_data[0]
