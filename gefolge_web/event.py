@@ -359,14 +359,14 @@ def ProfileForm(event, person):
         ))
 
     Form.section_food = gefolge_web.forms.FormSection('Essen')
-    form.section_food_intro = gefolge_web.forms.FormText('Bitte trage hier Informationen zu deiner Ernährung ein. Diese Daten werden nur Fenhl und der Essensorga angezeigt.')
-    animal_products = gefolge_web.forms.HorizontalButtonGroupField(
+    Form.section_food_intro = gefolge_web.forms.FormText('Bitte trage hier Informationen zu deiner Ernährung ein. Diese Daten werden nur Fenhl und der Essensorga angezeigt.')
+    Form.animal_products = gefolge_web.forms.HorizontalButtonGroupField(
         'tierische Produkte',
         choices=[('yes', 'uneingeschränkt', '#808080'), ('vegetarian', 'vegetarisch', '#aac912'), ('vegan', 'vegan', '#55a524')],
         default=person_data.get('food', {}).get('animalProducts', 'yes'),
         validators=[wtforms.validators.InputRequired()]
     )
-    allergies = wtforms.TextAreaField('Allergien/Unverträglichkeiten', default=person_data.get('food', {}).get('allergies', ''))
+    Form.allergies = wtforms.TextAreaField('Allergien/Unverträglichkeiten', default=person_data.get('food', {}).get('allergies', ''))
     return Form()
 
 def ProgrammAddForm(event):
