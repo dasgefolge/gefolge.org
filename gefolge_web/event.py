@@ -119,10 +119,12 @@ class Programmpunkt:
         if end_str is not None:
             return gefolge_web.util.parse_iso_datetime(end_str)
 
-    @end.setter(self, value):
+    @end.setter
+    def end(self, value):
         self.data['end'] = '{:%Y-%m-%d %H:%M:%S}'.format(value)
 
-    @end.deleter(self):
+    @end.deleter
+    def end(self):
         del self.data['end']
 
     @property
@@ -156,10 +158,12 @@ class Programmpunkt:
         if start_str is not None:
             return gefolge_web.util.parse_iso_datetime(start_str)
 
-    @start.setter(self, value):
+    @start.setter
+    def start(self, value):
         self.data['start'] = '{:%Y-%m-%d %H:%M:%S}'.format(value)
 
-    @start.deleter(self):
+    @start.deleter
+    def start(self):
         del self.data['start']
 
 @functools.total_ordering
