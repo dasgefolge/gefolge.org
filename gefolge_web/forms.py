@@ -5,8 +5,8 @@ import gefolge_web.util
 
 class AnnotatedStringField(wtforms.StringField):
     def __init__(self, *args, prefix=None, suffix=None, **kwargs):
-        self.type = 'AnnotatedStringField'
         super().__init__(*args, **kwargs)
+        self.type = 'AnnotatedStringField'
         self.prefix = prefix
         self.suffix = suffix
 
@@ -83,13 +83,13 @@ class FormText(wtforms.Field):
 
 class HorizontalButtonGroupField(wtforms.RadioField):
     def __init__(self, label, choices, default=None, **kwargs):
-        self.type = 'HorizontalButtonGroupField'
         super_choices = []
         self.choice_colors = []
         for name, label, color in choices:
             super_choices.append((name, label))
             self.choice_colors.append((name, color))
         super().__init__(label, choices=super_choices, default=default, **kwargs)
+        self.type = 'HorizontalButtonGroupField'
 
 class YesMaybeNoField(HorizontalButtonGroupField):
     """A form field that validates to yes, maybe, or no. Displayed as a horizontal button group."""
