@@ -73,13 +73,15 @@ class EventPersonField(wtforms.SelectField):
             raise ValueError('Not a valid choice')
 
 class FormSection(wtforms.Field):
-    def __init__(self, title, level=2):
+    def __init__(self, title, level=2, **kwargs):
         self.level = level
         self.title = title
+        super().__init__(**kwargs)
 
 class FormText(wtforms.Field):
-    def __init__(self, text):
+    def __init__(self, text, **kwargs):
         self.text = text
+        super().__init__(**kwargs)
 
 class HorizontalButtonGroupField(wtforms.RadioField):
     def __init__(self, label, choices, default=None, **kwargs):
