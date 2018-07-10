@@ -10,7 +10,7 @@ class AnnotatedStringField(wtforms.StringField):
         self.prefix = prefix
         self.suffix = suffix
 
-class EuroField(wtforms.StringField):
+class EuroField(AnnotatedStringField):
     """A form field that validates to the Euro class. Some code derived from wtforms.DecimalField."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, suffix='€', **kwargs)
