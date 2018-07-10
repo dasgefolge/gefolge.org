@@ -398,8 +398,8 @@ def ProfileForm(event, person):
     Form.section_food_intro = gefolge_web.forms.FormText('Bitte trage hier Informationen zu deiner Ernährung ein. Diese Daten werden nur der Orga angezeigt.')
     Form.animal_products = gefolge_web.forms.HorizontalButtonGroupField(
         'tierische Produkte',
-        [('yes', 'uneingeschränkt', '#808080'), ('vegetarian', 'vegetarisch', '#aac912'), ('vegan', 'vegan', '#55a524')],
         [wtforms.validators.InputRequired()],
+        choices=[('yes', 'uneingeschränkt', '#808080'), ('vegetarian', 'vegetarisch', '#aac912'), ('vegan', 'vegan', '#55a524')],
         default=person_data.get('food', {}).get('animalProducts', 'yes')
     )
     Form.allergies = wtforms.TextAreaField('Allergien, Unverträglichkeiten', default=person_data.get('food', {}).get('allergies', ''))

@@ -84,17 +84,17 @@ class FormText(wtforms.Field):
         super().__init__(**kwargs)
 
 class HorizontalButtonGroupField(wtforms.RadioField):
-    def __init__(self, label, choices, default=None, **kwargs):
+    def __init__(self, label, validators=None, choices=None, **kwargs):
         super_choices = []
         self.choice_colors = []
         for name, choice_label, color in choices:
             super_choices.append((name, choice_label))
             self.choice_colors.append((name, color))
-        super().__init__(label, choices=super_choices, default=default, **kwargs)
+        super().__init__(label, validators, choices=super_choices, **kwargs)
         self.type = 'HorizontalButtonGroupField'
 
 class YesMaybeNoField(HorizontalButtonGroupField):
     """A form field that validates to yes, maybe, or no. Displayed as a horizontal button group."""
 
-    def __init__(self, label, default='maybe', **kwargs):
-        super().__init__(label, choices=[('yes', 'Ja', '#449d44'), ('maybe', 'Vielleicht', '#d58512'), ('no', 'Nein', '#ac2925')], default=default, **kwargs)
+    def __init__(self, label, validators=None, default='maybe', **kwargs):
+        super().__init__(label, validators, choices=[('yes', 'Ja', '#449d44'), ('maybe', 'Vielleicht', '#d58512'), ('no', 'Nein', '#ac2925')], default=default, **kwargs)
