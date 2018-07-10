@@ -349,7 +349,7 @@ def ProfileForm(event, person):
     class Form(flask_wtf.FlaskForm):
         pass
 
-    Form.section_nights = gefolge_web.util.FormSection('Zeitraum')
+    Form.section_nights = gefolge_web.forms.FormSection('Zeitraum')
     person_data = event.attendee_data(person).value()
     for i, night in enumerate(event.nights):
         setattr(Form, 'night{}'.format(i), gefolge_web.forms.YesMaybeNoField(
