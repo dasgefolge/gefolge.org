@@ -114,6 +114,18 @@ class Programmpunkt:
         return self.event.data['programm'][self.name]
 
     @property
+    def end(self):
+        end_str = self.data.get('end')
+        if end_str is not None:
+            return gefolge_web.util.parse_iso_datetime(end_str)
+
+    @end.setter(self, value):
+        self.data['end'] = '{:%Y-%m-%d %H:%M:%S}'.format(value)
+
+    @end.deleter(self):
+        del self.data['end']
+
+    @property
     def orga(self):
         orga_id = self.data['orga'].value()
         if orga_id is not None:
@@ -137,6 +149,18 @@ class Programmpunkt:
             self.event.person(snowflake)
             for snowflake in self.data['signups'].value()
         ]
+
+    @property
+    def start(self):
+        start_str = self.data.get('start')
+        if start_str is not None:
+            return gefolge_web.util.parse_iso_datetime(start_str)
+
+    @start.setter(self, value):
+        self.data['start'] = '{:%Y-%m-%d %H:%M:%S}'.format(value)
+
+    @start.deleter(self):
+        del self.data['start']
 
 @functools.total_ordering
 class Event:
@@ -354,17 +378,17 @@ def ProfileForm(event, person):
     for i, night in enumerate(event.nights):
         setattr(Form, 'night{}'.format(i), gefolge_web.forms.YesMaybeNoField(
             '{:%d.%m.}–{:%d.%m.}'.format(night, night + datetime.timedelta(days=1)),
-            default=person_data.get('nights', {}).get('{:%Y-%m-%d}'.format(night), 'maybe'),
-            validators=[wtforms.validators.InputRequired()]
+            [wtforms.validators.InputRequired()],
+            default=person_data.get('nights', {}).get('{:%Y-%m-%d}'.format(night), 'maybe')
         ))
 
     Form.section_food = gefolge_web.forms.FormSection('Essen')
-    Form.section_food_intro = gefolge_web.forms.FormText('Bitte trage hier Informationen zu deiner Ernährung ein. Diese Daten werden nur Fenhl und der Essensorga angezeigt.')
+    Form.section_food_intro = gefolge_web.forms.FormText('Bitte trage hier Informationen zu deiner Ernährung ein. Diese Daten werden nur der Orga angezeigt.')
     Form.animal_products = gefolge_web.forms.HorizontalButtonGroupField(
         'tierische Produkte',
-        choices=[('yes', 'uneingeschränkt', '#808080'), ('vegetarian', 'vegetarisch', '#aac912'), ('vegan', 'vegan', '#55a524')],
-        default=person_data.get('food', {}).get('animalProducts', 'yes'),
-        validators=[wtforms.validators.InputRequired()]
+        [('yes', 'uneingeschränkt', '#808080'), ('vegetarian', 'vegetarisch', '#aac912'), ('vegan', 'vegan', '#55a524')],
+        [wtforms.validators.InputRequired()],
+        default=person_data.get('food', {}).get('animalProducts', 'yes')
     )
     Form.allergies = wtforms.TextAreaField('Allergien, Unverträglichkeiten', default=person_data.get('food', {}).get('allergies', ''))
     return Form()
@@ -391,6 +415,8 @@ def ProgrammEditForm(programmpunkt):
 
     class Form(flask_wtf.FlaskForm):
         orga = gefolge_web.forms.EventPersonField(programmpunkt.event, 'Orga', [validate_orga], allow_guests=False, default=programmpunkt.orga) #TODO disable (https://getbootstrap.com/docs/3.3/css/#forms-control-disabled) if not allowed to edit
+        start = wtforms.DateTimeField('Beginn', [wtforms.validators.Optional()], format='%d.%m.%Y %H:%M', default=programmpunkt.start)
+        end = wtforms.DateTimeField('Ende', [wtforms.validators.Optional()], format='%d.%m.%Y %H:%M', default=programmpunkt.end)
         description = wtforms.TextAreaField('Beschreibung', default=programmpunkt.data['description'].value())
 
     return Form()
@@ -586,9 +612,13 @@ def setup(app):
                 'event': event_id,
                 'programmpunkt': name,
                 'orga': programm_edit_form.orga.data.snowflake,
+                'start': '{:%Y-%m-%d %H:%M:%S}'.format(programm_edit_form.start.data),
+                'end': '{:%Y-%m-%d %H:%M:%S}'.format(programm_edit_form.end.data),
                 'description': programm_edit_form.description.data
             })
             programmpunkt.orga = programm_edit_form.orga.data
+            programmpunkt.start = programm_edit_form.start.data
+            programmpunkt.end = programm_edit_form.end.data
             programmpunkt.data['description'] = programm_edit_form.description.data
             return flask.redirect(flask.url_for('event_programmpunkt', event_id=event_id, name=name))
         else:
