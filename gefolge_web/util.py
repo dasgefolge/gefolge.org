@@ -5,8 +5,10 @@ import flask
 import functools
 import inspect
 import jinja2
+import json
 import lazyjson
 import more_itertools
+import pathlib
 import pytz
 import re
 
@@ -87,7 +89,10 @@ def parse_iso_date(date_str):
 def parse_iso_datetime(datetime_str, *, tz=pytz.timezone('Europe/Berlin')):
     if isinstance(datetime_str, datetime.datetime):
         return datetime_str
-    return tz.localize(datetime.datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S'), is_dst=None)
+    if datetime_str.endswith('Z'):
+        return pytz.utc.localize(datetime.datetime.strptime(datetime_str, '%Y-%m-%dT%H:%M:%SZ'), is_dst=None).astimezone(tz)
+    else:
+        return tz.localize(datetime.datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S'), is_dst=None)
 
 def path(name, parent=None):
     def decorator(f):
@@ -146,6 +151,14 @@ def setup(app):
         return '{:%d.%m.%Y %H:%M}'.format(value)
 
     @app.template_filter()
+    def hm(value):
+        if isinstance(value, lazyjson.Node):
+            value = value.value()
+        if isinstance(value, str):
+            value = parse_iso_datetime(value)
+        return '{:%H:%M}'.format(value)
+
+    @app.template_filter()
     def length(value):
         try:
             return len(value)
@@ -180,6 +193,23 @@ def setup(app):
         if eval_ctx.autoescape:
             result = jinja2.Markup(result)
         return result
+
+    @app.before_request
+    def current_time():
+        flask.g.now = now()
+
+    @app.before_request
+    def prepare_reboot_notice():
+        with pathlib.Path('/opt/dev/reboot.json').open() as reboot_info_f:
+            reboot_info = json.load(reboot_info_f)
+        if 'schedule' in reboot_info:
+            flask.g.reboot_timestamp = parse_iso_datetime(reboot_info['schedule'])
+            flask.g.reboot_upgrade = reboot_info.get('upgrade', False)
+            flask.g.reboot_end_time = None if flask.g.reboot_upgrade else flask.g.reboot_timestamp + datetime.timedelta(minutes=15)
+        else:
+            flask.g.reboot_timestamp = None
+            flask.g.reboot_upgrade = None
+            flask.g.reboot_end_time = None
 
 def template(template_name=None):
     def decorator(f):

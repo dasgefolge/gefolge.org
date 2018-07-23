@@ -76,6 +76,22 @@
 
 {% block content %}
     <div class="container" {% block container_attrs %}{% endblock %}>
+        {% if not g.reboot_timestamp is none %}
+            <div class="alert alert-warning">
+                gefolge.org wird
+                {% if g.reboot_upgrade %}
+                    ab {% if g.reboot_timestamp.date() == g.now.date() %}heute ({{g.reboot_timestamp | dmy}}){% else %}{{g.reboot_timestamp | dmy}}{% endif %} {{g.reboot_timestamp | hm}} Uhr über einen längeren Zeitraum zeitweise nicht erreichbar sein. Bitte ab sofort bis diese Nachricht gelöscht wird
+                {% else %}
+                    {% if g.reboot_timestamp.date() == g.reboot_end_time.date() %}
+                        {% if g.reboot_timestamp.date() == g.now.date() %}heute ({{g.reboot_timestamp | dmy}}){% else %}am {{g.reboot_timestamp | dmy}}{% endif %} zwischen {{g.reboot_timestamp | hm}} Uhr und {{g.reboot_end_time | hm}} Uhr
+                    {% else %}
+                        zwischen {{g.reboot_timestamp | dmy_hm}} Uhr und {{g.reboot_end_time | dmy_hm}} Uhr
+                    {% endif %}
+                    zeitweise nicht erreichbar sein. In diesem Zeitraum bitte
+                {% endif %}
+                nichts bearbeiten, sonst können Daten verloren gehen.
+            </div>
+        {% endif %}
         {% block flashes %}
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% for category, message in messages %}
