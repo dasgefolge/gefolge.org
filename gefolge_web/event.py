@@ -600,7 +600,7 @@ def setup(app):
     def event_programm(event_id):
         event = Event(event_id)
         programm = event.programm
-        filled_until = event.start
+        filled_until = pytz.timezone('Europe/Berlin').localize(datetime.datetime.min)
 
         def programm_cell(date, hour):
             nonlocal filled_until
