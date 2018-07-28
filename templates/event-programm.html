@@ -3,6 +3,28 @@
 {% block title %}Programm — {{event}}{% endblock %}
 
 {% block page_content %}
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th></th>
+                {% for night in event.nights %}
+                    <th>{{night | dm }}</th>
+                {% endfor %}
+                <th>{{event.end | dm }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for hour in range(24) %}
+                <tr>
+                    <th>{{hour}}:00</th>
+                    {% for night in event.nights %}
+                        {{table[night][hour]}}
+                    {% endfor %}
+                    {{table[event.end.date()][hour]}}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     <p>Aktuell {% if event.programm | length > 1 %}sind{% else %}ist{% endif %} {{event.programm | length}} Programmpunkt{% if event.programm | length > 1 %}e{% endif %} für <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a> geplant:</p>
     <table class="table table-responsive">
         <thead>

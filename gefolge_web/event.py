@@ -4,6 +4,8 @@ import flask_wtf
 import functools
 import jinja2
 import lazyjson
+import math
+import more_itertools
 import pathlib
 import pytz
 import random
@@ -595,7 +597,35 @@ def setup(app):
     @gefolge_web.util.path(('programm', 'Programm'), event_page)
     @gefolge_web.util.template('event-programm')
     def event_programm(event_id):
-        return {'event': Event(event_id)}
+        event = Event(event_id)
+        programm = event.programm
+        filled_until = event.start
+
+        def programm_cell(date, hour):
+            nonlocal filled_until
+
+            timestamp = pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(date, datetime.time(hour)), is_dst=None)
+            if filled_until > timestamp:
+                return '' # this cell is already filled
+            if timestamp < event.start or timestamp >= event.end:
+                return jinja2.Markup('<td style="background-color: #666666;"></td>')
+            if any(programmpunkt.start is not None and programmpunkt.start >= timestamp and programmpunkt.start < timestamp + datetime.timedelta(hours=1) for programmpunkt in programm):
+                programmpunkt = more_itertools.one(programmpunkt.start is not None and programmpunkt.start >= timestamp and programmpunkt.start < timestamp + datetime.timedelta(hours=1) for programmpunkt in programm)
+                hours = math.ceil((programmpunkt.end - timestamp) / datetime.timedelta(hours=1))
+                filled_until = timestamp + datetime.timedelta(hours=hours) #TODO support for events that go past midnight
+                return jinja2.Markup('<td rowspan="{}"><a href="{}">{}</a></td>'.format(hours, flask.url_for('event_programmpunkt', event_id=event_id, name=programmpunkt.name), programmpunkt.name))
+            return jinja2.Markup('<td></td>') # nothing planned yet
+
+        return {
+            'event': event,
+            'table': {
+                date: {
+                    hour: programm_cell(date, hour)
+                    for hour in range(24)
+                }
+                for date in itertools.chain(event.nights, [event.end.date()])
+            }
+        }
 
     @app.route('/event/<event_id>/programm/<name>')
     @gefolge_web.login.member_required
