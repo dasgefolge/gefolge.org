@@ -611,7 +611,7 @@ def setup(app):
             if timestamp < event.start or timestamp >= event.end:
                 return jinja2.Markup('<td style="background-color: #666666;"></td>')
             if any(programmpunkt.start is not None and programmpunkt.start >= timestamp and programmpunkt.start < timestamp + datetime.timedelta(hours=1) for programmpunkt in programm):
-                programmpunkt = more_itertools.one(programmpunkt.start is not None and programmpunkt.start >= timestamp and programmpunkt.start < timestamp + datetime.timedelta(hours=1) for programmpunkt in programm)
+                programmpunkt = more_itertools.one(programmpunkt for programmpunkt in programm if programmpunkt.start is not None and programmpunkt.start >= timestamp and programmpunkt.start < timestamp + datetime.timedelta(hours=1))
                 hours = math.ceil((programmpunkt.end - timestamp) / datetime.timedelta(hours=1))
                 filled_until = timestamp + datetime.timedelta(hours=hours) #TODO support for events that go past midnight
                 return jinja2.Markup('<td rowspan="{}"><a href="{}">{}</a></td>'.format(hours, flask.url_for('event_programmpunkt', event_id=event_id, name=programmpunkt.name), programmpunkt.name))
