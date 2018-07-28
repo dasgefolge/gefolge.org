@@ -600,13 +600,13 @@ def setup(app):
     def event_programm(event_id):
         event = Event(event_id)
         programm = event.programm
-        filled_until = pytz.timezone('Europe/Berlin').localize(datetime.datetime.min)
+        filled_until = None
 
         def programm_cell(date, hour):
             nonlocal filled_until
 
             timestamp = pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(date, datetime.time(hour)), is_dst=None)
-            if filled_until > timestamp:
+            if filled_until is None or filled_until > timestamp:
                 return '' # this cell is already filled
             if timestamp < event.start or timestamp >= event.end:
                 return jinja2.Markup('<td style="background-color: #666666;"></td>')
