@@ -2,6 +2,7 @@ import datetime
 import flask
 import flask_wtf
 import functools
+import itertools
 import jinja2
 import lazyjson
 import math
