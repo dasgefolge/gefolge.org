@@ -606,7 +606,7 @@ def setup(app):
             nonlocal filled_until
 
             timestamp = pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(date, datetime.time(hour)), is_dst=None)
-            if filled_until is None or filled_until > timestamp:
+            if filled_until is not None and filled_until > timestamp:
                 return '' # this cell is already filled
             if timestamp < event.start or timestamp >= event.end:
                 return jinja2.Markup('<td style="background-color: #666666;"></td>')
