@@ -12,6 +12,10 @@ import os
 import pathlib
 import pymdownx.emoji
 import pymdownx.extra
+try:
+    import werewolf_web # extension for Werewolf games, closed-source to allow the admin to make relevant changes before a game without giving away information to players
+except ImportError:
+    werewolf_web = None
 
 import gefolge_web.event
 import gefolge_web.login
@@ -43,6 +47,8 @@ with app.app_context():
     gefolge_web.wiki.setup(app, md)
     gefolge_web.event.setup(app)
     gefolge_web.util.setup(app)
+    if werewolf_web is not None:
+        werewolf_web.setup(app)
 
 @app.route('/')
 @gefolge_web.util.template('index')
