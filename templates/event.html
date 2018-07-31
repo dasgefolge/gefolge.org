@@ -10,13 +10,14 @@
     <p>
         {% if event.signups | length > 0 %}
             {# Programmpunkte #}
-            {% if event.programm | length > 0 %}
-                Aktuell {% if event.programm | length == 1 %}ist{% else %}sind{% endif %} <a href="{{url_for('event_programm', event_id=event.event_id)}}">{% if event.programm | length == 1 %}ein Programmpunkt{% else %}{{event.programm | length}} Programmpunkte{% endif %}</a> geplant und
+            {% set num_programm = event.programm | selectattr('listed') | length %}
+            {% if num_programm > 0 %}
+                Aktuell {% if num_programm == 1 %}ist{% else %}sind{% endif %} <a href="{{url_for('event_programm', event_id=event.event_id)}}">{% if num_programm == 1 %}ein Programmpunkt{% else %}{{num_programm}} Programmpunkte{% endif %}</a> geplant und
             {% else %}
                 Aktuell {% if event.signups | length == 1 %}ist{% else %}sind{% endif %}
             {% endif %}
             {# Menschen #}
-            <a href="{{url_for('event_menschen', event_id=event.event_id)}}">{% if event.signups | length == 1 %}ein Mensch{% else %}{{event.signups | length}} Menschen{% endif %}</a> {% if event.programm | length > 1 and event.signups | length < 2 %}sind{% elif event.programm | length == 1 and event.signups | length > 1 %}ist{% endif %} angemeldet.
+            <a href="{{url_for('event_menschen', event_id=event.event_id)}}">{% if event.signups | length == 1 %}ein Mensch{% else %}{{event.signups | length}} Menschen{% endif %}</a> {% if num_programm > 1 and event.signups | length < 2 %}sind{% elif num_programm == 1 and event.signups | length > 1 %}ist{% endif %} angemeldet.
             {# freie Plätze #}
             {% if 'capacity' in event.location.data %}
                 {% set capacity = event.location.data['capacity'].value() %}
