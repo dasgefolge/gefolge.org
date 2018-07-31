@@ -116,7 +116,7 @@ class Programmpunkt:
 
     @property
     def description(self):
-        return self.data.get('description')
+        return self.data.get('description', '')
 
     @description.setter
     def description(self, value):
@@ -217,7 +217,7 @@ class Abendessen(Programmpunkt):
 
     @property
     def description(self):
-        return self.data.get('dinner')
+        return self.data.get('dinner', '')
 
     @description.setter
     def description(self, value):
