@@ -19,13 +19,15 @@
     <p>Dieser Programmpunkt wird von {{programmpunkt.orga | mention}} organisiert.</p>
     <h2>Beschreibung</h2>
     {{programmpunkt.description | markdown}}
-    <h2>{{programmpunkt.data.get('signupHeader', 'Interessiert')}}</h2>
-    <ul>
-        {% for person in programmpunkt.signups %}
-            <li>{{render_person(person)}}</li>
-        {% endfor %}
-    </ul>
-    {% if programmpunkt.can_signup(g.user, g.user) %}
-        <p><a href="{{url_for('event_programm_signup', event_id=event.event_id, name=programmpunkt.name, snowflake=g.user.snowflake)}}" class="btn btn-primary">{{programmpunkt.data.get('signupButton', 'Als interessiert markieren')}}</a></p>
+    {% if programmpunkt.listed %}
+        <h2>{{programmpunkt.data.get('signupHeader', 'Interessiert')}}</h2>
+        <ul>
+            {% for person in programmpunkt.signups %}
+                <li>{{render_person(person)}}</li>
+            {% endfor %}
+        </ul>
+        {% if programmpunkt.can_signup(g.user, g.user) %}
+            <p><a href="{{url_for('event_programm_signup', event_id=event.event_id, name=programmpunkt.name, snowflake=g.user.snowflake)}}" class="btn btn-primary">{{programmpunkt.data.get('signupButton', 'Als interessiert markieren')}}</a></p>
+        {% endif %}
     {% endif %}
 {% endblock %}
