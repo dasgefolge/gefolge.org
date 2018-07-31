@@ -188,7 +188,7 @@ class Programmpunkt:
 
 class Abendessen(Programmpunkt):
     def __new__(cls, event=None, name=None, *, event_id=None):
-        return object.__new__(cls, event=event, name=name, event_id=event_id)
+        return object.__new__(cls)
 
     def __init__(self, event=None, name=None, *, event_id=None):
         if isinstance(name, datetime.date):
