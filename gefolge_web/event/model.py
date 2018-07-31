@@ -408,13 +408,13 @@ class Event:
 
     @property
     def programm(self):
-        return sorted(itertools.chain(
+        return sorted(itertools.chain((
             Programmpunkt(self, name)
             for name in self.data['programm'].value()
         ), (
             Abendessen(self, date)
             for date in self.nights
-        ))
+        )))
 
     def signup(self, mensch):
         gefolge_web.util.log('eventConfirmSignup', {
