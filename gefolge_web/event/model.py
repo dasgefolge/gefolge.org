@@ -194,7 +194,7 @@ class Abendessen(Programmpunkt):
     def __init__(self, event=None, name=None, *, event_id=None):
         if isinstance(name, datetime.date):
             name = 'abendessen{:%Y-%m-%d}'.format(name)
-        super().__init__(self, event=event, name=name, event_id=event_id)
+        super().__init__(event=event, name=name, event_id=event_id)
         self.date = datetime.date(*map(int, re.fullmatch('abendessen([0-9]+)-([0-9]+)-([0-9]+)', self.name).groups()))
         self.name = 'abendessen{:%Y-%m-%d}'.format(self.date) # normalize name
 
