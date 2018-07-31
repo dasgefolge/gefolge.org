@@ -25,7 +25,7 @@
             {% endfor %}
         </tbody>
     </table>
-    {% set listed_programm = event.programm | selectattr('listed') %}
+    {% set listed_programm = event.programm | selectattr('listed') | list %}
     <p>Aktuell {% if listed_programm | length > 1 %}sind{% else %}ist{% endif %} {{listed_programm | length}} Programmpunkt{% if listed_programm | length > 1 %}e{% endif %} für <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a> geplant:</p>
     <table class="table table-responsive">
         <thead>
