@@ -1,4 +1,5 @@
 import functools
+import itertools
 import jinja2
 import lazyjson
 import pathlib
