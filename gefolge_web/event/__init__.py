@@ -74,7 +74,7 @@ def setup(app):
             'programm_add_form': programm_add_form
         }
 
-    @app.route('/event/<event_id>/calendar/all')
+    @app.route('/event/<event_id>/calendar/all.ics')
     @gefolge_web.login.member_required
     def event_calendar_all(event_id):
         event = gefolge_web.event.model.Event(event_id)
@@ -85,7 +85,7 @@ def setup(app):
         for programmpunkt in event.programm:
             if programmpunkt.start is not None and programmpunkt.end is not None:
                 cal.add_component(programmpunkt.to_ical())
-        return cal.to_ical()
+        return flask.Response(cal.to_ical(), mimetype='text/calendar')
 
     @app.route('/event/<event_id>/guest', methods=['GET', 'POST'])
     @gefolge_web.login.member_required
