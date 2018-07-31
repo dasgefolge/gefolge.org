@@ -80,7 +80,7 @@ def ProgrammEditForm(programmpunkt):
         orga = gefolge_web.forms.EventPersonField(programmpunkt.event, 'Orga', [validate_orga], allow_guests=False, default=programmpunkt.orga) #TODO disable (https://getbootstrap.com/docs/3.3/css/#forms-control-disabled) if not allowed to edit
         start = wtforms.DateTimeField('Beginn', [wtforms.validators.Optional()], format='%d.%m.%Y %H:%M', default=programmpunkt.start)
         end = wtforms.DateTimeField('Ende', [wtforms.validators.Optional()], format='%d.%m.%Y %H:%M', default=programmpunkt.end)
-        description = wtforms.TextAreaField('Beschreibung', default=programmpunkt.data['description'].value())
+        description = wtforms.TextAreaField('Beschreibung', default=programmpunkt.description)
 
     return Form()
 

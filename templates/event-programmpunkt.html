@@ -18,7 +18,7 @@
     </h1>
     <p>Dieser Programmpunkt wird von {{programmpunkt.orga | mention}} organisiert.</p>
     <h2>Beschreibung</h2>
-    {{programmpunkt.data['description'].value() | markdown}}
+    {{programmpunkt.description | markdown}}
     <h2>{{programmpunkt.data.get('signupHeader', 'Interessiert')}}</h2>
     <ul>
         {% for person in programmpunkt.signups %}
