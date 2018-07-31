@@ -63,11 +63,11 @@ class Location:
 
 @functools.total_ordering
 class Programmpunkt:
-    def __new__(self, event=None, name=None, *, event_id=None):
+    def __new__(cls, event=None, name=None, *, event_id=None):
         if re.fullmatch('abendessen[0-9]+-[0-9]+-[0-9]+', name):
             return Abendessen(event=event, name=name, event_id=event_id)
         else:
-            return super().__new__(self, event=event, name=name, event_id=event_id)
+            return super().__new__(cls)
 
     def __init__(self, event=None, name=None, *, event_id=None):
         # event can be specified by event or event_id argument
