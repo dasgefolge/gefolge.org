@@ -1,5 +1,6 @@
 import datetime
 import functools
+import icalendar
 import itertools
 import jinja2
 import lazyjson
@@ -187,6 +188,18 @@ class Programmpunkt:
     def start(self):
         if 'start' in self.data:
             del self.data['start']
+
+    def to_ical():
+        result = icalendar.Event()
+        result.add('summary', str(self))
+        result.add('dtstart', self.start)
+        result.add('dtend', self.end)
+        #TODO date created
+        #TODO date last modified
+        result.add('uid', 'gefolge-event-{}-{}@{}'.format(self.event, self.name, HOSTNAME))
+        result.add('location', str(self.event.location)) #TODO add support for Programm at different locations
+        #TODO URL to Programmpunkt web page
+        return result
 
 class Abendessen(Programmpunkt):
     def __new__(cls, event=None, name=None, *, event_id=None):

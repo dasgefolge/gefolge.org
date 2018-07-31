@@ -1,5 +1,6 @@
 import datetime
 import flask
+import icalendar
 import itertools
 import jinja2
 import math
@@ -72,6 +73,19 @@ def setup(app):
             'confirm_signup_form': confirm_signup_form,
             'programm_add_form': programm_add_form
         }
+
+    @app.route('/event/<event_id>/calendar/all')
+    @gefolge_web.login.member_required
+    def event_calendar_all(event_id):
+        event = gefolge_web.event.model.Event(event_id)
+        cal = icalendar.Calendar()
+        cal.add('prodid', '-//Gefolge//gefolge.org//DE')
+        cal.add('version', '1.0')
+        cal.add('x-wr-calname', str(event))
+        for programmpunkt in event.programm:
+            if programmpunkt.start is not None and programmpunkt.end is not None:
+                cal.add_component(programmpunkt.to_ical())
+        return cal.to_ical()
 
     @app.route('/event/<event_id>/guest', methods=['GET', 'POST'])
     @gefolge_web.login.member_required
