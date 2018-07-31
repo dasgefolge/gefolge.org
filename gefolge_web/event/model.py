@@ -229,7 +229,7 @@ class Abendessen(Programmpunkt):
 
     @property
     def end(self):
-        return datetime.datetime.combine(self.date, pytz.timezone('Europe/Berlin').localize(datetime.time(20))) #TODO make configurable
+        return pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(self.date, datetime.time(20))) #TODO make configurable
 
     @end.setter
     def end(self, value):
@@ -263,7 +263,7 @@ class Abendessen(Programmpunkt):
 
     @property
     def start(self):
-        return datetime.datetime.combine(self.date, pytz.timezone('Europe/Berlin').localize(datetime.time(19))) #TODO make configurable
+        return pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(self.date, datetime.time(19))) #TODO make configurable
 
     @start.setter
     def start(self, value):
