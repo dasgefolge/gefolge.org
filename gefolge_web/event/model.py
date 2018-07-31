@@ -196,7 +196,7 @@ class Programmpunkt:
         result.add('dtend', self.end)
         #TODO date created
         #TODO date last modified
-        result.add('uid', 'gefolge-event-{}-{}@gefolge.org'.format(self.event, self.name))
+        result.add('uid', 'gefolge-event-{}-{}@gefolge.org'.format(self.event.event_id, self.name))
         result.add('location', str(self.event.location)) #TODO add support for Programm at different locations
         #TODO URL to Programmpunkt web page
         return result

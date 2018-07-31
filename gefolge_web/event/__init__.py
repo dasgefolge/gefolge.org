@@ -80,7 +80,7 @@ def setup(app):
         event = gefolge_web.event.model.Event(event_id)
         cal = icalendar.Calendar()
         cal.add('prodid', '-//Gefolge//gefolge.org//DE')
-        cal.add('version', '1.0')
+        cal.add('version', '2.0')
         cal.add('x-wr-calname', str(event))
         for programmpunkt in event.programm:
             if programmpunkt.start is not None and programmpunkt.end is not None:
