@@ -114,7 +114,8 @@ class Programmpunkt:
     def description(self):
         return self.data.get('description')
 
-    @description.setter(self, value):
+    @description.setter
+    def description(self, value):
         self.data['description'] = value
 
     @property
@@ -214,7 +215,8 @@ class Abendessen(Programmpunkt):
     def description(self):
         return self.data.get('dinner')
 
-    @description.setter(self, value):
+    @description.setter
+    def description(self, value):
         if 'essen' not in self.event.data:
             self.event.data['essen'] = {}
         if '{:%Y-%m-%d}'.format(self.date) not in self.event.data['essen']:
