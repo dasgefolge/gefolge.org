@@ -189,7 +189,7 @@ class Programmpunkt:
         if 'start' in self.data:
             del self.data['start']
 
-    def to_ical():
+    def to_ical(self):
         result = icalendar.Event()
         result.add('summary', str(self))
         result.add('dtstart', self.start)
