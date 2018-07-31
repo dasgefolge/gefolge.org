@@ -74,7 +74,7 @@ def ProgrammEditForm(programmpunkt):
             return
         if flask.g.user == programmpunkt.event.orga('Essen' if isinstance(programmpunkt, gefolge_web.event.model.Abendessen) else 'Programm'):
             return
-        raise wtforms.validators.ValidationError('Bitte wende dich an {}, wenn du die Orga für diesen Programmpunkt abgeben möchtest.'.format(programmpunkt.event.orga('Essen' if isinstance(programmpunkt, gefolge_web.event.model.Abendessen) else 'Programm'))
+        raise wtforms.validators.ValidationError('Bitte wende dich an {}, wenn du die Orga für diesen Programmpunkt abgeben möchtest.'.format(programmpunkt.event.orga('Essen' if isinstance(programmpunkt, gefolge_web.event.model.Abendessen) else 'Programm')))
 
     class Form(flask_wtf.FlaskForm):
         orga = gefolge_web.forms.EventPersonField(programmpunkt.event, 'Orga', [validate_orga], allow_guests=False, default=programmpunkt.orga) #TODO disable (https://getbootstrap.com/docs/3.3/css/#forms-control-disabled) if not allowed to edit
