@@ -7,6 +7,7 @@ import more_itertools
 import pytz
 import re
 
+import gefolge_web.event.forms
 import gefolge_web.event.model
 import gefolge_web.login
 import gefolge_web.util
