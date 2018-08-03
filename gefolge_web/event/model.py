@@ -242,13 +242,20 @@ class Abendessen(Programmpunkt):
 
     @property
     def end(self):
-        return pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(self.date, datetime.time(20))) #TODO make configurable
+        if 'dinnerEnd' in self.data:
+            return gefolge_web.util.parse_iso_datetime(self.data['dinnerEnd'])
+        else:
+            return self.start + datetime.timedelta(hours=1)
 
     @end.setter
     def end(self, value):
-        if value is None or value == self.end:
-            return
-        raise NotImplementedError('Abendessenzeiten können noch nicht geändert werden') #TODO
+        if value is None:
+            del self.end
+        if 'essen' not in self.event.data:
+            self.event.data['essen'] = {}
+        if '{:%Y-%m-%d}'.format(self.date) not in self.event.data['essen']:
+            self.event.data['essen']['{:%Y-%m-%d}'.format(self.date)] = {}
+        self.event.data['essen']['{:%Y-%m-%d}'.format(self.date)]['dinnerEnd'] = '{:%Y-%m-%d %H:%M:%S}'.format(value)
 
     @end.deleter
     def end(self):
@@ -276,13 +283,20 @@ class Abendessen(Programmpunkt):
 
     @property
     def start(self):
-        return pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(self.date, datetime.time(19))) #TODO make configurable
+        if 'dinnerStart' in self.data:
+            return gefolge_web.util.parse_iso_datetime(self.data['dinnerStart'])
+        else:
+            return pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(self.date, datetime.time(19)))
 
     @start.setter
     def start(self, value):
-        if value is None or value == self.start:
-            return
-        raise NotImplementedError('Abendessenzeiten können noch nicht geändert werden') #TODO
+        if value is None:
+            del self.start
+        if 'essen' not in self.event.data:
+            self.event.data['essen'] = {}
+        if '{:%Y-%m-%d}'.format(self.date) not in self.event.data['essen']:
+            self.event.data['essen']['{:%Y-%m-%d}'.format(self.date)] = {}
+        self.event.data['essen']['{:%Y-%m-%d}'.format(self.date)]['dinnerStart'] = '{:%Y-%m-%d %H:%M:%S}'.format(value)
 
     @start.deleter
     def start(self):
