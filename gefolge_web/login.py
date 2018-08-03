@@ -32,7 +32,7 @@ class Mensch(flask_login.UserMixin):
         return 'gefolge_web.login.Mensch({!r})'.format(self.snowflake)
 
     def __str__(self):
-        return '{}#{:04}'.format(self.data['username'], self.data['discriminator'])
+        return '{}#{}'.format(self.data['username'], self.discrim)
 
     @property
     def data(self):
@@ -53,6 +53,13 @@ class Mensch(flask_login.UserMixin):
     @property
     def is_guest(self):
         return False
+
+    @property
+    def long_name(self):
+        if self.data.get('nick') is None:
+            return str(self)
+        else:
+            return '{} ({})'.format(self.data['nick'], self)
 
     @property
     def name(self):

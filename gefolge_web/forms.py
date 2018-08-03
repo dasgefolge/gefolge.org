@@ -39,7 +39,7 @@ class EventPersonField(wtforms.SelectField):
     def __init__(self, event, label, validators=[], *, allow_guests=True, **kwargs):
         self.event = event
         self.allow_guests = allow_guests
-        super().__init__(label, validators, choices=[(person.snowflake, str(person)) for person in self.people], **kwargs)
+        super().__init__(label, validators, choices=[(person.snowflake, person.long_name) for person in self.people], **kwargs)
 
     @property
     def people(self):
@@ -50,7 +50,7 @@ class EventPersonField(wtforms.SelectField):
 
     def iter_choices(self):
         for person in self.people:
-            yield person.snowflake, str(person), person == self.data
+            yield person.snowflake, person.long_name, person == self.data
 
     def process_data(self, value):
         try:
