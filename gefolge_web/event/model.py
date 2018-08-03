@@ -246,7 +246,7 @@ class Abendessen(Programmpunkt):
 
     @end.setter
     def end(self, value):
-        if value == self.end:
+        if value is None or value == self.end:
             return
         raise NotImplementedError('Abendessenzeiten können noch nicht geändert werden') #TODO
 
@@ -280,7 +280,7 @@ class Abendessen(Programmpunkt):
 
     @start.setter
     def start(self, value):
-        if value == self.start:
+        if value is None or value == self.start:
             return
         raise NotImplementedError('Abendessenzeiten können noch nicht geändert werden') #TODO
 
@@ -430,6 +430,7 @@ class Event:
             Abendessen(self, date)
             for date in self.nights
         )))
+        #TODO rtww-Abstimmungen
 
     def signup(self, mensch):
         gefolge_web.util.log('eventConfirmSignup', {
