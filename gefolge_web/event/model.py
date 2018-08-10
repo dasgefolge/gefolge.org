@@ -471,7 +471,8 @@ class Event:
         })
         self.data['menschen'].append({
             'id': guest_id,
-            'name': guest_name
+            'name': guest_name,
+            'via': mensch.snowflake
         })
         return Guest(self, guest_id)
 
