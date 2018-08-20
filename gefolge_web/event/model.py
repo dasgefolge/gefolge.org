@@ -457,7 +457,7 @@ class Event:
             'signup': '{:%Y-%m-%d %H:%M:%S}'.format(gefolge_web.util.now()) #TODO Datum der Überweisung verwenden
         })
         if 'role' in self.data:
-            peter.bot_command(['add-role', str(mensch.snowflake), str(self.data['role'])])
+            peter.bot_cmd(['add-role', str(mensch.snowflake), str(self.data['role'])])
 
     def signup_guest(self, mensch, guest_name):
         if any(str(guest) == guest_name for guest in self.guests):
