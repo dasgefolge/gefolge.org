@@ -64,9 +64,9 @@
         {% elif event.end > g.now or g.user.is_admin %}
             <p><a href="{{url_for('event_guest_form', event_id=event.event_id)}}">Gast anmelden</a></p>
         {% endif %}
-        {% if event.attendee_data(g.user).get('orga', []) | length > 0 %}
+        {% if g.user.is_admin or event.attendee_data(g.user).get('orga', []) | length > 0 %}
             <h1 id="orga">Orga</h1>
-            {% if event.orga('Abrechnung') == g.user %}
+            {% if g.user.is_admin or event.orga('Abrechnung') == g.user %}
                 <h2>Abrechnung</h2>
                 {% if 'konto' in event.attendee_data(g.user) %}
                     <p>Bitte überprüfe regelmäßig dein Konto {{event.attendee_data(g.user)['konto']['iban']}} auf Anzahlungen.</p>
@@ -75,11 +75,11 @@
                     <p>Um die Anmeldungen zu eröffnen, gib bitte {{config['web']['admin'] | mention}} deine Kontodaten.</p>
                 {% endif %}
             {% endif %}
-            {% if event.orga('Buchung') == g.user %}
+            {% if g.user.is_admin or event.orga('Buchung') == g.user %}
                 <h2>Buchung</h2>
                 <p>Coming soon™</p> {#TODO#}
             {% endif %}
-            {% if event.orga('Essen') == g.user %}
+            {% if g.user.is_admin or event.orga('Essen') == g.user %}
                 <h2>Essen</h2>
                 <ul>
                     {% for date in event.nights %}
@@ -88,12 +88,12 @@
                     {% endfor %}
                 </ul>
             {% endif %}
-            {% if event.orga('Programm') == g.user %}
+            {% if g.user.is_admin or event.orga('Programm') == g.user %}
                 <h2>Programm</h2>
                 <h3>Programmpunkt erstellen</h3>
                 {{gen_form(programm_add_form, url_for('event_page', event_id=event.event_id))}}
             {% endif %}
-            {% if event.orga('Schlüssel') == g.user %}
+            {% if g.user.is_admin or event.orga('Schlüssel') == g.user %}
                 <h2>Schlüssel</h2>
                 <p>Coming soon™</p> {#TODO#}
             {% endif %}
