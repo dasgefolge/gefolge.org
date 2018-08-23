@@ -444,6 +444,8 @@ class Event:
     def person(self, snowflake):
         if hasattr(snowflake, 'snowflake'):
             snowflake = snowflake.snowflake
+        if snowflake is None:
+            return None
         if int(snowflake) < 100:
             result = Guest(self, snowflake)
         else:
