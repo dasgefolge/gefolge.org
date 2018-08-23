@@ -101,9 +101,17 @@ class Programmpunkt:
         return self.name
 
     def can_edit(self, editor):
+        if editor == gefolge_web.login.Mensch.admin():
+            return True # always allow the admin to edit since they have write access to the database anyway
+        if self.event.end < gefolge_web.util.now():
+            return False # event frozen
         return self.orga == editor or self.event.orga('Programm') == editor
 
     def can_signup(self, editor, person):
+        if editor == gefolge_web.login.Mensch.admin():
+            return True # always allow the admin to edit since they have write access to the database anyway
+        if self.event.end < gefolge_web.util.now():
+            return False # event frozen
         return (
             (editor == person or editor == self.event.orga('Programm'))
             and person in self.event.signups
@@ -220,9 +228,15 @@ class Abendessen(Programmpunkt):
         return 'Abendessen'
 
     def can_edit(self, editor):
+        if editor == gefolge_web.login.Mensch.admin():
+            return True # always allow the admin to edit since they have write access to the database anyway
+        if self.event.end < gefolge_web.util.now():
+            return False # event frozen
         return self.orga == editor or self.event.orga('Essen') == editor
 
     def can_signup(self, editor, person):
+        if editor == gefolge_web.login.Mensch.admin():
+            return True # always allow the admin to edit since they have write access to the database anyway
         return False
 
     @property
@@ -344,6 +358,8 @@ class Event:
             return gefolge_web.util.Euro()
 
     def can_edit(self, editor, profile):
+        if editor == gefolge_web.login.Mensch.admin():
+            return True # always allow the admin to edit since they have write access to the database anyway
         editor_data = self.attendee_data(editor)
         if editor_data is None:
             # wer nicht angemeldet ist, darf nichts bearbeiten

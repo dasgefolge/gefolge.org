@@ -8,12 +8,19 @@ import lazyjson
 import pathlib
 import urllib.parse
 
+import gefolge_web.util
+
 MENSCHEN = 386753710434287626 # role ID
 PROFILES_ROOT = pathlib.Path('/usr/local/share/fidera/profiles')
 
 class Mensch(flask_login.UserMixin):
     def __init__(self, snowflake):
         self.snowflake = int(snowflake)
+
+    @classmethod
+    def admin(cls):
+        with gefolge_web.util.CONFIG_PATH.open() as config_f:
+            return cls(json.load(config_f)['web']['admin'])
 
     @classmethod
     def get(cls, user_id):

@@ -22,7 +22,6 @@ import gefolge_web.login
 import gefolge_web.util
 import gefolge_web.wiki
 
-CONFIG_PATH = pathlib.Path('/usr/local/share/fidera/config.json')
 DOCUMENT_ROOT = os.environ.get('FLASK_ROOT_PATH', '/opt/git/github.com/dasgefolge/gefolge.org/master')
 
 app = application = flask.Flask('gefolge_web', root_path=DOCUMENT_ROOT, instance_path=DOCUMENT_ROOT)
@@ -30,8 +29,8 @@ app = application = flask.Flask('gefolge_web', root_path=DOCUMENT_ROOT, instance
 with app.app_context():
     app.url_map.strict_slashes = False
     # load config
-    if CONFIG_PATH.exists():
-        with CONFIG_PATH.open() as config_f:
+    if gefolge_web.util.CONFIG_PATH.exists():
+        with gefolge_web.util.CONFIG_PATH.open() as config_f:
             app.config.update(json.load(config_f))
     # set up Bootstrap
     flask_bootstrap.Bootstrap(app)

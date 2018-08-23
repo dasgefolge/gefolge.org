@@ -12,6 +12,7 @@ import pathlib
 import pytz
 import re
 
+CONFIG_PATH = pathlib.Path('/usr/local/share/fidera/config.json')
 EDIT_LOG = lazyjson.File('/usr/local/share/fidera/log.json')
 PARAGRAPH_RE = re.compile(r'(?:\r\n|\r|\n){2,}')
 
