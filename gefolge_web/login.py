@@ -147,7 +147,7 @@ def setup(app):
             flask.flash('Login fehlgeschlagen.', 'error')
         next_url = flask.session.get('next')
         if next_url is None:
-            return flask.redirect(flask.url_for('me' if flask_dance.contrib.discord.discord.authorized else 'discord.login'))
+            return flask.redirect(flask.url_for('index'))
         elif is_safe_url(next_url):
             return flask.redirect(next_url)
         else:
