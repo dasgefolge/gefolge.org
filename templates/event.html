@@ -84,7 +84,7 @@
                 <ul>
                     {% for date in event.nights %}
                         {% set date_info = event.essen(date) %}
-                        <li>{{date | dm}}: {% if date_info.description == '' %}noch nicht eingetragen{% else %}{{date_info.description}}{% endif %} (Orga: {{date_info.orga | mention}}) — <a href="{{url_for('event_programmpunkt_edit', event_id=event.event_id, name='abendessen{:%Y-%m-%d}'.format(date))}}">bearbeiten</a></li>
+                        <li>{{date | dm}}: {% if date_info.description == '' %}noch nicht eingetragen{% else %}{{date_info.description}}{% endif %} (Orga: {% if date_info.orga is none %}noch nicht eingetragen{% else %}{{date_info.orga | mention}}{% endif %}) — <a href="{{url_for('event_programmpunkt_edit', event_id=event.event_id, name='abendessen{:%Y-%m-%d}'.format(date))}}">bearbeiten</a></li>
                     {% endfor %}
                 </ul>
             {% endif %}
