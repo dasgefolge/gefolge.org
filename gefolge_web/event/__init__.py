@@ -53,7 +53,7 @@ def setup(app):
                 event.signup(mensch)
             return flask.redirect(flask.url_for('event_page', event_id=event_id))
         programm_add_form = gefolge_web.event.forms.ProgrammAddForm(event)
-        if programm_add_form.submit_programm_add_form and programm_add_form.validate():
+        if programm_add_form.submit_programm_add_form.data and programm_add_form.validate():
             gefolge_web.util.log('eventProgrammAdd', {
                 'event': event_id,
                 'orga': programm_add_form.orga.data.snowflake,
