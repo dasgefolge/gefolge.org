@@ -8,7 +8,7 @@
         <a href="{{url_for('event_programmpunkt', event_id=event.event_id, name=programmpunkt.name)}}" class="btn btn-danger">Abbrechen</a>
     </h1>
     {% if programmpunkt.can_edit(g.user) %}
-        {{gen_form(programm_edit_form, 'edit-programmpunkt', 'Speichern', url_for('event_programmpunkt_edit', event_id=event.event_id, name=programmpunkt.name))}}
+        {{gen_form(programm_edit_form, url_for('event_programmpunkt_edit', event_id=event.event_id, name=programmpunkt.name))}}
     {% else %}
         <p>Du bist nicht berechtigt, diesen Programmpunkt zu bearbeiten.</p>
     {% endif %}

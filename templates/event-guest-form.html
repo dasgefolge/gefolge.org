@@ -24,7 +24,7 @@
                     <li>Wir können erst buchen, wenn die Ausfallgebühr von {{event.ausfall}} gesichert ist. Dazu fehlen noch {{(event.ausfall.value / event.anzahlung.value - (event.signups | length)) | round(0, 'ceil') | int}} Anmeldungen.</li>
                 {% endif %}
             </ul>
-            {{gen_form(signup_guest_form, 'signup-guest', 'Weiter', url_for('event_guest_form', event_id=event.event_id))}}
+            {{gen_form(signup_guest_form, url_for('event_guest_form', event_id=event.event_id))}}
         {% else %}
             <p>Bevor du das tun kannst, musst du dich erst <a href="{{url_for('event_page', event_id=event.event_id, _anchor='signup')}}">selbst anmelden</a>.</p>
         {% endif %}

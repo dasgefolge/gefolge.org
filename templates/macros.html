@@ -90,7 +90,7 @@
     </div>
 {% endmacro %}
 
-{% macro gen_form(form, submit_value, submit_label, post_url) %}
+{% macro gen_form(form, post_url) %}
     <form class="form-horizontal" method="POST" role="form" action="{{post_url}}">
         {{form.hidden_tag()}}
         {% for field in form %}
@@ -98,10 +98,5 @@
                 {{gen_field(form, field)}}
             {% endif %}
         {% endfor %}
-        <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
-                <button type="submit" class="btn btn-primary" value="{{submit_value}}" name="save">{{submit_label}}</button>
-            </div>
-        </div>
     </form>
 {% endmacro %}

@@ -39,7 +39,7 @@ def setup(app):
     def event_page(event_id):
         event = gefolge_web.event.model.Event(event_id)
         confirm_signup_form = gefolge_web.event.forms.ConfirmSignupForm(event)
-        if confirm_signup_form.validate_on_submit():
+        if confirm_signup_form.submit_confirm_signup_form.data and confirm_signup_form.validate():
             snowflake = int(re.fullmatch('Anzahlung {} ([0-9]+)'.format(event_id), confirm_signup_form.verwendungszweck.data).group(1))
             if snowflake < 100:
                 guest = gefolge_web.event.model.Guest(event, snowflake)
@@ -53,7 +53,7 @@ def setup(app):
                 event.signup(mensch)
             return flask.redirect(flask.url_for('event_page', event_id=event_id))
         programm_add_form = gefolge_web.event.forms.ProgrammAddForm(event)
-        if programm_add_form.validate_on_submit():
+        if programm_add_form.submit_programm_add_form and programm_add_form.validate():
             gefolge_web.util.log('eventProgrammAdd', {
                 'event': event_id,
                 'orga': programm_add_form.orga.data.snowflake,
@@ -93,7 +93,7 @@ def setup(app):
     def event_guest_form(event_id):
         event = gefolge_web.event.model.Event(event_id)
         signup_guest_form = gefolge_web.event.forms.SignupGuestForm(event)
-        if signup_guest_form.validate_on_submit():
+        if signup_guest_form.submit_signup_guest_form.data and signup_guest_form.validate():
             guest_name = signup_guest_form.name.data.strip()
             guest = event.signup_guest(flask.g.user, guest_name)
             return flask.render_template('event-guest-confirm.html', event=event, guest=guest)
@@ -139,7 +139,7 @@ def setup(app):
             flask.flash('Du bist nicht berechtigt, dieses Profil zu bearbeiten.')
             return flask.redirect(flask.url_for('event_profile', event_id=event_id, snowflake=snowflake))
         profile_form = gefolge_web.event.forms.ProfileForm(event, person)
-        if profile_form.validate_on_submit():
+        if profile_form.submit_profile_form.data and profile_form.validate():
             person_data = event.attendee_data(person)
             gefolge_web.util.log('eventProfileEdit', {
                 'event': event_id,
@@ -226,7 +226,7 @@ def setup(app):
             flask.flash('Du bist nicht berechtigt, diesen Programmpunkt zu bearbeiten.')
             return flask.redirect(flask.url_for('event_programmpunkt', event_id=event_id, name=name))
         programm_edit_form = gefolge_web.event.forms.ProgrammEditForm(programmpunkt)
-        if programm_edit_form.validate_on_submit():
+        if programm_edit_form.submit_programm_edit_form.data and programm_edit_form.validate():
             gefolge_web.util.log('eventProgrammEdit', {
                 'event': event_id,
                 'programmpunkt': name,
@@ -258,7 +258,7 @@ def setup(app):
             flask.flash('Du bist nicht berechtigt, diesen Programmpunkt zu löschen.')
             return flask.redirect(flask.url_for('event_programmpunkt', event_id=event_id, name=name))
         programm_delete_form = gefolge_web.event.forms.ProgrammDeleteForm(programmpunkt)
-        if programm_delete_form.validate_on_submit():
+        if programm_delete_form.submit_programm_delete_form.data and programm_delete_form.validate():
             gefolge_web.util.log('eventProgrammDelete', {
                 'event': event_id,
                 'programmpunkt': name

@@ -29,6 +29,7 @@ def ConfirmSignupForm(event):
     class Form(flask_wtf.FlaskForm):
         betrag = gefolge_web.forms.EuroField('Betrag', [wtforms.validators.InputRequired(), wtforms.validators.NumberRange(min=event.anzahlung, max=event.anzahlung)])
         verwendungszweck = wtforms.StringField('Verwendungszweck', [validate_verwendungszweck])
+        submit_confirm_signup_form = wtforms.SubmitField('Anzahlung bestätigen')
 
     return Form()
 
@@ -54,6 +55,8 @@ def ProfileForm(event, person):
         default=person_data.get('food', {}).get('animalProducts', 'yes')
     )
     Form.allergies = wtforms.TextAreaField('Allergien, Unverträglichkeiten', default=person_data.get('food', {}).get('allergies', ''))
+
+    Form.submit_profile_form = wtforms.SubmitField('Speichern')
     return Form()
 
 def ProgrammAddForm(event):
@@ -65,6 +68,7 @@ def ProgrammAddForm(event):
         ])
         orga = gefolge_web.forms.EventPersonField(event, 'Orga', allow_guests=False, default=flask.g.user)
         description = wtforms.TextAreaField('Beschreibung')
+        submit_programm_add_form = wtforms.SubmitField('Programmpunkt erstellen')
 
     return Form()
 
@@ -81,11 +85,12 @@ def ProgrammEditForm(programmpunkt):
         start = wtforms.DateTimeField('Beginn', [wtforms.validators.Optional()], format='%d.%m.%Y %H:%M', default=programmpunkt.start)
         end = wtforms.DateTimeField('Ende', [wtforms.validators.Optional()], format='%d.%m.%Y %H:%M', default=programmpunkt.end)
         description = wtforms.TextAreaField('Beschreibung', default=programmpunkt.description)
+        submit_programm_edit_form = wtforms.SubmitField('Speichern')
 
     return Form()
 
 class ProgrammDeleteForm(flask_wtf.FlaskForm):
-    pass
+    submit_programm_delete_form = wtforms.SubmitField('Löschen')
 
 def SignupGuestForm(event):
     def validate_guest_name(form, field):
@@ -95,5 +100,6 @@ def SignupGuestForm(event):
 
     class Form(flask_wtf.FlaskForm):
         name = wtforms.StringField('Name', [wtforms.validators.DataRequired(), validate_guest_name])
+        submit_signup_guest_form = wtforms.SubmitField('Weiter')
 
     return Form()
