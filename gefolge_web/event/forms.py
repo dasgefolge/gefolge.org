@@ -5,6 +5,7 @@ import re
 import wtforms
 import wtforms.validators
 
+import gefolge_web.event.model
 import gefolge_web.forms
 import gefolge_web.login
 
@@ -14,7 +15,7 @@ def ConfirmSignupForm(event):
         if not match:
             raise wtforms.validators.ValidationError('Verwendungszweck ist keine Anzahlung für dieses event.')
         if len(match.group(1)) < 3:
-            guest = Guest(event, match.group(1))
+            guest = gefolge_web.event.model.Guest(event, match.group(1))
             if guest not in event.guests:
                 raise wtforms.validators.ValidationError('Es ist kein Gast mit dieser Nummer für dieses event eingetragen.')
             if guest in event.signups:
