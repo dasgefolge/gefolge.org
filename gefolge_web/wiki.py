@@ -31,8 +31,9 @@ def setup(app, md):
     @app.route('/wiki')
     @gefolge_web.login.member_required
     @gefolge_web.util.path('wiki')
+    @gefolge_web.util.template('wiki-index')
     def wiki_index():
-        raise NotImplementedError() #TODO
+        {}
 
     @app.route('/wiki/<article_name>')
     @gefolge_web.login.member_required

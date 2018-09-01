@@ -8,7 +8,7 @@
     <div><img style="max-width: 100%; max-height: 500px;" src="{{url_for('.static', filename='gefolge.png')}}" /></div>
     {% if g.user.is_active %}
         <p>Du bist als {{g.user | mention}} angemeldet.</p>
-        <p><a href="{{url_for('events_index')}}">events</a> • <a href="{{url_for('games_index')}}">Spiele</a> • <a href="{{url_for('menschen')}}">Menschen</a> • <a href="//wiki.gefolge.org/">wiki</a></p>
+        <p><a href="{{url_for('events_index')}}">events</a> • <a href="{{url_for('games_index')}}">Spiele</a> • <a href="{{url_for('menschen')}}">Menschen</a> • <a href="{{url_for('wiki_index')}}">wiki</a></p>
     {% else %}
         <p>Das <b><a href="//wiki.gefolge.org/Gefolge">Gefolge</a></b> ist eine lose Gruppe von <a href="//wiki.gefolge.org/Mensch">Menschen</a> und <a href="//wiki.gefolge.org/Benutzer:Xor">anderen Lebewesen</a>, die sich größtenteils über die <a href="//wiki.gefolge.org/Camp">Mensa Juniors Camps</a> kennen.</p>
         <p>Wir haben ein <a href="//wiki.gefolge.org/">Wiki</a> und einen <a href="https://discordapp.com/">Discord</a> server (Einladung für Gefolgemenschen auf Anfrage).</p>
