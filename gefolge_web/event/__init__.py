@@ -25,11 +25,11 @@ def setup(app):
     @gefolge_web.util.path(('event', 'events'))
     @gefolge_web.util.template('event.index')
     def events_index():
+        now = gefolge_web.util.now()
+        future_events, past_events = more_itertools.partition(lambda event: event.end is not None and event.end < now, gefolge_web.event.model.Event)
         return {
-            'events_list': sorted(
-                gefolge_web.event.model.Event(event_path.stem)
-                for event_path in gefolge_web.event.model.EVENTS_ROOT.iterdir()
-            )
+            'future_events': sorted(future_events),
+            'past_events': sorted(past_events, reverse=True)
         }
 
     @app.route('/event/<event_id>', methods=['GET', 'POST'])

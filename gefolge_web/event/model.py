@@ -317,8 +317,16 @@ class Abendessen(Programmpunkt):
     def start(self):
         raise TypeError('Abendessenzeiten können nicht gelöscht werden')
 
+class EventMeta(type):
+    def __iter__(self):
+        # iterating over the Event class yields all events
+        return iter(sorted(
+            Event(event_path.stem)
+            for event_path in EVENTS_ROOT.iterdir()
+        ))
+
 @functools.total_ordering
-class Event:
+class Event(metaclass=EventMeta):
     def __init__(self, event_id):
         self.event_id = event_id
 
