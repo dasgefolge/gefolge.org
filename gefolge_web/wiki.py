@@ -39,10 +39,13 @@ def setup(app, md):
     @gefolge_web.util.path(lambda article_name: article_name, wiki_index)
     @gefolge_web.util.template('wiki')
     def wiki_article(article_name):
+        source = get_article_source('wiki', article_name)
+        if source is None:
+            flask.abort(404)
         return {
             'article_name': article_name,
             'article_namespace': 'wiki',
-            'article_source': get_article_source('wiki', article_name)
+            'article_source': source
         }
 
 def get_article_source(namespace, article_name):

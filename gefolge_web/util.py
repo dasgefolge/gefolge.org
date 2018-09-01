@@ -1,3 +1,4 @@
+import contextlib
 import copy
 import datetime
 import decimal
@@ -11,10 +12,19 @@ import more_itertools
 import pathlib
 import pytz
 import re
+import subprocess
+import traceback
 
 CONFIG_PATH = pathlib.Path('/usr/local/share/fidera/config.json')
 EDIT_LOG = lazyjson.File('/usr/local/share/fidera/log.json')
 PARAGRAPH_RE = re.compile(r'(?:\r\n|\r|\n){2,}')
+
+CRASH_NOTICE = """To: fenhl@fenhl.net
+From: {}@{}
+Subject: gefolge.org internal server error
+
+An internal server error occurred on gefolge.org
+"""
 
 @functools.total_ordering
 class Euro:
@@ -79,6 +89,14 @@ def log(event_type, event):
     event['type'] = event_type
     EDIT_LOG.append(event)
 
+def notify_crash(exc=None):
+    whoami = subprocess.run(['whoami'], stdout=subprocess.PIPE, check=True).stdout.decode('utf-8').strip()
+    hostname = subprocess.run(['hostname', '-f'], stdout=subprocess.PIPE, check=True).stdout.decode('utf-8').strip()
+    mail_text = CRASH_NOTICE.format(whoami, hostname)
+    if exc is not None:
+        mail_text += '\n' + traceback.format_exc()
+    return subprocess.run(['ssmtp', 'fenhl@fenhl.net'], input=mail_text.encode('utf-8'), check=True)
+
 def now(tz=pytz.timezone('Europe/Berlin')):
     return pytz.utc.localize(datetime.datetime.utcnow()).astimezone(tz)
 
@@ -123,6 +141,12 @@ def path(name, parent=None):
     return decorator
 
 def setup(app):
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        with contextlib.suppress(Exception):
+            notify_crash(e)
+        return 'Internal Server Error', 500
+
     @app.template_filter()
     def dm(value):
         if isinstance(value, lazyjson.Node):

@@ -81,5 +81,5 @@ def menschen():
 def profile(snowflake):
     mensch = gefolge_web.login.Mensch(snowflake)
     if not mensch.is_active:
-        return flask.make_response(('Dieser Discord account existiert nicht oder ist nicht im Gefolge.', 404, []))
+        flask.abort(404)
     return {'mensch': mensch}
