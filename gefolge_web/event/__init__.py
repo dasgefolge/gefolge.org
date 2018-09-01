@@ -23,7 +23,7 @@ def setup(app):
     @app.route('/event')
     @gefolge_web.login.member_required
     @gefolge_web.util.path(('event', 'events'))
-    @gefolge_web.util.template('events-index')
+    @gefolge_web.util.template('event.index')
     def events_index():
         return {
             'events_list': sorted(
@@ -35,7 +35,7 @@ def setup(app):
     @app.route('/event/<event_id>', methods=['GET', 'POST'])
     @gefolge_web.login.member_required
     @gefolge_web.util.path(gefolge_web.event.model.Event, events_index)
-    @gefolge_web.util.template('event')
+    @gefolge_web.util.template('event.overview')
     def event_page(event_id):
         event = gefolge_web.event.model.Event(event_id)
         confirm_signup_form = gefolge_web.event.forms.ConfirmSignupForm(event)
@@ -96,9 +96,9 @@ def setup(app):
         if signup_guest_form.submit_signup_guest_form.data and signup_guest_form.validate():
             guest_name = signup_guest_form.name.data.strip()
             guest = event.signup_guest(flask.g.user, guest_name)
-            return flask.render_template('event-guest-confirm.html', event=event, guest=guest)
+            return flask.render_template('event.guest-confirm.html', event=event, guest=guest)
         else:
-            return flask.render_template('event-guest-form.html', event=event, signup_guest_form=signup_guest_form)
+            return flask.render_template('event.guest-form.html', event=event, signup_guest_form=signup_guest_form)
 
     @app.route('/event/<event_id>/me')
     @gefolge_web.login.member_required
@@ -113,14 +113,14 @@ def setup(app):
     @app.route('/event/<event_id>/mensch')
     @gefolge_web.login.member_required
     @gefolge_web.util.path(('mensch', 'Menschen'), event_page)
-    @gefolge_web.util.template('event-menschen')
+    @gefolge_web.util.template('event.menschen')
     def event_menschen(event_id):
         return {'event': gefolge_web.event.model.Event(event_id)}
 
     @app.route('/event/<event_id>/mensch/<snowflake>')
     @gefolge_web.login.member_required
     @gefolge_web.util.path(lambda event_id, snowflake: gefolge_web.event.model.Event(event_id).person(snowflake), event_menschen)
-    @gefolge_web.util.template('event-profile')
+    @gefolge_web.util.template('event.profile')
     def event_profile(event_id, snowflake):
         event = gefolge_web.event.model.Event(event_id)
         return {
@@ -131,7 +131,7 @@ def setup(app):
     @app.route('/event/<event_id>/mensch/<snowflake>/edit', methods=['GET', 'POST'])
     @gefolge_web.login.member_required
     @gefolge_web.util.path(('edit', 'bearbeiten'), event_profile)
-    @gefolge_web.util.template('event-profile-edit')
+    @gefolge_web.util.template('event.profile-edit')
     def event_profile_edit(event_id, snowflake):
         event = gefolge_web.event.model.Event(event_id)
         person = event.person(snowflake)
@@ -172,7 +172,7 @@ def setup(app):
     @app.route('/event/<event_id>/programm')
     @gefolge_web.login.member_required
     @gefolge_web.util.path(('programm', 'Programm'), event_page)
-    @gefolge_web.util.template('event-programm')
+    @gefolge_web.util.template('event.programm')
     def event_programm(event_id):
         event = gefolge_web.event.model.Event(event_id)
         programm = event.programm
@@ -207,7 +207,7 @@ def setup(app):
     @app.route('/event/<event_id>/programm/<name>')
     @gefolge_web.login.member_required
     @gefolge_web.util.path(gefolge_web.event.model.Programmpunkt, event_programm)
-    @gefolge_web.util.template('event-programmpunkt')
+    @gefolge_web.util.template('event.programmpunkt')
     def event_programmpunkt(event_id, name):
         event = gefolge_web.event.model.Event(event_id)
         return {
@@ -218,7 +218,7 @@ def setup(app):
     @app.route('/event/<event_id>/programm/<name>/edit', methods=['GET', 'POST'])
     @gefolge_web.login.member_required
     @gefolge_web.util.path(('edit', 'bearbeiten'), event_programmpunkt)
-    @gefolge_web.util.template('event-programmpunkt-edit')
+    @gefolge_web.util.template('event.programmpunkt-edit')
     def event_programmpunkt_edit(event_id, name):
         event = gefolge_web.event.model.Event(event_id)
         programmpunkt = gefolge_web.event.model.Programmpunkt(event, name)
@@ -250,7 +250,7 @@ def setup(app):
     @app.route('/event/<event_id>/programm/<name>/delete', methods=['GET', 'POST'])
     @gefolge_web.login.member_required
     @gefolge_web.util.path(('delete', 'löschen'), event_programmpunkt)
-    @gefolge_web.util.template('event-programmpunkt-delete')
+    @gefolge_web.util.template('event.programmpunkt-delete')
     def event_programmpunkt_delete(event_id, name):
         event = gefolge_web.event.model.Event(event_id)
         programmpunkt = gefolge_web.event.model.Programmpunkt(event, name)

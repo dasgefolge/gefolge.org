@@ -5,7 +5,8 @@
 {% block page_content %}
     <h1>Menschen</h1>
     <ul>
-    {% for mensch in menschen_list %}
-        <li>{{mensch | mention}}</li>
-    {% endfor %}
+        {% for mensch in menschen_list %}
+            <li>{{mensch | mention}}</li>
+        {% endfor %}
+    </ul>
 {% endblock %}

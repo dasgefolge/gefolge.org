@@ -45,9 +45,10 @@ with app.app_context():
     gefolge_web.login.setup(app)
     gefolge_web.wiki.setup(app, md)
     gefolge_web.event.setup(app)
+    games_index = gefolge_web.games.setup(app)
     gefolge_web.util.setup(app)
     if werewolf_web is not None:
-        werewolf_web.setup(app)
+        werewolf_web.setup(app, games_index)
 
 @app.route('/')
 @gefolge_web.util.template('index')
