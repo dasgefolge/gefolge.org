@@ -213,14 +213,14 @@ def setup(app):
         event = gefolge_web.event.model.Event(event_id)
         programmpunkt = gefolge_web.event.programm.Programmpunkt(event, name)
         programmpunkt_form = programmpunkt.form(flask.g.user)
-        if programmpunkt_form.submit_programmpunkt_form.data and programmpunkt_form.validate():
+        if hasattr(programmpunkt_form, 'submit_programmpunkt_form') and programmpunkt_form.submit_programmpunkt_form.data and programmpunkt_form.validate():
             programmpunkt.process_form_submission(programmpunkt_form, flask.g.user)
             return flask.redirect(flask.url_for('event_programmpunkt', event_id=event_id, name=name))
         else:
             return {
                 'event': event,
                 'programmpunkt': programmpunkt,
-                'programmpunkt_form': programmpunkt_form
+                'programmpunkt_form': programmpunkt_form if hasattr(programmpunkt_form, 'submit_programmpunkt_form') else None
             }
 
     @app.route('/event/<event_id>/programm/<name>/edit', methods=['GET', 'POST'])

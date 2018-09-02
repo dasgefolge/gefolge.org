@@ -76,7 +76,7 @@
 
 {% block content %}
     <div class="container" {% block container_attrs %}{% endblock %}>
-        {% if not g.reboot_timestamp is none %}
+        {% if g.reboot_timestamp is not none %}
             <div class="alert alert-warning">
                 gefolge.org wird
                 {% if g.reboot_upgrade %}

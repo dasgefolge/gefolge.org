@@ -27,7 +27,7 @@
                     {% endif %}
                 {% else %}
                     <div class="input-group">
-                        {% if not field.prefix is none %}
+                        {% if field.prefix is not none %}
                             <span class="input-group-addon">{{field.prefix}}</span>
                         {% endif %}
                         {% if 'placeholder' in field.description %}
@@ -35,7 +35,7 @@
                         {% else %}
                             {{field(class="form-control")}}
                         {% endif %}
-                        {% if not field.suffix is none %}
+                        {% if field.suffix is not none %}
                             <span class="input-group-addon">{{field.suffix}}</span>
                         {% endif %}
                     </div>
