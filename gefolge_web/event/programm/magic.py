@@ -48,7 +48,7 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
                 set_config = MAGIC_CONFIG['customSets'].get(set_code, {})
                 if set_config.get('boosters', True) and set_config.get('drafted') is None:
                     result[set_code] = set_info, set_config
-        return sorted(result.items(), key=lambda kv: (kv[1][0]['releaseDate'], kv[0]))
+        return sorted(result.items(), key=lambda kv: (kv[1][0]['releaseDate'].value(), kv[0]))
 
     @property
     def orga(self):
