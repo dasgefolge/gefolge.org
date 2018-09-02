@@ -33,7 +33,7 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
 
     @property
     def description(self):
-        return 'Wir [draften](https://mtg.gamepedia.com/Booster_draft) ein Custom Magic Set. Um zu bestimmen, welches, kannst du unten abstimmen.\n\nWir spielen mit [Proxies](https://mtg.gamepedia.com/Proxy), der Draft ist also kostenlos. Ihr müsst nichts mitbringen. Es gibt 8 Plätze. Es können gerne alle, die Interesse haben, Plätze reservieren, das ist *keine* verbindliche Anmeldung. Ich selbst spiele nur mit, wenn es ohne mich weniger als 8 Spieler wären. Falls wir am Ende weniger als 5 Menschen sind, spielen wir [Sealed](https://mtg.gamepedia.com/Sealed_deck) statt Draft.'
+        return 'Wir [draften](https://mtg.gamepedia.com/Booster_draft) ein Custom Magic Set. Um zu bestimmen, welches, kannst du unten abstimmen.\r\n\r\nWir spielen mit [Proxies](https://mtg.gamepedia.com/Proxy), der Draft ist also kostenlos. Ihr müsst nichts mitbringen. Es gibt 8 Plätze. Es können gerne alle, die Interesse haben, Plätze reservieren, das ist *keine* verbindliche Anmeldung. Ich selbst spiele nur mit, wenn es ohne mich weniger als 8 Spieler wären. Falls wir am Ende weniger als 5 Menschen sind, spielen wir [Sealed](https://mtg.gamepedia.com/Sealed_deck) statt Draft.'
 
     @description.setter
     def description(self, value):

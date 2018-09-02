@@ -16,7 +16,11 @@
         {% if programmpunkt.can_edit(g.user) %}<a href="{{url_for('event_programmpunkt_edit', event_id=event.event_id, name=programmpunkt.name)}}" class="btn btn-primary">Bearbeiten</a>{% endif %}
         {% if g.user == event.orga('Programm') %}<a href="{{url_for('event_programmpunkt_delete', event_id=event.event_id, name=programmpunkt.name)}}" class="btn btn-danger">Löschen</a>{% endif %}
     </h1>
-    <p>Dieser Programmpunkt wird von {{programmpunkt.orga | mention}} organisiert.</p>
+    {% if programmpunkt.orga is none %}
+        <p>Dieser Programmpunkt hat noch keine Orga.</p>
+    {% else %}
+        <p>Dieser Programmpunkt wird von {{programmpunkt.orga | mention}} organisiert.</p>
+    {% endif %}
     <h2>Beschreibung</h2>
     {{programmpunkt.description | markdown}}
     {% if programmpunkt.listed %}
