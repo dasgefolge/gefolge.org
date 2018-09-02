@@ -224,9 +224,9 @@ class Event(metaclass=EventMeta):
         ), (
             gefolge_web.event.programm.essen.Abendessen(self, date)
             for date in self.nights
-        )), [
+        ), [
             gefolge_web.event.programm.magic.CustomMagicDraft(self)
-        ])
+        ]))
         #TODO rtww-Abstimmungen
 
     def signup(self, mensch):
