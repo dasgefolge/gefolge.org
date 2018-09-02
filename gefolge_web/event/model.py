@@ -37,6 +37,10 @@ class Guest:
         return True
 
     @property
+    def long_name(self):
+        return str(self)
+
+    @property
     def via(self):
         return gefolge_web.login.Mensch(self.event.attendee_data(self)['via'].value())
 
