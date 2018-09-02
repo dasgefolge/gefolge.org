@@ -8,7 +8,7 @@ import gefolge_web.login
 
 FENHL = gefolge_web.login.Mensch(86841168427495424)
 LORE_SEEKER_REPO = pathlib.Path('/opt/git/github.com/fenhl/lore-seeker/stage')
-MAGIC_CONFIG = pathlib.Path('/usr/local/share/fidera/games/magic.json')
+MAGIC_CONFIG = lazyjson.File('/usr/local/share/fidera/games/magic.json')
 
 class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
     def __new__(cls, event=None, name=None, *, event_id=None):
