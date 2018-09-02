@@ -32,6 +32,6 @@
         </ul>
     {% endif %}
     {% if programmpunkt_form is not none %}
-        {{gen_form(programmpunkt_form(g.user), url_for('event_programmpunkt', event_id=event.event_id, name=programmpunkt.name))}}
+        {{gen_form(programmpunkt_form, url_for('event_programmpunkt', event_id=event.event_id, name=programmpunkt.name))}}
     {% endif %}
 {% endblock %}
