@@ -6,9 +6,6 @@ import pathlib
 import peter
 import random
 
-import gefolge_web.event.programm
-import gefolge_web.event.programm.essen
-import gefolge_web.event.programm.magic
 import gefolge_web.login
 import gefolge_web.util
 
@@ -146,6 +143,8 @@ class Event(metaclass=EventMeta):
         return gefolge_web.util.parse_iso_datetime(self.data['end'].value())
 
     def essen(self, date):
+        import gefolge_web.event.programm.essen
+
         if date in self.nights:
             return gefolge_web.event.programm.essen.Abendessen(self, date)
         else:
@@ -215,6 +214,10 @@ class Event(metaclass=EventMeta):
 
     @property
     def programm(self):
+        import gefolge_web.event.programm
+        import gefolge_web.event.programm.essen
+        import gefolge_web.event.programm.magic
+
         return sorted(itertools.chain((
             gefolge_web.event.programm.Programmpunkt(self, name)
             for name in self.data['programm'].value()
