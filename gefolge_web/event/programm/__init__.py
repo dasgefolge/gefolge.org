@@ -167,7 +167,8 @@ class Programmpunkt:
         })
         if 'signups' not in self.data:
             self.data['signups'] = [person.snowflake for person in self.signups]
-        self.data['signups'].append(person.snowflake)
+        if person.snowflake not in self.data['signups']:
+            self.data['signups'].append(person.snowflake)
 
     @property
     def signup_limit(self):
