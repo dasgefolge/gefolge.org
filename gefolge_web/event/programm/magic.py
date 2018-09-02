@@ -41,7 +41,7 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
 
     def draftable_sets(self):
         result = {}
-        for set_path in (LORE_SEEKER_REPO / 'sets').iterdir():
+        for set_path in (LORE_SEEKER_REPO / 'data' / 'sets').iterdir():
             set_info = lazyjson.File(set_path)
             set_code = set_info['code'].value()
             if set_info.get('custom', False):
