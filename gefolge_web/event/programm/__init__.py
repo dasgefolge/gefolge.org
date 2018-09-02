@@ -77,7 +77,9 @@ class Programmpunkt:
 
     @property
     def data(self):
-        return self.event.data['programm'].get(self.name, {})
+        if self.name not in self.event.data['programm']:
+            self.event.data['programm'][self.name] = {}
+        return self.event.data['programm'][self.name]
 
     @property
     def description(self):
