@@ -109,7 +109,7 @@ class Programmpunkt:
         class Form(flask_wtf.FlaskForm):
             pass
 
-        people_allowed_to_sign_up = list(filter(lambda person: self.can_signup(editor, person), self.event.people))
+        people_allowed_to_sign_up = list(filter(lambda person: self.can_signup(editor, person), self.event.signups))
         if len(people_allowed_to_sign_up) == 0:
             submit_text = None # don't show submit field unless overridden by a subclass in add_form_details
         elif len(people_allowed_to_sign_up) == 1:
@@ -150,7 +150,7 @@ class Programmpunkt:
         if hasattr(form, 'person_to_signup'):
             person_to_signup = form.person_to_signup.data
         else:
-            person_to_signup = more_itertools.one(filter(lambda person: self.can_signup(editor, person), self.event.people))
+            person_to_signup = more_itertools.one(filter(lambda person: self.can_signup(editor, person), self.event.signups))
         if not self.can_signup(editor, person_to_signup):
             flask.flash('Du bist nicht berechtigt, {} für diesen Programmpunkt anzumelden.'.format(person_to_signup))
             return flask.redirect(flask.url_for('event_programmpunkt', event_id=self.event.event_id, name=self.name))
