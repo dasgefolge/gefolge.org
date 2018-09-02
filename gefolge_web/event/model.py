@@ -1,15 +1,14 @@
-import datetime
 import functools
-import icalendar
 import itertools
 import jinja2
 import lazyjson
 import pathlib
 import peter
-import pytz
 import random
-import re
 
+import gefolge_web.event.programm
+import gefolge_web.event.programm.essen
+import gefolge_web.event.programm.magic
 import gefolge_web.login
 import gefolge_web.util
 
@@ -35,6 +34,10 @@ class Guest:
 
     def __str__(self):
         return self.event.attendee_data(self)['name'].value()
+
+    @property
+    def is_guest(self):
+        return True
 
     @property
     def via(self):
@@ -64,258 +67,6 @@ class Location:
     @property
     def prefix(self):
         return self.data.get('prefix', 'in')
-
-@functools.total_ordering
-class Programmpunkt:
-    def __new__(cls, event=None, name=None, *, event_id=None):
-        if re.fullmatch('abendessen[0-9]+-[0-9]+-[0-9]+', name):
-            return Abendessen(event=event, name=name, event_id=event_id)
-        else:
-            return super().__new__(cls)
-
-    def __init__(self, event=None, name=None, *, event_id=None):
-        # event can be specified by event or event_id argument
-        if name is None:
-            raise TypeError('Missing name argument for Programmpunkt constructor')
-        else:
-            self.name = name
-        if event is not None:
-            self.event = event
-        elif event_id is not None:
-            self.event = Event(event_id)
-        else:
-            raise TypeError('Missing event or event_id argument for Programmpunkt constructor')
-
-    def __eq__(self, other):
-        return isinstance(other, Programmpunkt) and self.event == other.event and self.name == other.name
-
-    def __lt__(self, other):
-        if not isinstance(other, Programmpunkt):
-            return NotImplemented
-        return (self.start is None, self.start, self.event, self.name) < (other.start is None, other.start, other.event, other.name)
-
-    def __repr__(self):
-        return 'gefolge_web.event.model.Programmpunkt({!r}, {!r})'.format(self.event, self.name)
-
-    def __str__(self):
-        return self.name
-
-    def can_edit(self, editor):
-        if editor == gefolge_web.login.Mensch.admin():
-            return True # always allow the admin to edit since they have write access to the database anyway
-        if self.event.end < gefolge_web.util.now():
-            return False # event frozen
-        return self.orga == editor or self.event.orga('Programm') == editor
-
-    def can_signup(self, editor, person):
-        if editor == gefolge_web.login.Mensch.admin():
-            return True # always allow the admin to edit since they have write access to the database anyway
-        if self.event.end < gefolge_web.util.now():
-            return False # event frozen
-        return (
-            (editor == person or editor == self.event.orga('Programm'))
-            and person in self.event.signups
-            and person not in self.signups
-            and len(self.signups) < self.data.get('limit', float('inf'))
-            and not self.data.get('closed', False)
-        )
-
-    @property
-    def data(self):
-        return self.event.data['programm'][self.name]
-
-    @property
-    def description(self):
-        return self.data.get('description', '')
-
-    @description.setter
-    def description(self, value):
-        self.data['description'] = value
-
-    @property
-    def end(self):
-        end_str = self.data.get('end')
-        if end_str is not None:
-            return gefolge_web.util.parse_iso_datetime(end_str)
-
-    @end.setter
-    def end(self, value):
-        if value is None:
-            del self.end
-        else:
-            self.data['end'] = '{:%Y-%m-%d %H:%M:%S}'.format(value)
-
-    @end.deleter
-    def end(self):
-        if 'end' in self.data:
-            del self.data['end']
-
-    @property
-    def listed(self):
-        """Whether this shows up in the list. Calendar and timetable are unaffected."""
-        return True
-
-    @property
-    def orga(self):
-        orga_id = self.data['orga'].value()
-        if orga_id is not None:
-            return gefolge_web.login.Mensch(orga_id)
-
-    @orga.setter
-    def orga(self, value):
-        self.data['orga'] = value.snowflake
-
-    def signup(self, person):
-        gefolge_web.util.log('eventProgrammSignup', {
-            'event': self.event.event_id,
-            'programmpunkt': self.name,
-            'person': person.snowflake
-        })
-        self.data['signups'].append(person.snowflake)
-
-    @property
-    def signups(self):
-        return [
-            self.event.person(snowflake)
-            for snowflake in self.data['signups'].value()
-        ]
-
-    @property
-    def start(self):
-        start_str = self.data.get('start')
-        if start_str is not None:
-            return gefolge_web.util.parse_iso_datetime(start_str)
-
-    @start.setter
-    def start(self, value):
-        if value is None:
-            del self.start
-        else:
-            self.data['start'] = '{:%Y-%m-%d %H:%M:%S}'.format(value)
-
-    @start.deleter
-    def start(self):
-        if 'start' in self.data:
-            del self.data['start']
-
-    def to_ical(self):
-        result = icalendar.Event()
-        result.add('summary', str(self))
-        result.add('dtstart', self.start)
-        result.add('dtend', self.end)
-        #TODO date created
-        #TODO date last modified
-        result.add('uid', 'gefolge-event-{}-{}@gefolge.org'.format(self.event.event_id, self.name))
-        result.add('location', str(self.event.location)) #TODO add support for Programm at different locations
-        #TODO URL to Programmpunkt web page
-        return result
-
-class Abendessen(Programmpunkt):
-    def __new__(cls, event=None, name=None, *, event_id=None):
-        return object.__new__(cls)
-
-    def __init__(self, event=None, name=None, *, event_id=None):
-        if isinstance(name, datetime.date):
-            name = 'abendessen{:%Y-%m-%d}'.format(name)
-        super().__init__(event=event, name=name, event_id=event_id)
-        self.date = datetime.date(*map(int, re.fullmatch('abendessen([0-9]+)-([0-9]+)-([0-9]+)', self.name).groups()))
-        self.name = 'abendessen{:%Y-%m-%d}'.format(self.date) # normalize name
-
-    def __repr__(self):
-        return 'gefolge_web.event.model.Abendessen({!r}, {!r})'.format(self.event, self.name)
-
-    def __str__(self):
-        return 'Abendessen'
-
-    def can_edit(self, editor):
-        if editor == gefolge_web.login.Mensch.admin():
-            return True # always allow the admin to edit since they have write access to the database anyway
-        if self.event.end < gefolge_web.util.now():
-            return False # event frozen
-        return self.orga == editor or self.event.orga('Essen') == editor
-
-    def can_signup(self, editor, person):
-        if editor == gefolge_web.login.Mensch.admin():
-            return True # always allow the admin to edit since they have write access to the database anyway
-        return False
-
-    @property
-    def data(self):
-        return self.event.data.get('essen', {}).get('{:%Y-%m-%d}'.format(self.date), {})
-
-    @property
-    def description(self):
-        return self.data.get('dinner', '')
-
-    @description.setter
-    def description(self, value):
-        if 'essen' not in self.event.data:
-            self.event.data['essen'] = {}
-        if '{:%Y-%m-%d}'.format(self.date) not in self.event.data['essen']:
-            self.event.data['essen']['{:%Y-%m-%d}'.format(self.date)] = {}
-        self.event.data['essen']['{:%Y-%m-%d}'.format(self.date)]['dinner'] = value
-
-    @property
-    def end(self):
-        if 'dinnerEnd' in self.data:
-            return gefolge_web.util.parse_iso_datetime(self.data['dinnerEnd'])
-        else:
-            return self.start + datetime.timedelta(hours=1)
-
-    @end.setter
-    def end(self, value):
-        if value is None:
-            del self.end
-        if 'essen' not in self.event.data:
-            self.event.data['essen'] = {}
-        if '{:%Y-%m-%d}'.format(self.date) not in self.event.data['essen']:
-            self.event.data['essen']['{:%Y-%m-%d}'.format(self.date)] = {}
-        self.event.data['essen']['{:%Y-%m-%d}'.format(self.date)]['dinnerEnd'] = '{:%Y-%m-%d %H:%M:%S}'.format(value)
-
-    @end.deleter
-    def end(self):
-        raise TypeError('Abendessenzeiten können nicht gelöscht werden')
-
-    @property
-    def listed(self):
-        return False
-
-    @property
-    def orga(self):
-        return self.event.person(self.data.get('orga', self.event.orga('Essen')))
-
-    @orga.setter
-    def orga(self, value):
-        if 'essen' not in self.event.data:
-            self.event.data['essen'] = {}
-        if '{:%Y-%m-%d}'.format(self.date) not in self.event.data['essen']:
-            self.event.data['essen']['{:%Y-%m-%d}'.format(self.date)] = {}
-        self.event.data['essen']['{:%Y-%m-%d}'.format(self.date)]['orga'] = value.snowflake
-
-    @property
-    def signups(self):
-        return []
-
-    @property
-    def start(self):
-        if 'dinnerStart' in self.data:
-            return gefolge_web.util.parse_iso_datetime(self.data['dinnerStart'])
-        else:
-            return pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(self.date, datetime.time(19)))
-
-    @start.setter
-    def start(self, value):
-        if value is None:
-            del self.start
-        if 'essen' not in self.event.data:
-            self.event.data['essen'] = {}
-        if '{:%Y-%m-%d}'.format(self.date) not in self.event.data['essen']:
-            self.event.data['essen']['{:%Y-%m-%d}'.format(self.date)] = {}
-        self.event.data['essen']['{:%Y-%m-%d}'.format(self.date)]['dinnerStart'] = '{:%Y-%m-%d %H:%M:%S}'.format(value)
-
-    @start.deleter
-    def start(self):
-        raise TypeError('Abendessenzeiten können nicht gelöscht werden')
 
 class EventMeta(type):
     def __iter__(self):
@@ -381,7 +132,7 @@ class Event(metaclass=EventMeta):
         if editor == profile:
             # Menschen dürfen ihr eigenes Profil bearbeiten
             return True
-        if profile.snowflake < 100 and profile.via == editor:
+        if profile.is_guest and profile.via == editor:
             # Gastprofile dürfen von ihren proxies bearbeitet werden
             return True
         return False
@@ -396,7 +147,7 @@ class Event(metaclass=EventMeta):
 
     def essen(self, date):
         if date in self.nights:
-            return Abendessen(self, date)
+            return gefolge_web.event.programm.essen.Abendessen(self, date)
         else:
             raise ValueError('Datum liegt außerhalb des event')
 
@@ -465,12 +216,14 @@ class Event(metaclass=EventMeta):
     @property
     def programm(self):
         return sorted(itertools.chain((
-            Programmpunkt(self, name)
+            gefolge_web.event.programm.Programmpunkt(self, name)
             for name in self.data['programm'].value()
         ), (
-            Abendessen(self, date)
+            gefolge_web.event.programm.essen.Abendessen(self, date)
             for date in self.nights
-        )))
+        )), [
+            gefolge_web.event.programm.magic.CustomMagicDraft(self)
+        ])
         #TODO rtww-Abstimmungen
 
     def signup(self, mensch):

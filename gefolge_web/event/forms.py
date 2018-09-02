@@ -6,6 +6,7 @@ import wtforms
 import wtforms.validators
 
 import gefolge_web.event.model
+import gefolge_web.event.programm
 import gefolge_web.forms
 import gefolge_web.login
 
@@ -77,9 +78,9 @@ def ProgrammEditForm(programmpunkt):
     def validate_orga(form, field):
         if field.data == programmpunkt.orga:
             return
-        if flask.g.user == programmpunkt.event.orga('Essen' if isinstance(programmpunkt, gefolge_web.event.model.Abendessen) else 'Programm'):
+        if flask.g.user == programmpunkt.event.orga('Essen' if isinstance(programmpunkt, gefolge_web.event.programm.essen.Abendessen) else 'Programm'):
             return
-        raise wtforms.validators.ValidationError('Bitte wende dich an {}, wenn du die Orga für diesen Programmpunkt abgeben möchtest.'.format(programmpunkt.event.orga('Essen' if isinstance(programmpunkt, gefolge_web.event.model.Abendessen) else 'Programm')))
+        raise wtforms.validators.ValidationError('Bitte wende dich an {}, wenn du die Orga für diesen Programmpunkt abgeben möchtest.'.format(programmpunkt.event.orga('Essen' if isinstance(programmpunkt, gefolge_web.event.programm.essen.Abendessen) else 'Programm')))
 
     class Form(flask_wtf.FlaskForm):
         orga = gefolge_web.forms.EventPersonField(programmpunkt.event, 'Orga', [validate_orga], allow_guests=False, default=programmpunkt.orga) #TODO disable (https://getbootstrap.com/docs/3.3/css/#forms-control-disabled) if not allowed to edit

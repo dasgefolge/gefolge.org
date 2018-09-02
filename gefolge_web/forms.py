@@ -36,17 +36,19 @@ class EventPersonField(wtforms.SelectField):
 
     #TODO actually display as a combobox (text field with dropdown menu)
 
-    def __init__(self, event, label, validators=[], *, allow_guests=True, **kwargs):
+    def __init__(self, event, label, validators=[], *, allow_guests=True, person_filter=lambda person: True, **kwargs):
         self.event = event
         self.allow_guests = allow_guests
+        self.person_filter = person_filter
         super().__init__(label, validators, choices=[(person.snowflake, person.long_name) for person in self.people], **kwargs)
 
     @property
     def people(self):
         if self.allow_guests:
-            return self.event.signups
+            result = self.event.signups
         else:
-            return self.event.menschen
+            result = self.event.menschen
+        return list(filter(self.person_filter, result))
 
     def iter_choices(self):
         for person in self.people:

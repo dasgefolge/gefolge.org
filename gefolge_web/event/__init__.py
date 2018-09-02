@@ -10,6 +10,7 @@ import re
 
 import gefolge_web.event.forms
 import gefolge_web.event.model
+import gefolge_web.event.programm
 import gefolge_web.login
 import gefolge_web.util
 
@@ -204,16 +205,23 @@ def setup(app):
             }
         }
 
-    @app.route('/event/<event_id>/programm/<name>')
+    @app.route('/event/<event_id>/programm/<name>', methods=['GET', 'POST'])
     @gefolge_web.login.member_required
-    @gefolge_web.util.path(gefolge_web.event.model.Programmpunkt, event_programm)
+    @gefolge_web.util.path(gefolge_web.event.programm.Programmpunkt, event_programm)
     @gefolge_web.util.template('event.programmpunkt')
     def event_programmpunkt(event_id, name):
         event = gefolge_web.event.model.Event(event_id)
-        return {
-            'event': event,
-            'programmpunkt': gefolge_web.event.model.Programmpunkt(event, name)
-        }
+        programmpunkt = gefolge_web.event.programm.Programmpunkt(event, name)
+        programmpunkt_form = programmpunkt.form(flask.g.user)
+        if programmpunkt_form.submit_programmpunkt_form.data and programmpunkt_form.validate():
+            programmpunkt.process_form_submission(programmpunkt_form, flask.g.user)
+            return flask.redirect(flask.url_for('event_programmpunkt', event_id=event_id, name=name))
+        else:
+            return {
+                'event': event,
+                'programmpunkt': programmpunkt,
+                'programmpunkt_form': programmpunkt_form
+            }
 
     @app.route('/event/<event_id>/programm/<name>/edit', methods=['GET', 'POST'])
     @gefolge_web.login.member_required
@@ -221,7 +229,7 @@ def setup(app):
     @gefolge_web.util.template('event.programmpunkt-edit')
     def event_programmpunkt_edit(event_id, name):
         event = gefolge_web.event.model.Event(event_id)
-        programmpunkt = gefolge_web.event.model.Programmpunkt(event, name)
+        programmpunkt = gefolge_web.event.programm.Programmpunkt(event, name)
         if not programmpunkt.can_edit(flask.g.user):
             flask.flash('Du bist nicht berechtigt, diesen Programmpunkt zu bearbeiten.')
             return flask.redirect(flask.url_for('event_programmpunkt', event_id=event_id, name=name))
@@ -253,7 +261,7 @@ def setup(app):
     @gefolge_web.util.template('event.programmpunkt-delete')
     def event_programmpunkt_delete(event_id, name):
         event = gefolge_web.event.model.Event(event_id)
-        programmpunkt = gefolge_web.event.model.Programmpunkt(event, name)
+        programmpunkt = gefolge_web.event.programm.Programmpunkt(event, name)
         if g.user != event.orga('Programm'):
             flask.flash('Du bist nicht berechtigt, diesen Programmpunkt zu löschen.')
             return flask.redirect(flask.url_for('event_programmpunkt', event_id=event_id, name=name))
@@ -271,15 +279,3 @@ def setup(app):
                 'programmpunkt': programmpunkt,
                 'programm_delete_form': programm_delete_form
             }
-
-    @app.route('/event/<event_id>/programm/<name>/signup/<snowflake>')
-    @gefolge_web.login.member_required
-    def event_programm_signup(event_id, name, snowflake):
-        event = gefolge_web.event.model.Event(event_id)
-        programmpunkt = gefolge_web.event.model.Programmpunkt(event, name)
-        person = event.person(snowflake)
-        if not programmpunkt.can_signup(flask.g.user, person):
-            flask.flash('Du bist nicht berechtigt, diese Person für diesen Programmpunkt anzumelden.')
-            return flask.redirect(flask.url_for('event_programmpunkt', event_id=event_id, name=name))
-        programmpunkt.signup(person)
-        return flask.redirect(flask.url_for('event_programmpunkt', event_id=event_id, name=name))
