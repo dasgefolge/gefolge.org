@@ -41,6 +41,10 @@ class Guest:
         return str(self)
 
     @property
+    def url_part(self):
+        return str(self.snowflake)
+
+    @property
     def via(self):
         return gefolge_web.login.Mensch(self.event.attendee_data(self)['via'].value())
 
