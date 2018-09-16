@@ -201,3 +201,7 @@ class Programmpunkt:
         result.add('location', str(self.event.location)) #TODO add support for Programm at different locations
         #TODO URL to Programmpunkt web page
         return result
+
+    @property
+    def url_part(self):
+        return self.name
