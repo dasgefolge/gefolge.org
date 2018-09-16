@@ -3,7 +3,7 @@
 {% block title %}Gast anmelden — {{event}}{% endblock %}
 
 {% block page_content %}
-    <p>Hier kannst du Gäste für <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a> anmelden.</p>
+    <p>Hier kannst du Gäste für <a href="{{url_for('event_page', event=event.event_id)}}">{{event}}</a> anmelden.</p>
     {% if event.anzahlung is none %}
         <p>Coming soon™</p> {#TODO#}
     {% else %}

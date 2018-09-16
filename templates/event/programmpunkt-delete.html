@@ -3,14 +3,14 @@
 {% block title %}{{programmpunkt}} löschen — {{event}}{% endblock %}
 
 {% block page_content %}
-    <h1>Möchtest du den Programmpunkt „{{programmpunkt}}“ auf <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a> wirklich löschen?</h1>
+    <h1>Möchtest du den Programmpunkt „{{programmpunkt}}“ auf <a href="{{url_for('event_page', event=event.event_id)}}">{{event}}</a> wirklich löschen?</h1>
     {% if g.user == event.orga('Programm') %}
         <p>
-            <form class="form-horizontal" method="POST" role="form" action="{{url_for('event_programmpunkt_delete', event_id=event.event_id, name=programmpunkt.name)}}">
+            <form class="form-horizontal" method="POST" role="form" action="{{g.view_node.url}}">
                 {{programm_delete_form.hidden_tag()}}
                 <button type="submit" class="btn btn-danger" value="delete-programmpunkt" name="save">Löschen</button>
             </form>
-            <a href="{{url_for('event_programmpunkt', event_id=event.event_id, name=programmpunkt.name)}}" class="btn">Abbrechen</a>
+            <a href="{{g.view_node.parent.url}}" class="btn">Abbrechen</a>
         </p>
     {% else %}
         <p>Du bist nicht berechtigt, diesen Programmpunkt zu löschen.</p>

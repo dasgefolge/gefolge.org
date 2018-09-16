@@ -12,8 +12,8 @@
 
 {% block page_content %}
     <h1>
-        Profil für {{render_person()}} auf <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a>
-        {% if event.can_edit(g.user, person) %}<a href="{{url_for('event_profile_edit', event_id=event.event_id, snowflake=person.snowflake)}}" class="btn btn-primary">Bearbeiten</a>{% endif %}
+        Profil für {{render_person()}} auf <a href="{{url_for('event_page', event=event.event_id)}}">{{event}}</a>
+        {% if event.can_edit(g.user, person) %}<a href="{{url_for('event_profile_edit', event=event.event_id, person=person.snowflake)}}" class="btn btn-primary">Bearbeiten</a>{% endif %}
     </h1>
     {% if person in event.signups %}
         {% if person is guest %}
@@ -60,7 +60,7 @@
         <ul>
             {% for programmpunkt in event.programm %}
                 {% if person in programmpunkt.signups %}
-                    <li><a href="{{url_for('event_programmpunkt', event_id=event.event_id, name=programmpunkt.name)}}">{{programmpunkt}}</a></li>
+                    <li><a href="{{url_for('event_programmpunkt', event=event.event_id, programmpunkt=programmpunkt.name)}}">{{programmpunkt}}</a></li>
                 {% endif %}
             {% endfor %}
         </ul>

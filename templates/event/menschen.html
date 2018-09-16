@@ -11,7 +11,7 @@
 {% block title %}Menschen — {{event}}{% endblock %}
 
 {% block page_content %}
-    <p>Aktuell {% if event.signups | length > 1 %}sind{% else %}ist{% endif %} {{event.signups | length}} Mensch{% if event.signups | length > 1 %}en{% endif %} für <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a> angemeldet:</p>
+    <p>Aktuell {% if event.signups | length > 1 %}sind{% else %}ist{% endif %} {{event.signups | length}} Mensch{% if event.signups | length > 1 %}en{% endif %} für <a href="{{url_for('event_page', event=event.event_id)}}">{{event}}</a> angemeldet:</p>
     <table class="table table-responsive">
         <thead>
             <tr>
@@ -69,9 +69,9 @@
                         {% endif %}
                     </td>
                     <td>
-                        <a href="{{url_for('event_profile', event_id=event.event_id, snowflake=person.snowflake)}}"><span class="fa fa-eye"></span></a>
+                        <a href="{{url_for('event_profile', event=event.event_id, person=person.snowflake)}}"><span class="fa fa-eye"></span></a>
                         {% if event.can_edit(g.user, person) %}
-                            <a href="{{url_for('event_profile_edit', event_id=event.event_id, snowflake=person.snowflake)}}"><span class="fa fa-edit"></span></a>
+                            <a href="{{url_for('event_profile_edit', event=event.event_id, person=person.snowflake)}}"><span class="fa fa-edit"></span></a>
                         {% endif %}
                     </td>
                 </tr>

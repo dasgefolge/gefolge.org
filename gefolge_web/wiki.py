@@ -17,7 +17,7 @@ class DiscordMentionPattern(markdown.inlinepatterns.LinkPattern):
         mensch = gefolge_web.login.Mensch(m.group(2))
         el = markdown.util.etree.Element('a')
         el.text = '@{}'.format(mensch.name)
-        el.set('href', flask.url_for('profile', snowflake=str(mensch.snowflake)))
+        el.set('href', flask.url_for('profile', mensch=str(mensch.snowflake)))
         return el
 
 class DiscordMentionExtension(markdown.Extension):

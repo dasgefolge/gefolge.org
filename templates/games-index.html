@@ -5,7 +5,8 @@
 {% block page_content %}
     <h1>Spiele</h1>
     <ul>
-        <li><a href="{{url_for('space_alert')}}">Space Alert</a></li>
-        <li><a href="{{url_for('werewolf_index')}}">Werwölfe</a></li>
+        {% for node in g.view_node.children | sort %}
+            <li><a href="{{node.url}}">{{node}}</a></li>
+        {% endfor %}
     </ul>
 {% endblock %}

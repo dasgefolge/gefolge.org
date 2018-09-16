@@ -12,9 +12,9 @@
 
 {% block page_content %}
     <h1>
-        Programmpunkt „{{programmpunkt}}“ auf <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a>
-        {% if programmpunkt.can_edit(g.user) %}<a href="{{url_for('event_programmpunkt_edit', event_id=event.event_id, name=programmpunkt.name)}}" class="btn btn-primary">Bearbeiten</a>{% endif %}
-        {% if g.user == event.orga('Programm') %}<a href="{{url_for('event_programmpunkt_delete', event_id=event.event_id, name=programmpunkt.name)}}" class="btn btn-danger">Löschen</a>{% endif %}
+        Programmpunkt „{{programmpunkt}}“ auf <a href="{{url_for('event_page', event=event.event_id)}}">{{event}}</a>
+        {% if programmpunkt.can_edit(g.user) %}<a href="{{(g.view_node / 'edit').url}}" class="btn btn-primary">Bearbeiten</a>{% endif %}
+        {% if g.user == event.orga('Programm') %}<a href="{{(g.view_node / 'delete').url}}" class="btn btn-danger">Löschen</a>{% endif %}
     </h1>
     {% if programmpunkt.orga is none %}
         <p>Dieser Programmpunkt hat noch keine Orga.</p>
@@ -32,6 +32,6 @@
         </ul>
     {% endif %}
     {% if programmpunkt_form is not none %}
-        {{gen_form(programmpunkt_form, url_for('event_programmpunkt', event_id=event.event_id, name=programmpunkt.name))}}
+        {{gen_form(programmpunkt_form, g.view_node.url)}}
     {% endif %}
 {% endblock %}

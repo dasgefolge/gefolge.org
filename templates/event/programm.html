@@ -26,7 +26,7 @@
         </tbody>
     </table>
     {% set listed_programm = event.programm | selectattr('listed') | list %}
-    <p>Aktuell {% if listed_programm | length > 1 %}sind{% else %}ist{% endif %} {{listed_programm | length}} Programmpunkt{% if listed_programm | length > 1 %}e{% endif %} für <a href="{{url_for('event_page', event_id=event.event_id)}}">{{event}}</a> geplant:</p>
+    <p>Aktuell {% if listed_programm | length > 1 %}sind{% else %}ist{% endif %} {{listed_programm | length}} Programmpunkt{% if listed_programm | length > 1 %}e{% endif %} für <a href="{{g.view_node.parent.url}}">{{event}}</a> geplant:</p>
     <table class="table table-responsive">
         <thead>
             <tr>
@@ -37,7 +37,7 @@
         <tbody>
             {% for programmpunkt in listed_programm %}
                 <tr>
-                    <td><a href="{{url_for('event_programmpunkt', event_id=event.event_id, name=programmpunkt.name)}}">{{programmpunkt}}</a></td>
+                    <td><a href="{{(g.view_node / programmpunkt).url}}">{{programmpunkt}}</a></td>
                     <td>{{programmpunkt.orga | mention}}</td>
                 </tr>
             {% endfor %}
