@@ -1,4 +1,4 @@
-import functools
+import class_key
 import itertools
 import jinja2
 import lazyjson
@@ -81,18 +81,14 @@ class EventMeta(type):
             for event_path in EVENTS_ROOT.iterdir()
         ))
 
-@functools.total_ordering
+@class_key.class_key()
 class Event(metaclass=EventMeta):
     def __init__(self, event_id):
         self.event_id = event_id
 
-    def __eq__(self, other):
-        return isinstance(other, Event) and self.event_id == other.event_id
-
-    def __lt__(self, other):
-        if not isinstance(other, Event):
-            return NotImplemented
-        return (self.start, self.end, self.event_id) < (other.start, other.end, other.event_id)
+    @property
+    def __key__(self):
+        return self.start, self.end, self.event_id
 
     def __repr__(self):
         return 'gefolge_web.event.model.Event({!r})'.format(self.event_id)

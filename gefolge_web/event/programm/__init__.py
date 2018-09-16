@@ -1,6 +1,6 @@
+import class_key
 import flask
 import flask_wtf
-import functools
 import icalendar
 import more_itertools
 import re
@@ -9,7 +9,7 @@ import wtforms
 import gefolge_web.login
 import gefolge_web.util
 
-@functools.total_ordering
+@class_key.class_key()
 class Programmpunkt:
     def __new__(cls, event, programmpunkt):
         if programmpunkt == 'custom-magic-draft':
@@ -33,13 +33,9 @@ class Programmpunkt:
             self.event = event
         self.name = programmpunkt
 
-    def __eq__(self, other):
-        return isinstance(other, Programmpunkt) and self.event == other.event and self.name == other.name
-
-    def __lt__(self, other):
-        if not isinstance(other, Programmpunkt):
-            return NotImplemented
-        return (self.start is None, self.start, self.event, self.name) < (other.start is None, other.start, other.event, other.name)
+    @property
+    def __key__(self):
+        return self.start is None, self.start, self.event, self.name
 
     def __repr__(self):
         return 'gefolge_web.event.programm.Programmpunkt({!r}, {!r})'.format(self.event, self.name)

@@ -36,6 +36,9 @@ class Euro:
     def __eq__(self, other):
         return isinstance(other, Euro) and self.value == other.value
 
+    def __hash__(self):
+        return hash(self.value)
+
     def __lt__(self, other):
         if not isinstance(other, Euro):
             return NotImplemented
