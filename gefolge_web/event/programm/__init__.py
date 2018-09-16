@@ -128,7 +128,7 @@ class Programmpunkt:
 
     @property
     def orga(self):
-        orga_id = self.data['orga'].value()
+        orga_id = self.data.get('orga')
         if orga_id is not None:
             return gefolge_web.login.Mensch(orga_id)
 
