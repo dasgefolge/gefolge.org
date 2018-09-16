@@ -65,7 +65,7 @@ def profile(mensch):
 
 @index.redirect('me')
 def me():
-    return profile, flask.g.user
+    return menschen, flask.g.user
 
 with app.app_context():
     # set up submodules
