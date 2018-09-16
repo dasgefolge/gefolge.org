@@ -14,16 +14,15 @@ import gefolge_web.event.programm
 import gefolge_web.login
 import gefolge_web.util
 
-def setup(app):
+def setup(index, app):
     @app.template_test('guest')
     def is_guest(value):
         if hasattr(value, 'snowflake'):
             value = value.snowflake
         return int(value) < 100
 
-    @app.route('/event')
+    @index.child('event', 'events')
     @gefolge_web.login.member_required
-    @gefolge_web.util.path(('event', 'events'))
     @gefolge_web.util.template('event.index')
     def events_index():
         now = gefolge_web.util.now()
@@ -33,30 +32,28 @@ def setup(app):
             'past_events': sorted(past_events, reverse=True)
         }
 
-    @app.route('/event/<event_id>', methods=['GET', 'POST'])
+    @events_index.children(gefolge_web.event.model.Event, methods=['GET', 'POST'])
     @gefolge_web.login.member_required
-    @gefolge_web.util.path(gefolge_web.event.model.Event, events_index)
     @gefolge_web.util.template('event.overview')
-    def event_page(event_id):
-        event = gefolge_web.event.model.Event(event_id)
+    def event_page(event):
         confirm_signup_form = gefolge_web.event.forms.ConfirmSignupForm(event)
         if confirm_signup_form.submit_confirm_signup_form.data and confirm_signup_form.validate():
-            snowflake = int(re.fullmatch('Anzahlung {} ([0-9]+)'.format(event_id), confirm_signup_form.verwendungszweck.data).group(1))
+            snowflake = int(re.fullmatch('Anzahlung {} ([0-9]+)'.format(event.event_id), confirm_signup_form.verwendungszweck.data).group(1))
             if snowflake < 100:
                 guest = gefolge_web.event.model.Guest(event, snowflake)
                 gefolge_web.util.log('eventConfirmSignup', {
-                    'event': event_id,
+                    'event': event.event_id,
                     'person': snowflake
                 })
                 event.attendee_data(guest)['signup'] = '{:%Y-%m-%d %H:%M:%S}'.format(gefolge_web.util.now()) #TODO Datum der Überweisung verwenden
             else:
                 mensch = gefolge_web.login.Mensch(snowflake)
                 event.signup(mensch)
-            return flask.redirect(flask.url_for('event_page', event_id=event_id))
+            return flask.redirect(flask.g.view_node.url)
         programm_add_form = gefolge_web.event.forms.ProgrammAddForm(event)
         if programm_add_form.submit_programm_add_form.data and programm_add_form.validate():
             gefolge_web.util.log('eventProgrammAdd', {
-                'event': event_id,
+                'event': event.event_id,
                 'orga': programm_add_form.orga.data.snowflake,
                 'programmpunkt': programm_add_form.name.data,
                 'description': programm_add_form.description.data
@@ -67,15 +64,15 @@ def setup(app):
                 'signups': []
             }
             #TODO ping Programm orga on Discord
-            #TODO redirect to Programm view/edit page
+            return flask.redirect((flask.g.view_node / 'programm' / programm_add_form.name.data).url)
         return {
             'event': event,
-            'article_source': gefolge_web.wiki.get_article_source('event', event_id),
+            'article_source': gefolge_web.wiki.get_article_source('event', event.event_id),
             'confirm_signup_form': confirm_signup_form,
             'programm_add_form': programm_add_form
         }
 
-    @app.route('/event/<event_id>/calendar/all.ics')
+    @app.route('/event/<event_id>/calendar/all.ics') #TODO move to api.gefolge.org
     @gefolge_web.login.member_required
     def event_calendar_all(event_id):
         event = gefolge_web.event.model.Event(event_id)
@@ -88,11 +85,9 @@ def setup(app):
                 cal.add_component(programmpunkt.to_ical())
         return flask.Response(cal.to_ical(), mimetype='text/calendar')
 
-    @app.route('/event/<event_id>/guest', methods=['GET', 'POST'])
+    @event_page.child('guest', 'Gast anmelden', methods=['GET', 'POST'])
     @gefolge_web.login.member_required
-    @gefolge_web.util.path(('guest', 'Gast anmelden'), event_page)
-    def event_guest_form(event_id):
-        event = gefolge_web.event.model.Event(event_id)
+    def event_guest_form(event):
         signup_guest_form = gefolge_web.event.forms.SignupGuestForm(event)
         if signup_guest_form.submit_signup_guest_form.data and signup_guest_form.validate():
             guest_name = signup_guest_form.name.data.strip()
@@ -101,49 +96,33 @@ def setup(app):
         else:
             return flask.render_template('event.guest-form.html', event=event, signup_guest_form=signup_guest_form)
 
-    @app.route('/event/<event_id>/me')
+    @event_page.child('mensch', 'Menschen')
     @gefolge_web.login.member_required
-    def event_me(event_id):
-        return flask.redirect(flask.url_for('event_profile', event_id=event_id, snowflake=str(flask.g.user.snowflake)))
-
-    @app.route('/event/<event_id>/me/edit')
-    @gefolge_web.login.member_required
-    def event_me_edit(event_id):
-        return flask.redirect(flask.url_for('event_profile_edit', event_id=event_id, snowflake=str(flask.g.user.snowflake)))
-
-    @app.route('/event/<event_id>/mensch')
-    @gefolge_web.login.member_required
-    @gefolge_web.util.path(('mensch', 'Menschen'), event_page)
     @gefolge_web.util.template('event.menschen')
-    def event_menschen(event_id):
-        return {'event': gefolge_web.event.model.Event(event_id)}
+    def event_menschen(event):
+        return {'event': event}
 
-    @app.route('/event/<event_id>/mensch/<snowflake>')
+    @event_menschen.children(lambda event, person: event.person(person))
     @gefolge_web.login.member_required
-    @gefolge_web.util.path(lambda event_id, snowflake: gefolge_web.event.model.Event(event_id).person(snowflake), event_menschen)
     @gefolge_web.util.template('event.profile')
-    def event_profile(event_id, snowflake):
-        event = gefolge_web.event.model.Event(event_id)
+    def event_profile(event, person):
         return {
             'event': event,
-            'person': event.person(snowflake)
+            'person': person
         }
 
-    @app.route('/event/<event_id>/mensch/<snowflake>/edit', methods=['GET', 'POST'])
+    @event_profile.child('edit', 'bearbeiten', methods=['GET', 'POST'])
     @gefolge_web.login.member_required
-    @gefolge_web.util.path(('edit', 'bearbeiten'), event_profile)
     @gefolge_web.util.template('event.profile-edit')
-    def event_profile_edit(event_id, snowflake):
-        event = gefolge_web.event.model.Event(event_id)
-        person = event.person(snowflake)
+    def event_profile_edit(event, person):
         if not event.can_edit(flask.g.user, person):
             flask.flash('Du bist nicht berechtigt, dieses Profil zu bearbeiten.')
-            return flask.redirect(flask.url_for('event_profile', event_id=event_id, snowflake=snowflake))
+            return flask.redirect(flask.g.view_node.parent.url)
         profile_form = gefolge_web.event.forms.ProfileForm(event, person)
         if profile_form.submit_profile_form.data and profile_form.validate():
             person_data = event.attendee_data(person)
             gefolge_web.util.log('eventProfileEdit', {
-                'event': event_id,
+                'event': event.event_id,
                 'person': person.snowflake,
                 'nights': {
                     '{:%Y-%m-%d}'.format(night): getattr(profile_form, 'night{}'.format(i)).data
@@ -162,7 +141,7 @@ def setup(app):
                 person_data['food'] = {}
             person_data['food']['animalProducts'] = profile_form.animal_products.data
             person_data['food']['allergies'] = profile_form.allergies.data
-            return flask.redirect(flask.url_for('event_profile', event_id=event_id, snowflake=snowflake))
+            return flask.redirect(flask.g.view_node.parent.url)
         else:
             return {
                 'event': event,
@@ -170,12 +149,14 @@ def setup(app):
                 'event_attendee_edit_form': profile_form
             }
 
-    @app.route('/event/<event_id>/programm')
+    @event_page.redirect('me')
+    def event_me(event):
+        return event_menschen, flask.g.user
+
+    @event_page.child('programm', 'Programm')
     @gefolge_web.login.member_required
-    @gefolge_web.util.path(('programm', 'Programm'), event_page)
     @gefolge_web.util.template('event.programm')
-    def event_programm(event_id):
-        event = gefolge_web.event.model.Event(event_id)
+    def event_programm(event):
         programm = event.programm
         filled_until = None
 
@@ -191,7 +172,7 @@ def setup(app):
                 programmpunkt = more_itertools.one(programmpunkt for programmpunkt in programm if programmpunkt.start is not None and programmpunkt.start >= timestamp and programmpunkt.start < timestamp + datetime.timedelta(hours=1))
                 hours = math.ceil((programmpunkt.end - timestamp) / datetime.timedelta(hours=1))
                 filled_until = timestamp + datetime.timedelta(hours=hours) #TODO support for events that go past midnight
-                return jinja2.Markup('<td rowspan="{}"><a href="{}">{}</a></td>'.format(hours, flask.url_for('event_programmpunkt', event_id=event_id, name=programmpunkt.name), programmpunkt))
+                return jinja2.Markup('<td rowspan="{}"><a href="{}">{}</a></td>'.format(hours, (flask.g.view_node / programmpunkt).url, programmpunkt))
             return jinja2.Markup('<td></td>') # nothing planned yet
 
         return {
@@ -205,17 +186,14 @@ def setup(app):
             }
         }
 
-    @app.route('/event/<event_id>/programm/<name>', methods=['GET', 'POST'])
+    @event_programm.children(gefolge_web.event.programm.Programmpunkt, methods=['GET', 'POST'])
     @gefolge_web.login.member_required
-    @gefolge_web.util.path(gefolge_web.event.programm.Programmpunkt, event_programm)
     @gefolge_web.util.template('event.programmpunkt')
-    def event_programmpunkt(event_id, name):
-        event = gefolge_web.event.model.Event(event_id)
-        programmpunkt = gefolge_web.event.programm.Programmpunkt(event, name)
+    def event_programmpunkt(event, programmpunkt):
         programmpunkt_form = programmpunkt.form(flask.g.user)
         if hasattr(programmpunkt_form, 'submit_programmpunkt_form') and programmpunkt_form.submit_programmpunkt_form.data and programmpunkt_form.validate():
             programmpunkt.process_form_submission(programmpunkt_form, flask.g.user)
-            return flask.redirect(flask.url_for('event_programmpunkt', event_id=event_id, name=name))
+            return flask.redirect(flask.g.view_node.url)
         else:
             return {
                 'event': event,
@@ -223,21 +201,18 @@ def setup(app):
                 'programmpunkt_form': programmpunkt_form if hasattr(programmpunkt_form, 'submit_programmpunkt_form') else None
             }
 
-    @app.route('/event/<event_id>/programm/<name>/edit', methods=['GET', 'POST'])
+    @event_programmpunkt.child('edit', 'bearbeiten', methods=['GET', 'POST'])
     @gefolge_web.login.member_required
-    @gefolge_web.util.path(('edit', 'bearbeiten'), event_programmpunkt)
     @gefolge_web.util.template('event.programmpunkt-edit')
-    def event_programmpunkt_edit(event_id, name):
-        event = gefolge_web.event.model.Event(event_id)
-        programmpunkt = gefolge_web.event.programm.Programmpunkt(event, name)
+    def event_programmpunkt_edit(event, programmpunkt):
         if not programmpunkt.can_edit(flask.g.user):
             flask.flash('Du bist nicht berechtigt, diesen Programmpunkt zu bearbeiten.')
-            return flask.redirect(flask.url_for('event_programmpunkt', event_id=event_id, name=name))
+            return flask.redirect(flask.g.view_node.parent.url)
         programm_edit_form = gefolge_web.event.forms.ProgrammEditForm(programmpunkt)
         if programm_edit_form.submit_programm_edit_form.data and programm_edit_form.validate():
             gefolge_web.util.log('eventProgrammEdit', {
-                'event': event_id,
-                'programmpunkt': name,
+                'event': event.event_id,
+                'programmpunkt': programmpunkt.name,
                 'orga': programm_edit_form.orga.data.snowflake,
                 'start': (None if programm_edit_form.start.data is None else '{:%Y-%m-%d %H:%M:%S}'.format(programm_edit_form.start.data)),
                 'end': (None if programm_edit_form.end.data is None else '{:%Y-%m-%d %H:%M:%S}'.format(programm_edit_form.end.data)),
@@ -247,7 +222,7 @@ def setup(app):
             programmpunkt.start = programm_edit_form.start.data
             programmpunkt.end = programm_edit_form.end.data
             programmpunkt.description = programm_edit_form.description.data
-            return flask.redirect(flask.url_for('event_programmpunkt', event_id=event_id, name=name))
+            return flask.redirect(flask.g.view_node.parent.url)
         else:
             return {
                 'event': event,
@@ -255,24 +230,21 @@ def setup(app):
                 'programm_edit_form': programm_edit_form
             }
 
-    @app.route('/event/<event_id>/programm/<name>/delete', methods=['GET', 'POST'])
+    @event_programmpunkt.child('delete', 'löschen', methods=['GET', 'POST'])
     @gefolge_web.login.member_required
-    @gefolge_web.util.path(('delete', 'löschen'), event_programmpunkt)
     @gefolge_web.util.template('event.programmpunkt-delete')
-    def event_programmpunkt_delete(event_id, name):
-        event = gefolge_web.event.model.Event(event_id)
-        programmpunkt = gefolge_web.event.programm.Programmpunkt(event, name)
+    def event_programmpunkt_delete(event, programmpunkt):
         if g.user != event.orga('Programm'):
             flask.flash('Du bist nicht berechtigt, diesen Programmpunkt zu löschen.')
-            return flask.redirect(flask.url_for('event_programmpunkt', event_id=event_id, name=name))
+            return flask.redirect(flask.g.view_node.parent.url)
         programm_delete_form = gefolge_web.event.forms.ProgrammDeleteForm(programmpunkt)
         if programm_delete_form.submit_programm_delete_form.data and programm_delete_form.validate():
             gefolge_web.util.log('eventProgrammDelete', {
-                'event': event_id,
-                'programmpunkt': name
+                'event': event.event_id,
+                'programmpunkt': programmpunkt.name
             })
             del event.data['programm'][programmpunkt.name]
-            return flask.redirect(flask.url_for('event_programm', event_id=event_id))
+            return flask.redirect(flask.g.view_node.parent.parent.url)
         else:
             return {
                 'event': event,

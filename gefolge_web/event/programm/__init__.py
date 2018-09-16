@@ -11,32 +11,27 @@ import gefolge_web.util
 
 @functools.total_ordering
 class Programmpunkt:
-    def __new__(cls, event=None, name=None, *, event_id=None):
+    def __new__(cls, event, programmpunkt):
         if name == 'custom-magic-draft':
             import gefolge_web.event.programm.magic
 
-            return gefolge_web.event.programm.magic.CustomMagicDraft(event=event, name=name, event_id=event_id)
-        elif re.fullmatch('abendessen[0-9]+-[0-9]+-[0-9]+', name):
+            return gefolge_web.event.programm.magic.CustomMagicDraft(event, programmpunkt)
+        elif re.fullmatch('abendessen[0-9]+-[0-9]+-[0-9]+', programmpunkt):
             import gefolge_web.event.programm.essen
 
-            return gefolge_web.event.programm.essen.Abendessen(event=event, name=name, event_id=event_id)
+            return gefolge_web.event.programm.essen.Abendessen(event, programmpunkt)
         else:
             return super().__new__(cls)
 
-    def __init__(self, event=None, name=None, *, event_id=None):
+    def __init__(self, event, programmpunkt):
         # event can be specified by event or event_id argument
-        if name is None:
-            raise TypeError('Missing name argument for Programmpunkt constructor')
-        else:
-            self.name = name
-        if event is not None:
-            self.event = event
-        elif event_id is not None:
+        if isinstance(event, str):
             import gefolge_web.event.model
 
-            self.event = gefolge_web.event.model.Event(event_id)
+            self.event = gefolge_web.event.model.Event(event)
         else:
-            raise TypeError('Missing event or event_id argument for Programmpunkt constructor')
+            self.event = event
+        self.name = programmpunkt
 
     def __eq__(self, other):
         return isinstance(other, Programmpunkt) and self.event == other.event and self.name == other.name

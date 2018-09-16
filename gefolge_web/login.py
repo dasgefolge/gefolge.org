@@ -14,7 +14,16 @@ import gefolge_web.util
 MENSCHEN = 386753710434287626 # role ID
 PROFILES_ROOT = pathlib.Path('/usr/local/share/fidera/profiles')
 
-class Mensch(flask_login.UserMixin):
+class MenschMeta(type):
+    def __iter__(self):
+        # iterating over the Mensch class yields everyone in the guild
+        return (
+            Mensch(profile_path.stem)
+            for profile_path in sorted(PROFILES_ROOT.iterdir(), key=lambda path: int(path.stem))
+            if Mensch(profile_path.stem).is_active
+        )
+
+class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
     def __init__(self, snowflake):
         self.snowflake = int(snowflake)
 

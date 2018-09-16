@@ -5,8 +5,8 @@
 {% block page_content %}
     <h1>Menschen</h1>
     <ul>
-        {% for mensch in menschen_list %}
-            <li>{{mensch | mention}}</li>
+        {% for profile in g.view_node.children %}
+            <li>{{profile.var | mention}}</li>
         {% endfor %}
     </ul>
 {% endblock %}

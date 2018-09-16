@@ -1,24 +1,21 @@
 import gefolge_web.login
 import gefolge_web.util
 
-def setup(app):
-    @app.route('/games')
+def setup(index):
+    @index.child('games', 'Spiele')
     @gefolge_web.login.member_required
-    @gefolge_web.util.path(('games', 'Spiele'))
     @gefolge_web.util.template('games-index')
     def games_index():
         return {}
 
-    @app.route('/games/space-alert')
+    @games_index.child('space-alert', 'Space Alert')
     @gefolge_web.login.member_required
-    @gefolge_web.util.path(('space-alert', 'Space Alert'), games_index)
     @gefolge_web.util.template('space-alert-index')
     def space_alert():
         return {}
 
-    @app.route('/games/space-alert/scan')
+    @space_alert.child('scan', 'Hirnscans')
     @gefolge_web.login.member_required
-    @gefolge_web.util.path(('scan', 'Hirnscans'), space_alert)
     @gefolge_web.util.template('brainscans-index')
     def brainscans_index():
         return {}

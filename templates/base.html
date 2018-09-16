@@ -8,7 +8,7 @@
     {{ super() }}
 {% endblock %}
 
-{% block title %}Das Gefolge{% endblock %}
+{% block title %}{{g.view_node}} — Das Gefolge{% endblock %}
 
 {% block styles %}
     {{ super() }}
@@ -59,18 +59,14 @@
 
 {% block navbar %}
     <nav>
-        <span><a class="nolink" href="{{url_for('index')}}"><img src="{{url_for('.static', filename='gefolge.png')}}" style="height: 32px;" /></a></span>
-        {% if g.path is none %}
-            <span> / </span>
-        {% else %}
-            {% for path_component in g.path.components %}
-                {% if loop.index == loop.length %}
-                    <span> / {{path_component.name}}</span>
-                {% else %}
-                    <span> / <a href="{{path_component.url}}">{{path_component.name}}</a></span>
-                {% endif %}
-            {% endfor %}
-        {% endif %}
+        {% for node in g.view_node.parents | reverse %}
+            {% if node.is_index %}
+                <span><a class="nolink" href="{{url_for('index')}}"><img src="{{url_for('.static', filename='gefolge.png')}}" style="height: 32px;" /></a></span>
+            {% else %}
+                <span> / <a href="{{node.url}}">{{node}}</a></span>
+            {% endif %}
+        {% endfor %}
+        <span> / {{g.view_node}}</span>
     </nav>
 {% endblock %}
 

@@ -7,13 +7,13 @@ import gefolge_web.login
 import gefolge_web.util
 
 class Abendessen(gefolge_web.event.programm.Programmpunkt):
-    def __new__(cls, event=None, name=None, *, event_id=None):
+    def __new__(cls, event, programmpunkt):
         return object.__new__(cls)
 
-    def __init__(self, event=None, name=None, *, event_id=None):
-        if isinstance(name, datetime.date):
-            name = 'abendessen{:%Y-%m-%d}'.format(name)
-        super().__init__(event=event, name=name, event_id=event_id)
+    def __init__(self, event, programmpunkt):
+        if isinstance(programmpunkt, datetime.date):
+            programmpunkt = 'abendessen{:%Y-%m-%d}'.format(programmpunkt)
+        super().__init__(event, programmpunkt)
         self.date = datetime.date(*map(int, re.fullmatch('abendessen([0-9]+)-([0-9]+)-([0-9]+)', self.name).groups()))
         self.name = 'abendessen{:%Y-%m-%d}'.format(self.date) # normalize name
 

@@ -6,6 +6,7 @@ sys.path.append('/opt/py')
 
 import flask
 import flask_bootstrap
+import flask_view_tree
 import flaskext.markdown
 import json
 import os
@@ -42,44 +43,36 @@ with app.app_context():
     emoji_ext.setConfig('emoji_index', pymdownx.emoji.twemoji)
     md._instance.registerExtensions([emoji_ext], {})
     md.register_extension(pymdownx.extra.ExtraExtension)
-    # set up submodules
-    gefolge_web.login.setup(app)
-    gefolge_web.wiki.setup(app, md)
-    gefolge_web.event.setup(app)
-    games_index = gefolge_web.games.setup(app)
-    gefolge_web.util.setup(app)
-    if werewolf_web is not None:
-        werewolf_web.setup(app, games_index)
 
-@app.route('/')
+@flask_view_tree.index(app)
 @gefolge_web.util.template('index')
 def index():
     pass
 
-@app.route('/me')
+@index.child('mensch', 'Menschen')
 @gefolge_web.login.member_required
-def me():
-    return flask.redirect(flask.url_for('profile', snowflake=str(flask.g.user.snowflake)))
-
-@app.route('/mensch')
-@gefolge_web.login.member_required
-@gefolge_web.util.path(('mensch', 'Menschen'))
 @gefolge_web.util.template('menschen-index')
 def menschen():
-    return {
-        'menschen_list': [
-            gefolge_web.login.Mensch(profile_path.stem)
-            for profile_path in sorted(gefolge_web.login.PROFILES_ROOT.iterdir(), key=lambda path: int(path.stem))
-            if gefolge_web.login.Mensch(profile_path.stem).is_active
-        ]
-    }
+    pass
 
-@app.route('/mensch/<snowflake>')
+@menschen.children(gefolge_web.login.Mensch)
 @gefolge_web.login.member_required
-@gefolge_web.util.path(gefolge_web.login.Mensch, menschen)
 @gefolge_web.util.template()
-def profile(snowflake):
-    mensch = gefolge_web.login.Mensch(snowflake)
+def profile(mensch):
     if not mensch.is_active:
         flask.abort(404)
     return {'mensch': mensch}
+
+@index.redirect('me')
+def me():
+    return profile, flask.g.user
+
+with app.app_context():
+    # set up submodules
+    gefolge_web.login.setup(app)
+    gefolge_web.wiki.setup(index, md)
+    gefolge_web.event.setup(index, app)
+    games_index = gefolge_web.games.setup(index)
+    gefolge_web.util.setup(app)
+    if werewolf_web is not None:
+        werewolf_web.setup(games_index)

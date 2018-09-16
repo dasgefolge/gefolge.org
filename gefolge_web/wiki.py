@@ -25,24 +25,22 @@ class DiscordMentionExtension(markdown.Extension):
         config = self.getConfigs()
         md.inlinePatterns.add('discord-mention', DiscordMentionPattern(DISCORD_MENTION_REGEX, md), '<reference')
 
-def setup(app, md):
+def setup(index, md):
     md.register_extension(DiscordMentionExtension)
 
-    @app.route('/wiki')
+    @index.child('wiki')
     @gefolge_web.login.member_required
-    @gefolge_web.util.path('wiki')
     @gefolge_web.util.template('wiki-index')
     def wiki_index():
         {}
 
-    @app.route('/wiki/<article_name>')
+    @wiki_index.children()
     @gefolge_web.login.member_required
-    @gefolge_web.util.path(lambda article_name: article_name, wiki_index)
     @gefolge_web.util.template('wiki')
     def wiki_article(article_name):
         source = get_article_source('wiki', article_name)
         if source is None:
-            flask.abort(404)
+            flask.abort(404) #TODO allow users to create new articles
         return {
             'article_name': article_name,
             'article_namespace': 'wiki',
