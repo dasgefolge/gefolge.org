@@ -12,7 +12,7 @@ import gefolge_web.util
 @functools.total_ordering
 class Programmpunkt:
     def __new__(cls, event, programmpunkt):
-        if name == 'custom-magic-draft':
+        if programmpunkt == 'custom-magic-draft':
             import gefolge_web.event.programm.magic
 
             return gefolge_web.event.programm.magic.CustomMagicDraft(event, programmpunkt)
