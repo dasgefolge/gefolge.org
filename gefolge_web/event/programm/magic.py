@@ -12,12 +12,11 @@ LORE_SEEKER_REPO = pathlib.Path('/opt/git/github.com/fenhl/lore-seeker/stage')
 MAGIC_CONFIG = lazyjson.File('/usr/local/share/fidera/games/magic.json')
 
 class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
-    def __new__(cls, event, programmpunkt):
+    def __new__(cls, event, programmpunkt='custom-magic-draft'):
         return object.__new__(cls)
 
-    def __init__(self, event, programmpunkt):
-        self.name = 'custom-magic-draft'
-        super().__init__(event, self.name)
+    def __init__(self, event, programmpunkt='custom-magic-draft'):
+        super().__init__(event, 'custom-magic-draft')
 
     def __repr__(self):
         return 'gefolge_web.event.programm.CustomMagicDraft({!r})'.format(self.event)
