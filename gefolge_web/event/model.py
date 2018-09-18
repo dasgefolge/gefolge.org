@@ -221,6 +221,10 @@ class Event(metaclass=EventMeta):
         import gefolge_web.event.programm
         import gefolge_web.event.programm.essen
         import gefolge_web.event.programm.magic
+        try:
+            import werewolf_web
+        except ImportError:
+            werewolf_web = None
 
         return sorted(itertools.chain((
             gefolge_web.event.programm.Programmpunkt(self, name)
@@ -230,9 +234,11 @@ class Event(metaclass=EventMeta):
             gefolge_web.event.programm.essen.Abendessen(self, date)
             for date in self.nights
         ), [
-            gefolge_web.event.programm.magic.CustomMagicDraft(self)
-        ]))
-        #TODO rtww-Abstimmungen
+            gefolge_web.event.programm.magic.CustomMagicDraft(self),
+        ], (
+            [] if werewolf_web is None else [werewolf_web.RealtimeWerewolf(self)]
+        )))
+        #TODO Silvesterbuffet-Vorbereitung, rtww-Abstimmungen
 
     def signup(self, mensch):
         gefolge_web.util.log('eventConfirmSignup', {
