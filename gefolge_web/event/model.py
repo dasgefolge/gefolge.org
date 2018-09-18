@@ -229,7 +229,7 @@ class Event(metaclass=EventMeta):
         return sorted(itertools.chain((
             gefolge_web.event.programm.Programmpunkt(self, name)
             for name in self.data['programm'].value()
-            if name != 'custom-magic-draft' # draft is already listed below
+            if name not in {'custom-magic-draft', 'rtww'} # special, already listed below
         ), (
             gefolge_web.event.programm.essen.Abendessen(self, date)
             for date in self.nights
