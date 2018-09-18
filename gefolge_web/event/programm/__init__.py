@@ -12,10 +12,17 @@ import gefolge_web.util
 @class_key.class_key()
 class Programmpunkt:
     def __new__(cls, event, programmpunkt):
+        try:
+            import werewolf_web
+        except ImportError:
+            werewolf_web = None
+
         if programmpunkt == 'custom-magic-draft':
             import gefolge_web.event.programm.magic
 
-            return gefolge_web.event.programm.magic.CustomMagicDraft(event, programmpunkt)
+            return gefolge_web.event.programm.magic.CustomMagicDraft(event)
+        elif programmpunkt == 'rtww' and werewolf_web is not None:
+            return werewolf_web.RealtimeWerewolf(event)
         elif re.fullmatch('abendessen[0-9]+-[0-9]+-[0-9]+', programmpunkt):
             import gefolge_web.event.programm.essen
 
