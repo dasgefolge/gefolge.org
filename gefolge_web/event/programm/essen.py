@@ -21,7 +21,10 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
         return 'gefolge_web.event.programm.essen.Abendessen({!r}, {!r})'.format(self.event, self.name)
 
     def __str__(self):
-        return 'Abendessen'
+        if self.date.month == 12 and self.date.day == 31:
+            return 'Silvesterbuffet'
+        else:
+            return 'Abendessen'
 
     def can_edit(self, editor):
         if editor == gefolge_web.login.Mensch.admin():
@@ -55,6 +58,8 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
     def end(self):
         if 'dinnerEnd' in self.data:
             return gefolge_web.util.parse_iso_datetime(self.data['dinnerEnd'])
+        elif self.date.month == 12 and self.date.day == 31:
+            return pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(self.date, datetime.time(23, 55)))
         else:
             return self.start + datetime.timedelta(hours=1)
 
@@ -96,6 +101,8 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
     def start(self):
         if 'dinnerStart' in self.data:
             return gefolge_web.util.parse_iso_datetime(self.data['dinnerStart'])
+        elif self.date.month == 12 and self.date.day == 31:
+            return pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(self.date, datetime.time(22)))
         else:
             return pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(self.date, datetime.time(19)))
 
