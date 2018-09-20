@@ -139,15 +139,15 @@ def setup(app):
 
     @app.template_filter()
     def natjoin(value):
-        sequence = [str(elt) for elt in value]
+        sequence = list(map(jinja2.escape, value))
         if len(sequence) == 0:
             raise IndexError('Tried to join empty sequence')
         elif len(sequence) == 1:
             return sequence[0]
         elif len(sequence) == 2:
-            return '{} und {}'.format(sequence[0], sequence[1])
+            return jinja2.Markup('{} und {}'.format(sequence[0], sequence[1]))
         else:
-            return ', '.join(sequence[:-1]) + ' und {}'.format(sequence[-1])
+            return jinja2.Markup(', '.join(sequence[:-1]) + ' und {}'.format(sequence[-1]))
 
     @app.template_filter()
     def next_date(value):
@@ -158,13 +158,11 @@ def setup(app):
         return value + datetime.timedelta(days=1)
 
     @app.template_filter()
-    @jinja2.evalcontextfilter
-    def nl2br(eval_ctx, value): #FROM http://flask.pocoo.org/snippets/28/
-        result = u'\n\n'.join(u'<p>%s</p>' % p.replace('\n', '<br>\n') \
-            for p in PARAGRAPH_RE.split(jinja2.escape(value)))
-        if eval_ctx.autoescape:
-            result = jinja2.Markup(result)
-        return result
+    def nl2br(value): #FROM http://flask.pocoo.org/snippets/28/ (modified)
+        return jinja2.Markup('\n'.join(
+            '<p>{}</p>'.format(p.replace('\n', '<br />\n'))
+            for p in PARAGRAPH_RE.split(jinja2.escape(value))
+        ))
 
     @app.before_request
     def current_time():

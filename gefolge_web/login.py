@@ -135,14 +135,10 @@ def setup(app):
     login_manager.init_app(app)
 
     @app.template_filter()
-    @jinja2.evalcontextfilter
-    def mention(eval_ctx, value):
+    def mention(value):
         if not hasattr(value, 'snowflake'):
             value = Mensch(value)
-        result = '<a title="{}" href="{}">@{}</a>'.format(value, flask.url_for('profile', mensch=str(value.snowflake)), jinja2.escape(value.name))
-        if eval_ctx.autoescape:
-            result = jinja2.Markup(result)
-        return result
+        return jinja2.Markup('<a title="{}" href="{}">@{}</a>'.format(value, flask.url_for('profile', mensch=str(value.snowflake)), jinja2.escape(value.name)))
 
     @app.route('/auth')
     def auth_callback():
