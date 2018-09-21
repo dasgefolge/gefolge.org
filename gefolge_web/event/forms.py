@@ -12,7 +12,7 @@ import gefolge_web.login
 
 def ConfirmSignupForm(event):
     def validate_verwendungszweck(form, field):
-        match = re.fullmatch('Anzahlung {} ([0-9]+)'.format(event.event_id), field.data)
+        match = re.fullmatch('Anzahlung {} ([0-9]+)'.format(event.event_id), field.data.lower())
         if not match:
             raise wtforms.validators.ValidationError('Verwendungszweck ist keine Anzahlung für dieses event.')
         if len(match.group(1)) < 3:
