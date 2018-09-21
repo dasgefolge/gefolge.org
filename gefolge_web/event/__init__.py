@@ -38,7 +38,7 @@ def setup(index, app):
     def event_page(event):
         confirm_signup_form = gefolge_web.event.forms.ConfirmSignupForm(event)
         if confirm_signup_form.submit_confirm_signup_form.data and confirm_signup_form.validate():
-            snowflake = int(re.fullmatch('Anzahlung {} ([0-9]+)'.format(event.event_id), confirm_signup_form.verwendungszweck.data).group(1))
+            snowflake = int(re.fullmatch('anzahlung {} ([0-9]+)'.format(event.event_id), confirm_signup_form.verwendungszweck.data.lower()).group(1))
             if snowflake < 100:
                 guest = gefolge_web.event.model.Guest(event, snowflake)
                 gefolge_web.util.log('eventConfirmSignup', {
