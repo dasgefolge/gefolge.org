@@ -12,6 +12,7 @@ import gefolge_web.util
 EVENTS_ROOT = pathlib.Path('/usr/local/share/fidera/event')
 LOCATIONS_ROOT = pathlib.Path('/usr/local/share/fidera/loc')
 ORGA_ROLES = ['Abrechnung', 'Buchung', 'Essen', 'Programm', 'Schlüssel']
+SILVESTER_CHANNEL = 387264349678338049
 
 class Guest:
     def __init__(self, event, guest_id):
@@ -251,6 +252,7 @@ class Event(metaclass=EventMeta):
         })
         if 'role' in self.data:
             peter.bot_cmd('add-role', str(mensch.snowflake), str(self.data['role']))
+        peter.bot_cmd('channel-msg', str(self.data.get('channel', SILVESTER_CHANNEL)), '<@{}>: du bist jetzt für {} angemeldet. Fülle bitte bei Gelegenheit noch dein Profil auf <https://gefolge.org/event/{}/me/edit> aus. Außerdem kannst du dich auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(mensch.snowflake, self, self.event_id, self.event_id))
 
     def signup_guest(self, mensch, guest_name):
         if any(str(guest) == guest_name for guest in self.guests):
