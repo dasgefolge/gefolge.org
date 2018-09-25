@@ -92,9 +92,9 @@ def setup(index, app):
         if signup_guest_form.submit_signup_guest_form.data and signup_guest_form.validate():
             guest_name = signup_guest_form.name.data.strip()
             guest = event.signup_guest(flask.g.user, guest_name)
-            return flask.render_template('event.guest-confirm.html', event=event, guest=guest)
+            return flask.render_template('event/guest-confirm.html', event=event, guest=guest)
         else:
-            return flask.render_template('event.guest-form.html', event=event, signup_guest_form=signup_guest_form)
+            return flask.render_template('event/guest-form.html', event=event, signup_guest_form=signup_guest_form)
 
     @event_page.child('mensch', 'Menschen')
     @gefolge_web.login.member_required
