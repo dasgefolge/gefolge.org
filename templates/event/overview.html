@@ -106,6 +106,10 @@
                     Falls kein Platz für dich frei wird, bekommst du deine Anzahlung natürlich zurück.
                 {% endif %}
             </div>
+        {% elif event.ausfall.value > (event.signups | length) * event.anzahlung.value %}
+            <div class="alert alert-info">
+                <strong>Wichtig:</strong> Wir können erst buchen, wenn die Ausfallgebühr von {{event.ausfall}} gesichert ist. Dazu fehlen noch {{(event.ausfall.value / event.anzahlung.value - (event.signups | length)) | round(0, 'ceil') | int}} Anmeldungen.
+            </div>
         {% endif %}
         {% if event.end < g.now %}
             <p>Dieses event ist schon vorbei.</p>
@@ -123,9 +127,7 @@
                 BIC: {{event.attendee_data(event.orga('Abrechnung'))['konto']['bic']}}<br />
                 Verwendungszweck: Anzahlung {{event.event_id}} {{g.user.snowflake}}
             </p>
-            {% if event.ausfall.value > (event.signups | length) * event.anzahlung.value %}
-                <p>Wichtig: wir können erst buchen, wenn die Ausfallgebühr von {{event.ausfall}} gesichert ist. Dazu fehlen noch {{(event.ausfall.value / event.anzahlung.value - (event.signups | length)) | round(0, 'ceil') | int}} Anmeldungen.</p>
-            {% endif %}
+            <p>Details zu deiner Anmeldung kannst du eintragen, wenn die Anzahlung angekommen ist. Du wirst dazu auf Discord angepingt.</p> {#TODO reverse signup flow #}
         {% endif %}
     {% endif %}
 {% endblock %}
