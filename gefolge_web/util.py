@@ -34,6 +34,11 @@ class Euro:
         if self.value.quantize(decimal.Decimal('1.00')) != self.value:
             raise ValueError('Euro value contains fractional cents')
 
+    def __add__(self, other):
+        if not isinstance(other, Euro):
+            return NotImplemented
+        return Euro(self.value + other.value)
+
     @property
     def __key__(self):
         return self.value
