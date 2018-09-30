@@ -90,9 +90,9 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
     @property
     def name(self):
         if self.profile_data.get('nick') is None:
-            return self.profile_data['username'].value()
+            return self.profile_data['username']
         else:
-            return self.profile_data['nick'].value()
+            return self.profile_data['nick']
 
     @property
     def profile_data(self):
