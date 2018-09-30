@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{event}}{% endblock %}
+{% block title %}{{event.__str__()}}{% endblock %}
 
 {% block page_content %}
     <p><strong>{{event.__str__()}}</strong> {% if event.end < g.now %}fand{% else %}findet{% endif %} vom {{event.start | dmy_hm}} bis zum {{event.end | dmy_hm}} {{event.location.prefix}}{{event.location}} statt.</p>

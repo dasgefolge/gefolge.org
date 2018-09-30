@@ -8,7 +8,7 @@
     {%- endif -%}
 {%- endmacro %}
 
-{% block title %}{{person}} bearbeiten — {{event}}{% endblock %}
+{% block title %}{{person}} bearbeiten — {{event.__str__()}}{% endblock %}
 
 {% block page_content %}
     <h1>

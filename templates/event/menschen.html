@@ -8,7 +8,7 @@
     {%- endif -%}
 {%- endmacro %}
 
-{% block title %}Menschen — {{event}}{% endblock %}
+{% block title %}Menschen — {{event.__str__()}}{% endblock %}
 
 {% block page_content %}
     <p>Aktuell {% if event.signups | length > 1 %}sind{% else %}ist{% endif %} {{event.signups | length}} Mensch{% if event.signups | length > 1 %}en{% endif %} für {{event}} angemeldet:</p>

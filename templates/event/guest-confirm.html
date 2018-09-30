@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Gast anmelden — {{event}}{% endblock %}
+{% block title %}Gast anmelden — {{event.__str__()}}{% endblock %}
 
 {% block page_content %}
     <p>Hier kannst du Gäste für {{event}} anmelden.</p>
