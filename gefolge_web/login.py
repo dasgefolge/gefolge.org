@@ -54,7 +54,7 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
 
     @property
     def balance(self):
-        return sum((transaction.amount for transaction in self.transactions), start=gefolge_web.util.Euro())
+        return sum((transaction.amount for transaction in self.transactions), gefolge_web.util.Euro())
 
     @property
     def data(self):
