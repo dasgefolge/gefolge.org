@@ -6,7 +6,7 @@
     <h1>Menschen</h1>
     <ul>
         {% for profile in g.view_node.children %}
-            <li>{{profile.var | mention}}</li>
+            <li>{{profile.var}}</li>
         {% endfor %}
     </ul>
 {% endblock %}

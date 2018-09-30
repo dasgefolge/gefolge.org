@@ -1,13 +1,5 @@
 {% extends "base.html" %}
 
-{% macro render_person(person) -%}
-    {%- if person is guest -%}
-        {{person}}
-    {%- else -%}
-        {{person | mention}}
-    {%- endif -%}
-{%- endmacro %}
-
 {% block title %}Menschen — {{event.__str__()}}{% endblock %}
 
 {% block page_content %}
@@ -42,7 +34,7 @@
         <tbody>
             {% for person in event.signups %}
                 <tr>
-                    <td>{{render_person(person)}}</td>
+                    <td>{{person}}</td>
                     <td></td>
                     {% for night in event.nights %}
                         {% set attending_night = event.attendee_data(person).get('nights', {}).get('{:%Y-%m-%d}'.format(night), 'maybe') %}
@@ -65,7 +57,7 @@
                         {% if event.attendee_data(person).get('orga', []) | length > 0 %}
                             Orga: {{event.attendee_data(person)['orga'] | natjoin}}
                         {% elif person is guest %}
-                            (via {{person.via | mention}})
+                            (via {{person.via}})
                         {% endif %}
                     </td>
                     <td>

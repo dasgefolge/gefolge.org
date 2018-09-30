@@ -66,6 +66,11 @@ class Transaction:
 
             event = gefolge_web.event.model.Event(self.json_data['event'])
             return jinja2.Markup('Anzahlung für {}'.format(event.__html__()))
+        elif self.json_data['type'] == 'transfer':
+            import gefolge_web.login
+
+            mensch = gefolge_web.login.Mensch(self.json_data['mensch'])
+            return jinja2.Markup('{} {} übertragen'.format(, mensch.__html__()))
         else:
             raise NotImplementedError('transaction type {} not implemented'.format(self.json_data['type']))
 

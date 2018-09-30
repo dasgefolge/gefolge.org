@@ -46,6 +46,9 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
     def __hash__(self):
         return hash(self.snowflake)
 
+    def __html__(self):
+        return jinja2.Markup('<a title="{}" href="{}">@{}</a>'.format(value, flask.url_for('profile', mensch=str(self.snowflake)), jinja2.escape(self.name)))
+
     def __repr__(self):
         return 'gefolge_web.login.Mensch({!r})'.format(self.snowflake)
 
@@ -158,14 +161,9 @@ def setup(index, app):
 
     login_manager.init_app(app)
 
-    @app.template_filter()
-    def mention(value):
-        if not hasattr(value, 'snowflake'):
-            value = Mensch(value)
-        return jinja2.Markup('<a title="{}" href="{}">@{}</a>'.format(value, flask.url_for('profile', mensch=str(value.snowflake)), jinja2.escape(value.name)))
-
     @app.before_request
-    def global_user():
+    def global_users():
+        flask.g.admin = Mensch(app.config['web']['admin'])
         flask.g.user = flask_login.current_user
 
     @app.route('/auth')

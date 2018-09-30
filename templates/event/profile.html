@@ -1,26 +1,18 @@
 {% extends "base.html" %}
 
-{% macro render_person() -%}
-    {%- if person is guest -%}
-        {{person}}
-    {%- else -%}
-        {{person | mention}}
-    {%- endif -%}
-{%- endmacro %}
-
-{% block title %}{{person}} — {{event.__str__()}}{% endblock %}
+{% block title %}{{person.__str__()}} — {{event.__str__()}}{% endblock %}
 
 {% block page_content %}
     <h1>
-        Profil für {{render_person()}} auf {{event}}
+        Profil für {{person}} auf {{event}}
         {% if event.can_edit(g.user, person) %}<a href="{{url_for('event_profile_edit', event=event.event_id, person=person.snowflake)}}" class="btn btn-primary">Bearbeiten</a>{% endif %}
     </h1>
     {% if person in event.signups %}
         {% if person is guest %}
-            <p>{{person}} ist Gast und wurde von {{person.via | mention}} angemeldet.</p>
+            <p>{{person}} ist Gast und wurde von {{person.via}} angemeldet.</p>
         {% endif %}
         {% if event.attendee_data(person).get('orga', []) | length > 0 %}
-            <p>{{render_person()}} ist im Orga-Team und organisiert {{event.attendee_data(person)['orga'] | natjoin}}.</p>
+            <p>{{person}} ist im Orga-Team und organisiert {{event.attendee_data(person)['orga'] | natjoin}}.</p>
         {% endif %}
         <h2>Zeitraum</h2>
         <table class="table table-responsive">
@@ -56,7 +48,7 @@
             </tbody>
         </table>
         <h2>Programm</h2>
-        <p>{{render_person()}} ist an folgenden Programmpunkten interessiert:</p>
+        <p>{{person}} ist an folgenden Programmpunkten interessiert:</p>
         <ul>
             {% for programmpunkt in event.programm %}
                 {% if person in programmpunkt.signups %}
@@ -65,6 +57,6 @@
             {% endfor %}
         </ul>
     {% else %}
-        <p>{{render_person()}} ist nicht für {{event}} angemeldet.</p>
+        <p>{{person}} ist nicht für {{event}} angemeldet.</p>
     {% endif %}
 {% endblock %}

@@ -1,13 +1,5 @@
 {% extends "base.html" %}
 
-{% macro render_person(person) -%}
-    {%- if person is guest -%}
-        {{person}}
-    {%- else -%}
-        {{person | mention}}
-    {%- endif -%}
-{%- endmacro %}
-
 {% block title %}{{programmpunkt}} — {{event.__str__()}}{% endblock %}
 
 {% block page_content %}
@@ -19,7 +11,7 @@
     {% if programmpunkt.orga is none %}
         <p>Dieser Programmpunkt hat noch keine Orga.</p>
     {% else %}
-        <p>Dieser Programmpunkt wird von {{programmpunkt.orga | mention}} organisiert.</p>
+        <p>Dieser Programmpunkt wird von {{programmpunkt.orga}} organisiert.</p>
     {% endif %}
     <h2>Beschreibung</h2>
     {{programmpunkt.description | markdown}}
@@ -27,7 +19,7 @@
         <h2>{{programmpunkt.data.get('signupHeader', 'Interessiert')}}</h2>
         <ul>
             {% for person in programmpunkt.signups %}
-                <li>{{render_person(person)}}</li>
+                <li>{{person}}</li>
             {% endfor %}
         </ul>
     {% endif %}

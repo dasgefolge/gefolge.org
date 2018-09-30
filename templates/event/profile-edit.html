@@ -1,18 +1,10 @@
 {% extends "base.html" %}
 
-{% macro render_person() -%}
-    {%- if person is guest -%}
-        {{person}}
-    {%- else -%}
-        {{person | mention}}
-    {%- endif -%}
-{%- endmacro %}
-
-{% block title %}{{person}} bearbeiten — {{event.__str__()}}{% endblock %}
+{% block title %}{{person.__str__()}} bearbeiten — {{event.__str__()}}{% endblock %}
 
 {% block page_content %}
     <h1>
-        Profil für {{render_person()}} auf {{event}}
+        Profil für {{person}} auf {{event}}
         <a href="{{url_for('event_profile', event=event.event_id, person=person.snowflake)}}" class="btn btn-danger">Abbrechen</a>
     </h1>
     {% if event.can_edit(g.user, person) %}

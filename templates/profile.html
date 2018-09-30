@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{mensch}} — Das Gefolge{% endblock %}
+{% block title %}{{mensch.__str__()}} — Das Gefolge{% endblock %}
 
 {% block page_content %}
     {% if mensch.data['nick'].value() is none %}
@@ -12,15 +12,27 @@
     <p>Profil für Discord snowflake {{mensch.snowflake}}. (<a href="https://discordapp.com/users/{{mensch.snowflake}}/">Discord-Profil</a>)</p>
     {% if g.user.is_admin or g.user == mensch %}
         <h1>Guthaben</h1>
-        <p>Du kannst dein Guthaben per Überweisung an {{config['web']['admin'] | mention}} aufladen. Mit diesem Guthaben kannst du dich dann z.B. für events anmelden.</p>
+        <p>Du kannst dein Guthaben per Überweisung an {{g.admin}} aufladen. Mit diesem Guthaben kannst du dich dann z.B. für events anmelden.</p>
         <p>
-            Aktuelles Guthaben: {{mensch.balance}}
+            Aktuelles Guthaben: {{mensch.balance}}.
             {% if mensch.balance.value > 0 %}
-                Wenn du dein Guthaben ausgezahlt haben möchtest, kontaktiere bitte {{config['web']['admin'] | mention}}.
+                Wenn du dein Guthaben ausgezahlt haben möchtest, kontaktiere bitte {{g.admin}}.
             {% elif mensch.balance.value < 0 %}
                 Zahle die Schulden bitte möglichst bald zurück.
             {% endif %}
         </p>
+        {% if 'konto' in g.admin.userdata %}
+            <p>Kontodaten:</p>
+            <p>
+                {{g.admin.userdata['konto']['name']}}<br />
+                IBAN: {{g.admin.userdata['konto']['iban']}}<br />
+                BIC: {{g.admin.userdata['konto']['bic']}}<br />
+                Verwendungszweck: gefolge.org {{mensch.snowflake}}
+            </p>
+        {% endif %}
+        {% if 'payPal' in g.admin.userdata %}
+            <p>{{g.admin}} über PayPal Geld senden: <a href="https://www.paypal.me/{{g.admin.userdata['payPal']}}">paypal.me/{{g.admin.userdata['payPal']}}</a>.</p>
+        {% endif %}
         <h2>Transaktionen</h2>
         <ul>
             {% for transaction in mensch.transactions | reverse %}
