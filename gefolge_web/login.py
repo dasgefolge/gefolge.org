@@ -111,7 +111,7 @@ def member_required(f):
 
     return flask_login.login_required(wrapper)
 
-def setup(app):
+def setup(index, app):
     if 'clientID' not in app.config.get('peter', {}) or 'clientSecret' not in app.config.get('peter', {}):
         return #TODO mount error messages at /login and /auth
     app.config['SECRET_KEY'] = app.config['peter']['clientSecret']
@@ -140,6 +140,10 @@ def setup(app):
             value = Mensch(value)
         return jinja2.Markup('<a title="{}" href="{}">@{}</a>'.format(value, flask.url_for('profile', mensch=str(value.snowflake)), jinja2.escape(value.name)))
 
+    @app.before_request
+    def global_user():
+        flask.g.user = flask_login.current_user
+
     @app.route('/auth')
     def auth_callback():
         if flask_dance.contrib.discord.discord.authorized:
@@ -158,6 +162,18 @@ def setup(app):
         else:
             return flask.abort(400)
 
-    @app.before_request
-    def global_user():
-        flask.g.user = flask_login.current_user
+    @index.child('mensch', 'Menschen', decorators=[member_required])
+    @gefolge_web.util.template('menschen-index')
+    def menschen():
+        pass
+
+    @menschen.children(Mensch)
+    @gefolge_web.util.template()
+    def profile(mensch):
+        if not mensch.is_active:
+            flask.abort(404)
+        return {'mensch': mensch}
+
+    @index.redirect('me', decorators=[member_required])
+    def me():
+        return menschen, flask.g.user

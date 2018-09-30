@@ -49,27 +49,9 @@ with app.app_context():
 def index():
     pass
 
-@index.child('mensch', 'Menschen')
-@gefolge_web.login.member_required
-@gefolge_web.util.template('menschen-index')
-def menschen():
-    pass
-
-@menschen.children(gefolge_web.login.Mensch)
-@gefolge_web.login.member_required
-@gefolge_web.util.template()
-def profile(mensch):
-    if not mensch.is_active:
-        flask.abort(404)
-    return {'mensch': mensch}
-
-@index.redirect('me')
-def me():
-    return menschen, flask.g.user
-
 with app.app_context():
     # set up submodules
-    gefolge_web.login.setup(app)
+    gefolge_web.login.setup(index, app)
     gefolge_web.wiki.setup(index, md)
     gefolge_web.event.setup(index, app)
     games_index = gefolge_web.games.setup(index)

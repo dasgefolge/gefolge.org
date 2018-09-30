@@ -21,8 +21,7 @@ def setup(index, app):
             value = value.snowflake
         return int(value) < 100
 
-    @index.child('event', 'events')
-    @gefolge_web.login.member_required
+    @index.child('event', 'events', decorators=[gefolge_web.login.member_required])
     @gefolge_web.util.template('event.index')
     def events_index():
         now = gefolge_web.util.now()
@@ -33,7 +32,6 @@ def setup(index, app):
         }
 
     @events_index.children(gefolge_web.event.model.Event, methods=['GET', 'POST'])
-    @gefolge_web.login.member_required
     @gefolge_web.util.template('event.overview')
     def event_page(event):
         confirm_signup_form = gefolge_web.event.forms.ConfirmSignupForm(event)
@@ -86,7 +84,6 @@ def setup(index, app):
         return flask.Response(cal.to_ical(), mimetype='text/calendar')
 
     @event_page.child('guest', 'Gast anmelden', methods=['GET', 'POST'])
-    @gefolge_web.login.member_required
     def event_guest_form(event):
         signup_guest_form = gefolge_web.event.forms.SignupGuestForm(event)
         if signup_guest_form.submit_signup_guest_form.data and signup_guest_form.validate():
@@ -97,13 +94,11 @@ def setup(index, app):
             return flask.render_template('event/guest-form.html', event=event, signup_guest_form=signup_guest_form)
 
     @event_page.child('mensch', 'Menschen')
-    @gefolge_web.login.member_required
     @gefolge_web.util.template('event.menschen')
     def event_menschen(event):
         return {'event': event}
 
     @event_menschen.children(lambda event, person: event.person(person))
-    @gefolge_web.login.member_required
     @gefolge_web.util.template('event.profile')
     def event_profile(event, person):
         return {
@@ -112,7 +107,6 @@ def setup(index, app):
         }
 
     @event_profile.child('edit', 'bearbeiten', methods=['GET', 'POST'])
-    @gefolge_web.login.member_required
     @gefolge_web.util.template('event.profile-edit')
     def event_profile_edit(event, person):
         if not event.can_edit(flask.g.user, person):
@@ -154,7 +148,6 @@ def setup(index, app):
         return event_menschen, flask.g.user
 
     @event_page.child('programm', 'Programm')
-    @gefolge_web.login.member_required
     @gefolge_web.util.template('event.programm')
     def event_programm(event):
         programm = event.programm
@@ -187,7 +180,6 @@ def setup(index, app):
         }
 
     @event_programm.children(gefolge_web.event.programm.Programmpunkt, methods=['GET', 'POST'])
-    @gefolge_web.login.member_required
     @gefolge_web.util.template('event.programmpunkt')
     def event_programmpunkt(event, programmpunkt):
         programmpunkt_form = programmpunkt.form(flask.g.user)
@@ -202,7 +194,6 @@ def setup(index, app):
             }
 
     @event_programmpunkt.child('edit', 'bearbeiten', methods=['GET', 'POST'])
-    @gefolge_web.login.member_required
     @gefolge_web.util.template('event.programmpunkt-edit')
     def event_programmpunkt_edit(event, programmpunkt):
         if not programmpunkt.can_edit(flask.g.user):
@@ -231,7 +222,6 @@ def setup(index, app):
             }
 
     @event_programmpunkt.child('delete', 'löschen', methods=['GET', 'POST'])
-    @gefolge_web.login.member_required
     @gefolge_web.util.template('event.programmpunkt-delete')
     def event_programmpunkt_delete(event, programmpunkt):
         if g.user != event.orga('Programm'):

@@ -28,14 +28,12 @@ class DiscordMentionExtension(markdown.Extension):
 def setup(index, md):
     md.register_extension(DiscordMentionExtension)
 
-    @index.child('wiki')
-    @gefolge_web.login.member_required
+    @index.child('wiki', decorators=[gefolge_web.login.member_required])
     @gefolge_web.util.template('wiki-index')
     def wiki_index():
         {}
 
     @wiki_index.children()
-    @gefolge_web.login.member_required
     @gefolge_web.util.template('wiki')
     def wiki_article(article_name):
         source = get_article_source('wiki', article_name)
