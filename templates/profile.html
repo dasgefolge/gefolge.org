@@ -19,7 +19,7 @@
                 Wenn du dein Guthaben ausgezahlt haben möchtest, kontaktiere bitte {{config['web']['admin'] | mention}}.
             {% elif mensch.balance.value < 0 %}
                 Zahle die Schulden bitte möglichst bald zurück.
-            {% end %}
+            {% endif %}
         </p>
         <h2>Transaktionen</h2>
         <ul>
