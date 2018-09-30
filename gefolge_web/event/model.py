@@ -1,4 +1,5 @@
 import class_key
+import flask
 import itertools
 import jinja2
 import lazyjson
@@ -86,6 +87,9 @@ class EventMeta(type):
 class Event(metaclass=EventMeta):
     def __init__(self, event_id):
         self.event_id = event_id
+
+    def __html__(self):
+        return jinja2.Markup('<a href="{}">{}</a>'.format(flask.url_for('event_page', event=self.event_id), self))
 
     @property
     def __key__(self):

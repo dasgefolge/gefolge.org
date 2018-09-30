@@ -4,7 +4,7 @@
 
 {% block page_content %}
     {% if event.end > g.now or g.user.is_admin %}
-        <p>Hier kannst du Gäste für <a href="{{url_for('event_page', event=event.event_id)}}">{{event}}</a> anmelden.</p>
+        <p>Hier kannst du Gäste für {{event}} anmelden.</p>
         {% if 'capacity' in event.location.data and (event.signups | length) >= event.location.data['capacity'].value() %}
             <div class="alert alert-warning">
                 <strong>Achtung:</strong> Das Haus ist schon voll. Du kannst den Gast trotzdem anmelden. Er kommt dann auf die Warteliste. Wenn jemand absagt, rückt der erste Mensch auf der Warteliste nach.
@@ -29,6 +29,6 @@
             <p>Bevor du das tun kannst, musst du dich erst <a href="{{url_for('event_page', event=event.event_id, _anchor='signup')}}">selbst anmelden</a>.</p>
         {% endif %}
     {% else %}
-        <p>Hier {% if event.guests | selectattr("via", "equalto", g.user) | length > 0 %}konntest{% endif %} du Gäste für <a href="{{url_for('event_page', event=event.event_id)}}">{{event}}</a> anmelden{% if event.guests | selectattr("via", "equalto", g.user) | length == 0 %} können{% endif %}. Das event ist aber schon vorbei.</p>
+        <p>Hier {% if event.guests | selectattr("via", "equalto", g.user) | length > 0 %}konntest{% endif %} du Gäste für {{event}} anmelden{% if event.guests | selectattr("via", "equalto", g.user) | length == 0 %} können{% endif %}. Das event ist aber schon vorbei.</p>
     {% endif %}
 {% endblock %}

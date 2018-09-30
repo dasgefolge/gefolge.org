@@ -13,6 +13,7 @@ import gefolge_web.util
 
 MENSCHEN = 386753710434287626 # role ID
 PROFILES_ROOT = pathlib.Path('/usr/local/share/fidera/profiles')
+USERDATA_ROOT = pathlib.Path('/usr/local/share/fidera/userdata')
 
 class MenschMeta(type):
     def __iter__(self):
@@ -49,7 +50,11 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
         return 'gefolge_web.login.Mensch({!r})'.format(self.snowflake)
 
     def __str__(self):
-        return '{}#{}'.format(self.data['username'], self.discrim)
+        return '{}#{}'.format(self.profile_data['username'], self.discrim)
+
+    @property
+    def balance(self):
+        return sum(transaction.amount for transaction in self.transactions)
 
     @property
     def data(self):
@@ -58,14 +63,14 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
     @property
     def discrim(self):
         """Returns the username discriminator as a string with leading zeroes."""
-        return '{:04}'.format(self.data['discriminator'])
+        return '{:04}'.format(self.profile_data['discriminator'])
 
     def get_id(self): # required by flask_login
         return str(self.snowflake)
 
     @property
     def is_active(self):
-        return self.profile_path.exists() and MENSCHEN in self.data.get('roles')
+        return self.profile_path.exists() and MENSCHEN in self.profile_data.get('roles')
 
     @property
     def is_admin(self):
@@ -77,25 +82,44 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
 
     @property
     def long_name(self):
-        if self.data.get('nick') is None:
+        if self.profile_data.get('nick') is None:
             return str(self)
         else:
-            return '{} ({})'.format(self.data['nick'], self)
+            return '{} ({})'.format(self.profile_data['nick'], self)
 
     @property
     def name(self):
-        if self.data.get('nick') is None:
-            return self.data['username'].value()
+        if self.profile_data.get('nick') is None:
+            return self.profile_data['username'].value()
         else:
-            return self.data['nick'].value()
+            return self.profile_data['nick'].value()
+
+    @property
+    def profile_data(self):
+        return lazyjson.File(self.profile_path).value()
 
     @property
     def profile_path(self):
         return PROFILES_ROOT / '{}.json'.format(self.snowflake)
 
     @property
+    def transactions(self):
+        return [
+            gefolge_web.util.Transaction(transaction_data)
+            for transaction_data in self.userdata.get('transactions', [])
+        ]
+
+    @property
     def url_part(self):
         return str(self.snowflake)
+
+    @property
+    def userdata(self):
+        return lazyjson.File(self.userdata_path, init={})
+
+    @property
+    def userdata_path(self):
+        return USERDATA_ROOT / '{}.json'.format(self.snowflake)
 
 def is_safe_url(target):
     ref_url = urllib.parse.urlparse(flask.request.host_url)

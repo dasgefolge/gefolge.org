@@ -1,3 +1,4 @@
+import class_key
 import contextlib
 import copy
 import datetime
@@ -26,29 +27,50 @@ Subject: gefolge.org internal server error
 An internal server error occurred on gefolge.org
 """
 
-@functools.total_ordering
+@class_key.class_key()
 class Euro:
     def __init__(self, value=0):
         self.value = decimal.Decimal(value)
         if self.value.quantize(decimal.Decimal('1.00')) != self.value:
             raise ValueError('Euro value contains fractional cents')
 
-    def __eq__(self, other):
-        return isinstance(other, Euro) and self.value == other.value
-
-    def __hash__(self):
-        return hash(self.value)
-
-    def __lt__(self, other):
-        if not isinstance(other, Euro):
-            return NotImplemented
-        return self.value < other.value
+    @property
+    def __key__(self):
+        return self.value
 
     def __repr__(self):
         return 'gefolge_web.event.Euro({!r})'.format(self.value)
 
     def __str__(self):
         return '{:.2f}€'.format(self.value).replace('.', ',')
+
+class Transaction:
+    def __init__(self, json_data):
+        self.json_data = json_data
+
+    def __html__(self):
+        if self.json_data['type'] == 'bankTransfer':
+            return jinja2.Markup('Überweisung')
+        elif self.json_data['type'] == 'eventAbrechnung':
+            import gefolge_web.event.model
+
+            event = gefolge_web.event.model.Event(self.json_data['event'])
+            return jinja2.Markup('Abrechnung von {}'.format(event.__html__()))
+        elif self.json_data['type'] == 'eventAnzahlung':
+            import gefolge_web.event.model
+
+            event = gefolge_web.event.model.Event(self.json_data['event'])
+            return jinja2.Markup('Anzahlung für {}'.format(event.__html__()))
+        else:
+            raise NotImplementedError('transaction type {} not implemented'.format(self.json_data['type']))
+
+    @property
+    def amount(self):
+        return Euro(self.json_data['amount'])
+
+    @property
+    def time(self):
+        return parse_iso_datetime(self.json_data['time'], tz=pytz.utc).astimezone(pytz.timezone('Europe/Berlin'))
 
 def date_range(start, end):
     date = start
@@ -121,6 +143,14 @@ def setup(app):
         if isinstance(value, str):
             value = parse_iso_datetime(value)
         return '{:%d.%m.%Y %H:%M}'.format(value)
+
+    @app.template_filter()
+    def dmy_hms(value):
+        if isinstance(value, lazyjson.Node):
+            value = value.value()
+        if isinstance(value, str):
+            value = parse_iso_datetime(value)
+        return '{:%d.%m.%Y %H:%M:%S}'.format(value)
 
     @app.template_filter()
     def hm(value):

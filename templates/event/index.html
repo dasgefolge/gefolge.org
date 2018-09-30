@@ -7,13 +7,13 @@
     <h2>zukünftige Events</h2>
     <ul>
         {% for event in future_events %}
-            <li><a href="{{url_for('event_page', event=event.event_id)}}">{{event}}</a> ({{event.start.strftime('%d.%m.%Y')}}–{{event.end.strftime('%d.%m.%Y')}})</li>
+            <li>{{event}} ({{event.start.strftime('%d.%m.%Y')}}–{{event.end.strftime('%d.%m.%Y')}})</li>
         {% endfor %}
     </ul>
     <h2>vergangene Events</h2>
     <ul>
         {% for event in past_events %}
-            <li><a href="{{url_for('event_page', event=event.event_id)}}">{{event}}</a> ({{event.start.strftime('%d.%m.%Y')}}–{{event.end.strftime('%d.%m.%Y')}})</li>
+            <li>{{event}} ({{event.start.strftime('%d.%m.%Y')}}–{{event.end.strftime('%d.%m.%Y')}})</li>
         {% endfor %}
     </ul>
 {% endblock %}

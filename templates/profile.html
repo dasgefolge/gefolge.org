@@ -10,4 +10,22 @@
         <h2>{{mensch.data['username']}}<span class="muted">#{{mensch.discrim}}</span></h1>
     {% endif %}
     <p>Profil für Discord snowflake {{mensch.snowflake}}. (<a href="https://discordapp.com/users/{{mensch.snowflake}}/">Discord-Profil</a>)</p>
+    {% if g.user.is_admin() or g.user == mensch %}
+        <h1>Guthaben</h1>
+        <p>Du kannst dein Guthaben per Überweisung an {{config['web']['admin'] | mention}} aufladen. Mit diesem Guthaben kannst du dich dann z.B. für events anmelden.</p>
+        <p>
+            Aktuelles Guthaben: {{mensch.balance}}
+            {% if mensch.balance.value > 0 %}
+                Wenn du dein Guthaben ausgezahlt haben möchtest, kontaktiere bitte {{config['web']['admin'] | mention}}.
+            {% elif mensch.balance.value < 0 %}
+                Zahle die Schulden bitte möglichst bald zurück.
+            {% end %}
+        </p>
+        <h2>Transaktionen</h2>
+        <ul>
+            {% for transaction in mensch.transactions | reverse %}
+                <li>{{transaction.time | dmy_hms}}: {{transaction}}, {{transaction.amount}}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
 {% endblock %}

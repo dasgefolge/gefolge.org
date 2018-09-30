@@ -26,7 +26,7 @@
         </tbody>
     </table>
     {% set listed_programm = event.programm | selectattr('listed') | list %}
-    <p>Aktuell {% if listed_programm | length > 1 %}sind{% else %}ist{% endif %} {{listed_programm | length}} Programmpunkt{% if listed_programm | length > 1 %}e{% endif %} für <a href="{{g.view_node.parent.url}}">{{event}}</a> geplant:</p>
+    <p>Aktuell {% if listed_programm | length > 1 %}sind{% else %}ist{% endif %} {{listed_programm | length}} Programmpunkt{% if listed_programm | length > 1 %}e{% endif %} für {{event}} geplant:</p>
     <table class="table table-responsive">
         <thead>
             <tr>

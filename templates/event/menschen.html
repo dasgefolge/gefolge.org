@@ -11,7 +11,7 @@
 {% block title %}Menschen — {{event}}{% endblock %}
 
 {% block page_content %}
-    <p>Aktuell {% if event.signups | length > 1 %}sind{% else %}ist{% endif %} {{event.signups | length}} Mensch{% if event.signups | length > 1 %}en{% endif %} für <a href="{{url_for('event_page', event=event.event_id)}}">{{event}}</a> angemeldet:</p>
+    <p>Aktuell {% if event.signups | length > 1 %}sind{% else %}ist{% endif %} {{event.signups | length}} Mensch{% if event.signups | length > 1 %}en{% endif %} für {{event}} angemeldet:</p>
     <table class="table table-responsive">
         <thead>
             <tr>

@@ -4,7 +4,7 @@
 
 {% block page_content %}
     <h1>
-        Programmpunkt „{{programmpunkt}}“ auf <a href="{{url_for('event_page', event=event.event_id)}}">{{event}}</a>
+        Programmpunkt „{{programmpunkt}}“ auf {{event}}
         <a href="{{g.view_node.parent.url}}" class="btn btn-danger">Abbrechen</a>
     </h1>
     {% if programmpunkt.can_edit(g.user) %}

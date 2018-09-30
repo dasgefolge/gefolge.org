@@ -12,7 +12,7 @@
 
 {% block page_content %}
     <h1>
-        Profil für {{render_person()}} auf <a href="{{url_for('event_page', event=event.event_id)}}">{{event}}</a>
+        Profil für {{render_person()}} auf {{event}}
         {% if event.can_edit(g.user, person) %}<a href="{{url_for('event_profile_edit', event=event.event_id, person=person.snowflake)}}" class="btn btn-primary">Bearbeiten</a>{% endif %}
     </h1>
     {% if person in event.signups %}
