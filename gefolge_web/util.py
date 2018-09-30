@@ -70,7 +70,7 @@ class Transaction:
             import gefolge_web.login
 
             mensch = gefolge_web.login.Mensch(self.json_data['mensch'])
-            return jinja2.Markup('{} {} übertragen'.format(, mensch.__html__()))
+            return jinja2.Markup('{} {} übertragen'.format('von' if self.amount > 0 else 'an', mensch.__html__()))
         else:
             raise NotImplementedError('transaction type {} not implemented'.format(self.json_data['type']))
 
