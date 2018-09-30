@@ -47,7 +47,7 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
         return hash(self.snowflake)
 
     def __html__(self):
-        return jinja2.Markup('<a title="{}" href="{}">@{}</a>'.format(value, flask.url_for('profile', mensch=str(self.snowflake)), jinja2.escape(self.name)))
+        return jinja2.Markup('<a title="{}" href="{}">@{}</a>'.format(self, flask.url_for('profile', mensch=str(self.snowflake)), jinja2.escape(self.name)))
 
     def __repr__(self):
         return 'gefolge_web.login.Mensch({!r})'.format(self.snowflake)
