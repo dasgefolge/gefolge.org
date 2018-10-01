@@ -14,6 +14,29 @@ import gefolge_web.event.programm
 import gefolge_web.login
 import gefolge_web.util
 
+def handle_profile_edit(event, person, profile_form):
+    person_data = event.attendee_data(person)
+    gefolge_web.util.log('eventProfileEdit', {
+        'event': event.event_id,
+        'person': person.snowflake,
+        'nights': {
+            '{:%Y-%m-%d}'.format(night): getattr(profile_form, 'night{}'.format(i)).data
+            for i, night in enumerate(event.nights)
+        },
+        'food': {
+            'animalProducts': profile_form.animal_products.data,
+            'allergies': profile_form.allergies.data
+        }
+    })
+    if 'nights' not in person_data:
+        person_data['nights'] = {}
+    for i, night in enumerate(event.nights):
+        person_data['nights']['{:%Y-%m-%d}'.format(night)] = getattr(profile_form, 'night{}'.format(i)).data
+    if 'food' not in person_data:
+        person_data['food'] = {}
+    person_data['food']['animalProducts'] = profile_form.animal_products.data
+    person_data['food']['allergies'] = profile_form.allergies.data
+
 def setup(index, app):
     @app.template_test('guest')
     def is_guest(value):
@@ -34,16 +57,25 @@ def setup(index, app):
     @events_index.children(gefolge_web.event.model.Event, methods=['GET', 'POST'])
     @gefolge_web.util.template('event.overview')
     def event_page(event):
+        profile_form = gefolge_web.event.forms.ProfileForm(event, flask.g.user)
+        if profile_form.submit_profile_form.data and profile_form.validate():
+            if flask.g.user in event.signups:
+                flask.flash('Du bist schon angemeldet.')
+                return flask.redirect(flask.g.view_node.url)
+            if event.anzahlung > gefolge_web.util.Euro():
+                if flask.g.user.balance < event.anzahlung:
+                    flask.flash('Dein Guthaben reicht nicht aus, um die Anzahlung zu bezahlen.')
+                    return flask.redirect(flask.g.view_node.url)
+                flask.g.user.add_transaction(Transaction.anzahlung(event))
+            event.signup(flask.g.user)
+            handle_profile_edit(event, person, profile_form)
+            return flask.redirect((flask.g.view_node / 'mensch' / flask.g.user).url)
         confirm_signup_form = gefolge_web.event.forms.ConfirmSignupForm(event)
         if confirm_signup_form.submit_confirm_signup_form.data and confirm_signup_form.validate():
             snowflake = int(re.fullmatch('anzahlung {} ([0-9]+)'.format(event.event_id), confirm_signup_form.verwendungszweck.data.lower()).group(1))
             if snowflake < 100:
                 guest = gefolge_web.event.model.Guest(event, snowflake)
-                gefolge_web.util.log('eventConfirmSignup', {
-                    'event': event.event_id,
-                    'person': snowflake
-                })
-                event.attendee_data(guest)['signup'] = '{:%Y-%m-%d %H:%M:%S}'.format(gefolge_web.util.now()) #TODO Datum der Überweisung verwenden
+                event.confirm_guest_signup(guest)
             else:
                 mensch = gefolge_web.login.Mensch(snowflake)
                 event.signup(mensch)
@@ -67,6 +99,7 @@ def setup(index, app):
             'event': event,
             'article_source': gefolge_web.wiki.get_article_source('event', event.event_id),
             'confirm_signup_form': confirm_signup_form,
+            'profile_form': profile_form,
             'programm_add_form': programm_add_form
         }
 
@@ -89,7 +122,15 @@ def setup(index, app):
         if signup_guest_form.submit_signup_guest_form.data and signup_guest_form.validate():
             guest_name = signup_guest_form.name.data.strip()
             guest = event.signup_guest(flask.g.user, guest_name)
-            return flask.render_template('event/guest-confirm.html', event=event, guest=guest)
+            if event.anzahlung == gefolge_web.util.Euro() or event.orga('Abrechnung') == gefolge_web.login.Mensch.admin():
+                if event.anzahlung > gefolge_web.util.Euro():
+                    if flask.g.user.balance < event.anzahlung:
+                        flask.flash('Dein Guthaben reicht nicht aus, um die Anzahlung zu bezahlen.')
+                        return flask.redirect(flask.g.view_node.url)
+                    flask.g.user.add_transaction(Transaction.anzahlung(event, guest=guest))
+                return flask.redirect((flask.g.view_node.parent / 'mensch' / guest / 'edit').url)
+            else:
+                return flask.render_template('event/guest-confirm.html', event=event, guest=guest)
         else:
             return flask.render_template('event/guest-form.html', event=event, signup_guest_form=signup_guest_form)
 
@@ -114,27 +155,7 @@ def setup(index, app):
             return flask.redirect(flask.g.view_node.parent.url)
         profile_form = gefolge_web.event.forms.ProfileForm(event, person)
         if profile_form.submit_profile_form.data and profile_form.validate():
-            person_data = event.attendee_data(person)
-            gefolge_web.util.log('eventProfileEdit', {
-                'event': event.event_id,
-                'person': person.snowflake,
-                'nights': {
-                    '{:%Y-%m-%d}'.format(night): getattr(profile_form, 'night{}'.format(i)).data
-                    for i, night in enumerate(event.nights)
-                },
-                'food': {
-                    'animalProducts': profile_form.animal_products.data,
-                    'allergies': profile_form.allergies.data
-                }
-            })
-            if 'nights' not in person_data:
-                person_data['nights'] = {}
-            for i, night in enumerate(event.nights):
-                person_data['nights']['{:%Y-%m-%d}'.format(night)] = getattr(profile_form, 'night{}'.format(i)).data
-            if 'food' not in person_data:
-                person_data['food'] = {}
-            person_data['food']['animalProducts'] = profile_form.animal_products.data
-            person_data['food']['allergies'] = profile_form.allergies.data
+            handle_profile_edit(event, person, profile_form)
             return flask.redirect(flask.g.view_node.parent.url)
         else:
             return {

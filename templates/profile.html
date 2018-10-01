@@ -12,7 +12,7 @@
     <p>Profil für Discord snowflake {{mensch.snowflake}}. (<a href="https://discordapp.com/users/{{mensch.snowflake}}/">Discord-Profil</a>)</p>
     {% if g.user.is_admin or g.user == mensch %}
         <h1>Guthaben</h1>
-        <p>Du kannst dein Guthaben per Überweisung an {{g.admin}} aufladen. Mit diesem Guthaben kannst du dich dann z.B. für events anmelden.</p>
+        <p>Du kannst dein Guthaben per Überweisung an {{g.admin}} aufladen. Mit diesem Guthaben kannst du dich dann z.B. für <a href="{{url_for('events_index')}}">events</a> anmelden.</p>
         <p>
             Aktuelles Guthaben: {{mensch.balance}}.
             {% if mensch.balance.value > 0 %}

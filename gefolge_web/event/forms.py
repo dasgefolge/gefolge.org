@@ -9,6 +9,7 @@ import gefolge_web.event.model
 import gefolge_web.event.programm
 import gefolge_web.forms
 import gefolge_web.login
+import gefolge_web.util
 
 def ConfirmSignupForm(event):
     def validate_verwendungszweck(form, field):
@@ -58,7 +59,7 @@ def ProfileForm(event, person):
     )
     Form.allergies = wtforms.TextAreaField('Allergien, Unverträglichkeiten', default=person_data.get('food', {}).get('allergies', ''))
 
-    Form.submit_profile_form = wtforms.SubmitField('Speichern')
+    Form.submit_profile_form = wtforms.SubmitField('Speichern' if person in event.signups else 'Anmelden')
     return Form()
 
 def ProgrammAddForm(event):
@@ -102,6 +103,6 @@ def SignupGuestForm(event):
 
     class Form(flask_wtf.FlaskForm):
         name = wtforms.StringField('Name', [wtforms.validators.DataRequired(), validate_guest_name])
-        submit_signup_guest_form = wtforms.SubmitField('Weiter')
+        submit_signup_guest_form = wtforms.SubmitField('Anmelden' if if event.anzahlung == gefolge_web.util.Euro() or event.orga('Abrechnung') == gefolge_web.login.Mensch.admin() else 'Weiter')
 
     return Form()

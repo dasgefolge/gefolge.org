@@ -49,9 +49,28 @@ class Euro:
     def __str__(self):
         return '{:.2f}€'.format(self.value).replace('.', ',')
 
+    def __sub__(self, other):
+        if not isinstance(other, Euro):
+            return NotImplemented
+        return Euro(self.value - other.value)
+
 class Transaction:
     def __init__(self, json_data):
         self.json_data = json_data
+
+    @classmethod
+    def anzahlung(cls, event, guest=None, *, time=None):
+        if time is None:
+            time = now()
+        json_data = {
+            'type': 'eventAnzahlung',
+            'amount': -event.anzahlung.value,
+            'time': '{:%Y-%m-%d %H:%M:%S}'.format(time.astimezone(pytz.utc)),
+            'event': event.event_id
+        }
+        if guest is not None:
+            json_data['guest'] = guest.snowflake
+        return cls(json_data)
 
     def __html__(self):
         if self.json_data['type'] == 'bankTransfer':
@@ -81,6 +100,9 @@ class Transaction:
             return jinja2.Markup('{} {} übertragen'.format('von' if self.amount > Euro() else 'an', mensch.__html__()))
         else:
             raise NotImplementedError('transaction type {} not implemented'.format(self.json_data['type']))
+
+    def __repr__(self):
+        return 'gefolge_web.util.Transaction({!r})'.format(self.json_data)
 
     @property
     def amount(self):

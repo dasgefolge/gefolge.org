@@ -8,18 +8,29 @@
         {% if 'capacity' in event.location.data and (event.signups | length) >= event.location.data['capacity'].value() %}
             <div class="alert alert-warning">
                 <strong>Achtung:</strong> Das Haus ist schon voll. Du kannst den Gast trotzdem anmelden. Er kommt dann auf die Warteliste. Wenn jemand absagt, rückt der erste Mensch auf der Warteliste nach.
-                {% if event.anzahlung is not none %}
-                    Falls kein Platz frei wird, bekommt der Gast die Anzahlung natürlich zurück.
+                {% if event.anzahlung is none or event.anzahlung.value > 0 %}
+                    Falls kein Platz frei wird, {% if event.orga('Abrechnung') == g.admin %}bekommst du{% else %}bekommt der Gast{% endif %} die Anzahlung natürlich zurück.
                 {% endif %}
             </div>
         {% endif %}
+        {% if event.orga('Abrechnung') is none %}
+            <p>Das Orga-Team ist noch nicht vollständig, wir suchen noch jemanden für die Abrechnung. Wenn du das übernehmen möchtest, melde dich bitte bei {{g.admin}}.</p>
         {% if event.anzahlung is none %}
-            <p>Coming soon™</p> {#TODO#}
+            <p>{{event.orga('Abrechnung')}} hat die Höhe der Anzahlung noch nicht eingetragen.</p>
+        {% elif event.anzahlung.value > 0 and event.orga('Abrechnung') == g.admin and not g.user.is_admin and g.user.balance < event.anzahlung %}
+            <p>Die Anmeldung ist mit einer Anzahlung von {{event.anzahlung}} verbunden, die von deinem Guthaben abgezogen wird.</p>
+            <p>Dein aktuelles Guthaben ist {{g.user.balance}}, es fehlen also noch {{event.anzahlung - g.user.balance}} für die Anzahlung. Auf <a href="{{url_for('profile', mensch=g.user.snowflake)}}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.</p>
         {% elif g.user in event.menschen %}
             <p>Beachte vorher bitte Folgendes:</p>
             <ul>
-                <li>Die Anmeldung gilt erst mit Überweisung der Anzahlung, die auf der nächsten Seite angezeigt wird.</li>
-                <li>Du bist dafür verantwortlich, die Anmeldedaten für den Gast aktuell zu halten und ihn über wichtige Dinge, die im <a href="https://discordapp.com/channels/355761290809180170/387264349678338049">#silvester</a> besprochen werden, zu informieren.</li>
+                {% if event.anzahlung.value > 0 %}
+                    {% if event.orga('Abrechnung') == g.admin %}
+                        <li>Die Anmeldung ist mit einer Anzahlung von {{event.anzahlung}} verbunden, die von deinem Guthaben abgezogen wird.</li>
+                    {% else %}
+                        <li>Die Anmeldung gilt erst mit Überweisung der Anzahlung, die auf der nächsten Seite angezeigt wird.</li>
+                    {% endif %}
+                {% endif %}
+                <li>Du bist dafür verantwortlich, die Anmeldedaten für den Gast aktuell zu halten und ihn über wichtige Dinge, die im <a href="https://discordapp.com/channels/355761290809180170/387264349678338049">#silvester</a> besprochen werden, zu informieren.</li> {#TODO use channel from event data #}
                 {% if event.ausfall.value > (event.signups | length) * event.anzahlung.value %}
                     <li>Wir können erst buchen, wenn die Ausfallgebühr von {{event.ausfall}} gesichert ist. Dazu fehlen noch {{(event.ausfall.value / event.anzahlung.value - (event.signups | length)) | round(0, 'ceil') | int}} Anmeldungen.</li>
                 {% endif %}
@@ -29,6 +40,6 @@
             <p>Bevor du das tun kannst, musst du dich erst <a href="{{url_for('event_page', event=event.event_id, _anchor='signup')}}">selbst anmelden</a>.</p>
         {% endif %}
     {% else %}
-        <p>Hier {% if event.guests | selectattr("via", "equalto", g.user) | length > 0 %}konntest{% endif %} du Gäste für {{event}} anmelden{% if event.guests | selectattr("via", "equalto", g.user) | length == 0 %} können{% endif %}. Das event ist aber schon vorbei.</p>
+        <p>Hier {% if event.guests | selectattr("via", "equalto", g.user) | length > 0 %}konntest{% else %}hättest{% endif %} du Gäste für {{event}} anmelden{% if event.guests | selectattr("via", "equalto", g.user) | length == 0 %} können{% endif %}. Das event ist aber schon vorbei.</p>
     {% endif %}
 {% endblock %}

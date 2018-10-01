@@ -55,6 +55,11 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
     def __str__(self):
         return '{}#{}'.format(self.profile_data['username'], self.discrim)
 
+    def add_transaction(self, transaction):
+        if 'transactions' not in self.userdata:
+            self.userdata['transactions'] = []
+        self.userdata['transactions'].append(transaction.json_data)
+
     @property
     def balance(self):
         return sum((transaction.amount for transaction in self.transactions), gefolge_web.util.Euro())

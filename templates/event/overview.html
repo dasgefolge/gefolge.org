@@ -102,7 +102,7 @@
         {% if 'capacity' in event.location.data and (event.signups | length) >= event.location.data['capacity'].value() %}
             <div class="alert alert-warning">
                 <strong>Achtung:</strong> Das Haus ist schon voll. Du kannst dich trotzdem anmelden und kommst dann auf die Warteliste. Wenn jemand absagt, rückt der erste Mensch auf der Warteliste nach.
-                {% if event.anzahlung is not none %}
+                {% if event.anzahlung is none or event.anzahlung.value > 0 %}
                     Falls kein Platz für dich frei wird, bekommst du deine Anzahlung natürlich zurück.
                 {% endif %}
             </div>
@@ -113,20 +113,31 @@
         {% endif %}
         {% if event.end < g.now %}
             <p>Dieses event ist schon vorbei.</p>
-        {% elif event.anzahlung is none %}
-            <p>Coming soon™</p> {#TODO#}
         {% elif event.orga('Abrechnung') is none %}
             <p>Das Orga-Team ist noch nicht vollständig, wir suchen noch jemanden für die Abrechnung. Wenn du das übernehmen möchtest, melde dich bitte bei {{g.admin}}.</p>
-        {% elif 'konto' not in event.attendee_data(event.orga('Abrechnung')) %}
-            <p>{{event.orga('Abrechnung')}} hat die Anmeldungen noch nicht eröffnet.</p>
+        {% elif event.anzahlung is none %}
+            <p>{{event.orga('Abrechnung')}} hat die Höhe der Anzahlung noch nicht eingetragen.</p>
+        {% elif event.anzahlung.value == 0 %}
+            {{gen_form(profile_form, g.view_node.url)}}
+        {% elif event.orga('Abrechnung') == g.admin %}
+            <p>Die Anmeldung ist mit einer Anzahlung von {{event.anzahlung}} verbunden, die von deinem Guthaben abgezogen wird.</p>
+            {% if g.user.is_admin or g.user.balance >= event.anzahlung %}
+                {{gen_form(profile_form, g.view_node.url)}}
+            {% else %}
+                <p>Dein aktuelles Guthaben ist {{g.user.balance}}, es fehlen also noch {{event.anzahlung - g.user.balance}} für die Anzahlung. Auf <a href="{{url_for('profile', mensch=g.user.snowflake)}}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.</p>
+            {% endif %}
         {% else %}
-            <p>Um dich anzumelden, überweise bitte die Anzahlung von {{event.anzahlung}} an:</p>
-            <p>
-                {{event.attendee_data(event.orga('Abrechnung'))['konto']['name']}}<br />
-                IBAN: {{event.attendee_data(event.orga('Abrechnung'))['konto']['iban']}}<br />
-                BIC: {{event.attendee_data(event.orga('Abrechnung'))['konto']['bic']}}<br />
-                Verwendungszweck: Anzahlung {{event.event_id}} {{g.user.snowflake}}
-            </p>
+            {% if 'konto' in event.attendee_data(event.orga('Abrechnung')) %}
+                <p>Um dich anzumelden, überweise bitte die Anzahlung von {{event.anzahlung}} an:</p>
+                <p>
+                    {{event.attendee_data(event.orga('Abrechnung'))['konto']['name']}}<br />
+                    IBAN: {{event.attendee_data(event.orga('Abrechnung'))['konto']['iban']}}<br />
+                    BIC: {{event.attendee_data(event.orga('Abrechnung'))['konto']['bic']}}<br />
+                    Verwendungszweck: Anzahlung {{event.event_id}} {{g.user.snowflake}}
+                </p>
+            {% else %}
+                <p>Um dich anzumelden, gib bitte {{event.orga('Abrechnung')}} die Anzahlung von {{event.anzahlung}}.</p>
+            {% endif %}
             <p>Details zu deiner Anmeldung kannst du eintragen, wenn die Anzahlung angekommen ist. Du wirst dazu auf Discord angepingt.</p> {#TODO reverse signup flow #}
         {% endif %}
     {% endif %}
