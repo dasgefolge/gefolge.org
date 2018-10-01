@@ -66,7 +66,7 @@ def setup(index, app):
                 if flask.g.user.balance < event.anzahlung:
                     flask.flash('Dein Guthaben reicht nicht aus, um die Anzahlung zu bezahlen.')
                     return flask.redirect(flask.g.view_node.url)
-                flask.g.user.add_transaction(Transaction.anzahlung(event))
+                flask.g.user.add_transaction(gefolge_web.util.Transaction.anzahlung(event))
             event.signup(flask.g.user)
             handle_profile_edit(event, person, profile_form)
             return flask.redirect((flask.g.view_node / 'mensch' / flask.g.user).url)
@@ -129,7 +129,7 @@ def setup(index, app):
                     if flask.g.user.balance < event.anzahlung:
                         flask.flash('Dein Guthaben reicht nicht aus, um die Anzahlung zu bezahlen.')
                         return flask.redirect(flask.g.view_node.url)
-                    flask.g.user.add_transaction(Transaction.anzahlung(event, guest=guest))
+                    flask.g.user.add_transaction(gefolge_web.util.Transaction.anzahlung(event, guest=guest))
                 return flask.redirect((flask.g.view_node.parent / 'mensch' / guest / 'edit').url)
             else:
                 return flask.render_template('event/guest-confirm.html', event=event, guest=guest)

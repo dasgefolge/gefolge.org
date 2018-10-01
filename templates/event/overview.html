@@ -3,7 +3,7 @@
 {% block title %}{{event.__str__()}}{% endblock %}
 
 {% block page_content %}
-    <p><strong>{{event.__str__()}}</strong> {% if event.end < g.now %}fand{% else %}findet{% endif %} vom {{event.start | dmy_hm}} bis zum {{event.end | dmy_hm}} {{event.location.prefix}}{{event.location}} statt.</p>
+    <p><strong>{{event.__str__()}}</strong> {% if event.end < g.now %}fand{% else %}findet{% endif %} vom {{event.start | dmy_hm}} bis zum {{event.end | dmy_hm}} {% if event.location is not none %}{{event.location.prefix}}{{event.location}} statt.{% else %}statt. Der Ort steht noch nicht fest.{% endif %}</p>
     {% if event.orga_unassigned | length > 0 %}
         <p>Wir suchen noch Orga-Menschen für folgende Aufgaben: {{event.orga_unassigned | natjoin}}</p>
     {% endif %}
