@@ -93,7 +93,7 @@ class Event(metaclass=EventMeta):
 
     @property
     def __key__(self):
-        return self.start, self.end, self.event_id
+        return self.start is None, self.start, self.end is None, self.end, self.event_id
 
     def __repr__(self):
         return 'gefolge_web.event.model.Event({!r})'.format(self.event_id)
@@ -157,7 +157,8 @@ class Event(metaclass=EventMeta):
 
     @property
     def end(self):
-        return gefolge_web.util.parse_iso_datetime(self.data['end'].value())
+        if 'end' in self.data:
+            return gefolge_web.util.parse_iso_datetime(self.data['end'].value())
 
     def essen(self, date):
         import gefolge_web.event.programm.essen
@@ -305,7 +306,8 @@ class Event(metaclass=EventMeta):
 
     @property
     def start(self):
-        return gefolge_web.util.parse_iso_datetime(self.data['start'].value())
+        if 'start' in self.data:
+            return gefolge_web.util.parse_iso_datetime(self.data['start'].value())
 
     @property
     def url_part(self):
