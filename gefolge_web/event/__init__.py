@@ -88,6 +88,8 @@ def setup(index, app):
                 'programmpunkt': programm_add_form.name.data,
                 'description': programm_add_form.description.data
             })
+            if 'programm' not in event.data:
+                event.data['programm'] = {}
             event.data['programm'][programm_add_form.name.data] = {
                 'description': programm_add_form.description.data,
                 'orga': programm_add_form.orga.data.snowflake,

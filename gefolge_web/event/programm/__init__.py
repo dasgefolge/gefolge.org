@@ -75,6 +75,8 @@ class Programmpunkt:
 
     @property
     def data(self):
+        if 'programm' not in self.event.data:
+            self.event.data['programm'] = {}
         if self.name not in self.event.data['programm']:
             self.event.data['programm'][self.name] = {}
         return self.event.data['programm'][self.name]
