@@ -32,7 +32,7 @@ class Euro:
     def __init__(self, value=0):
         self.value = decimal.Decimal(value)
         if self.value.quantize(decimal.Decimal('1.00')) != self.value:
-            raise ValueError('Euro value contains fractional cents')
+            raise ValueError('Euro value contains fractional cents: {!r}'.format(self.value))
 
     def __add__(self, other):
         if not isinstance(other, Euro):
