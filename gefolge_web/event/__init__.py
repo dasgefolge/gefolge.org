@@ -68,7 +68,7 @@ def setup(index, app):
                     return flask.redirect(flask.g.view_node.url)
                 flask.g.user.add_transaction(gefolge_web.util.Transaction.anzahlung(event))
             event.signup(flask.g.user)
-            handle_profile_edit(event, person, profile_form)
+            handle_profile_edit(event, flask.g.user, profile_form)
             return flask.redirect((flask.g.view_node / 'mensch' / flask.g.user).url)
         confirm_signup_form = gefolge_web.event.forms.ConfirmSignupForm(event)
         if confirm_signup_form.submit_confirm_signup_form.data and confirm_signup_form.validate():
