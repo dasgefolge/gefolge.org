@@ -60,12 +60,20 @@ class Transaction:
             import gefolge_web.event.model
 
             event = gefolge_web.event.model.Event(self.json_data['event'])
-            return jinja2.Markup('Abrechnung von {}'.format(event.__html__()))
+            if 'guest' in self.json_data:
+                return jinja2.Markup('Abrechnung von {} für {}'.format(event.__html__(), jinja2.escape(event.person())))
+            else:
+                return jinja2.Markup('Abrechnung von {}'.format(event.__html__()))
         elif self.json_data['type'] == 'eventAnzahlung':
             import gefolge_web.event.model
 
             event = gefolge_web.event.model.Event(self.json_data['event'])
-            return jinja2.Markup('Anzahlung für {}'.format(event.__html__()))
+            if 'guest' in self.json_data:
+                return jinja2.Markup('Anzahlung für {} für {}'.format(event.__html__(), jinja2.escape(event.person())))
+            else:
+                return jinja2.Markup('Anzahlung für {}'.format(event.__html__()))
+        elif self.json_data['type'] == 'payPal':
+            return jinja2.Markup('PayPal-Überweisung')
         elif self.json_data['type'] == 'transfer':
             import gefolge_web.login
 
