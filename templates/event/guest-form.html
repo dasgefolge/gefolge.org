@@ -15,7 +15,7 @@
         {% endif %}
         {% if event.orga('Abrechnung') is none %}
             <p>Das Orga-Team ist noch nicht vollständig, wir suchen noch jemanden für die Abrechnung. Wenn du das übernehmen möchtest, melde dich bitte bei {{g.admin}}.</p>
-        {% if event.anzahlung is none %}
+        {% elif event.anzahlung is none %}
             <p>{{event.orga('Abrechnung')}} hat die Höhe der Anzahlung noch nicht eingetragen.</p>
         {% elif event.anzahlung.value > 0 and event.orga('Abrechnung') == g.admin and not g.user.is_admin and g.user.balance < event.anzahlung %}
             <p>Die Anmeldung ist mit einer Anzahlung von {{event.anzahlung}} verbunden, die von deinem Guthaben abgezogen wird.</p>
