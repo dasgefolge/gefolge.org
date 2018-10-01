@@ -103,6 +103,6 @@ def SignupGuestForm(event):
 
     class Form(flask_wtf.FlaskForm):
         name = wtforms.StringField('Name', [wtforms.validators.DataRequired(), validate_guest_name])
-        submit_signup_guest_form = wtforms.SubmitField('Anmelden' if if event.anzahlung == gefolge_web.util.Euro() or event.orga('Abrechnung') == gefolge_web.login.Mensch.admin() else 'Weiter')
+        submit_signup_guest_form = wtforms.SubmitField('Anmelden' if event.anzahlung == gefolge_web.util.Euro() or event.orga('Abrechnung') == gefolge_web.login.Mensch.admin() else 'Weiter')
 
     return Form()
