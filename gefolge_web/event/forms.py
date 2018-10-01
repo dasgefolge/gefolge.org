@@ -41,7 +41,11 @@ def ProfileForm(event, person):
         pass
 
     Form.section_nights = gefolge_web.forms.FormSection('Zeitraum')
-    person_data = event.attendee_data(person).value()
+    person_data = event.attendee_data(person)
+    if person_data is None:
+        person_data = {'id': person.snowflake}
+    else:
+        person_data = person_data.value()
     for i, night in enumerate(event.nights):
         setattr(Form, 'night{}'.format(i), gefolge_web.forms.YesMaybeNoField(
             '{:%d.%m.}–{:%d.%m.}'.format(night, night + datetime.timedelta(days=1)),

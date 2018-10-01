@@ -19,7 +19,7 @@ class Guest:
     def __init__(self, event, guest_id):
         self.event = event
         self.snowflake = int(guest_id) # not actually a snowflake but uses this variable name for compatibility with the Mensch class
-        if not any('via' in person and person['id'].value() == self.snowflake for person in event.data['menschen']):
+        if not any('via' in person and person['id'] == self.snowflake for person in event.data.get('menschen', [])):
             raise ValueError('Es gibt keinen Gast mit dieser ID.')
 
     def __eq__(self, other):
@@ -111,9 +111,10 @@ class Event(metaclass=EventMeta):
             return None
 
     def attendee_data(self, person):
-        for iter_data in self.data['menschen']:
-            if iter_data['id'].value() == person.snowflake:
-                return iter_data
+        if 'menschen' in iter_data:
+            for iter_data in self.data['menschen']:
+                if iter_data['id'].value() == person.snowflake:
+                    return iter_data
 
     @property
     def ausfall(self):
@@ -171,8 +172,8 @@ class Event(metaclass=EventMeta):
     @property
     def guests(self):
         return [
-            Guest(self, person['id'].value())
-            for person in self.data['menschen']
+            Guest(self, person['id'])
+            for person in self.data.get('menschen', [])
             if 'via' in person
         ]
 
@@ -185,8 +186,8 @@ class Event(metaclass=EventMeta):
     @property
     def menschen(self):
         return [
-            gefolge_web.login.Mensch(person['id'].value())
-            for person in self.data['menschen']
+            gefolge_web.login.Mensch(person['id'])
+            for person in self.data.get('menschen', [])
             if 'via' not in person
         ]
 
@@ -209,9 +210,9 @@ class Event(metaclass=EventMeta):
         return gefolge_web.util.date_range(self.start.date(), self.end.date())
 
     def orga(self, aufgabe):
-        for mensch in self.data['menschen']:
+        for mensch in self.data.get('menschen', []):
             if aufgabe in mensch.get('orga', []):
-                return gefolge_web.login.Mensch(mensch['id'].value())
+                return gefolge_web.login.Mensch(mensch['id'])
 
     @property
     def orga_unassigned(self):
@@ -259,6 +260,8 @@ class Event(metaclass=EventMeta):
             'event': self.event_id,
             'person': mensch.snowflake
         })
+        if 'menschen' not in self.data:
+            self.data['menschen'] = []
         self.data['menschen'].append({
             'id': mensch.snowflake,
             'signup': '{:%Y-%m-%d %H:%M:%S}'.format(gefolge_web.util.now()) #TODO Datum der Überweisung verwenden
