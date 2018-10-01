@@ -111,7 +111,7 @@ class Event(metaclass=EventMeta):
             return None
 
     def attendee_data(self, person):
-        if 'menschen' in iter_data:
+        if 'menschen' in self.data:
             for iter_data in self.data['menschen']:
                 if iter_data['id'].value() == person.snowflake:
                     return iter_data
