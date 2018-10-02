@@ -17,7 +17,7 @@
                 Aktuell {% if event.signups | length == 1 %}ist{% else %}sind{% endif %}
             {% endif %}
             {# Menschen #}
-            <a href="{{(g.view_node / 'mensch').url}}">{% if event.signups | length == 1 %}ein Mensch{% else %}{{event.signups | length}} Menschen{% endif %}</a> {% if num_programm > 1 and event.signups | length < 2 %}sind{% elif num_programm == 1 and event.signups | length > 1 %}ist{% endif %} angemeldet.
+            <a href="{{(g.view_node / 'mensch').url}}">{% if event.signups | length == 1 %}ein Mensch{% else %}{{event.signups | length}} Menschen{% endif %}</a> {% if num_programm > 1 and event.signups | length < 2 %}ist{% elif num_programm == 1 and event.signups | length > 1 %}sind{% endif %} angemeldet.
             {# freie Plätze #}
             {% if 'capacity' in event.location.data %}
                 {% set capacity = event.location.data['capacity'].value() %}
