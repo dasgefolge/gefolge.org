@@ -71,7 +71,8 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
                 for event in gefolge_web.event.model.Event
                 if event.anzahlung is not None and not any(
                     transaction.json_data['type'] == 'eventAbrechnung' and transaction.json_data['event'] == event.event_id
-                    for transaction in event.menschen.transactions
+                    for mensch in event.menschen
+                    for transaction in mensch.transactions
                 )
             ), gefolge_web.util.Euro()) + sum((
                 # Guthaben aller anderen Menschen (ohne Schulden)
