@@ -34,14 +34,30 @@ class Euro:
         if self.value.quantize(decimal.Decimal('1.00')) != self.value:
             raise ValueError('Euro value contains fractional cents: {!r}'.format(self.value))
 
+    def __abs__(self):
+        return Euro(abs(self.value))
+
     def __add__(self, other):
-        if not isinstance(other, Euro):
-            return NotImplemented
-        return Euro(self.value + other.value)
+        if isinstance(other, Euro):
+            return Euro(self.value + other.value)
+        return NotImplemented
 
     @property
     def __key__(self):
         return self.value
+
+    def __mul__(self, other):
+        if isinstance(other, int):
+            return Euro(self.value * other)
+        if isinstance(other, decimal.Decimal):
+            return Euro(self.value * other)
+        return NotImplemented
+
+    def __neg__(self):
+        return Euro(-self.value)
+
+    def __pos__(self):
+        return Euro(self.value)
 
     def __repr__(self):
         return 'gefolge_web.event.Euro({!r})'.format(self.value)
@@ -50,9 +66,9 @@ class Euro:
         return '{:.2f}€'.format(self.value).replace('.', ',')
 
     def __sub__(self, other):
-        if not isinstance(other, Euro):
-            return NotImplemented
-        return Euro(self.value - other.value)
+        if isinstance(other, Euro):
+            return Euro(self.value - other.value)
+        return NotImplemented
 
 class Transaction:
     def __init__(self, json_data):

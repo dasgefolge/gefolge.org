@@ -62,7 +62,25 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
 
     @property
     def balance(self):
-        return sum((transaction.amount for transaction in self.transactions), gefolge_web.util.Euro())
+        if self == self.__class__.admin():
+            import gefolge_web.event.model
+
+            return sum((
+                # Anzahlungen für noch nicht abgerechnete events
+                event.anzahlung * -len(event.signups)
+                for event in gefolge_web.event.model.Event
+                if event.anzahlung is not None and not any(
+                    transaction.json_data['type'] == 'eventAbrechnung' and transaction.json_data['event'] == event.event_id
+                    for transaction in event.menschen.transactions
+                )
+            ), gefolge_web.util.Euro()) + sum((
+                # Guthaben aller anderen Menschen (ohne Schulden)
+                -mensch.balance
+                for mensch in self.__class__
+                if not mensch.is_admin and mensch.balance > gefolge_web.util.Euro()
+            ), gefolge_web.util.Euro())
+        else:
+            return sum((transaction.amount for transaction in self.transactions), gefolge_web.util.Euro())
 
     @property
     def data(self):
