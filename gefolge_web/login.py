@@ -62,9 +62,9 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
 
     @property
     def balance(self):
-        if self == self.__class__.admin():
-            import gefolge_web.event.model
+        import gefolge_web.event.model
 
+        if self == self.__class__.admin():
             return sum((
                 # Anzahlungen für noch nicht abgerechnete events
                 event.anzahlung * -len(event.signups)
