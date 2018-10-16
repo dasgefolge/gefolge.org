@@ -128,7 +128,7 @@ class Transaction:
     def details(self):
         if 'details' in self.json_data:
             return jinja2.Markup('<ul>\n{}\n</ul>'.format('\n'.join(
-                '<li>{}</li>'.format({
+                '<li>{}: {}</li>'.format(detail['label'], {
                     'flat': lambda detail: '{}'.format(Euro(detail['amount'])),
                     'even': lambda detail: '{} ({} / {} Menschen)'.format(Euro(detail['amount']), Euro(detail['total']), detail['people']),
                     'weighted': lambda detail: '{} ({} * {} / {} Übernachtungen)'.format(Euro(detail['amount']), Euro(detail['total']), detail['nightsAttended'], detail['nightsTotal'])
