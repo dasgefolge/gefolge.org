@@ -63,7 +63,7 @@ class Euro:
         return 'gefolge_web.event.Euro({!r})'.format(self.value)
 
     def __str__(self):
-        return '{:.2f}€'.format(self.value).replace('.', ',')
+        return '{}{:.2f}€'.format(self.value).replace('-', '−').replace('.', ',')
 
     def __sub__(self, other):
         if isinstance(other, Euro):
