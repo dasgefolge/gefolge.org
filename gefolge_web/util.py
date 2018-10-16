@@ -125,6 +125,18 @@ class Transaction:
         return Euro(self.json_data['amount'])
 
     @property
+    def details(self):
+        if 'details' in self.json_data:
+            return jinja2.Markup('<ul>\n{}\n</ul>'.format('\n'.join(
+                '<li>{}</li>'.format({
+                    'flat': lambda detail: '{}'.format(Euro(detail['amount'])),
+                    'even': lambda detail: '{} ({} / {} Menschen)'.format(Euro(detail['amount']), Euro(detail['total']), detail['people']),
+                    'weighted': lambda detail: '{} ({} * {} / {} Übernachtungen)'.format(Euro(detail['amount']), Euro(detail['total']), detail['nightsAttended'], detail['nightsTotal'])
+                }[detail['type']](detail))
+                for detail in self.json_data['details']
+            )))
+
+    @property
     def time(self):
         return parse_iso_datetime(self.json_data['time'], tz=pytz.utc).astimezone(pytz.timezone('Europe/Berlin'))
 

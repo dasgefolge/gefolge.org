@@ -36,7 +36,7 @@
         <h2>Transaktionen</h2>
         <ul>
             {% for transaction in mensch.transactions | reverse %}
-                <li>{{transaction.time | dmy_hms}}: {{transaction}}, {{transaction.amount}}</li>
+                <li>{{transaction.time | dmy_hms}}: {{transaction}}, {{transaction.amount}}{% if transaction.details is not none %}, Details:<br />{{transaction.details}}{% endif %}</li>
             {% endfor %}
         </ul>
     {% endif %}
