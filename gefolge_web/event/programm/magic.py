@@ -31,6 +31,9 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
             votes = list(map(gefolge_web.login.Mensch, self.data.get('votes', {}).get(set_code, [])))
             setattr(Form, 'set_checkbox_{}'.format(set_code), wtforms.BooleanField(flask.render_template('event/custom-magic-draft-set-blurb.html', programmpunkt=self, set_code=set_code, set_info=set_info, set_config=set_config, votes=votes), default=editor.snowflake in self.data.get('votes', {}).get(set_code, [])))
 
+    def assert_exists(self):
+        pass # assume each event has a Custom Magic Draft
+
     @property
     def description(self):
         return 'Wir [draften](https://mtg.gamepedia.com/Booster_draft) ein Custom Magic Set. Um zu bestimmen, welches, kannst du unten abstimmen.\r\n\r\nWir spielen mit [Proxies](https://mtg.gamepedia.com/Proxy), der Draft ist also kostenlos. Ihr müsst nichts mitbringen. Es gibt 8 Plätze. Es können gerne alle, die Interesse haben, Plätze reservieren, das ist *keine* verbindliche Anmeldung. Ich selbst spiele nur mit, wenn es ohne mich weniger als 8 Spieler wären. Falls wir am Ende weniger als 5 Menschen sind, spielen wir [Sealed](https://mtg.gamepedia.com/Sealed_deck) statt Draft.'

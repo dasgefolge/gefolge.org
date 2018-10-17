@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Artikel nicht gefunden — GefolgeWiki{% endblock %}
+
+{% block page_content %}
+    <h1>Artikel nicht gefunden</h1>
+    <p>Es wurde kein Artikel mit Name „{{article_name}}“ gefunden.</p>
+    <p>
+        Diesen Artikel erstellen (coming soon™) {#TODO#}
+        • <a href="{{url_for('wiki_index')}}">GefolgeWiki-Hauptseite</a>
+    </p>
+{% endblock %}

@@ -154,6 +154,10 @@ def setup(index, app):
             'person': person
         }
 
+    @event_profile.catch_init(ValueError)
+    def event_profile_catch_init(exc, value):
+        return flask.render_template('event/profile-404.html', exc=exc), 404
+
     @event_profile.child('edit', 'bearbeiten', methods=['GET', 'POST'])
     @gefolge_web.util.template('event.profile-edit')
     def event_profile_edit(event, person):
@@ -220,6 +224,10 @@ def setup(index, app):
                 'programmpunkt': programmpunkt,
                 'programmpunkt_form': programmpunkt_form if hasattr(programmpunkt_form, 'submit_programmpunkt_form') else None
             }
+
+    @event_programmpunkt.catch_init(ValueError)
+    def event_programmpunkt_catch_init(exc, value):
+        return flask.render_template('event/programmpunkt-404.html', exc=exc), 404
 
     @event_programmpunkt.child('edit', 'bearbeiten', methods=['GET', 'POST'])
     @gefolge_web.util.template('event.programmpunkt-edit')

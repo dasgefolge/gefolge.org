@@ -26,6 +26,16 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
         else:
             return 'Abendessen'
 
+    def assert_exists(self):
+        if self.date < self.event.start.date():
+            raise ValueError('Am {:%d.%m.%Y} hat {} noch nicht angefangen.'.format(self.date, self.event))
+        elif self.date < self.event.end.date():
+            pass # date is correct
+        elif self.date == self.event.end.date():
+            raise ValueError('Der {:%d.%m.%Y} ist der Abreisetag von {}.'.format(self.date, self.event))
+        else:
+            raise ValueError('Am {:%d.%m.%Y} ist {} schon vorbei.'.format(self.date, self.event))
+
     def can_edit(self, editor):
         if editor == gefolge_web.login.Mensch.admin():
             return True # always allow the admin to edit since they have write access to the database anyway

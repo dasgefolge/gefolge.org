@@ -38,7 +38,7 @@ def setup(index, md):
     def wiki_article(article_name):
         source = get_article_source('wiki', article_name)
         if source is None:
-            flask.abort(404) #TODO allow users to create new articles
+            return flask.render_template('wiki-404.html', article_name=article_name), 404
         return {
             'article_name': article_name,
             'article_namespace': 'wiki',

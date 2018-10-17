@@ -39,6 +39,7 @@ class Programmpunkt:
         else:
             self.event = event
         self.name = programmpunkt
+        self.assert_exists()
 
     @property
     def __key__(self):
@@ -52,6 +53,10 @@ class Programmpunkt:
 
     def add_form_details(self, Form, editor):
         pass # subclasses may override
+
+    def assert_exists(self):
+        if self.name not in self.event.data.get('programm', {}):
+            raise ValueError('Es gibt auf {} keinen Programmpunkt namens {}.'.format(self.event, self.name))
 
     def can_edit(self, editor):
         if editor == gefolge_web.login.Mensch.admin():
