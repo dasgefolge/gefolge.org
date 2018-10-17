@@ -8,6 +8,6 @@
         <p>Der Discord account mit snowflake {{mensch.snowflake}} existiert nicht oder ist nicht im Gefolge.</p>
     {% else %}
         <p>„{{snowflake}}“ ist keine gültige Discord snowflake.</p>
-    {% end %}
+    {% endif %}
     <p><a href="{{url_for('menschen')}}">Liste aller Gefolgemenschen</a></p>
 {% endblock %}
