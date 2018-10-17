@@ -53,7 +53,10 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
         return 'gefolge_web.login.Mensch({!r})'.format(self.snowflake)
 
     def __str__(self):
-        return '{}#{}'.format(self.profile_data['username'], self.discrim)
+        try:
+            return '{}#{}'.format(self.profile_data['username'], self.discrim)
+        except FileNotFoundError:
+            return str(self.snowflake)
 
     def add_transaction(self, transaction):
         if 'transactions' not in self.userdata:
