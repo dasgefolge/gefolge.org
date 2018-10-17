@@ -105,6 +105,11 @@ def setup(index, app):
             'programm_add_form': programm_add_form
         }
 
+    @event_page.catch_init(FileNotFoundError)
+    def event_page_catch_init(exc, value):
+        #TODO allow users to create new events?
+        return flask.render_template('event/404.html', event_id=value), 404
+
     @app.route('/event/<event_id>/calendar/all.ics') #TODO move to api.gefolge.org
     @gefolge_web.login.member_required
     def event_calendar_all(event_id):
