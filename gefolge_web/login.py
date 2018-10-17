@@ -223,6 +223,10 @@ def setup(index, app):
             return flask.render_template('profile-404.html', mensch=mensch), 404
         return {'mensch': mensch}
 
+    @profile.catch_init(ValueError)
+    def profile_catch_init(exc, value):
+        return flask.render_template('profile-404.html', snowflake=value), 404
+
     @index.redirect('me', decorators=[member_required])
     def me():
         return menschen, flask.g.user
