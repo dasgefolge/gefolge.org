@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}event nicht gefunden — Das Gefolge{% endblock %}
+
+{% block page_content %}
+    <h1>Event nicht gefunden</h1>
+    <p>Es existiert (noch) kein event mit dem Kürzel <code>{{event_id}}</code>.</p>
+    <p><a href="{{url_for('events_index')}}">Liste aller events</a></p>
+{% endblock %}
