@@ -87,6 +87,7 @@ class EventMeta(type):
 class Event(metaclass=EventMeta):
     def __init__(self, event_id):
         self.event_id = event_id
+        self.data.value() # make sure event exists
 
     def __html__(self):
         return jinja2.Markup('<a href="{}">{}</a>'.format(flask.url_for('event_page', event=self.event_id), self))
