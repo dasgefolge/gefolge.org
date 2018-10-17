@@ -13,9 +13,8 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
     def __init__(self, event, programmpunkt):
         if isinstance(programmpunkt, datetime.date):
             programmpunkt = 'abendessen{:%Y-%m-%d}'.format(programmpunkt)
+        self.date = datetime.date(*map(int, re.fullmatch('abendessen([0-9]+)-([0-9]+)-([0-9]+)', programmpunkt).groups()))
         super().__init__(event, programmpunkt)
-        self.date = datetime.date(*map(int, re.fullmatch('abendessen([0-9]+)-([0-9]+)-([0-9]+)', self.name).groups()))
-        self.name = 'abendessen{:%Y-%m-%d}'.format(self.date) # normalize name
 
     def __repr__(self):
         return 'gefolge_web.event.programm.essen.Abendessen({!r}, {!r})'.format(self.event, self.name)
