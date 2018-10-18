@@ -30,7 +30,7 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
         Form.section_sets_intro = gefolge_web.forms.FormText('Welche(s) set(s) würdest du am liebsten draften? Du kannst auch ohne abzustimmen einen Platz reservieren.')
         for set_code, (set_info, set_config) in self.draftable_sets():
             votes = list(map(gefolge_web.login.Mensch, self.data.get('votes', {}).get(set_code, [])))
-            setattr(Form, 'set_checkbox_{}'.format(set_code), wtforms.BooleanField(gefolge_web.util.render_template('event/custom-magic-draft-set-blurb.html', programmpunkt=self, set_code=set_code, set_info=set_info, set_config=set_config, votes=votes), default=editor.snowflake in self.data.get('votes', {}).get(set_code, [])))
+            setattr(Form, 'set_checkbox_{}'.format(set_code), wtforms.BooleanField(gefolge_web.util.render_template('event.custom-magic-draft-set-blurb', programmpunkt=self, set_code=set_code, set_info=set_info, set_config=set_config, votes=votes), default=editor.snowflake in self.data.get('votes', {}).get(set_code, [])))
 
     def assert_exists(self):
         pass # assume each event has a Custom Magic Draft

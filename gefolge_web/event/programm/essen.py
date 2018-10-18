@@ -106,7 +106,7 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
 
     @property
     def orga_notes(self):
-        return gefolge_web.util.render_template('event/orga-notes-essen.html', event=self.event, programmpunkt=self)
+        return gefolge_web.util.render_template('event.orga-notes-essen', event=self.event, programmpunkt=self)
 
     @property
     def orga_role(self):
