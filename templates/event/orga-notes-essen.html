@@ -23,9 +23,9 @@
 
 <p>Die Menschen, die an diesem Abend da sind, haben folgende Informationen zu ihrer Ernährung eingetragen:</p>
 <ul>
-    {% set data_signups = [event.attendee_data(person).get('food', {'allergies': '', 'animalProducts': 'yes'}) for person in event.night_signups(programmpunkt.date)] %}
     {% set groups_signups = {} %}
-    {% for data in data_signups %}
+    {% for person in event.night_signups(programmpunkt.date) %}
+        {% set data = event.attendee_data(person).get('food', {'allergies': '', 'animalProducts': 'yes'})
         {% if (data['animalProducts'], data['allergies']) in groups_signups %}
             {% set groups_signups[data['animalProducts'], data['allergies']] += 1 %}
         {% else %}
@@ -35,9 +35,9 @@
     {% for (animal_products, allergies), count in groups_signups.items() %}
         {{render_group(false, count, animal_products, allergies)}}
     {% endfor %}
-    {% set data_maybes = [event.attendee_data(person).get('food', {'allergies': '', 'animalProducts': 'yes'}) for person in event.night_maybes(programmpunkt.date)] %}
     {% set groups_maybes = {} %}
-    {% for data in data_maybes %}
+    {% for person in event.night_maybes(programmpunkt.date) %}
+        {% set data = event.attendee_data(person).get('food', {'allergies': '', 'animalProducts': 'yes'}) %}
         {% if (data['animalProducts'], data['allergies']) in groups_maybes %}
             {% set groups_maybes[data['animalProducts'], data['allergies']] += 1 %}
         {% else %}
