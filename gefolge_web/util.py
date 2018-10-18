@@ -182,7 +182,7 @@ def render_template(template_name=None, **kwargs):
         template_path = '{}.html'.format(flask.request.endpoint.replace('.', '/'))
     else:
         template_path = '{}.html'.format(template_name.replace('.', '/'))
-    return jinja2.Markup(flask.render_template(template_path), **kwargs)
+    return jinja2.Markup(flask.render_template(template_path, **kwargs))
 
 def setup(app):
     @app.errorhandler(500)
