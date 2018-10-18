@@ -38,7 +38,7 @@ def setup(index, md):
     def wiki_article(article_name):
         source = get_article_source('wiki', article_name)
         if source is None:
-            return flask.render_template('wiki-404.html', article_name=article_name), 404
+            return gefolge_web.util.render_template('wiki-404.html', article_name=article_name), 404
         return {
             'article_name': article_name,
             'article_namespace': 'wiki',

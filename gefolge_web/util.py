@@ -177,6 +177,13 @@ def parse_iso_datetime(datetime_str, *, tz=pytz.timezone('Europe/Berlin')):
     else:
         return tz.localize(datetime.datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S'), is_dst=None)
 
+def render_template(template_name=None):
+    if template_name is None:
+        template_path = '{}.html'.format(flask.request.endpoint.replace('.', '/'))
+    else:
+        template_path = '{}.html'.format(template_name.replace('.', '/'))
+    return jinja2.Markup(flask.render_template(template_path))
+
 def setup(app):
     @app.errorhandler(500)
     def internal_server_error(e):
@@ -283,16 +290,12 @@ def template(template_name=None):
     def decorator(f):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
-            if template_name is None:
-                template_path = '{}.html'.format(flask.request.endpoint.replace('.', '/'))
-            else:
-                template_path = '{}.html'.format(template_name.replace('.', '/'))
             context = f(*args, **kwargs)
             if context is None:
                 context = {}
             elif not isinstance(context, dict):
                 return context
-            return flask.render_template(template_path, **context)
+            return render_template(template_name, **context)
 
         return wrapper
 

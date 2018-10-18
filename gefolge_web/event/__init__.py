@@ -108,7 +108,7 @@ def setup(index, app):
     @event_page.catch_init(FileNotFoundError)
     def event_page_catch_init(exc, value):
         #TODO allow users to create new events?
-        return flask.render_template('event/404.html', event_id=value), 404
+        return gefolge_web.util.render_template('event/404.html', event_id=value), 404
 
     @app.route('/event/<event_id>/calendar/all.ics') #TODO move to api.gefolge.org
     @gefolge_web.login.member_required
@@ -137,9 +137,9 @@ def setup(index, app):
                     flask.g.user.add_transaction(gefolge_web.util.Transaction.anzahlung(event, guest=guest))
                 return flask.redirect((flask.g.view_node.parent / 'mensch' / guest / 'edit').url)
             else:
-                return flask.render_template('event/guest-confirm.html', event=event, guest=guest)
+                return gefolge_web.util.render_template('event/guest-confirm.html', event=event, guest=guest)
         else:
-            return flask.render_template('event/guest-form.html', event=event, signup_guest_form=signup_guest_form)
+            return gefolge_web.util.render_template('event/guest-form.html', event=event, signup_guest_form=signup_guest_form)
 
     @event_page.child('mensch', 'Menschen')
     @gefolge_web.util.template('event.menschen')
@@ -156,7 +156,7 @@ def setup(index, app):
 
     @event_profile.catch_init(ValueError)
     def event_profile_catch_init(exc, value):
-        return flask.render_template('event/profile-404.html', exc=exc), 404
+        return gefolge_web.util.render_template('event/profile-404.html', exc=exc), 404
 
     @event_profile.child('edit', 'bearbeiten', methods=['GET', 'POST'])
     @gefolge_web.util.template('event.profile-edit')
@@ -227,7 +227,7 @@ def setup(index, app):
 
     @event_programmpunkt.catch_init(ValueError)
     def event_programmpunkt_catch_init(exc, value):
-        return flask.render_template('event/programmpunkt-404.html', exc=exc), 404
+        return gefolge_web.util.render_template('event/programmpunkt-404.html', exc=exc), 404
 
     @event_programmpunkt.child('edit', 'bearbeiten', methods=['GET', 'POST'])
     @gefolge_web.util.template('event.programmpunkt-edit')
