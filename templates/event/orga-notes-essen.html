@@ -25,7 +25,7 @@
 <ul>
     {% set groups_signups = {} %}
     {% for person in event.night_signups(programmpunkt.date) %}
-        {% set data = event.attendee_data(person).get('food', {'allergies': '', 'animalProducts': 'yes'})
+        {% set data = event.attendee_data(person).get('food', {'allergies': '', 'animalProducts': 'yes'}) %}
         {% if (data['animalProducts'], data['allergies']) in groups_signups %}
             {% set groups_signups[data['animalProducts'], data['allergies']] += 1 %}
         {% else %}
