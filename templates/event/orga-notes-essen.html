@@ -26,10 +26,11 @@
     {% set groups_signups = {} %}
     {% for person in event.night_signups(programmpunkt.date) %}
         {% set data = event.attendee_data(person).get('food', {'allergies': '', 'animalProducts': 'yes'}) %}
-        {% if (data['animalProducts'], data['allergies']) in groups_signups %}
-            {% set groups_signups[data['animalProducts'], data['allergies']] += 1 %}
+        {% set key = (data['animalProducts'], data['allergies']) %}
+        {% if key in groups_signups %}
+            {% do groups_signups.update({key: groups_signups[key] + 1}) %}
         {% else %}
-            {% set groups_signups[data['animalProducts'], data['allergies']] = 1 %}
+            {% set groups_signups[key] = 1 %}
         {% endif %}
     {% endfor %}
     {% for (animal_products, allergies), count in groups_signups.items() %}
@@ -38,10 +39,11 @@
     {% set groups_maybes = {} %}
     {% for person in event.night_maybes(programmpunkt.date) %}
         {% set data = event.attendee_data(person).get('food', {'allergies': '', 'animalProducts': 'yes'}) %}
-        {% if (data['animalProducts'], data['allergies']) in groups_maybes %}
-            {% set groups_maybes[data['animalProducts'], data['allergies']] += 1 %}
+        {% set key = (data['animalProducts'], data['allergies']) %}
+        {% if key in groups_maybes %}
+            {% do groups_maybes.update({key: groups_maybes[key] + 1}) %}
         {% else %}
-            {% set groups_maybes[data['animalProducts'], data['allergies']] = 1 %}
+            {% set groups_maybes[key] = 1 %}
         {% endif %}
     {% endfor %}
     {% for (animal_products, allergies), count in groups_maybes.items() %}
