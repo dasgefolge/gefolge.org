@@ -15,6 +15,10 @@
     {% endif %}
     <h2>Beschreibung</h2>
     {{programmpunkt.description | markdown}}
+    {% if programmpunkt.orga_notes is not none and (g.user.is_admin or g.user == event.orga(programmpunkt.orga_role) or g.user == programmpunkt.orga) %}
+        <h2>Info für die Orga</h2>
+        {{programmpunkt.orga_notes}}
+    {% endif %}
     {% if programmpunkt.listed %}
         <h2>{{programmpunkt.data.get('signupHeader', 'Interessiert')}}</h2>
         <ul>

@@ -1,4 +1,5 @@
 import datetime
+import flask
 import pytz
 import re
 
@@ -101,6 +102,14 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
         if '{:%Y-%m-%d}'.format(self.date) not in self.event.data['essen']:
             self.event.data['essen']['{:%Y-%m-%d}'.format(self.date)] = {}
         self.event.data['essen']['{:%Y-%m-%d}'.format(self.date)]['orga'] = value.snowflake
+
+    @property
+    def orga_notes(self):
+        return flask.render_template('event/orga-notes-essen.html', event=self.event, programmpunkt=self)
+
+    @property
+    def orga_role(self):
+        return 'Essen'
 
     @property
     def signups(self):

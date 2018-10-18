@@ -1,0 +1,50 @@
+{% macro render_group(maybe, count, animal_products, allergies) %}
+    <li>
+        {% if maybe %}
+            vielleicht:
+        {% endif %}
+        {{count}}×
+        {% if animal_products == 'yes' and allergies == '' %}
+            uneingeschränkt
+        {% elif animal_products == 'yes' %}
+            Allergien/Unverträglichkeiten: {{allergies}}
+        {% else %}
+            {% if animal_products == 'vegetarian' %}
+                vegetarisch
+            {% else %}
+                vegan
+            {% endif %}
+            {% if allergies != '' %}
+                (Allergien/Unverträglichkeiten: {{allergies}})
+            {% endif %}
+        {% endif %}
+    </li>
+{% endmacro %}
+
+<p>Die Menschen, die an diesem Abend da sind, haben folgende Informationen zu ihrer Ernährung eingetragen:</p>
+<ul>
+    {% set data_signups = [event.attendee_data(person).get('food', {'allergies': '', 'animalProducts': 'yes'}) for person in event.night_signups(programmpunkt.date)] %}
+    {% set groups_signups = {} %}
+    {% for data in data_signups %}
+        {% if (data['animalProducts'], data['allergies']) in groups_signups %}
+            {% set groups_signups[data['animalProducts'], data['allergies']] += 1 %}
+        {% else %}
+            {% set groups_signups[data['animalProducts'], data['allergies']] = 1 %}
+        {% endif %}
+    {% endfor %}
+    {% for (animal_products, allergies), count in groups_signups.items() %}
+        {{render_group(false, count, animal_products, allergies)}}
+    {% endfor %}
+    {% set data_maybes = [event.attendee_data(person).get('food', {'allergies': '', 'animalProducts': 'yes'}) for person in event.night_maybes(programmpunkt.date)] %}
+    {% set groups_maybes = {} %}
+    {% for data in data_maybes %}
+        {% if (data['animalProducts'], data['allergies']) in groups_maybes %}
+            {% set groups_maybes[data['animalProducts'], data['allergies']] += 1 %}
+        {% else %}
+            {% set groups_maybes[data['animalProducts'], data['allergies']] = 1 %}
+        {% endif %}
+    {% endfor %}
+    {% for (animal_products, allergies), count in groups_maybes.items() %}
+        {{render_group(true, count, animal_products, allergies)}}
+    {% endfor %}
+</ul>

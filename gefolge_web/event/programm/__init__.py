@@ -150,6 +150,14 @@ class Programmpunkt:
     def orga(self, value):
         self.data['orga'] = value.snowflake
 
+    @property
+    def orga_notes(self):
+        pass # subclasses may override
+
+    @property
+    def orga_role(self):
+        return 'Programm' # subclasses may override
+
     def process_form_details(self, form, editor):
         pass # subclasses may override
 
