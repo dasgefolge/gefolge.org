@@ -88,6 +88,16 @@ class Transaction:
             json_data['guest'] = guest.snowflake
         return cls(json_data)
 
+    @classmethod
+    def sponsor_werewolf_card(cls, card, amount):
+        return cls({
+            'type': 'sponsorWerewolfCard',
+            'amount': -amount.value,
+            'time': '{:%Y-%m-%d %H:%M:%S}'.format(now().astimezone(pytz.utc)),
+            'faction': card['faction'],
+            'role': card['role']
+        })
+
     def __html__(self):
         if self.json_data['type'] == 'bankTransfer':
             return jinja2.Markup('Überweisung')
@@ -114,6 +124,13 @@ class Transaction:
 
             mensch = gefolge_web.login.Mensch(self.json_data['mensch'])
             return jinja2.Markup('{} {} übertragen'.format('von' if self.amount > Euro() else 'an', mensch.__html__()))
+        elif self.json_data['type'] = 'sponsorWerewolfCard':
+            try:
+                import werewolf_web
+            except ImportError:
+                return jinja2.Markup('<i>Werwölfe</i>-Karte gesponsert: {}'.format(jinja2.escape(self.json_data['role'])))
+            else:
+                return jinja2.Markup('<a href="{}"><i>Werwölfe</i>-Karte</a> gesponsert: <span style="color: {};">{}</span>'.format(flask.url_for('werewolf_cards'), werewolf_web.FACTION_COLORS.get(self.json_data['faction'], 'black'), jinja2.escape(self.json_data['role'])))
         else:
             raise NotImplementedError('transaction type {} not implemented'.format(self.json_data['type']))
 
