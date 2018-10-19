@@ -124,7 +124,7 @@ class Transaction:
 
             mensch = gefolge_web.login.Mensch(self.json_data['mensch'])
             return jinja2.Markup('{} {} übertragen'.format('von' if self.amount > Euro() else 'an', mensch.__html__()))
-        elif self.json_data['type'] = 'sponsorWerewolfCard':
+        elif self.json_data['type'] == 'sponsorWerewolfCard':
             try:
                 import werewolf_web
             except ImportError:
