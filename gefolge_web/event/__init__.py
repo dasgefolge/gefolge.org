@@ -63,7 +63,7 @@ def setup(index, app):
                 flask.flash('Du bist schon angemeldet.')
                 return flask.redirect(flask.g.view_node.url)
             if event.anzahlung > gefolge_web.util.Euro():
-                if flask.g.user.balance < event.anzahlung:
+                if flask.g.user.balance < event.anzahlung and not flask.g.user.is_admin:
                     flask.flash('Dein Guthaben reicht nicht aus, um die Anzahlung zu bezahlen.')
                     return flask.redirect(flask.g.view_node.url)
                 flask.g.user.add_transaction(gefolge_web.util.Transaction.anzahlung(event))
@@ -131,7 +131,7 @@ def setup(index, app):
             guest = event.signup_guest(flask.g.user, guest_name)
             if event.anzahlung == gefolge_web.util.Euro() or event.orga('Abrechnung') == gefolge_web.login.Mensch.admin():
                 if event.anzahlung > gefolge_web.util.Euro():
-                    if flask.g.user.balance < event.anzahlung:
+                    if flask.g.user.balance < event.anzahlung and not flask.g.user.is_admin:
                         flask.flash('Dein Guthaben reicht nicht aus, um die Anzahlung zu bezahlen.')
                         return flask.redirect(flask.g.view_node.url)
                     flask.g.user.add_transaction(gefolge_web.util.Transaction.anzahlung(event, guest=guest))
