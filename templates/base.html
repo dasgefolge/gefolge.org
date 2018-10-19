@@ -15,6 +15,17 @@
     <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.css" />
     <link rel="stylesheet" href="{{url_for('.static', filename='common.css')}}" />
     <style>
+        /* divider table rows */
+        .table > tbody > tr.top-divider > td {
+            border-top: 2px solid #ddd;
+        }
+
+        .table > tbody > tr.bottom-divider > td {
+            border-bottom: 2px solid #ddd;
+        }
+
+        /* button group toggles */
+
         .btn-group-toggle .btn + .btn {
             margin-left: 0;
         }
