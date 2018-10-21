@@ -9,5 +9,5 @@ server {
     ssl_certificate /etc/letsencrypt/live/inwx/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/inwx/privkey.pem;
 
-    return 301 $scheme://gefolge.org$request_uri;
+    return 301 https://gefolge.org$request_uri;
 }
