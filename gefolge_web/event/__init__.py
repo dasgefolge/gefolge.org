@@ -75,10 +75,10 @@ def setup(index, app):
                     anzahlung_extra = event.anzahlung_total - event.ausfall
                     if anzahlung_extra <= gefolge_web.util.Euro():
                         break
-                    extra_anzahlungen = sorted(filter(lambda kv: kv[1] > event.anzahlung,
+                    extra_anzahlungen = sorted(filter(lambda kv: kv[1] > event.anzahlung, (
                         (mensch, gefolge_web.util.Euro(event.attendee_data(mensch).get('anzahlung', event.anzahlung.value)))
                         for mensch in event.menschen
-                    ), key=lambda kv: kv[1] % event.anzahlung == gefolge_web.util.Euro(), (kv[1] - anzahlung_extra) % event.anzahlung != gefolge_web.util.Euro(), -kv[1])
+                    )), key=lambda kv: kv[1] % event.anzahlung == gefolge_web.util.Euro(), (kv[1] - anzahlung_extra) % event.anzahlung != gefolge_web.util.Euro(), -kv[1])
                     if len(extra_anzahlungen) == 0:
                         break
                     iter_mensch, iter_anzahlung = extra_anzahlungen[0]
