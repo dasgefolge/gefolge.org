@@ -21,11 +21,11 @@
     {% endif %}
     {% if programmpunkt.listed %}
         <h2>{{programmpunkt.data.get('signupHeader', 'Interessiert')}}</h2>
-        <ul>
+        <ol>
             {% for person in programmpunkt.signups %}
                 <li>{{person}}</li>
             {% endfor %}
-        </ul>
+        </ol>
     {% endif %}
     {% if programmpunkt_form is not none %}
         {{gen_form(programmpunkt_form, g.view_node.url)}}
