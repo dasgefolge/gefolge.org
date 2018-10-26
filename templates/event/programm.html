@@ -32,6 +32,7 @@
             <tr>
                 <th>Titel</th>
                 <th>Orga</th>
+                <th>Interessenten</th>
             </tr>
         </thead>
         <tbody>
@@ -45,6 +46,7 @@
                             {{programmpunkt.orga}}
                         {% endif %}
                     </td>
+                    <td>{{programmpunkt.signups | length}}</td>
                 </tr>
             {% endfor %}
         </tbody>
