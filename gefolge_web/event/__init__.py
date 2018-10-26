@@ -135,6 +135,7 @@ def setup(index, app):
                         flask.flash('Dein Guthaben reicht nicht aus, um die Anzahlung zu bezahlen.')
                         return flask.redirect(flask.g.view_node.url)
                     flask.g.user.add_transaction(gefolge_web.util.Transaction.anzahlung(event, guest=guest))
+                event.confirm_guest_signup(guest)
                 return flask.redirect((flask.g.view_node.parent / 'mensch' / guest / 'edit').url)
             else:
                 return gefolge_web.util.render_template('event.guest-confirm', event=event, guest=guest)
