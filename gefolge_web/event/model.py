@@ -116,10 +116,10 @@ class Event(metaclass=EventMeta):
         """Die Summe der bisher gezahlten Anzahlungen."""
         if self.anzahlung is None:
             return None
-        return sum(
+        return sum((
             gefolge_web.util.Euro(self.attendee_data(person).get('anzahlung', self.anzahlung.value))
             for person in self.signups
-        )
+        ), gefolge_web.util.Euro())
 
     def attendee_data(self, person):
         if 'menschen' in self.data:
