@@ -31,8 +31,8 @@
                     {% endif %}
                 {% endif %}
                 <li>Du bist dafür verantwortlich, die Anmeldedaten für den Gast aktuell zu halten und ihn über wichtige Dinge, die im <a href="https://discordapp.com/channels/355761290809180170/387264349678338049">#silvester</a> besprochen werden, zu informieren.</li> {#TODO use channel from event data #}
-                {% if event.ausfall.value > (event.signups | length) * event.anzahlung.value %}
-                    <li>Wir können erst buchen, wenn die Ausfallgebühr von {{event.ausfall}} gesichert ist. Dazu fehlen noch {{(event.ausfall.value / event.anzahlung.value - (event.signups | length)) | round(0, 'ceil') | int}} Anmeldungen.</li>
+                {% if event.ausfall > event.anzahlung_total %}
+                    <li>Wir können erst buchen, wenn die Ausfallgebühr von {{event.ausfall}} gesichert ist. Dazu fehlen noch {{((event.ausfall - event.anzahlung_total).value / event.anzahlung.value) | round(0, 'ceil') | int}} Anmeldungen.</li>
                 {% endif %}
             </ul>
             {{gen_form(signup_guest_form, url_for('event_guest_form', event=event.event_id))}}

@@ -111,6 +111,16 @@ class Event(metaclass=EventMeta):
         else:
             return None
 
+    @property
+    def anzahlung_total(self):
+        """Die Summe der bisher gezahlten Anzahlungen."""
+        if self.anzahlung is None:
+            return None
+        return sum(
+            gefolge_web.util.Euro(self.attendee_data(person).get('anzahlung', self.anzahlung.value))
+            for person in self.signups
+        )
+
     def attendee_data(self, person):
         if 'menschen' in self.data:
             for iter_data in self.data['menschen']:
@@ -256,17 +266,21 @@ class Event(metaclass=EventMeta):
         )))
         #TODO Silvesterbuffet-Vorbereitung, rtww-Abstimmungen
 
-    def signup(self, mensch):
+    def signup(self, mensch, anzahlung=None):
         gefolge_web.util.log('eventConfirmSignup', {
             'event': self.event_id,
-            'person': mensch.snowflake
+            'person': mensch.snowflake,
+            'anzahlung': None if anzahlung is None else anzahlung.value
         })
         if 'menschen' not in self.data:
             self.data['menschen'] = []
-        self.data['menschen'].append({
+        person_data = {
             'id': mensch.snowflake,
-            'signup': '{:%Y-%m-%d %H:%M:%S}'.format(gefolge_web.util.now()) #TODO Datum der Überweisung verwenden
-        })
+            'signup': '{:%Y-%m-%d %H:%M:%S}'.format(gefolge_web.util.now())
+        }
+        if anzahlung is not None:
+            person_data['anzahlung'] = anzahlung.value
+        self.data['menschen'].append(person_data)
         if 'role' in self.data:
             peter.bot_cmd('add-role', str(mensch.snowflake), str(self.data['role']))
         if self.orga('Abrechnung') == gefolge_web.login.Mensch.admin():

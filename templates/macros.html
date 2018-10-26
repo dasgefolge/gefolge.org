@@ -3,7 +3,7 @@
     {% if form.errors and field.short_name in form.errors %}
         <div class="alert alert-danger col-sm-10 col-sm-offset-2" role="alert">
             <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-            <span class="sr-only">Error:</span>
+            <span class="sr-only">Fehler:</span>
             {% for message in form.errors[field.short_name] %}
                 {{message}}
             {% endfor %}

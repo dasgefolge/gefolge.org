@@ -1,6 +1,7 @@
 import datetime
 import flask
 import flask_wtf
+import jinja2
 import re
 import wtforms
 import wtforms.validators
@@ -62,6 +63,16 @@ def ProfileForm(event, person):
         default=person_data.get('food', {}).get('animalProducts', 'yes')
     )
     Form.allergies = wtforms.TextAreaField('Allergien, Unverträglichkeiten', default=person_data.get('food', {}).get('allergies', ''))
+
+    if person not in event.signups and person == flask.g.user and event.anzahlung is not None and event.ausfall > event.anzahlung_total + event.anzahlung:
+        Form.section_money = gefolge_web.forms.FormSection('Anzahlung')
+        Form.section_money_intro = gefolge_web.forms.FormText('Wir können erst buchen, wenn die Ausfallgebühr von {} gesichert ist. Dazu fehlen noch {}, also {} Anmeldungen. Damit wir früher buchen können, kannst du freiwillig eine höhere Anzahlung bezahlen. Du bekommst den zusätzlichen Betrag wieder gutgeschrieben, wenn sich genug weitere Menschen angemeldet haben, dass ihre Anzahlungen ihn decken. Er wird nur behalten, um die Ausfallgebühr zu bezahlen, falls das event komplett ausfällt.'.format(event.ausfall, event.ausfall - event.anzahlung_total, math.ceil((event.ausfall - event.anzahlung_total).value / event.anzahlung.value)))
+        Form.anzahlung = gefolge_web.forms.EuroField('Anzahlung', [
+            wtforms.validators.InputRequired(),
+            wtforms.validators.NumberRange(min=event.anzahlung, message='Die reguläre Anzahlung beträgt %(min)s. Mindestens soviel musst du bezahlen, um dich anzumelden.'),
+            wtforms.validators.NumberRange(max=event.ausfall - (event.anzahlung_total + event.anzahlung), message='Wir benötigen nur noch %(max)s, um die Ausfallgebühr abzudecken.'),
+            wtforms.validators.NumberRange(max=person.balance, message=jinja2.Markup('Dein aktuelles Guthaben ist {}. Auf <a href="{}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.'.format(flask.g.user.balance, flask.url_for('profile', mensch=flask.g.user.snowflake))))
+        ], default=event.anzahlung)
 
     Form.submit_profile_form = wtforms.SubmitField('Speichern' if person in event.signups else 'Anmelden')
     return Form()

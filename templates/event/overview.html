@@ -106,10 +106,6 @@
                     Falls kein Platz für dich frei wird, bekommst du deine Anzahlung natürlich zurück.
                 {% endif %}
             </div>
-        {% elif event.anzahlung is not none and event.ausfall.value > (event.signups | length) * event.anzahlung.value %}
-            <div class="alert alert-info">
-                <strong>Wichtig:</strong> Wir können erst buchen, wenn die Ausfallgebühr von {{event.ausfall}} gesichert ist. Dazu fehlen noch {{(event.ausfall.value / event.anzahlung.value - (event.signups | length)) | round(0, 'ceil') | int}} Anmeldungen.
-            </div>
         {% endif %}
         {% if event.end < g.now %}
             <p>Dieses event ist schon vorbei.</p>

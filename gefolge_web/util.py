@@ -46,6 +46,11 @@ class Euro:
     def __key__(self):
         return self.value
 
+    def __mod__(self, other):
+        if isinstance(other, Euro):
+            return Euro(self.value % other.value)
+        return NotImplemented
+
     def __mul__(self, other):
         if isinstance(other, int):
             return Euro(self.value * other)
@@ -75,18 +80,31 @@ class Transaction:
         self.json_data = json_data
 
     @classmethod
-    def anzahlung(cls, event, guest=None, *, time=None):
+    def anzahlung(cls, event, amount=None, *, guest=None, time=None):
         if time is None:
             time = now()
+        if amount is None:
+            amount = -event.anzahlung
         json_data = {
             'type': 'eventAnzahlung',
-            'amount': -event.anzahlung.value,
+            'amount': amount.value,
+            'default': -event.anzahlung.value,
             'time': '{:%Y-%m-%d %H:%M:%S}'.format(time.astimezone(pytz.utc)),
             'event': event.event_id
         }
         if guest is not None:
             json_data['guest'] = guest.snowflake
         return cls(json_data)
+
+    @classmethod
+    def anzahlung_return(cls, event, remaining, amount):
+        json_data = {
+            'type': 'eventAnzahlungReturn',
+            'amount': amount.value,
+            'extraRemaining': remaining.value,
+            'time': '{:%Y-%m-%d H:%M:%S}'.format(now(pytz.utc)),
+            'event': event.event_id
+        }
 
     @classmethod
     def sponsor_werewolf_card(cls, card, amount):
@@ -117,6 +135,11 @@ class Transaction:
                 return jinja2.Markup('Anzahlung für {} für {}'.format(event.__html__(), jinja2.escape(event.person(self.json_data['guest']))))
             else:
                 return jinja2.Markup('Anzahlung für {}'.format(event.__html__()))
+        elif self.json_data['type'] == 'eventAnzahlungReturn':
+            import gefolge_web.event.model
+
+            event = gefolge_web.event.model.Event(self.json_data['event'])
+            return jinja2.Markup('{}Rückzahlung der erhöhten Anzahlung für {}{}'.format('Teilweise ' if self.json_data['extraRemaining'] > 0 else '', event.__html__(), ' (noch {})'.format(Euro(self.json_data['extraRemaining'])) if self.json_data['extraRemaining'] > 0 else ''))
         elif self.json_data['type'] == 'payPal':
             return jinja2.Markup('PayPal-Überweisung')
         elif self.json_data['type'] == 'transfer':

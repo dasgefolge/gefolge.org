@@ -70,7 +70,7 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
         if self == self.__class__.admin():
             return sum((
                 # Anzahlungen für noch nicht abgerechnete events
-                event.anzahlung * -len(event.signups)
+                -event.anzahlung_total
                 for event in gefolge_web.event.model.Event
                 if event.anzahlung is not None and not any(
                     transaction.json_data['type'] == 'eventAbrechnung' and transaction.json_data['event'] == event.event_id
@@ -191,7 +191,10 @@ def setup(index, app):
     @app.before_request
     def global_users():
         flask.g.admin = Mensch(app.config['web']['admin'])
-        flask.g.user = flask_login.current_user
+        if flask_login.current_user == flask.g.admin and 'viewAs' in app.config['web']:
+            flask.g.user = Mensch(app.config['web']['viewAs'])
+        else:
+            flask.g.user = flask_login.current_user
 
     @app.route('/auth')
     def auth_callback():

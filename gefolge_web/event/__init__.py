@@ -62,12 +62,30 @@ def setup(index, app):
             if flask.g.user in event.signups:
                 flask.flash('Du bist schon angemeldet.')
                 return flask.redirect(flask.g.view_node.url)
-            if event.anzahlung > gefolge_web.util.Euro():
-                if flask.g.user.balance < event.anzahlung and not flask.g.user.is_admin:
+            if event.anzahlung is not None and event.anzahlung > gefolge_web.util.Euro():
+                if hasattr(profile_form, 'anzahlung'):
+                    anzahlung = profile_form.anzahlung.data
+                else:
+                    anzahlung = event.anzahlung
+                if flask.g.user.balance < anzahlung and not flask.g.user.is_admin:
                     flask.flash('Dein Guthaben reicht nicht aus, um die Anzahlung zu bezahlen.')
                     return flask.redirect(flask.g.view_node.url)
-                flask.g.user.add_transaction(gefolge_web.util.Transaction.anzahlung(event))
-            event.signup(flask.g.user)
+                flask.g.user.add_transaction(gefolge_web.util.Transaction.anzahlung(event, -anzahlung))
+                while True:
+                    anzahlung_extra = event.anzahlung_total - event.ausfall
+                    if anzahlung_extra <= gefolge_web.util.Euro():
+                        break
+                    extra_anzahlungen = sorted(filter(lambda kv: kv[1] > event.anzahlung,
+                        (mensch, gefolge_web.util.Euro(event.attendee_data(mensch).get('anzahlung', event.anzahlung.value)))
+                        for mensch in event.menschen
+                    ), key=lambda kv: kv[1] % event.anzahlung == gefolge_web.util.Euro(), (kv[1] - anzahlung_extra) % event.anzahlung != gefolge_web.util.Euro(), -kv[1])
+                    if len(extra_anzahlungen) == 0:
+                        break
+                    iter_mensch, iter_anzahlung = extra_anzahlungen[0]
+                    amount = min(anzahlung_extra, iter_anzahlung - event.anzahlung)
+                    event.attendee_data(iter_mensch)['anzahlung'] -= amount.value
+                    iter_mensch.add_transaction(gefolge_web.util.Transaction.anzahlung_return(event, iter_anzahlung - amount - event.anzahlung, amount))
+            event.signup(flask.g.user, anzahlung)
             handle_profile_edit(event, flask.g.user, profile_form)
             return flask.redirect((flask.g.view_node / 'mensch' / flask.g.user).url)
         confirm_signup_form = gefolge_web.event.forms.ConfirmSignupForm(event)
