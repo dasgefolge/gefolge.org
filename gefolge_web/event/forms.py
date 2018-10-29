@@ -71,7 +71,7 @@ def ProfileForm(event, person):
         Form.anzahlung = gefolge_web.forms.EuroField('Anzahlung', [
             wtforms.validators.InputRequired(),
             wtforms.validators.NumberRange(min=event.anzahlung, message='Die reguläre Anzahlung beträgt %(min)s. Mindestens soviel musst du bezahlen, um dich anzumelden.'),
-            wtforms.validators.NumberRange(max=event.ausfall - (event.anzahlung_total + event.anzahlung), message='Wir benötigen nur noch %(max)s, um die Ausfallgebühr abzudecken.'),
+            wtforms.validators.NumberRange(max=event.ausfall - event.anzahlung_total, message='Wir benötigen nur noch %(max)s, um die Ausfallgebühr abzudecken.'),
             wtforms.validators.NumberRange(max=person.balance, message=jinja2.Markup('Dein aktuelles Guthaben ist {}. Auf <a href="{}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.'.format(flask.g.user.balance, flask.url_for('profile', mensch=flask.g.user.snowflake))))
         ], default=event.anzahlung)
 

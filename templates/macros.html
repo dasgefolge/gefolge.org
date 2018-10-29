@@ -4,9 +4,13 @@
         <div class="alert alert-danger col-sm-10 col-sm-offset-2" role="alert">
             <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
             <span class="sr-only">Fehler:</span>
-            {% for message in form.errors[field.short_name] %}
-                {{message}}
-            {% endfor %}
+            {% if form.errors[field.short_name] | length == 1 %}
+                {{form.errors[field.short_name][0]}}
+            {% else %}
+                {% for message in form.errors[field.short_name] %}
+                    <p>{{message}}</p>
+                {% endfor %}
+            {% endif %}
         </div>
     {% endif %}
     <div class="form-group">
