@@ -64,7 +64,11 @@
             <h1 id="orga">Orga</h1>
             {% if g.user.is_admin or event.orga('Abrechnung') == g.user %}
                 <h2>Abrechnung</h2>
-                {% if 'konto' in event.attendee_data(g.user) %}
+                {% if event.orga('Abrechnung') is none %}
+                    <p>Dieses Event hat noch keine Abrechnungsorga.</p>
+                {% elif event.orga('Abrechnung').is_admin %}
+                    <p>Dieses Event läuft über das Guthabensystem.</p>
+                {% elif 'konto' in event.attendee_data(event.orga('Abrechnung')) %}
                     <p>Bitte überprüfe regelmäßig dein Konto {{event.attendee_data(g.user)['konto']['iban']}} auf Anzahlungen.</p>
                     {{gen_form(confirm_signup_form, g.view_node.url)}}
                 {% else %}
