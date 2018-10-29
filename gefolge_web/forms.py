@@ -19,7 +19,7 @@ class EuroField(AnnotatedStringField):
         if self.raw_data:
             return self.raw_data[0]
         elif self.data is not None:
-            return str(self.data.value)
+            return str(self.data).strip('€')
         else:
             return ''
 
