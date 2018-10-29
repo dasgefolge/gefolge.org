@@ -73,7 +73,11 @@
             {% endif %}
             {% if g.user.is_admin or event.orga('Buchung') == g.user %}
                 <h2>Buchung</h2>
-                <p>Coming soon™</p> {#TODO#}
+                {% if event.ausfall > event.anzahlung_total %}
+                    <li>Wir können erst buchen, wenn die Ausfallgebühr von {{event.ausfall}} gesichert ist. Dazu fehlen noch {{event.ausfall - event.anzahlung_total}}, also {{((event.ausfall - event.anzahlung_total).value / event.anzahlung.value) | round(0, 'ceil') | int}} Anmeldungen.</li>
+                {% else %}
+                    <li>Die Ausfallgebühr von {{event.ausfall}} ist jetzt durch die Anzahlungen abgedeckt. Das Haus kann also gebucht werden.</li>
+                {% endif %}
             {% endif %}
             {% if g.user.is_admin or event.orga('Essen') == g.user %}
                 <h2>Essen</h2>
