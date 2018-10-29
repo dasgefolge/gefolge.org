@@ -192,8 +192,10 @@ def setup(index, app):
     def global_users():
         flask.g.admin = Mensch(app.config['web']['admin'])
         if flask_login.current_user == flask.g.admin and 'viewAs' in app.config['web']:
+            flask.g.view_as = True
             flask.g.user = Mensch(app.config['web']['viewAs'])
         else:
+            flask.g.view_as = False
             flask.g.user = flask_login.current_user
 
     @app.route('/auth')

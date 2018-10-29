@@ -104,6 +104,11 @@
                 nichts bearbeiten, sonst können Daten verloren gehen.
             </div>
         {% endif %}
+        {% if g.view_as %}
+            <div class="alert alert-info">
+                Viewing as {{g.user}}.
+            </div>
+        {% endif %}
         {% block flashes %}
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% for category, message in messages %}
