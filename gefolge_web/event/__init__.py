@@ -82,7 +82,10 @@ def setup(index, app):
                     if len(extra_anzahlungen) == 0:
                         break
                     iter_mensch, iter_anzahlung = extra_anzahlungen[0]
-                    amount = min(anzahlung_extra, iter_anzahlung - event.anzahlung)
+                    if iter_anzahlung % event.anzahlung == gefolge_web.util.Euro() or (iter_anzahlung - anzahlung_extra) % event.anzahlung == gefolge_web.util.Euro():
+                        amount = min(anzahlung_extra, iter_anzahlung - event.anzahlung)
+                    else:
+                        amount = min(anzahlung_extra, iter_anzahlung % event.anzahlung)
                     event.attendee_data(iter_mensch)['anzahlung'] -= amount.value
                     iter_mensch.add_transaction(gefolge_web.util.Transaction.anzahlung_return(event, iter_anzahlung - amount - event.anzahlung, amount))
             event.signup(flask.g.user, anzahlung)
