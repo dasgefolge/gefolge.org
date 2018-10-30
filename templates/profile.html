@@ -11,10 +11,6 @@
     {% endif %}
     <p>Profil für Discord snowflake {{mensch.snowflake}}. (<a href="https://discordapp.com/users/{{mensch.snowflake}}/">Discord-Profil</a>)</p>
     {% if g.user.is_admin or g.user == mensch %}
-        <h1>API</h1>
-        <p>Mit deinem API key kannst du die <a href="{{url_for('api_index')}}">API</a> auch ohne Anmeldung über Discord verwenden. Falls du nach Anmeldedaten gefragt wirst, verwende <code>api</code> als Benutzername und deinen API key als Passwort.</p>
-        <p>Dein API key: <code>{{mensch.api_key}}</code></p>
-        <p>Falls dein API key in falsche Hände gerät, kannst du jederzeit einen <a class="btn btn-primary" href="{{(g.view_node / 'reset-key').url}}">neuen API key generieren</a>. Du musst dich dann überall, wo du dich mit dem alten API key angemeldet hast, mit dem neuen anmelden.</p>
         <h1>Guthaben</h1>
         <p>Du kannst dein Guthaben per Überweisung an {{g.admin}} aufladen. Mit diesem Guthaben kannst du dich dann z.B. für <a href="{{url_for('events_index')}}">events</a> anmelden.</p>
         <p>

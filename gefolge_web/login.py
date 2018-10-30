@@ -272,10 +272,10 @@ def setup(index, app):
     def reset_api_key(mensch):
         if flask.g.user.is_admin or flask.g.user == mensch:
             del mensch.api_key
-            return flask.redirect(flask.g.view_node.parent.url)
+            return flask.redirect(flask.url_for('api_index'))
         else:
             flask.flash(jinja2.Markup('Du bist nicht berechtigt, den API key für {} neu zu generieren.'.format(mensch.__html__())), 'error')
-            return flask.redirect(flask.g.view_node.parent.url)
+            return flask.redirect(flask.url_for('api_index'))
 
     @index.redirect('me', decorators=[member_required])
     def me():
