@@ -7,5 +7,17 @@
     <p>Dein API key: <code>{{g.user.api_key}}</code></p>
     <p>Falls dein API key in falsche Hände gerät, kannst du jederzeit einen <a class="btn btn-primary" href="{{url_for('reset_api_key', mensch=g.user.snowflake)}}">neuen API key generieren</a>. Du musst dich dann überall, wo du dich mit dem alten API key angemeldet hast, mit dem neuen anmelden.</p>
     <h1>Endpoints</h1>
-    <p>API docs coming soon™</p> {#TODO#}
+    <ul>
+        {% for node in g.view_node.children recursive %}
+            <li>
+                <a href="{{node.url}}">{{node}}</a>
+                {% if node.view.__doc__ is not none %}
+                    — {{node.view.__doc__}}
+                {% endif %}
+                {% if node.children | length > 0 %}
+                    <ul>{{loop(node.children)}}</ul>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
 {% endblock %}
