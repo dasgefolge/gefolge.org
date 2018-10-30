@@ -16,8 +16,9 @@ import re
 import subprocess
 import traceback
 
-CONFIG_PATH = pathlib.Path('/usr/local/share/fidera/config.json')
-EDIT_LOG = lazyjson.File('/usr/local/share/fidera/log.json')
+BASE_PATH = pathlib.Path('/usr/local/share/fidera') #TODO use basedir
+CONFIG_PATH = BASE_PATH / 'config.json'
+EDIT_LOG = lazyjson.File(BASE_PATH / 'log.json')
 PARAGRAPH_RE = re.compile(r'(?:\r\n|\r|\n){2,}')
 
 CRASH_NOTICE = """To: fenhl@fenhl.net

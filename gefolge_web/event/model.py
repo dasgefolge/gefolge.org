@@ -11,8 +11,8 @@ import random
 import gefolge_web.login
 import gefolge_web.util
 
-EVENTS_ROOT = pathlib.Path('/usr/local/share/fidera/event')
-LOCATIONS_ROOT = pathlib.Path('/usr/local/share/fidera/loc')
+EVENTS_ROOT = gefolge_web.util.BASE_PATH / 'event'
+LOCATIONS_ROOT = gefolge_web.util.BASE_PATH / 'loc'
 ORGA_ROLES = ['Abrechnung', 'Buchung', 'Essen', 'Programm', 'Schlüssel']
 SILVESTER_CHANNEL = 387264349678338049
 

@@ -10,7 +10,7 @@ import gefolge_web.util
 DISCORD_TAG_REGEX = r'@([^#]{2,32})#([0-9]{4}?)'
 DISCORD_MENTION_REGEX = r'<@!?([0-9]+)>'
 
-WIKI_ROOT = pathlib.Path('/usr/local/share/fidera/wiki')
+WIKI_ROOT = gefolge_web.util.BASE_PATH / 'wiki'
 
 class DiscordMentionPattern(markdown.inlinepatterns.LinkPattern):
     def handleMatch(self, m):

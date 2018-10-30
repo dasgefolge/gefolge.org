@@ -2,10 +2,13 @@ import flask
 import flask_login
 import functools
 import icalendar
+import pathlib
 
 import gefolge_web.event.model
 import gefolge_web.login
 import gefolge_web.util
+
+DISCORD_VOICE_STATE_PATH = gefolge_web.util.BASE_PATH / 'discord' / 'voice-state.json'
 
 def key_or_member_required(f):
     @functools.wraps(f)
@@ -50,6 +53,16 @@ def setup(index):
                     if flask.g.user in programmpunkt.signups and programmpunkt.start is not None and programmpunkt.end is not None:
                         cal.add_component(programmpunkt.to_ical())
         return flask.Response(cal.to_ical(), mimetype='text/calendar')
+
+    @api_index.child('discord')
+    @gefolge_web.util.template('api-dir')
+    def api_discord_index():
+        return {}
+
+    @api_discord_index.child('voice-state.json')
+    def discord_voice_state():
+        with DISCORD_VOICE_STATE_PATH.open() as f:
+            return flask.Response(f.read(), mimetype='application/json')
 
     @api_index.child('event')
     @gefolge_web.util.template('api-dir')

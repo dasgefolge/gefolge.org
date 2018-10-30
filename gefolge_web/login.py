@@ -14,8 +14,8 @@ import urllib.parse
 import gefolge_web.util
 
 MENSCHEN = 386753710434287626 # role ID
-PROFILES_ROOT = pathlib.Path('/usr/local/share/fidera/profiles')
-USERDATA_ROOT = pathlib.Path('/usr/local/share/fidera/userdata')
+PROFILES_ROOT = gefolge_web.util.BASE_PATH / 'profiles'
+USERDATA_ROOT = gefolge_web.util.BASE_PATH / 'userdata'
 
 class MenschMeta(type):
     def __iter__(self):

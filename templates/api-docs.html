@@ -1,5 +1,29 @@
 {% extends "base.html" %}
 
+{% macro view_func_node_map(node) %}
+    <ul>
+        {% if node.children_are_static %}
+            <li>
+                {% set child_node = %} {#TODO#}
+                {{child_node}}
+                {% if child_node.view.__doc__ is not none %}
+                    — {{child_node.view.__doc__}}
+                {% endif %}
+                {{view_func_node_map(child_node)}}
+        {% else %}
+            {% for child_node in node.children %}
+                <li>
+                    {{child_node}}
+                    {% if child_node.view.__doc__ is not none %}
+                        — {{child_node.view.__doc__}}
+                    {% endif %}
+                    {{view_func_node_map(child_node)}}
+                </li>
+            {% endfor %}
+        {% endif %}
+    </ul>
+{% endmacro %}
+
 {% block title %}gefolge.org API{% endblock %}
 
 {% block page_content %}
@@ -14,8 +38,12 @@
                 {% if node.view.__doc__ is not none %}
                     — {{node.view.__doc__}}
                 {% endif %}
-                {% if node.children | length > 0 %}
-                    <ul>{{loop(node.children)}}</ul>
+                {% if node.children_are_static %}
+                    {% if node.children | length > 0 %}
+                        <ul>{{loop(node.children)}}</ul>
+                    {% endif %}
+                {% else %}
+                    {{view_func_node_map(node.view_func_node)}}
                 {% endif %}
             </li>
         {% endfor %}
