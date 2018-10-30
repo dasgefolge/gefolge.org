@@ -24,6 +24,8 @@ def key_or_member_required(f):
             {'WWW-Authenticate': 'Basic realm="gefolge.org API key required"'}
         ) #TODO template
 
+    return wrapper
+
 def setup(index):
     @index.child('api', 'API', decorators=[key_or_member_required])
     @gefolge_web.util.template('api-docs')
