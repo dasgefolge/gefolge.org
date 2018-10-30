@@ -114,7 +114,13 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
 
     @property
     def signups(self):
-        return []
+        night_maybes = self.event.night_signups(self.date) + self.event.night_maybes(self.date)
+        return [
+            person
+            for person in self.event.signups
+            if person in night_maybes
+            #TODO Selbstversorger
+        ]
 
     @property
     def start(self):

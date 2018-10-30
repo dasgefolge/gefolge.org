@@ -18,6 +18,7 @@ try:
 except ImportError:
     werewolf_web = None
 
+import gefolge_web.api
 import gefolge_web.event
 import gefolge_web.games
 import gefolge_web.login
@@ -51,6 +52,7 @@ def index():
 
 with app.app_context():
     # set up submodules
+    gefolge_web.api.setup(index)
     gefolge_web.login.setup(index, app)
     gefolge_web.wiki.setup(index, md)
     gefolge_web.event.setup(index, app)

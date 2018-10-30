@@ -327,6 +327,18 @@ class Event(metaclass=EventMeta):
         if 'start' in self.data:
             return gefolge_web.util.parse_iso_datetime(self.data['start'].value())
 
+    def to_ical(self):
+        result = icalendar.Event()
+        result.add('summary', str(self))
+        result.add('dtstart', self.start) #TODO add support for personal start time based on profile
+        result.add('dtend', self.end) #TODO add support for personal end time based on profile
+        #TODO date created
+        #TODO date last modified
+        result.add('uid', 'gefolge-event-{}@gefolge.org'.format(self.event_id))
+        result.add('location', str(self.location))
+        #TODO URL to event web page
+        return result
+
     @property
     def url_part(self):
         return self.event_id

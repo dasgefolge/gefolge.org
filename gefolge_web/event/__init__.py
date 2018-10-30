@@ -60,7 +60,7 @@ def setup(index, app):
         profile_form = gefolge_web.event.forms.ProfileForm(event, flask.g.user)
         if profile_form.submit_profile_form.data and profile_form.validate():
             if flask.g.user in event.signups:
-                flask.flash('Du bist schon angemeldet.')
+                flask.flash('Du bist schon angemeldet.', 'error')
                 return flask.redirect(flask.g.view_node.url)
             if event.anzahlung is not None and event.anzahlung > gefolge_web.util.Euro():
                 if hasattr(profile_form, 'anzahlung'):
@@ -68,7 +68,7 @@ def setup(index, app):
                 else:
                     anzahlung = event.anzahlung
                 if flask.g.user.balance < anzahlung and not flask.g.user.is_admin:
-                    flask.flash('Dein Guthaben reicht nicht aus, um die Anzahlung zu bezahlen.')
+                    flask.flash('Dein Guthaben reicht nicht aus, um die Anzahlung zu bezahlen.', 'error')
                     return flask.redirect(flask.g.view_node.url)
                 flask.g.user.add_transaction(gefolge_web.util.Transaction.anzahlung(event, -anzahlung))
                 while True:
@@ -131,19 +131,6 @@ def setup(index, app):
         #TODO allow users to create new events?
         return gefolge_web.util.render_template('event.404', event_id=value), 404
 
-    @app.route('/event/<event_id>/calendar/all.ics') #TODO move to api.gefolge.org
-    @gefolge_web.login.member_required
-    def event_calendar_all(event_id):
-        event = gefolge_web.event.model.Event(event_id)
-        cal = icalendar.Calendar()
-        cal.add('prodid', '-//Gefolge//gefolge.org//DE')
-        cal.add('version', '2.0')
-        cal.add('x-wr-calname', str(event))
-        for programmpunkt in event.programm:
-            if programmpunkt.start is not None and programmpunkt.end is not None:
-                cal.add_component(programmpunkt.to_ical())
-        return flask.Response(cal.to_ical(), mimetype='text/calendar')
-
     @event_page.child('guest', 'Gast anmelden', methods=['GET', 'POST'])
     def event_guest_form(event):
         signup_guest_form = gefolge_web.event.forms.SignupGuestForm(event)
@@ -153,7 +140,7 @@ def setup(index, app):
             if event.anzahlung == gefolge_web.util.Euro() or event.orga('Abrechnung') == gefolge_web.login.Mensch.admin():
                 if event.anzahlung > gefolge_web.util.Euro():
                     if flask.g.user.balance < event.anzahlung and not flask.g.user.is_admin:
-                        flask.flash('Dein Guthaben reicht nicht aus, um die Anzahlung zu bezahlen.')
+                        flask.flash('Dein Guthaben reicht nicht aus, um die Anzahlung zu bezahlen.', 'error')
                         return flask.redirect(flask.g.view_node.url)
                     flask.g.user.add_transaction(gefolge_web.util.Transaction.anzahlung(event, guest=guest))
                 event.confirm_guest_signup(guest)
@@ -184,7 +171,7 @@ def setup(index, app):
     @gefolge_web.util.template('event.profile-edit')
     def event_profile_edit(event, person):
         if not event.can_edit(flask.g.user, person):
-            flask.flash('Du bist nicht berechtigt, dieses Profil zu bearbeiten.')
+            flask.flash('Du bist nicht berechtigt, dieses Profil zu bearbeiten.', 'error')
             return flask.redirect(flask.g.view_node.parent.url)
         profile_form = gefolge_web.event.forms.ProfileForm(event, person)
         if profile_form.submit_profile_form.data and profile_form.validate():
@@ -255,7 +242,7 @@ def setup(index, app):
     @gefolge_web.util.template('event.programmpunkt-edit')
     def event_programmpunkt_edit(event, programmpunkt):
         if not programmpunkt.can_edit(flask.g.user):
-            flask.flash('Du bist nicht berechtigt, diesen Programmpunkt zu bearbeiten.')
+            flask.flash('Du bist nicht berechtigt, diesen Programmpunkt zu bearbeiten.', 'error')
             return flask.redirect(flask.g.view_node.parent.url)
         programm_edit_form = gefolge_web.event.forms.ProgrammEditForm(programmpunkt)
         if programm_edit_form.submit_programm_edit_form.data and programm_edit_form.validate():
@@ -283,7 +270,7 @@ def setup(index, app):
     @gefolge_web.util.template('event.programmpunkt-delete')
     def event_programmpunkt_delete(event, programmpunkt):
         if g.user != event.orga('Programm'):
-            flask.flash('Du bist nicht berechtigt, diesen Programmpunkt zu löschen.')
+            flask.flash('Du bist nicht berechtigt, diesen Programmpunkt zu löschen.', 'error')
             return flask.redirect(flask.g.view_node.parent.url)
         programm_delete_form = gefolge_web.event.forms.ProgrammDeleteForm(programmpunkt)
         if programm_delete_form.submit_programm_delete_form.data and programm_delete_form.validate():

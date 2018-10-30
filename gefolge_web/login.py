@@ -7,6 +7,8 @@ import jinja2
 import json
 import lazyjson
 import pathlib
+import random
+import string
 import urllib.parse
 
 import gefolge_web.util
@@ -32,6 +34,16 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
     def admin(cls):
         with gefolge_web.util.CONFIG_PATH.open() as config_f:
             return cls(json.load(config_f)['web']['admin'])
+
+    @classmethod
+    def by_api_key(cls, key=None):
+        if key is None:
+            auth = flask.request.authorization
+            if auth and auth.username.strip().lower() == 'api':
+                key = auth.password.strip().lower()
+        for mensch in cls:
+            if key == mensch.api_key:
+                return mensch
 
     @classmethod
     def get(cls, user_id):
@@ -62,6 +74,20 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
         if 'transactions' not in self.userdata:
             self.userdata['transactions'] = []
         self.userdata['transactions'].append(transaction.json_data)
+
+    @property
+    def api_key(self):
+        if 'apiKey' not in self.userdata:
+            new_key = None
+            while new_key is None or self.__class__.by_api_key(new_key) is not None: # to avoid duplicates
+                new_key = ''.join(random.choice(string.ascii_lowercase + string.digits) for i in range(25))
+            self.userdata['apiKey'] = new_key
+        return self.userdata['apiKey'].value()
+
+    @api_key.deleter
+    def api_key(self):
+        if 'apiKey' in self.userdata:
+            del self.userdata['apiKey']
 
     @property
     def balance(self):
@@ -204,8 +230,9 @@ def setup(index, app):
             response = flask_dance.contrib.discord.discord.get('/api/v6/users/@me')
             if not response.ok:
                 return flask.make_response(('Discord returned error {} at {}: {}'.format(response.status_code, html.escape(response.url), html.escape(response.text)), response.status_code, []))
-            flask_login.login_user(Mensch(response.json()['id']), remember=True)
-            flask.flash('Hallo {}.'.format(response.json()['username']))
+            mensch = Mensch(response.json()['id'])
+            flask_login.login_user(mensch, remember=True)
+            flask.flash(jinja2.Markup('Hallo {}.'.format(mensch.__html__())))
         else:
             flask.flash('Login fehlgeschlagen.', 'error')
         next_url = flask.session.get('next')
@@ -231,6 +258,15 @@ def setup(index, app):
     @profile.catch_init(ValueError)
     def profile_catch_init(exc, value):
         return gefolge_web.util.render_template('profile-404', snowflake=value), 404
+
+    @profile.child('reset-key')
+    def reset_api_key(mensch):
+        if flask.g.user.is_admin or flask.g.user == mensch:
+            del mensch.api_key
+            return flask.redirect(flask.g.view_node.parent.url)
+        else:
+            flask.flash(jinja2.Markup('Du bist nicht berechtigt, den API key für {} neu zu generieren.'.format(mensch.__html__())), 'error')
+            return flask.redirect(flask.g.view_node.parent.url)
 
     @index.redirect('me', decorators=[member_required])
     def me():
