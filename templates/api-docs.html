@@ -3,24 +3,19 @@
 {% macro view_func_node_map(node) %}
     <ul>
         {% if node.children_are_static %}
+            {% set children = [node.children] %}
+        {% else %}
+            {% set children = node.children %}
+        {% endif %}
+        {% for child_node in children %}
             <li>
-                {% set child_node = %} {#TODO#}
                 {{child_node}}
                 {% if child_node.view.__doc__ is not none %}
                     — {{child_node.view.__doc__}}
                 {% endif %}
                 {{view_func_node_map(child_node)}}
-        {% else %}
-            {% for child_node in node.children %}
-                <li>
-                    {{child_node}}
-                    {% if child_node.view.__doc__ is not none %}
-                        — {{child_node.view.__doc__}}
-                    {% endif %}
-                    {{view_func_node_map(child_node)}}
-                </li>
-            {% endfor %}
-        {% endif %}
+            </li>
+        {% endfor %}
     </ul>
 {% endmacro %}
 
