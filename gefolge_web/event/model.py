@@ -1,5 +1,6 @@
 import class_key
 import flask
+import icalendar
 import itertools
 import jinja2
 import lazyjson
