@@ -3,7 +3,7 @@
 {% macro view_func_node_map(node) %}
     <ul>
         {% if node.children_are_static %}
-            {% set children = node.children %}
+            {% set children = node.children.values() %}
         {% else %}
             {% set children = [node.children] %}
         {% endif %}
