@@ -36,13 +36,17 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
             return cls(json.load(config_f)['web']['admin'])
 
     @classmethod
-    def by_api_key(cls, key=None):
+    def by_api_key(cls, key=None, *, exclude=None):
+        if exclude is None:
+            exclude = set()
         if key is None:
             auth = flask.request.authorization
             if auth and auth.username.strip().lower() == 'api':
                 key = auth.password.strip().lower()
         for mensch in cls:
-            if key == mensch.api_key:
+            if mensch in exclude:
+                continue
+            if key == mensch.api_key_inner(exclude=exclude):
                 return mensch
 
     @classmethod
@@ -77,9 +81,14 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
 
     @property
     def api_key(self):
+        return self.api_key_inner()
+
+    def api_key_inner(self, *, exclude=None):
+        if exclude is None:
+            exclude = set()
         if 'apiKey' not in self.userdata:
             new_key = None
-            while new_key is None or self.__class__.by_api_key(new_key) is not None: # to avoid duplicates
+            while new_key is None or self.__class__.by_api_key(new_key, exclude=exclude | {self}) is not None: # to avoid duplicates
                 new_key = ''.join(random.choice(string.ascii_lowercase + string.digits) for i in range(25))
             self.userdata['apiKey'] = new_key
         return self.userdata['apiKey'].value()
