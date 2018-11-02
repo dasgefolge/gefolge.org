@@ -224,17 +224,18 @@ def setup(index, app):
                 return jinja2.Markup('<td rowspan="{}"><a href="{}">{}</a></td>'.format(hours, (flask.g.view_node / programmpunkt).url, programmpunkt))
             return jinja2.Markup('<td></td>') # nothing planned yet
 
+        table = {
+            date: {
+                hour: programm_cell(date, hour)
+                for hour in range(24)
+            }
+            for date in itertools.chain(event.nights, [event.end.date()])
+        }
         return {
             'event': event,
             'snip_start': snip_start,
             'snip_end': snip_end,
-            'table': {
-                date: {
-                    hour: programm_cell(date, hour)
-                    for hour in range(24)
-                }
-                for date in itertools.chain(event.nights, [event.end.date()])
-            }
+            'table': table
         }
 
     @event_programm.children(gefolge_web.event.programm.Programmpunkt, methods=['GET', 'POST'])
