@@ -199,6 +199,8 @@ def setup(index, app):
 
         def programm_cell(date, hour):
             nonlocal filled_until
+            nonlocal snip_start
+            nonlocal snip_end
 
             timestamp = pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(date, datetime.time(hour)), is_dst=None)
             if filled_until is not None and filled_until > timestamp:
