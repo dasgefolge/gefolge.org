@@ -14,9 +14,23 @@
             </tr>
         </thead>
         <tbody>
-            {% for hour in range(24) %}
+            {% for hour in range(snip_start) %}
                 <tr>
-                    <th>{{hour}}:00</th>
+                    <th>{{'{:02}'.format(hour)}}:00</th>
+                    {% for night in event.nights %}
+                        {{table[night][hour]}}
+                    {% endfor %}
+                    {{table[event.end.date()][hour]}}
+                </tr>
+            {% endfor %}
+            {% if snip_start < 6 or snip_end > 6 %}
+                <tr>
+                    <th colspan="{{(event.nights | length) + 1}}">(noch) kein Programm zwischen {{'{:02}'.format(snip_start)}}:00 und {{'{:02}'.format(snip_end)}}:00</th>
+                </tr>
+            {% endif %}
+            {% for hour in range(snip_end, 24) %}
+                <tr>
+                    <th>{{'{:02}'.format(hour)}}:00</th>
                     {% for night in event.nights %}
                         {{table[night][hour]}}
                     {% endfor %}
@@ -32,7 +46,7 @@
             <tr>
                 <th>Titel</th>
                 <th>Orga</th>
-                <th>Interessenten</th>
+                <th style="text-align: right;">Interessenten</th>
             </tr>
         </thead>
         <tbody>
@@ -46,7 +60,7 @@
                             {{programmpunkt.orga}}
                         {% endif %}
                     </td>
-                    <td>{{programmpunkt.signups | length}}</td>
+                    <td style="text-align: right;">{{programmpunkt.signups | length}}</td>
                 </tr>
             {% endfor %}
         </tbody>

@@ -193,6 +193,9 @@ def setup(index, app):
     def event_programm(event):
         programm = event.programm
         filled_until = None
+        # rows from hour snip_start to hour snip_end are omitted
+        snip_start = 0
+        snip_end = 24
 
         def programm_cell(date, hour):
             nonlocal filled_until
@@ -206,11 +209,23 @@ def setup(index, app):
                 programmpunkt = more_itertools.one(programmpunkt for programmpunkt in programm if programmpunkt.start is not None and programmpunkt.start >= timestamp and programmpunkt.start < timestamp + datetime.timedelta(hours=1))
                 hours = math.ceil((programmpunkt.end - timestamp) / datetime.timedelta(hours=1))
                 filled_until = timestamp + datetime.timedelta(hours=hours) #TODO support for events that go past midnight
+                if hour < 6 and hour + hours >= 6:
+                    # goes over 06:00, remove snip entirely
+                    snip_start = 6
+                    snip_end = 6
+                if snip_start < hour + hours < 6:
+                    # before 06:00, can only start snip at end hour
+                    snip_start = hour + hours
+                if snip_end > hour >= 6:
+                    # at or after 06:00, must stop snip at start hour
+                    snip_end = hour
                 return jinja2.Markup('<td rowspan="{}"><a href="{}">{}</a></td>'.format(hours, (flask.g.view_node / programmpunkt).url, programmpunkt))
             return jinja2.Markup('<td></td>') # nothing planned yet
 
         return {
             'event': event,
+            'snip_start': snip_start,
+            'snip_end': snip_end,
             'table': {
                 date: {
                     hour: programm_cell(date, hour)
