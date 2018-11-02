@@ -37,7 +37,7 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
 
     @property
     def card_set(self):
-        for set_code, iter_set in MAGIC_CONFIG['customSets'].value():
+        for set_code, iter_set in MAGIC_CONFIG['customSets'].value().items():
             if iter_set.get('drafted') == self.event.event_id:
                 return set_code
 
