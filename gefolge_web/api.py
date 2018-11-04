@@ -50,7 +50,7 @@ def setup(index):
             if flask.g.user in event.signups:
                 cal.add_component(event.to_ical())
                 for programmpunkt in event.programm:
-                    if flask.g.user in programmpunkt.signups and programmpunkt.start is not None and programmpunkt.end is not None:
+                    if (programmpunkt.orga == flask.g.user or flask.g.user in programmpunkt.signups) and programmpunkt.start is not None and programmpunkt.end is not None:
                         cal.add_component(programmpunkt.to_ical())
         return flask.Response(cal.to_ical(), mimetype='text/calendar')
 
