@@ -11,7 +11,7 @@
                 <th>Auf Discord seit</th>
                 <th>Im Gefolge Discord server seit</th>
                 {% if g.user.is_admin %}
-                    <th>Guthaben</th>
+                    <th style="text-align: right;">Guthaben</th>
                 {% endif %}
             </tr>
         </thead>
@@ -23,7 +23,11 @@
                     <td>{{mensch.snowflake | melt | dmy_hms}}</td>
                     <td>{{mensch.profile_data['joined'] | dmy_hms}}</td>
                     {% if g.user.is_admin %}
-                        <td {% if mensch.balance.value < 0 %}class="danger"{% endif %}>{% if mensch.balance.value != 0 %}{{mensch.balance}}{% endif %}</td>
+                        <td style="text-align: right;" {% if mensch.balance.value < 0 %}class="danger"{% endif %}>
+                            {% if mensch.balance.value != 0 %}
+                                {{mensch.balance}}
+                            {% endif %}
+                        </td>
                     {% endif %}
                 </tr>
             {% endfor %}
