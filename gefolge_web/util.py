@@ -122,7 +122,8 @@ class Transaction:
         json_data = {
             'type': 'transfer',
             'amount': amount.value,
-            'time': '{:%Y-%m-%d %H:%M:%S}'.format(now(pytz.utc))
+            'time': '{:%Y-%m-%d %H:%M:%S}'.format(now(pytz.utc)),
+            'mensch': mensch.snowflake
         }
         if comment:
             json_data['comment'] = comment
