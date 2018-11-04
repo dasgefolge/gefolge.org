@@ -17,9 +17,9 @@ class PersonField(gefolge_web.forms.MenschField):
     """A form field that validates to a Mensch or Guest. Displayed as a combobox."""
 
     def __init__(self, event, label, validators=[], *, allow_guests=True, person_filter=lambda person: True, **kwargs):
-        super().__init__(label, validators, person_filter=person_filter, **kwargs)
         self.event = event
         self.allow_guests = allow_guests
+        super().__init__(label, validators, person_filter=person_filter, **kwargs)
 
     @property
     def people(self):
