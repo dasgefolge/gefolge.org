@@ -234,7 +234,7 @@ def parse_iso_datetime(datetime_str, *, tz=pytz.timezone('Europe/Berlin')):
     if isinstance(datetime_str, datetime.datetime):
         return datetime_str
     result = dateutil.parser.isoparse(datetime_str)
-    if datetime_or_time.tzinfo is not None and datetime_or_time.tzinfo.utcoffset(datetime_or_time) is not None: # result is timezone-aware
+    if result.tzinfo is not None and result.tzinfo.utcoffset(result) is not None: # result is timezone-aware
         return result.astimezone(tz)
     else:
         return tz.localize(result, is_dst=None)
