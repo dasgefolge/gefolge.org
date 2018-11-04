@@ -1,16 +1,21 @@
 import flask
 import flask_dance.contrib.discord
 import flask_login
+import flask_wtf
 import functools
 import html
 import jinja2
 import json
 import lazyjson
 import pathlib
+import peter
 import random
 import string
 import urllib.parse
+import wtforms
+import wtforms.validators
 
+import gefolge_web.forms
 import gefolge_web.util
 
 MENSCHEN = 386753710434287626 # role ID
@@ -186,6 +191,20 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
     def userdata_path(self):
         return USERDATA_ROOT / '{}.json'.format(self.snowflake)
 
+def TransferMoneyForm(mensch):
+    class Form(flask_wtf.FlaskForm):
+        recipient = gefolge_web.forms.MenschField('An', person_filter=lambda person: person != mensch)
+        amount = gefolge_web.forms.EuroField('Betrag', [
+            wtforms.validators.InputRequired(),
+            wtforms.validators.NumberRange(min=gefolge_web.util.Euro('0.01'), message='Nur positive Beträge erlaubt.'),
+        ] + ([] if flask.g.user.is_admin else [
+            wtforms.validators.NumberRange(max=mensch.balance, message=jinja2.Markup('Du kannst maximal dein aktuelles Guthaben übertragen.'))
+        ]))
+        comment = wtforms.TextAreaField('Kommentar (optional)')
+        submit_transfer_money_form = wtforms.SubmitField('Übertragen')
+
+    return Form()
+
 def is_safe_url(target):
     ref_url = urllib.parse.urlparse(flask.request.host_url)
     test_url = urllib.parse.urlparse(urllib.parse.urljoin(flask.request.host_url, target))
@@ -262,7 +281,19 @@ def setup(index, app):
     def profile(mensch):
         if not mensch.is_active:
             return gefolge_web.util.render_template('profile-404', mensch=mensch), 404
-        return {'mensch': mensch}
+        if flask.g.user.is_admin or flask.g.user == mensch:
+            transfer_money_form = TransferMoneyForm(mensch)
+            if transfer_money_form.submit_transfer_money_form.data and transfer_money_form.validate():
+                mensch.add_transaction(gefolge_web.util.Transaction.transfer(transfer_money_form.recipient.data, -transfer_money_form.amount.data, transfer_money_form.comment.data))
+                transfer_money_form.recipient.data.add_transaction(gefolge_web.util.Transaction.transfer(mensch, transfer_money_form.amount.data, transfer_money_form.comment.data))
+                peter.bot_cmd('msg', str(transfer_money_form.recipient.data.snowflake), '<@{}> ({}) hat {} an dich übertragen. {}: <https://gefolge.org/me>'.format(mensch.snowflake, mensch, transfer_money_form.amount.data, 'Kommentar und weitere Infos' if transfer_money_form.comment.data else 'Weitere Infos'))
+                return flask.redirect(flask.g.view_node.url)
+        else:
+            transfer_money_form = None
+        return {
+            'mensch': mensch,
+            'transfer_money_form': transfer_money_form
+        }
 
     @profile.catch_init(ValueError)
     def profile_catch_init(exc, value):

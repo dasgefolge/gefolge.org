@@ -31,49 +31,6 @@ class EuroField(AnnotatedStringField):
                 self.data = None
                 raise ValueError('Ungültiger Eurobetrag') from e
 
-class EventPersonField(wtforms.SelectField):
-    """A form field that validates to a Mensch or Guest. Displayed as a combobox."""
-
-    #TODO actually display as a combobox (text field with dropdown menu)
-
-    def __init__(self, event, label, validators=[], *, allow_guests=True, person_filter=lambda person: True, **kwargs):
-        self.event = event
-        self.allow_guests = allow_guests
-        self.person_filter = person_filter
-        super().__init__(label, validators, choices=[(person.snowflake, person.long_name) for person in self.people], **kwargs)
-
-    @property
-    def people(self):
-        if self.allow_guests:
-            result = self.event.signups
-        else:
-            result = self.event.menschen
-        return list(filter(self.person_filter, result))
-
-    def iter_choices(self):
-        for person in self.people:
-            yield person.snowflake, person.long_name, person == self.data
-
-    def process_data(self, value):
-        try:
-            self.data = None if value is None else self.event.person(value)
-        except (TypeError, ValueError):
-            self.data = None
-
-    def process_formdata(self, valuelist):
-        if valuelist:
-            try:
-                self.data = self.event.person(valuelist[0])
-            except (TypeError, ValueError):
-                raise ValueError('Invalid choice: could not coerce')
-
-    def pre_validate(self, form):
-        for person in self.people:
-            if self.data == person:
-                break
-        else:
-            raise ValueError('Not a valid choice')
-
 class FormSection(wtforms.Field):
     def __init__(self, title, level=2, **kwargs):
         self.level = level
@@ -94,6 +51,50 @@ class HorizontalButtonGroupField(wtforms.RadioField):
             self.choice_colors.append((name, color))
         super().__init__(label, validators, choices=super_choices, **kwargs)
         self.type = 'HorizontalButtonGroupField'
+
+class MenschField(wtforms.SelectField):
+    """A form field that validates to a Mensch. Displayed as a combobox."""
+
+    #TODO actually display as a combobox (text field with dropdown menu)
+
+    def __init__(self, label, validators=[], *, person_filter=lambda person: True, **kwargs):
+        self.person_filter = person_filter
+        super().__init__(label, validators, choices=[(person.snowflake, person.long_name) for person in self.people], **kwargs)
+
+    @property
+    def people(self):
+        import gefolge_web.login
+
+        return list(filter(self.person_filter, gefolge_web.login.Mensch))
+
+    def iter_choices(self):
+        for person in self.people:
+            yield person.snowflake, person.long_name, person == self.data
+
+    def process_data(self, value):
+        try:
+            self.data = None if value is None else self.value_constructor(value)
+        except (TypeError, ValueError):
+            self.data = None
+
+    def process_formdata(self, valuelist):
+        if valuelist:
+            try:
+                self.data = self.value_constructor(valuelist[0])
+            except (TypeError, ValueError):
+                raise ValueError('Invalid choice: could not coerce')
+
+    def pre_validate(self, form):
+        for person in self.people:
+            if self.data == person:
+                break
+        else:
+            raise ValueError('Not a valid choice')
+
+    def value_constructor(self, snowflake):
+        import gefolge_web.login
+
+        return gefolge_web.login.Mensch(snowflake)
 
 class YesMaybeNoField(HorizontalButtonGroupField):
     """A form field that validates to yes, maybe, or no. Displayed as a horizontal button group."""

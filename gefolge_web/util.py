@@ -99,23 +99,34 @@ class Transaction:
 
     @classmethod
     def anzahlung_return(cls, event, remaining, amount):
-        json_data = {
+        return cls({
             'type': 'eventAnzahlungReturn',
             'amount': amount.value,
             'extraRemaining': remaining.value,
             'time': '{:%Y-%m-%d H:%M:%S}'.format(now(pytz.utc)),
             'event': event.event_id
-        }
+        })
 
     @classmethod
     def sponsor_werewolf_card(cls, card, amount):
         return cls({
             'type': 'sponsorWerewolfCard',
             'amount': -amount.value,
-            'time': '{:%Y-%m-%d %H:%M:%S}'.format(now().astimezone(pytz.utc)),
+            'time': '{:%Y-%m-%d %H:%M:%S}'.format(now(pytz.utc)),
             'faction': card['faction'],
             'role': card['role']
         })
+
+    @classmethod
+    def transfer(cls, mensch, amount, comment=None):
+        json_data = {
+            'type': 'transfer',
+            'amount': amount.value,
+            'time': '{:%Y-%m-%d %H:%M:%S}'.format(now(pytz.utc))
+        }
+        if comment:
+            json_data['comment'] = comment
+        return cls(json_data)
 
     def __html__(self):
         if self.json_data['type'] == 'bankTransfer':
@@ -143,11 +154,6 @@ class Transaction:
             return jinja2.Markup('{}Rückzahlung der erhöhten Anzahlung für {}{}'.format('Teilweise ' if self.json_data['extraRemaining'] > 0 else '', event.__html__(), ' (noch {})'.format(Euro(self.json_data['extraRemaining'])) if self.json_data['extraRemaining'] > 0 else ''))
         elif self.json_data['type'] == 'payPal':
             return jinja2.Markup('PayPal-Überweisung')
-        elif self.json_data['type'] == 'transfer':
-            import gefolge_web.login
-
-            mensch = gefolge_web.login.Mensch(self.json_data['mensch'])
-            return jinja2.Markup('{} {} übertragen'.format('von' if self.amount > Euro() else 'an', mensch.__html__()))
         elif self.json_data['type'] == 'sponsorWerewolfCard':
             try:
                 import werewolf_web
@@ -155,6 +161,11 @@ class Transaction:
                 return jinja2.Markup('<i>Werwölfe</i>-Karte gesponsert: {}'.format(jinja2.escape(self.json_data['role'])))
             else:
                 return jinja2.Markup('<a href="{}"><i>Werwölfe</i>-Karte</a> gesponsert: <span style="color: {};">{}</span>'.format(flask.url_for('werewolf_cards'), werewolf_web.FACTION_COLORS.get(self.json_data['faction'], 'black'), jinja2.escape(self.json_data['role'])))
+        elif self.json_data['type'] == 'transfer':
+            import gefolge_web.login
+
+            mensch = gefolge_web.login.Mensch(self.json_data['mensch'])
+            return jinja2.Markup('{} {} übertragen'.format('von' if self.amount > Euro() else 'an', mensch.__html__()))
         else:
             raise NotImplementedError('transaction type {} not implemented'.format(self.json_data['type']))
 
@@ -167,15 +178,20 @@ class Transaction:
 
     @property
     def details(self):
-        if 'details' in self.json_data:
-            return jinja2.Markup('<ul>\n{}\n</ul>'.format('\n'.join(
-                '<li>{}: {}</li>'.format(detail['label'], {
-                    'flat': lambda detail: '{}'.format(Euro(detail['amount'])),
-                    'even': lambda detail: '{} ({} / {} Menschen)'.format(Euro(detail['amount']), Euro(detail['total']), detail['people']),
-                    'weighted': lambda detail: '{} ({} * {} / {} Übernachtungen)'.format(Euro(detail['amount']), Euro(detail['total']), detail['nightsAttended'], detail['nightsTotal'])
-                }[detail['type']](detail))
-                for detail in self.json_data['details']
-            )))
+        if self.json_data['type'] == 'eventAbrechnung':
+            if 'details' in self.json_data:
+                return jinja2.Markup(', Details:<br /><ul>\n{}\n</ul>'.format('\n'.join(
+                    '<li>{}: {}</li>'.format(detail['label'], {
+                        'flat': lambda detail: '{}'.format(Euro(detail['amount'])),
+                        'even': lambda detail: '{} ({} / {} Menschen)'.format(Euro(detail['amount']), Euro(detail['total']), detail['people']),
+                        'weighted': lambda detail: '{} ({} * {} / {} Übernachtungen)'.format(Euro(detail['amount']), Euro(detail['total']), detail['nightsAttended'], detail['nightsTotal'])
+                    }[detail['type']](detail))
+                    for detail in self.json_data['details']
+                )))
+        elif self.json_data['type'] == 'transfer':
+            if self.json_data.get('comment'):
+                return jinja2.Markup(', Kommentar:<br /><blockquote style="margin-bottom: 0;"><p>{}</p></blockquote>'.format(jinja2.escape(self.json_data['comment'])))
+        return ''
 
     @property
     def time(self):

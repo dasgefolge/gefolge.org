@@ -13,6 +13,25 @@ import gefolge_web.forms
 import gefolge_web.login
 import gefolge_web.util
 
+class PersonField(gefolge_web.forms.MenschField):
+    """A form field that validates to a Mensch or Guest. Displayed as a combobox."""
+
+    def __init__(self, event, label, validators=[], *, allow_guests=True, person_filter=lambda person: True, **kwargs):
+        super().__init__(label, validators, person_filter=person_filter, **kwargs)
+        self.event = event
+        self.allow_guests = allow_guests
+
+    @property
+    def people(self):
+        if self.allow_guests:
+            result = self.event.signups
+        else:
+            result = self.event.menschen
+        return list(filter(self.person_filter, result))
+
+    def value_constructor(self, snowflake):
+        return self.event.person(snowflake)
+
 def ConfirmSignupForm(event):
     def validate_verwendungszweck(form, field):
         match = re.fullmatch('anzahlung {} ([0-9]+)'.format(event.event_id), field.data.lower())
@@ -85,7 +104,7 @@ def ProgrammAddForm(event):
             wtforms.validators.NoneOf([programmpunkt.name for programmpunkt in event.programm], message='Es gibt bereits einen Programmpunkt mit diesem Titel.'),
             wtforms.validators.Regexp('^[^/]+$', message='Schrägstriche können hier nicht verwendet werden, weil der Titel in der URL der Programmpunktseite steht.')
         ])
-        orga = gefolge_web.forms.EventPersonField(event, 'Orga', allow_guests=False, default=flask.g.user)
+        orga = PersonField(event, 'Orga', allow_guests=False, default=flask.g.user)
         description = wtforms.TextAreaField('Beschreibung')
         submit_programm_add_form = wtforms.SubmitField('Programmpunkt erstellen')
 
@@ -100,7 +119,7 @@ def ProgrammEditForm(programmpunkt):
         raise wtforms.validators.ValidationError('Bitte wende dich an {}, wenn du die Orga für diesen Programmpunkt abgeben möchtest.'.format(programmpunkt.event.orga(programmpunkt.orga_role)))
 
     class Form(flask_wtf.FlaskForm):
-        orga = gefolge_web.forms.EventPersonField(programmpunkt.event, 'Orga', [validate_orga], allow_guests=False, default=programmpunkt.orga) #TODO disable (https://getbootstrap.com/docs/3.3/css/#forms-control-disabled) if not allowed to edit
+        orga = PersonField(programmpunkt.event, 'Orga', [validate_orga], allow_guests=False, default=programmpunkt.orga) #TODO disable (https://getbootstrap.com/docs/3.3/css/#forms-control-disabled) if not allowed to edit
         start = wtforms.DateTimeField('Beginn', [wtforms.validators.Optional()], format='%d.%m.%Y %H:%M', default=programmpunkt.start)
         end = wtforms.DateTimeField('Ende', [wtforms.validators.Optional()], format='%d.%m.%Y %H:%M', default=programmpunkt.end)
         description = wtforms.TextAreaField('Beschreibung', default=programmpunkt.description)

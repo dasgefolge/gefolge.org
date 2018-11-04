@@ -12,17 +12,19 @@
     <p>Profil für Discord snowflake {{mensch.snowflake}}. (<a href="https://discordapp.com/users/{{mensch.snowflake}}/">Discord-Profil</a>)</p>
     {% if g.user.is_admin or g.user == mensch %}
         <h1>Guthaben</h1>
-        <p>Du kannst dein Guthaben per Überweisung an {{g.admin}} aufladen. Mit diesem Guthaben kannst du dich dann z.B. für <a href="{{url_for('events_index')}}">events</a> anmelden.</p>
+        <p>Mit diesem Guthaben kannst du dich z.B. für <a href="{{url_for('events_index')}}">events</a> anmelden.</p>
         <p>
             Aktuelles Guthaben: {{mensch.balance}}.
             {% if mensch.balance.value > 0 %}
                 Wenn du dein Guthaben ausgezahlt haben möchtest, kontaktiere bitte {{g.admin}}.
-            {% elif mensch.balance.value < 0 %}
+            {% elif mensch.balance.value < 0 and not mensch.is_admin %}
                 Zahle die Schulden bitte möglichst bald zurück.
             {% endif %}
         </p>
+        <h2>Aufladen</h2>
+        <p>Du kannst dein Guthaben per Überweisung an {{g.admin}} aufladen.</p>
         {% if 'konto' in g.admin.userdata %}
-            <p>Kontodaten:</p>
+            <p>Mit SEPA-Überweisung an:</p>
             <p>
                 {{g.admin.userdata['konto']['name']}}<br />
                 IBAN: {{g.admin.userdata['konto']['iban']}}<br />
@@ -31,12 +33,20 @@
             </p>
         {% endif %}
         {% if 'payPal' in g.admin.userdata %}
-            <p>{{g.admin}} über PayPal Geld senden: <a href="https://www.paypal.me/{{g.admin.userdata['payPal']}}">paypal.me/{{g.admin.userdata['payPal']}}</a>.</p>
+            <p>Mit PayPal: <a href="https://www.paypal.me/{{g.admin.userdata['payPal']}}">paypal.me/{{g.admin.userdata['payPal']}}</a></p>
+        {% endif %}
+        <h2>Übertragen</h2>
+        <p>Du kannst Geld von deinem Guthaben an andere Gefolgemenschen übertragen.</p>
+        {% if mensch.balance.value > 0 %}
+            <p>Wenn du Geld an jemand übertragen hast, kann nur diese Person es dir zurück geben. Achte also bitte genau darauf, dass du den richtigen Empfänger wählst!</p>
+            {{gen_form(transfer_money_form, g.view_node.url)}}
+        {% else %}
+            <p>Du hast aber im Moment kein Guthaben.</p>
         {% endif %}
         <h2>Transaktionen</h2>
         <ul>
             {% for transaction in mensch.transactions | reverse %}
-                <li>{{transaction.time | dmy_hms}}: {{transaction}}, {{transaction.amount}}{% if transaction.details is not none %}, Details:<br />{{transaction.details}}{% endif %}</li>
+                <li>{{transaction.time | dmy_hms}}: {{transaction}}, {{transaction.amount}}{{transaction.details}}</li>
             {% endfor %}
         </ul>
     {% endif %}
