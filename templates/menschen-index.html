@@ -4,9 +4,29 @@
 
 {% block page_content %}
     <h1>Menschen</h1>
-    <ul>
-        {% for profile in g.view_node.children %}
-            <li>{{profile.var}}</li>
-        {% endfor %}
-    </ul>
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>Mensch</th>
+                <th>Auf Discord seit</th>
+                <th>Im Gefolge Discord server seit</th>
+                {% if g.user.is_admin %}
+                    <th>Guthaben</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for profile in g.view_node.children %}
+                {% set mensch = profile.var %}
+                <tr>
+                    <td>{{mensch}}</td>
+                    <td>{{mensch.snowflake | melt | dmy_hms}}</td>
+                    <td>{{mensch.profile_data['joined'] | dmy_hms}}</td>
+                    {% if g.user.is_admin %}
+                        <td {% if mensch.balance.value < 0 %}class="danger"{% endif %}>{% if mensch.balance.value != 0 %}{{mensch.balance}}{% endif %}</td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock %}

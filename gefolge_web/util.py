@@ -18,6 +18,7 @@ import traceback
 
 BASE_PATH = pathlib.Path('/usr/local/share/fidera') #TODO use basedir
 CONFIG_PATH = BASE_PATH / 'config.json'
+DISCORD_EPOCH = 1420070400000
 EDIT_LOG = lazyjson.File(BASE_PATH / 'log.json')
 PARAGRAPH_RE = re.compile(r'(?:\r\n|\r|\n){2,}')
 
@@ -230,10 +231,11 @@ def parse_iso_date(date_str):
 def parse_iso_datetime(datetime_str, *, tz=pytz.timezone('Europe/Berlin')):
     if isinstance(datetime_str, datetime.datetime):
         return datetime_str
-    if datetime_str.endswith('Z'):
-        return pytz.utc.localize(datetime.datetime.strptime(datetime_str, '%Y-%m-%dT%H:%M:%SZ'), is_dst=None).astimezone(tz)
+    result = dateutil.parser.isoparse(datetime_str)
+    if datetime_or_time.tzinfo is not None and datetime_or_time.tzinfo.utcoffset(datetime_or_time) is not None: # result is timezone-aware
+        return result.astimezone(tz)
     else:
-        return tz.localize(datetime.datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S'), is_dst=None)
+        return tz.localize(result, is_dst=None)
 
 def render_template(template_name=None, **kwargs):
     if template_name is None:
@@ -299,6 +301,14 @@ def setup(app):
             return len(value)
         except TypeError:
             return more_itertools.ilen(value)
+
+    @app.template_filter()
+    def melt(value):
+        if isinstance(value, lazyjson.Node):
+            value = value.value()
+        value = int(value)
+        timestamp, data_center, worker, sequence = snowflake.melt(flake, twepoch=DISCORD_EPOCH)
+        return pytz.utc.localize(datetime.datetime.fromtimestamp(timestamp / 1000)).astimezone(pytz.timezone('Europe/Berlin'))
 
     @app.template_filter()
     def natjoin(value):
