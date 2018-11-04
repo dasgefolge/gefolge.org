@@ -14,6 +14,7 @@ import more_itertools
 import pathlib
 import pytz
 import re
+import snowflake
 import subprocess
 import traceback
 
@@ -308,7 +309,7 @@ def setup(app):
         if isinstance(value, lazyjson.Node):
             value = value.value()
         value = int(value)
-        timestamp, data_center, worker, sequence = value.melt(flake, twepoch=DISCORD_EPOCH)
+        timestamp, data_center, worker, sequence = snowflake.melt(value, twepoch=DISCORD_EPOCH)
         return pytz.utc.localize(datetime.datetime.fromtimestamp(timestamp / 1000)).astimezone(pytz.timezone('Europe/Berlin'))
 
     @app.template_filter()
