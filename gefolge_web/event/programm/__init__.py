@@ -223,7 +223,7 @@ class Programmpunkt:
         #TODO date last modified
         result.add('uid', 'gefolge-event-{}-{}@gefolge.org'.format(self.event.event_id, self.name))
         result.add('location', str(self.event.location)) #TODO add support for Programm at different locations
-        result.add('url', flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.name))
+        result.add('url', flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.name, _external=True))
         return result
 
     @property

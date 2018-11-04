@@ -337,7 +337,7 @@ class Event(metaclass=EventMeta):
         #TODO date last modified
         result.add('uid', 'gefolge-event-{}@gefolge.org'.format(self.event_id))
         result.add('location', str(self.location))
-        result.add('url', flask.url_for('event_page', event=self.event_id))
+        result.add('url', flask.url_for('event_page', event=self.event_id, _external=True))
         return result
 
     @property
