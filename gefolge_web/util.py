@@ -2,6 +2,7 @@ import class_key
 import contextlib
 import copy
 import datetime
+import dateutil.parser
 import decimal
 import flask
 import functools
@@ -307,7 +308,7 @@ def setup(app):
         if isinstance(value, lazyjson.Node):
             value = value.value()
         value = int(value)
-        timestamp, data_center, worker, sequence = snowflake.melt(flake, twepoch=DISCORD_EPOCH)
+        timestamp, data_center, worker, sequence = value.melt(flake, twepoch=DISCORD_EPOCH)
         return pytz.utc.localize(datetime.datetime.fromtimestamp(timestamp / 1000)).astimezone(pytz.timezone('Europe/Berlin'))
 
     @app.template_filter()
