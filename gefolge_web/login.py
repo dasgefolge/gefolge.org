@@ -276,7 +276,7 @@ def setup(index, app):
     def menschen():
         pass
 
-    @menschen.children(Mensch)
+    @menschen.children(Mensch, methods=['GET', 'POST'])
     @gefolge_web.util.template()
     def profile(mensch):
         if not mensch.is_active:
