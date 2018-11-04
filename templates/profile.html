@@ -37,7 +37,7 @@
         {% endif %}
         <h2>Übertragen</h2>
         <p>Du kannst Geld von deinem Guthaben an andere Gefolgemenschen übertragen.</p>
-        {% if flask.g.user.is_admin or mensch.balance.value > 0 %}
+        {% if g.user.is_admin or mensch.balance.value > 0 %}
             <p>Wenn du Geld an jemand übertragen hast, kann nur diese Person es dir zurück geben. Achte also bitte genau darauf, dass du den richtigen Empfänger wählst!</p>
             {{gen_form(transfer_money_form, g.view_node.url)}}
         {% else %}
