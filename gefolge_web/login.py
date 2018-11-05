@@ -254,15 +254,24 @@ def setup(index, app):
 
     @app.route('/auth')
     def auth_callback():
-        if flask_dance.contrib.discord.discord.authorized:
-            response = flask_dance.contrib.discord.discord.get('/api/v6/users/@me')
-            if not response.ok:
-                return flask.make_response(('Discord returned error {} at {}: {}'.format(response.status_code, html.escape(response.url), html.escape(response.text)), response.status_code, []))
-            mensch = Mensch(response.json()['id'])
-            flask_login.login_user(mensch, remember=True)
-            flask.flash(jinja2.Markup('Hallo {}.'.format(mensch.__html__())))
-        else:
+        if not flask_dance.contrib.discord.discord.authorized:
             flask.flash('Login fehlgeschlagen.', 'error')
+            return flask.redirect(flask.url_for('index'))
+        response = flask_dance.contrib.discord.discord.get('/api/v6/users/@me')
+        if not response.ok:
+            return flask.make_response(('Discord returned error {} at {}: {}'.format(response.status_code, html.escape(response.url), html.escape(response.text)), response.status_code, []))
+        mensch = Mensch(response.json()['id'])
+        if not mensch.is_active:
+            try:
+                mensch.profile_data
+            except FileNotFoundError:
+                flask.flash('Sie haben sich erfolgreich mit Discord angemeldet, sind aber nicht im Gefolge Discord server.', 'error')
+                return flask.redirect(flask.url_for('index'))
+            else:
+                flask.flash('Dein Account wurde noch nicht freigeschaltet. Stelle dich doch bitte einmal kurz im #general vor und warte, bis ein admin dich bestätigt.', 'error')
+                return flask.redirect(flask.url_for('index'))
+        flask_login.login_user(mensch, remember=True)
+        flask.flash(jinja2.Markup('Hallo {}.'.format(mensch.__html__())))
         next_url = flask.session.get('next')
         if next_url is None:
             return flask.redirect(flask.url_for('index'))
@@ -284,9 +293,13 @@ def setup(index, app):
         if flask.g.user.is_admin or flask.g.user == mensch:
             transfer_money_form = TransferMoneyForm(mensch)
             if transfer_money_form.submit_transfer_money_form.data and transfer_money_form.validate():
-                mensch.add_transaction(gefolge_web.util.Transaction.transfer(transfer_money_form.recipient.data, -transfer_money_form.amount.data, transfer_money_form.comment.data))
-                transfer_money_form.recipient.data.add_transaction(gefolge_web.util.Transaction.transfer(mensch, transfer_money_form.amount.data, transfer_money_form.comment.data))
-                peter.bot_cmd('msg', str(transfer_money_form.recipient.data.snowflake), '<@{}> ({}) hat {} an dich übertragen. {}: <https://gefolge.org/me>'.format(mensch.snowflake, mensch, transfer_money_form.amount.data, 'Kommentar und weitere Infos' if transfer_money_form.comment.data else 'Weitere Infos'))
+                recipient = transfer_money_form.recipient.data
+                mensch.add_transaction(gefolge_web.util.Transaction.transfer(recipient, -transfer_money_form.amount.data, transfer_money_form.comment.data))
+                recipient.add_transaction(gefolge_web.util.Transaction.transfer(mensch, transfer_money_form.amount.data, transfer_money_form.comment.data))
+                if flask.g.user != mensch:
+                    peter.bot_cmd('msg', str(mensch.snowflake), '<@{}> ({}) hat {} von deinem Guthaben an <@{}> ({}) übertragen. {}: <https://gefolge.org/me>'.format(Mensch.admin().snowflake, Mensch.admin(), transfer_money_form.amount.data, recipient.snowflake, recipient, 'Kommentar und weitere Infos' if transfer_money_form.comment.data else 'Weitere Infos'))
+                if flask.g.user != recipient:
+                    peter.bot_cmd('msg', str(recipient.snowflake), '<@{}> ({}) hat {} an dich übertragen. {}: <https://gefolge.org/me>'.format(mensch.snowflake, mensch, transfer_money_form.amount.data, 'Kommentar und weitere Infos' if transfer_money_form.comment.data else 'Weitere Infos'))
                 return flask.redirect(flask.g.view_node.url)
         else:
             transfer_money_form = None
