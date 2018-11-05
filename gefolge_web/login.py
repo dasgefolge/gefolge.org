@@ -288,6 +288,8 @@ def setup(index, app):
     @menschen.children(Mensch, methods=['GET', 'POST'])
     @gefolge_web.util.template()
     def profile(mensch):
+        import gefolge_web.event.model
+
         if not mensch.is_active:
             return gefolge_web.util.render_template('profile-404', mensch=mensch), 404
         if flask.g.user.is_admin or flask.g.user == mensch:
@@ -304,6 +306,7 @@ def setup(index, app):
         else:
             transfer_money_form = None
         return {
+            'events': [event for event in gefolge_web.event.model.Event if mensch in event.signups],
             'mensch': mensch,
             'transfer_money_form': transfer_money_form
         }
