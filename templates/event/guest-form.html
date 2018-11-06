@@ -17,9 +17,6 @@
             <p>Das Orga-Team ist noch nicht vollständig, wir suchen noch jemanden für die Abrechnung. Wenn du das übernehmen möchtest, melde dich bitte bei {{g.admin}}.</p>
         {% elif event.anzahlung is none %}
             <p>{{event.orga('Abrechnung')}} hat die Höhe der Anzahlung noch nicht eingetragen.</p>
-        {% elif event.anzahlung.value > 0 and event.orga('Abrechnung') == g.admin and not g.user.is_admin and g.user.balance < event.anzahlung %}
-            <p>Die Anmeldung ist mit einer Anzahlung von {{event.anzahlung}} verbunden, die von deinem Guthaben abgezogen wird.</p>
-            <p>Dein aktuelles Guthaben ist {{g.user.balance}}, es fehlen also noch {{event.anzahlung - g.user.balance}} für die Anzahlung. Auf <a href="{{url_for('profile', mensch=g.user.snowflake)}}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.</p>
         {% elif g.user in event.menschen %}
             <p>Beachte vorher bitte Folgendes:</p>
             <ul>
@@ -35,7 +32,11 @@
                     <li>Wir können erst buchen, wenn die Ausfallgebühr von {{event.ausfall}} gesichert ist. Dazu fehlen noch {{((event.ausfall - event.anzahlung_total).value / event.anzahlung.value) | round(0, 'ceil') | int}} Anmeldungen.</li>
                 {% endif %}
             </ul>
-            {{gen_form(signup_guest_form, url_for('event_guest_form', event=event.event_id))}}
+            {% if event.anzahlung.value > 0 and event.orga('Abrechnung') == g.admin and not g.user.is_admin and g.user.balance < event.anzahlung %}
+                <p>Dein aktuelles Guthaben ist {{g.user.balance}}, es fehlen also noch {{event.anzahlung - g.user.balance}} für die Anzahlung. Auf <a href="{{url_for('profile', mensch=g.user.snowflake)}}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.</p>
+            {% else %}
+                {{gen_form(signup_guest_form, url_for('event_guest_form', event=event.event_id))}}
+            {% endif %}
         {% else %}
             <p>Bevor du das tun kannst, musst du dich erst <a href="{{url_for('event_page', event=event.event_id, _anchor='signup')}}">selbst anmelden</a>.</p>
         {% endif %}
