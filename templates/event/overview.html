@@ -48,7 +48,7 @@
             <ul>
                 {% for guest in event.guests | selectattr("via", "equalto", g.user) %}
                     {% if guest in event.signups %}
-                        <li>{{guest}}: Anmeldung bestätigt</li>
+                        <li><a href="{{(g.view_node / 'mensch' / guest).url}}">{{guest}}</a>: Anmeldung bestätigt</li>
                     {% else %}
                         <li>{{guest}}: noch nicht angemeldet</li> {#TODO link to event/guest-confirm.html #}
                     {% endif %}
