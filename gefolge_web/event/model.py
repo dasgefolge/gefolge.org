@@ -156,13 +156,16 @@ class Event(metaclass=EventMeta):
             return True
         return False
 
-    def confirm_guest_signup(self, guest):
+    def confirm_guest_signup(self, guest, *, message=None):
+        if message is None:
+            message = not self.orga('Abrechnung').is_admin
         gefolge_web.util.log('eventConfirmSignup', {
             'event': self.event_id,
             'person': guest.snowflake
         })
         self.attendee_data(guest)['signup'] = '{:%Y-%m-%d %H:%M:%S}'.format(gefolge_web.util.now()) #TODO Datum der Überweisung verwenden
-        peter.bot_cmd('channel-msg', str(self.data.get('channel', SILVESTER_CHANNEL)), '<@{}>: {} ist jetzt für {} angemeldet. Fülle bitte bei Gelegenheit noch das Profil auf <https://gefolge.org/event/{}/mensch/{}/edit> aus. Außerdem kannst du {} auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(guest.via.snowflake, guest, self, self.event_id, guest.snowflake, guest, self.event_id))
+        if message:
+            peter.bot_cmd('channel-msg', str(self.data.get('channel', SILVESTER_CHANNEL)), '<@{}>: {} ist jetzt für {} angemeldet. Fülle bitte bei Gelegenheit noch das Profil auf <https://gefolge.org/event/{}/mensch/{}/edit> aus. Außerdem kannst du {} auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(guest.via.snowflake, guest, self, self.event_id, guest.snowflake, guest, self.event_id))
 
     @property
     def data(self):

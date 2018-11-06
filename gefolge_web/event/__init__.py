@@ -96,7 +96,7 @@ def setup(index, app):
             snowflake = int(re.fullmatch('anzahlung {} ([0-9]+)'.format(event.event_id), confirm_signup_form.verwendungszweck.data.lower()).group(1))
             if snowflake < 100:
                 guest = gefolge_web.event.model.Guest(event, snowflake)
-                event.confirm_guest_signup(guest)
+                event.confirm_guest_signup(guest, message=True)
             else:
                 mensch = gefolge_web.login.Mensch(snowflake)
                 event.signup(mensch)
@@ -143,7 +143,7 @@ def setup(index, app):
                         flask.flash('Dein Guthaben reicht nicht aus, um die Anzahlung zu bezahlen.', 'error')
                         return flask.redirect(flask.g.view_node.url)
                     flask.g.user.add_transaction(gefolge_web.util.Transaction.anzahlung(event, guest=guest))
-                event.confirm_guest_signup(guest)
+                event.confirm_guest_signup(guest, message=False)
                 return flask.redirect((flask.g.view_node.parent / 'mensch' / guest / 'edit').url)
             else:
                 return gefolge_web.util.render_template('event.guest-confirm', event=event, guest=guest)
