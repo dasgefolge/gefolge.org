@@ -25,7 +25,7 @@
                 {% set free = event.free %}
                 {% if free != naive_free %}
                     Weil {% if free - naive_free > 1 %}{{free - naive_free}} Paare von Menschen jeweils nicht gleichzeitig da sind{% else %}zwei Menschen nicht gleichzeitig da sind{% endif %}, sind aber erst {{capacity - free}} Plätze belegt.
-                {% else %}
+                {% endif %}
                 {% if free > 0 %}
                     Das Haus hat {{capacity}} Betten, es {% if free > 1 %}sind{% else %}ist{% endif %} also noch {{free}} Bett{% if free > 1 %}en{% endif %} frei.
                 {% elif free == 0 %}
