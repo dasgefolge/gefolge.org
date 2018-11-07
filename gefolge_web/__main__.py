@@ -8,7 +8,7 @@ import flask
 import flask_bootstrap
 import flask_view_tree
 import flaskext.markdown
-import json
+import lazyjson
 import os
 import pathlib
 import pymdownx.emoji
@@ -33,8 +33,7 @@ with app.app_context():
     app.url_map.strict_slashes = False
     # load config
     if gefolge_web.util.CONFIG_PATH.exists():
-        with gefolge_web.util.CONFIG_PATH.open() as config_f:
-            app.config.update(json.load(config_f))
+        app.config.update(lazyjson.File(gefolge_web.util.CONFIG_PATH).value())
     # set up Bootstrap
     flask_bootstrap.Bootstrap(app)
     # set up Markdown

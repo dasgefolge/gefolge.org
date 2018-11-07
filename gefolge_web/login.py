@@ -5,7 +5,6 @@ import flask_wtf
 import functools
 import html
 import jinja2
-import json
 import lazyjson
 import pathlib
 import peter
@@ -37,8 +36,7 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
 
     @classmethod
     def admin(cls):
-        with gefolge_web.util.CONFIG_PATH.open() as config_f:
-            return cls(json.load(config_f)['web']['admin'])
+        return cls(lazyjson.File(gefolge_web.util.CONFIG_PATH)['web']['admin'].value())
 
     @classmethod
     def by_api_key(cls, key=None, *, exclude=None):

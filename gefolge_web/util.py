@@ -8,7 +8,6 @@ import flask
 import functools
 import inspect
 import jinja2
-import json
 import lazyjson
 import more_itertools
 import pathlib
@@ -345,8 +344,7 @@ def setup(app):
 
     @app.before_request
     def prepare_reboot_notice():
-        with pathlib.Path('/opt/dev/reboot.json').open() as reboot_info_f:
-            reboot_info = json.load(reboot_info_f)
+        reboot_info = lazyjson.File('/opt/dev/reboot.json').value()
         if 'schedule' in reboot_info:
             flask.g.reboot_timestamp = parse_iso_datetime(reboot_info['schedule'])
             flask.g.reboot_upgrade = reboot_info.get('upgrade', False)
