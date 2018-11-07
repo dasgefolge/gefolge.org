@@ -185,6 +185,13 @@ class Event(metaclass=EventMeta):
             raise ValueError('Datum liegt außerhalb des event')
 
     @property
+    def free(self):
+        return self.location.data['capacity'].value() - max(
+            len(self.night_signups(night)) + len(self.night_maybes(night))
+            for night in self.nights
+        )
+
+    @property
     def guests(self):
         return [
             Guest(self, person['id'])

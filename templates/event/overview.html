@@ -21,7 +21,11 @@
             {# freie Plätze #}
             {% if 'capacity' in event.location.data %}
                 {% set capacity = event.location.data['capacity'].value() %}
-                {% set free = capacity - (event.signups | length) %}
+                {% set naive_free = capacity - (event.signups | length) %}
+                {% set free = event.free %}
+                {% if free != naive_free %}
+                    Weil {% if free - naive_free > 1 %}{{free - naive_free}} Paare von Menschen jeweils nicht gleichzeitig da sind{% else %}zwei Menschen nicht gleichzeitig da sind{% endif %}, sind aber erst {{capacity - free}} Plätze belegt.
+                {% else %}
                 {% if free > 0 %}
                     Das Haus hat {{capacity}} Betten, es {% if free > 1 %}sind{% else %}ist{% endif %} also noch {{free}} Bett{% if free > 1 %}en{% endif %} frei.
                 {% elif free == 0 %}
@@ -103,9 +107,9 @@
             {% endif %}
         {% endif %}
     {% else %}
-        {% if 'capacity' in event.location.data and (event.signups | length) >= event.location.data['capacity'].value() %}
+        {% if 'capacity' in event.location.data and event.free <= 0 %}
             <div class="alert alert-warning">
-                <strong>Achtung:</strong> Das Haus ist schon voll. Du kannst dich trotzdem anmelden und kommst dann auf die Warteliste. Wenn jemand absagt, rückt der erste Mensch auf der Warteliste nach.
+                <strong>Achtung:</strong> Das Haus ist schon voll. Du kannst dich trotzdem anmelden und kommst dann auf die Warteliste. Wenn jemand absagt, rückt der erste Mensch auf der Warteliste nach. {#TODO check for free nights, adjust message accordingly #}
                 {% if event.anzahlung is none or event.anzahlung.value > 0 %}
                     Falls kein Platz für dich frei wird, bekommst du deine Anzahlung natürlich zurück.
                 {% endif %}
