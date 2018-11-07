@@ -4,14 +4,14 @@
 
 {% block page_content %}
     <h1>Menschen</h1>
-    <table class="table table-responsive">
+    <table class="table table-responsive" data-search="true" data-toggle="table">
         <thead>
             <tr>
-                <th>Mensch</th>
-                <th>Auf Discord seit</th>
-                <th>Im Gefolge Discord server seit</th>
+                <th data-sortable="true"><span style="color: rgba(0, 0, 0, 0);">@</span>Name</th>
+                <th data-sortable="true" data-defaultsort="asc">Auf Discord seit</th>
+                <th data-sortable="true">Im Gefolge Discord server seit</th>
                 {% if g.user.is_admin %}
-                    <th style="text-align: right;">Guthaben</th>
+                    <th data-sortable="true" style="text-align: right;">Guthaben</th>
                 {% endif %}
             </tr>
         </thead>
