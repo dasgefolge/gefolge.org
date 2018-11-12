@@ -31,7 +31,7 @@
                 {% elif free == 0 %}
                     Damit ist das Haus exakt voll. Die Warteliste ist im Moment leer.
                 {% else %}
-                    Das Haus hat {{capacity}} Betten, es {% if free < -1 %}stehen{% else %}steht{% endif %} also {{-free}} Mensch{% if free < -1 %}en{% endif %} auf der Warteliste.
+                    Das Haus hat {{capacity}} Betten, es {% if free < -1 %}stehen{% else %}steht{% endif %} also {{(-free)}} Mensch{% if free < -1 %}en{% endif %} auf der Warteliste.
                 {% endif %}
             {% endif %}
         {% else %}
