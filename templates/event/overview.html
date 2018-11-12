@@ -89,10 +89,20 @@
             {% endif %}
             {% if g.user.is_admin or event.orga('Essen') == g.user %}
                 <h2>Essen</h2>
+                <p>Trage bitte jeweils als Programmpunktbeschreibung ein, was es an dem Abend gibt.</p>
                 <ul>
                     {% for date in event.nights %}
                         {% set date_info = event.essen(date) %}
-                        <li>{{date | dm}}: {% if date_info.description == '' %}noch nicht eingetragen{% else %}{{date_info.description}}{% endif %} (Orga: {% if date_info.orga is none %}noch nicht eingetragen{% else %}{{date_info.orga}}{% endif %}) — <a href="{{url_for('event_programmpunkt_edit', event=event.event_id, programmpunkt='abendessen{:%Y-%m-%d}'.format(date))}}">bearbeiten</a></li>
+                        <li>
+                            <a href="{{url_for('event_programmpunkt', event=event.event_id, programmpunkt=date_info.name)}}">{{date | dm}}</a>:
+                            {% if date_info.description == '' %}
+                                noch nicht eingetragen
+                            {% else %}
+                                {{date_info.description}}
+                            {% endif %}
+                            (Orga: {% if date_info.orga is none %}noch nicht eingetragen{% else %}{{date_info.orga}}{% endif %})
+                            — <a href="{{url_for('event_programmpunkt_edit', event=event.event_id, programmpunkt='abendessen{:%Y-%m-%d}'.format(date))}}">bearbeiten</a>
+                        </li>
                     {% endfor %}
                 </ul>
             {% endif %}
