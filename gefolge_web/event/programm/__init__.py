@@ -52,7 +52,7 @@ class Programmpunkt:
         return self.name
 
     def add_form_details(self, Form, editor):
-        pass # subclasses may override
+        return False # subclasses may override
 
     def assert_exists(self):
         if self.name not in self.event.data.get('programm', {}):
@@ -131,7 +131,8 @@ class Programmpunkt:
             Form.person_to_signup = gefolge_web.event.forms.PersonField(self.event, 'Mensch', person_filter=lambda person: person in people_allowed_to_sign_up, default=editor if editor in people_allowed_to_sign_up else people_allowed_to_sign_up[0])
             submit_text = self.data.get('signupOtherButton', '{} als interessiert markieren').format('Gewählte Person')
 
-        self.add_form_details(Form, editor)
+        if self.add_form_details(Form, editor) and submit_text is None:
+            submit_text = self.data.get('editSignupButton', 'Änderungen speichern')
 
         if submit_text is not None:
             Form.submit_programmpunkt_form = wtforms.SubmitField(submit_text)
@@ -164,14 +165,16 @@ class Programmpunkt:
         pass # subclasses may override
 
     def process_form_submission(self, form, editor):
-        if hasattr(form, 'person_to_signup'):
-            person_to_signup = form.person_to_signup.data
-        else:
-            person_to_signup = more_itertools.one(filter(lambda person: self.can_signup(editor, person), self.event.signups))
-        if not self.can_signup(editor, person_to_signup):
-            flask.flash('Du bist nicht berechtigt, {} für diesen Programmpunkt anzumelden.'.format(person_to_signup), 'error')
-            return flask.redirect(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.name))
-        self.signup(person_to_signup)
+        people_allowed_to_sign_up = list(filter(lambda person: self.can_signup(editor, person), self.event.signups))
+        if len(people_allowed_to_sign_up) > 0:
+            if len(people_allowed_to_sign_up) == 1:
+                person_to_signup = more_itertools.one(people_allowed_to_sign_up)
+            else:
+                person_to_signup = form.person_to_signup.data
+            if not self.can_signup(editor, person_to_signup):
+                flask.flash('Du bist nicht berechtigt, {} für diesen Programmpunkt anzumelden.'.format(person_to_signup), 'error')
+                return flask.redirect(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.name))
+            self.signup(person_to_signup)
         self.process_form_details(form, editor)
 
     def signup(self, person):
