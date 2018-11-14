@@ -36,9 +36,15 @@ class CalendarEvent:
         result.add('dtend', self.end)
         #TODO date created
         #TODO date last modified
-        result.add('uid', 'gefolge-event-{}-{}-{}@gefolge.org'.format(self.programmpunkt.event.event_id, self.programmpunkt.name, self.text))
-        result.add('location', str(self.event.location)) #TODO add support for Programm at different locations
-        result.add('url', flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.name, _external=True))
+        if isinstance(self.programmpunkt, Programmpunkt):
+            result.add('uid', 'gefolge-event-{}-{}-{}@gefolge.org'.format(self.programmpunkt.event.event_id, self.programmpunkt.name, self.text))
+        else:
+            result.add('uid', 'gefolge-event-{}-{}@gefolge.org'.format(self.programmpunkt.event_id, self.text))
+        result.add('location', str(self.programmpunkt.location))
+        if isinstance(self.programmpunkt, Programmpunkt):
+            result.add('url', flask.url_for('event_programmpunkt', event=self.programmpunkt.event.event_id, programmpunkt=self.programmpunkt.name, _external=True))
+        else:
+            result.add('url', flask.url_for('event_page', event=self.programmpunkt.event_id, _external=True))
         return result
 
 @class_key.class_key()
@@ -190,6 +196,10 @@ class Programmpunkt:
     def listed(self):
         """Whether this shows up in the list. Calendar and timetable are unaffected."""
         return True
+
+    @property
+    def location(self):
+        return self.event.location #TODO add support for Programm at different locations
 
     @property
     def orga(self):
