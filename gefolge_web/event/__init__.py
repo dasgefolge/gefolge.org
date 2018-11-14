@@ -207,8 +207,11 @@ def setup(index, app):
                 return '' # this cell is already filled
             if timestamp < event.start or timestamp >= event.end:
                 return jinja2.Markup('<td style="background-color: #666666;"></td>')
-            if any(calendar_event.start >= timestamp and calendar_event.start < timestamp + datetime.timedelta(hours=1) for calendar_event in calendar):
-                calendar_event = more_itertools.one(calendar_event for calendar_event in calendar if calendar_event.start >= timestamp and calendar_event.start < timestamp + datetime.timedelta(hours=1))
+            events_starting_now = [calendar_event for calendar_event in calendar if calendar_event.start >= timestamp and calendar_event.start < timestamp + datetime.timedelta(hours=1)]
+            if len(events_starting_now) == 0:
+                return jinja2.Markup('<td></td>') # nothing planned yet
+            elif len(events_starting_now) == 1:
+                calendar_event = more_itertools.one(events_starting_now)
                 hours = math.ceil((calendar_event.end - timestamp) / datetime.timedelta(hours=1))
                 filled_until = timestamp + datetime.timedelta(hours=hours) #TODO support for events that go past midnight
                 if hour < 6 and hour + hours >= 6:
@@ -222,7 +225,8 @@ def setup(index, app):
                     # at or after 06:00, must stop snip at start hour
                     snip_end = hour
                 return jinja2.Markup('<td rowspan="{}">{}</td>'.format(hours, calendar_event.__html__())) #TODO color-coding
-            return jinja2.Markup('<td></td>') # nothing planned yet
+            else:
+                return jinja2.Markup('<td class="danger">{} Programmpunkte</td>'.format(len(events_starting_now)))
 
         table = {
             date: {
