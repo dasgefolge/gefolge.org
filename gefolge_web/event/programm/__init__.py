@@ -12,8 +12,9 @@ import gefolge_web.util
 
 @class_key.class_key()
 class CalendarEvent:
-    def __init__(self, programmpunkt, text, html, start, end):
+    def __init__(self, programmpunkt, uid, text, html, start, end):
         self.programmpunkt = programmpunkt
+        self.uid = uid
         self.text = text
         self.html = html
         self.start = start
@@ -37,9 +38,9 @@ class CalendarEvent:
         #TODO date created
         #TODO date last modified
         if isinstance(self.programmpunkt, Programmpunkt):
-            result.add('uid', 'gefolge-event-{}-{}-{}@gefolge.org'.format(self.programmpunkt.event.event_id, self.programmpunkt.name, self.text))
+            result.add('uid', 'gefolge-event-{}-{}-{}@gefolge.org'.format(self.programmpunkt.event.event_id, self.programmpunkt.name, self.uid))
         else:
-            result.add('uid', 'gefolge-event-{}-{}@gefolge.org'.format(self.programmpunkt.event_id, self.text))
+            result.add('uid', 'gefolge-event-{}-{}@gefolge.org'.format(self.programmpunkt.event_id, self.uid))
         result.add('location', str(self.programmpunkt.location))
         if isinstance(self.programmpunkt, Programmpunkt):
             result.add('url', flask.url_for('event_programmpunkt', event=self.programmpunkt.event.event_id, programmpunkt=self.programmpunkt.name, _external=True))
@@ -103,7 +104,7 @@ class Programmpunkt:
     def calendar_events(self):
         if self.start is not None and self.end is not None:
             return [CalendarEvent(
-                self,
+                self, 'main',
                 text=str(self),
                 html=self.__html__(),
                 start=self.start,

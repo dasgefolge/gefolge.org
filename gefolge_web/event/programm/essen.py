@@ -40,7 +40,7 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
     @property
     def calendar_events(self):
         return super().calendar_events + ([gefolge_web.event.programm.CalendarEvent(
-            self,
+            self, 'vorbereitung',
             text='Silvesterbuffet: Vorbereitung',
             html=jinja2.Markup('{}: Vorbereitung'.format(self.__html__())),
             start=self.start - datetime.timedelta(hours=4),

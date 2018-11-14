@@ -143,14 +143,14 @@ class Event(metaclass=EventMeta):
 
         return sorted(itertools.chain((
             [gefolge_web.event.programm.CalendarEvent(
-                self,
+                self, 'neujahr',
                 text='Neujahr',
                 html='Neujahr',
                 start=pytz.timezone('Europe/Berlin').localize(datetime.datetime(self.end.year, 1, 1), is_dst=None),
                 end=pytz.timezone('Europe/Berlin').localize(datetime.datetime(self.end.year, 1, 1, 1), is_dst=None)
             )] if self.end.year > self.start.year else []
         ), [gefolge_web.event.programm.CalendarEvent(
-            self,
+            self, 'endreinigung',
             text='Endreinigung',
             html='Endreinigung',
             start=self.end - datetime.timedelta(hours=2),
