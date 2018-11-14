@@ -2,12 +2,44 @@ import class_key
 import flask
 import flask_wtf
 import icalendar
+import jinja2
 import more_itertools
 import re
 import wtforms
 
 import gefolge_web.login
 import gefolge_web.util
+
+@class_key.class_key()
+class CalendarEvent:
+    def __init__(self, programmpunkt, text, html, start, end):
+        self.programmpunkt = programmpunkt
+        self.text = text
+        self.html = html
+        self.start = start
+        self.end = end
+
+    def __html__(self):
+        return self.html
+
+    @property
+    def __key__(self):
+        return self.start, self.end, self.text
+
+    def __str__(self):
+        return self.text
+
+    def to_ical(self):
+        result = icalendar.Event()
+        result.add('summary', self.text)
+        result.add('dtstart', self.start)
+        result.add('dtend', self.end)
+        #TODO date created
+        #TODO date last modified
+        result.add('uid', 'gefolge-event-{}-{}-{}@gefolge.org'.format(self.programmpunkt.event.event_id, self.programmpunkt.name, self.text))
+        result.add('location', str(self.event.location)) #TODO add support for Programm at different locations
+        result.add('url', flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.name, _external=True))
+        return result
 
 @class_key.class_key()
 class Programmpunkt:
@@ -41,6 +73,9 @@ class Programmpunkt:
         self.name = programmpunkt
         self.assert_exists()
 
+    def __html__(self):
+        return jinja2.Markup('<a href="{}">{}</a>'.format(jinja2.escape(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.name)), jinja2.escape(str(self))))
+
     @property
     def __key__(self):
         return self.start is None, self.start, self.event, self.name
@@ -57,6 +92,19 @@ class Programmpunkt:
     def assert_exists(self):
         if self.name not in self.event.data.get('programm', {}):
             raise ValueError('Es gibt auf {} keinen Programmpunkt namens {}.'.format(self.event, self.name))
+
+    @property
+    def calendar_events(self):
+        if self.start is not None and self.end is not None:
+            return [CalendarEvent(
+                self,
+                text=str(self),
+                html=self.__html__(),
+                start=self.start,
+                end=self.end
+            )]
+        else:
+            return []
 
     def can_edit(self, editor):
         if editor == gefolge_web.login.Mensch.admin():
@@ -216,18 +264,6 @@ class Programmpunkt:
     def start(self):
         if 'start' in self.data:
             del self.data['start']
-
-    def to_ical(self):
-        result = icalendar.Event()
-        result.add('summary', str(self))
-        result.add('dtstart', self.start)
-        result.add('dtend', self.end)
-        #TODO date created
-        #TODO date last modified
-        result.add('uid', 'gefolge-event-{}-{}@gefolge.org'.format(self.event.event_id, self.name))
-        result.add('location', str(self.event.location)) #TODO add support for Programm at different locations
-        result.add('url', flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.name, _external=True))
-        return result
 
     @property
     def url_part(self):

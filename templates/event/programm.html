@@ -52,7 +52,7 @@
         <tbody>
             {% for programmpunkt in listed_programm %}
                 <tr>
-                    <td><a href="{{(g.view_node / programmpunkt).url}}">{{programmpunkt}}</a></td>
+                    <td>{{programmpunkt}}</td>
                     <td>
                         {% if programmpunkt.orga is none %}
                             noch nicht eingetragen

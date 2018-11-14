@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}{{programmpunkt}} bearbeiten — {{event.__str__()}}{% endblock %}
+{% block title %}{{programmpunkt.__str__()}} bearbeiten — {{event.__str__()}}{% endblock %}
 
 {% block page_content %}
     <h1>
-        Programmpunkt „{{programmpunkt}}“ auf {{event}}
+        Programmpunkt „{{programmpunkt.__str__()}}“ auf {{event}}
         <a href="{{g.view_node.parent.url}}" class="btn btn-danger">Abbrechen</a>
     </h1>
     {% if programmpunkt.can_edit(g.user) %}

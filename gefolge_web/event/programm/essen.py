@@ -37,6 +37,16 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
         else:
             raise ValueError('Am {:%d.%m.%Y} ist {} schon vorbei.'.format(self.date, self.event))
 
+    @property
+    def calendar_events(self):
+        return super().calendar_events() + ([gefolge_web.event.programm.CalendarEvent(
+            self,
+            text='Silvesterbuffet: Vorbereitung',
+            html=jinja2.Markup('{}: Vorbereitung'.format(self.__html__())),
+            start=self.start - datetime.timedelta(hours=4),
+            end=self.start,
+        )] if self.date.month == 12 and self.date.day == 31 else [])
+
     def can_edit(self, editor):
         if editor == gefolge_web.login.Mensch.admin():
             return True # always allow the admin to edit since they have write access to the database anyway
@@ -70,7 +80,7 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
         if 'dinnerEnd' in self.data:
             return gefolge_web.util.parse_iso_datetime(self.data['dinnerEnd'])
         elif self.date.month == 12 and self.date.day == 31:
-            return pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(self.date, datetime.time(23, 55)))
+            return pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(self.date, datetime.time(23, 55)), is_dst=None)
         else:
             return self.start + datetime.timedelta(hours=1)
 
@@ -127,9 +137,9 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
         if 'dinnerStart' in self.data:
             return gefolge_web.util.parse_iso_datetime(self.data['dinnerStart'])
         elif self.date.month == 12 and self.date.day == 31:
-            return pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(self.date, datetime.time(22)))
+            return pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(self.date, datetime.time(22)), is_dst=None)
         else:
-            return pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(self.date, datetime.time(19)))
+            return pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(self.date, datetime.time(19)), is_dst=None)
 
     @start.setter
     def start(self, value):

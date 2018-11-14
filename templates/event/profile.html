@@ -77,7 +77,7 @@
         <ul>
             {% for programmpunkt in event.programm %}
                 {% if programmpunkt.listed and person in programmpunkt.signups %}
-                    <li><a href="{{url_for('event_programmpunkt', event=event.event_id, programmpunkt=programmpunkt.name)}}">{{programmpunkt}}</a></li>
+                    <li>{{programmpunkt}}</li>
                 {% endif %}
             {% endfor %}
         </ul>

@@ -1,4 +1,5 @@
 import class_key
+import datetime
 import flask
 import icalendar
 import itertools
@@ -6,6 +7,7 @@ import jinja2
 import lazyjson
 import pathlib
 import peter
+import pytz
 import random
 
 import gefolge_web.login
@@ -134,6 +136,29 @@ class Event(metaclass=EventMeta):
             return gefolge_web.util.Euro(self.data['ausfall'].value())
         else:
             return gefolge_web.util.Euro()
+
+    @property
+    def calendar(self):
+        import gefolge_web.event.programm
+
+        return sorted(itertools.chain((
+            [gefolge_web.event.programm.CalendarEvent(
+                None,
+                text='Neujahr',
+                html='Neujahr',
+                start=pytz.timezone('Europe/Berlin').localize(datetime.datetime(self.end.year, 1, 1), is_dst=None),
+                end=pytz.timezone('Europe/Berlin').localize(datetime.datetime(self.end.year, 1, 1, 1), is_dst=None)
+            )] if self.end.year > self.start.year else []
+        ), [gefolge_web.event.programm.CalendarEvent(
+            None,
+            text='Endreinigung',
+            html='Endreinigung',
+            start=self.end - datetime.timedelta(hours=2),
+            end=self.end
+        )], itertools.chain.from_iterable(
+            programmpunkt.calendar_events
+            for programmpunkt in self.programm
+        )))
 
     def can_edit(self, editor, profile):
         if editor == gefolge_web.login.Mensch.admin():
@@ -275,7 +300,6 @@ class Event(metaclass=EventMeta):
         ], (
             [] if werewolf_web is None else [werewolf_web.RealtimeWerewolf(self)]
         )))
-        #TODO Silvesterbuffet-Vorbereitung, rtww-Abstimmungen
 
     def signup(self, mensch, anzahlung=None):
         gefolge_web.util.log('eventConfirmSignup', {

@@ -191,13 +191,13 @@ def setup(index, app):
     @event_page.child('programm', 'Programm')
     @gefolge_web.util.template('event.programm')
     def event_programm(event):
-        programm = event.programm
+        calendar = event.calendar
         filled_until = None
         # rows from hour snip_start to hour snip_end are omitted
         snip_start = 0
         snip_end = 24
 
-        def programm_cell(date, hour):
+        def calendar_cell(date, hour):
             nonlocal filled_until
             nonlocal snip_start
             nonlocal snip_end
@@ -207,9 +207,9 @@ def setup(index, app):
                 return '' # this cell is already filled
             if timestamp < event.start or timestamp >= event.end:
                 return jinja2.Markup('<td style="background-color: #666666;"></td>')
-            if any(programmpunkt.start is not None and programmpunkt.start >= timestamp and programmpunkt.start < timestamp + datetime.timedelta(hours=1) for programmpunkt in programm):
-                programmpunkt = more_itertools.one(programmpunkt for programmpunkt in programm if programmpunkt.start is not None and programmpunkt.start >= timestamp and programmpunkt.start < timestamp + datetime.timedelta(hours=1))
-                hours = math.ceil((programmpunkt.end - timestamp) / datetime.timedelta(hours=1))
+            if any(calendar_event.start >= timestamp and calendar_event.start < timestamp + datetime.timedelta(hours=1) for calendar_event in calendar):
+                calendar_event = more_itertools.one(calendar_event for calendar_event in calendar if calendar_event.start >= timestamp and calendar_event.start < timestamp + datetime.timedelta(hours=1))
+                hours = math.ceil((calendar_event.end - timestamp) / datetime.timedelta(hours=1))
                 filled_until = timestamp + datetime.timedelta(hours=hours) #TODO support for events that go past midnight
                 if hour < 6 and hour + hours >= 6:
                     # goes over 06:00, remove snip entirely
@@ -221,7 +221,7 @@ def setup(index, app):
                 if snip_end > hour >= 6:
                     # at or after 06:00, must stop snip at start hour
                     snip_end = hour
-                return jinja2.Markup('<td rowspan="{}"><a href="{}">{}</a></td>'.format(hours, (flask.g.view_node / programmpunkt).url, programmpunkt))
+                return jinja2.Markup('<td rowspan="{}">{}</td>'.format(hours, calendar_event.__html__())) #TODO color-coding
             return jinja2.Markup('<td></td>') # nothing planned yet
 
         table = {

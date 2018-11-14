@@ -49,9 +49,9 @@ def setup(index):
         for event in gefolge_web.event.model.Event:
             if flask.g.user in event.signups:
                 cal.add_component(event.to_ical())
-                for programmpunkt in event.programm:
-                    if (programmpunkt.orga == flask.g.user or flask.g.user in programmpunkt.signups) and programmpunkt.start is not None and programmpunkt.end is not None:
-                        cal.add_component(programmpunkt.to_ical())
+                for calendar_event in event.calendar:
+                    if calendar_event.programmpunkt is None or calendar_event.programmpunkt.orga == flask.g.user or flask.g.user in calendar_event.programmpunkt.signups:
+                        cal.add_component(calendar_event.to_ical())
         return flask.Response(cal.to_ical(), mimetype='text/calendar')
 
     @api_index.child('discord')
@@ -85,7 +85,6 @@ def setup(index):
         cal.add('prodid', '-//Gefolge//gefolge.org//DE')
         cal.add('version', '2.0')
         cal.add('x-wr-calname', str(event))
-        for programmpunkt in event.programm:
-            if programmpunkt.start is not None and programmpunkt.end is not None:
-                cal.add_component(programmpunkt.to_ical())
+        for calendar_event in event.calendar:
+            cal.add_component(calendar_event.to_ical())
         return flask.Response(cal.to_ical(), mimetype='text/calendar')
