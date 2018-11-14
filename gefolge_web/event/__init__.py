@@ -226,7 +226,7 @@ def setup(index, app):
 
         table = {
             date: {
-                hour: programm_cell(date, hour)
+                hour: calendar_cell(date, hour)
                 for hour in range(24)
             }
             for date in itertools.chain(event.nights, [event.end.date()])
