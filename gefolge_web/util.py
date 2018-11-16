@@ -13,6 +13,7 @@ import more_itertools
 import pathlib
 import pytz
 import re
+import simplejson
 import snowflake
 import subprocess
 import traceback
@@ -20,7 +21,7 @@ import traceback
 BASE_PATH = pathlib.Path('/usr/local/share/fidera') #TODO use basedir
 CONFIG_PATH = BASE_PATH / 'config.json'
 DISCORD_EPOCH = 1420070400000
-EDIT_LOG = lazyjson.File(BASE_PATH / 'log.json')
+EDIT_LOG = BASE_PATH / 'web.jlog'
 PARAGRAPH_RE = re.compile(r'(?:\r\n|\r|\n){2,}')
 
 CRASH_NOTICE = """To: fenhl@fenhl.net
@@ -206,12 +207,17 @@ def date_range(start, end):
         yield date
         date += datetime.timedelta(days=1)
 
+def jlog_append(line, log_path):
+    with log_path.open('a') as log_f:
+        simplejson.dump(line, log_f, sort_keys=True)
+        print(file=log_f)
+
 def log(event_type, event):
     event = copy.copy(event)
     event['by'] = flask.g.user.snowflake
     event['time'] = '{:%Y-%m-%d %H:%M:%S}'.format(now())
     event['type'] = event_type
-    EDIT_LOG.append(event)
+    jlog_append(event, EDIT_LOG)
 
 def notify_crash(exc=None):
     whoami = subprocess.run(['whoami'], stdout=subprocess.PIPE, check=True).stdout.decode('utf-8').strip()
@@ -253,48 +259,32 @@ def setup(app):
         return 'Internal Server Error', 500
 
     @app.template_filter()
-    def dm(value):
+    def dt_format(value, format='%d.%m.%Y %H:%M:%S'):
         if isinstance(value, lazyjson.Node):
             value = value.value()
         if isinstance(value, str):
-            if ' ' in value:
-                value = value.split(' ')[0]
-            value = parse_iso_date(value)
-        return '{:%d.%m.}'.format(value)
+            value = parse_iso_datetime(value)
+        return value.strftime(format)
+
+    @app.template_filter()
+    def dm(value):
+        return dt_format(value, '%d.%m.')
 
     @app.template_filter()
     def dmy(value):
-        if isinstance(value, lazyjson.Node):
-            value = value.value()
-        if isinstance(value, str):
-            if ' ' in value:
-                value = value.split(' ')[0]
-            value = parse_iso_date(value)
-        return '{:%d.%m.%Y}'.format(value)
+        return dt_format(value, '%d.%m.%Y')
 
     @app.template_filter()
     def dmy_hm(value):
-        if isinstance(value, lazyjson.Node):
-            value = value.value()
-        if isinstance(value, str):
-            value = parse_iso_datetime(value)
-        return '{:%d.%m.%Y %H:%M}'.format(value)
+        return dt_format(value, '%d.%m.%Y %H:%M')
 
     @app.template_filter()
     def dmy_hms(value):
-        if isinstance(value, lazyjson.Node):
-            value = value.value()
-        if isinstance(value, str):
-            value = parse_iso_datetime(value)
-        return '{:%d.%m.%Y %H:%M:%S}'.format(value)
+        return dt_format(value, '%d.%m.%Y %H:%M:%S')
 
     @app.template_filter()
     def hm(value):
-        if isinstance(value, lazyjson.Node):
-            value = value.value()
-        if isinstance(value, str):
-            value = parse_iso_datetime(value)
-        return '{:%H:%M}'.format(value)
+        return dt_format(value, '%H:%M')
 
     @app.template_filter()
     def length(value):
@@ -326,7 +316,7 @@ def setup(app):
     @app.template_filter()
     def next_date(value):
         if isinstance(value, lazyjson.Node):
-           value = value.value()
+            value = value.value()
         if isinstance(value, str):
            value = parse_iso_date(value)
         return value + datetime.timedelta(days=1)
@@ -344,7 +334,9 @@ def setup(app):
 
     @app.before_request
     def prepare_reboot_notice():
-        reboot_info = lazyjson.File('/opt/dev/reboot.json').value()
+        if not hasattr(flask.g, 'json_cache'):
+            flask.g.json_cache = {}
+        reboot_info = lazyjson.CachedFile(flask.g.json_cache, lazyjson.File('/opt/dev/reboot.json'))
         if 'schedule' in reboot_info:
             flask.g.reboot_timestamp = parse_iso_datetime(reboot_info['schedule'])
             flask.g.reboot_upgrade = reboot_info.get('upgrade', False)

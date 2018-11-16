@@ -10,7 +10,6 @@ import gefolge_web.util
 
 FENHL = gefolge_web.login.Mensch(86841168427495424)
 LORE_SEEKER_REPO = pathlib.Path('/opt/git/github.com/fenhl/lore-seeker/stage')
-MAGIC_CONFIG = lazyjson.File(gefolge_web.util.BASE_PATH / 'games' / 'magic.json')
 
 class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
     def __new__(cls, event, programmpunkt='custom-magic-draft'):
@@ -40,7 +39,7 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
 
     @property
     def card_set(self):
-        for set_code, iter_set in MAGIC_CONFIG['customSets'].value().items():
+        for set_code, iter_set in config()['customSets'].value().items():
             if iter_set.get('drafted') == self.event.event_id:
                 return set_code
 
@@ -50,8 +49,10 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
         if set_code is None:
             result = 'Wir [draften](https://mtg.gamepedia.com/Booster_draft) ein Custom Magic Set. Um zu bestimmen, welches, kannst du unten abstimmen.'
         else:
-            set_info = lazyjson.File(LORE_SEEKER_REPO / 'data' / 'sets' / '{}.json'.format(set_code))
-            set_config = MAGIC_CONFIG['customSets'].get(set_code, {})
+            if not hasattr(flask.g, 'json_cache'):
+                flask.g.json_cache = {}
+            set_info = lazyjson.CachedFile(flask.g.json_cache, lazyjson.File(LORE_SEEKER_REPO / 'data' / 'sets' / '{}.json'.format(set_code)))
+            set_config = config()['customSets'].get(set_code, {})
             result = 'Wir [draften](https://mtg.gamepedia.com/Booster_draft) [*{}*](https://loreseeker.fenhl.net/set/{}), ein Custom Magic Set.'.format(set_info['name'], set_code.lower())
             result += '\r\n\r\n*{}* {}'.format(set_info['name'], set_config.get('blurb', 'hat noch keine Beschreibung :('))
         return result + '\r\n\r\nWir spielen mit [Proxies](https://mtg.gamepedia.com/Proxy), der Draft ist also kostenlos. Ihr müsst nichts mitbringen. Es gibt 8 Plätze. Es können gerne alle, die Interesse haben, Plätze reservieren, das ist *keine* verbindliche Anmeldung. Ich selbst spiele nur mit, wenn es ohne mich weniger als 8 Spieler wären. Falls wir am Ende weniger als 5 Menschen sind, spielen wir [Sealed](https://mtg.gamepedia.com/Sealed_deck) statt Draft.'
@@ -64,10 +65,12 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
     def draftable_sets(self):
         result = {}
         for set_path in (LORE_SEEKER_REPO / 'data' / 'sets').iterdir():
-            set_info = lazyjson.File(set_path)
+            if not hasattr(flask.g, 'json_cache'):
+                flask.g.json_cache = {}
+            set_info = lazyjson.CachedFile(flask.g.json_cache, lazyjson.File(set_path))
             set_code = set_info['code'].value()
             if set_info.get('custom', False):
-                set_config = MAGIC_CONFIG['customSets'].get(set_code, {})
+                set_config = config()['customSets'].get(set_code, {})
                 if set_config.get('boosters', True) and set_config.get('drafted') is None:
                     result[set_code] = set_info, set_config
         return sorted(result.items(), key=lambda kv: (kv[1][0]['releaseDate'].value(), kv[0]))
@@ -107,3 +110,8 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
             self.event.person(snowflake)
             for snowflake in self.data.get('signups', [FENHL.snowflake])
         ]
+
+def config():
+    if not hasattr(flask.g, 'json_cache'):
+        flask.g.json_cache = {}
+    return lazyjson.CachedFile(flask.g.json_cache, lazyjson.File(gefolge_web.util.BASE_PATH / 'games' / 'magic.json'))

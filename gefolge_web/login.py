@@ -36,7 +36,9 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
 
     @classmethod
     def admin(cls):
-        return cls(lazyjson.File(gefolge_web.util.CONFIG_PATH)['web']['admin'].value())
+        if not hasattr(flask.g, 'json_cache'):
+            flask.g.json_cache = {}
+        return cls(lazyjson.CachedFile(flask.g.json_cache, lazyjson.File(gefolge_web.util.CONFIG_PATH))['web']['admin'].value())
 
     @classmethod
     def by_api_key(cls, key=None, *, exclude=None):
@@ -125,10 +127,6 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
             return sum((transaction.amount for transaction in self.transactions), gefolge_web.util.Euro())
 
     @property
-    def data(self):
-        return lazyjson.File(self.profile_path)
-
-    @property
     def discrim(self):
         """Returns the username discriminator as a string with leading zeroes."""
         return '{:04}'.format(self.profile_data['discriminator'])
@@ -164,7 +162,9 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
 
     @property
     def profile_data(self):
-        return lazyjson.File(self.profile_path).value()
+        if not hasattr(flask.g, 'json_cache'):
+            flask.g.json_cache = {}
+        return lazyjson.CachedFile(flask.g.json_cache, lazyjson.File(self.profile_path)).value()
 
     @property
     def profile_path(self):
@@ -183,7 +183,9 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
 
     @property
     def userdata(self):
-        return lazyjson.File(self.userdata_path, init={})
+        if not hasattr(flask.g, 'json_cache'):
+            flask.g.json_cache = {}
+        return lazyjson.CachedFile(flask.g.json_cache, lazyjson.File(self.userdata_path, init={}))
 
     @property
     def userdata_path(self):
