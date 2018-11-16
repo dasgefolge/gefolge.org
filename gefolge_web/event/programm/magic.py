@@ -49,9 +49,7 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
         if set_code is None:
             result = 'Wir [draften](https://mtg.gamepedia.com/Booster_draft) ein Custom Magic Set. Um zu bestimmen, welches, kannst du unten abstimmen.'
         else:
-            if not hasattr(flask.g, 'json_cache'):
-                flask.g.json_cache = {}
-            set_info = lazyjson.CachedFile(flask.g.json_cache, lazyjson.File(LORE_SEEKER_REPO / 'data' / 'sets' / '{}.json'.format(set_code)))
+            set_info = gefolge_web.util.cached_json(lazyjson.File(LORE_SEEKER_REPO / 'data' / 'sets' / '{}.json'.format(set_code)))
             set_config = config()['customSets'].get(set_code, {})
             result = 'Wir [draften](https://mtg.gamepedia.com/Booster_draft) [*{}*](https://loreseeker.fenhl.net/set/{}), ein Custom Magic Set.'.format(set_info['name'], set_code.lower())
             result += '\r\n\r\n*{}* {}'.format(set_info['name'], set_config.get('blurb', 'hat noch keine Beschreibung :('))
@@ -65,9 +63,7 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
     def draftable_sets(self):
         result = {}
         for set_path in (LORE_SEEKER_REPO / 'data' / 'sets').iterdir():
-            if not hasattr(flask.g, 'json_cache'):
-                flask.g.json_cache = {}
-            set_info = lazyjson.CachedFile(flask.g.json_cache, lazyjson.File(set_path))
+            set_info = gefolge_web.util.cached_json(lazyjson.File(set_path))
             set_code = set_info['code'].value()
             if set_info.get('custom', False):
                 set_config = config()['customSets'].get(set_code, {})
@@ -112,6 +108,4 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
         ]
 
 def config():
-    if not hasattr(flask.g, 'json_cache'):
-        flask.g.json_cache = {}
-    return lazyjson.CachedFile(flask.g.json_cache, lazyjson.File(gefolge_web.util.BASE_PATH / 'games' / 'magic.json'))
+    return gefolge_web.util.cached_json(lazyjson.File(gefolge_web.util.BASE_PATH / 'games' / 'magic.json'))

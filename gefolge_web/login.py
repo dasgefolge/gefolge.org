@@ -36,9 +36,7 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
 
     @classmethod
     def admin(cls):
-        if not hasattr(flask.g, 'json_cache'):
-            flask.g.json_cache = {}
-        return cls(lazyjson.CachedFile(flask.g.json_cache, lazyjson.File(gefolge_web.util.CONFIG_PATH))['web']['admin'].value())
+        return cls(gefolge_web.util.cached_json(lazyjson.File(gefolge_web.util.CONFIG_PATH))['web']['admin'].value())
 
     @classmethod
     def by_api_key(cls, key=None, *, exclude=None):
@@ -162,9 +160,7 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
 
     @property
     def profile_data(self):
-        if not hasattr(flask.g, 'json_cache'):
-            flask.g.json_cache = {}
-        return lazyjson.CachedFile(flask.g.json_cache, lazyjson.File(self.profile_path)).value()
+        return gefolge_web.util.cached_json(lazyjson.File(self.profile_path)).value()
 
     @property
     def profile_path(self):
@@ -183,9 +179,7 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
 
     @property
     def userdata(self):
-        if not hasattr(flask.g, 'json_cache'):
-            flask.g.json_cache = {}
-        return lazyjson.CachedFile(flask.g.json_cache, lazyjson.File(self.userdata_path, init={}))
+        return gefolge_web.util.cached_json(lazyjson.File(self.userdata_path, init={}))
 
     @property
     def userdata_path(self):

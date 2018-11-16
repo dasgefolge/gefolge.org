@@ -72,9 +72,7 @@ class Location:
 
     @property
     def data(self):
-        if not hasattr(flask.g, 'json_cache'):
-            flask.g.json_cache = {}
-        return lazyjson.CachedFile(flask.g.json_cache, lazyjson.File(LOCATIONS_ROOT / '{}.json'.format(self.loc_id)))
+        return gefolge_web.util.cached_json(lazyjson.File(LOCATIONS_ROOT / '{}.json'.format(self.loc_id)))
 
     @property
     def prefix(self):
@@ -196,9 +194,7 @@ class Event(metaclass=EventMeta):
 
     @property
     def data(self):
-        if not hasattr(flask.g, 'json_cache'):
-            flask.g.json_cache = {}
-        return lazyjson.CachedFile(flask.g.json_cache, lazyjson.File(EVENTS_ROOT / '{}.json'.format(self.event_id)))
+        return gefolge_web.util.cached_json(lazyjson.File(EVENTS_ROOT / '{}.json'.format(self.event_id)))
 
     @property
     def end(self):

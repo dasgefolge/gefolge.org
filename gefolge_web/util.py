@@ -201,6 +201,15 @@ class Transaction:
     def time(self):
         return parse_iso_datetime(self.json_data['time'], tz=pytz.utc).astimezone(pytz.timezone('Europe/Berlin'))
 
+def cached_json(file):
+    try:
+        if not hasattr(flask.g, 'json_cache'):
+            flask.g.json_cache = {}
+    except RuntimeError:
+        return file
+    else:
+        return lazyjson.CachedFile(flask.g.json_cache, file)
+
 def date_range(start, end):
     date = start
     while date < end:
@@ -334,9 +343,7 @@ def setup(app):
 
     @app.before_request
     def prepare_reboot_notice():
-        if not hasattr(flask.g, 'json_cache'):
-            flask.g.json_cache = {}
-        reboot_info = lazyjson.CachedFile(flask.g.json_cache, lazyjson.File('/opt/dev/reboot.json'))
+        reboot_info = cached_json(lazyjson.File('/opt/dev/reboot.json'))
         if 'schedule' in reboot_info:
             flask.g.reboot_timestamp = parse_iso_datetime(reboot_info['schedule'])
             flask.g.reboot_upgrade = reboot_info.get('upgrade', False)

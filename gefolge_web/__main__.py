@@ -33,9 +33,7 @@ with app.app_context():
     app.url_map.strict_slashes = False
     # load config
     if gefolge_web.util.CONFIG_PATH.exists():
-        if not hasattr(flask.g, 'json_cache'):
-            flask.g.json_cache = {}
-        app.config.update(lazyjson.CachedFile(flask.g.json_cache, lazyjson.File(gefolge_web.util.CONFIG_PATH)).value())
+        app.config.update(gefolge_web.util.cached_json(lazyjson.File(gefolge_web.util.CONFIG_PATH)).value())
     # set up Bootstrap
     flask_bootstrap.Bootstrap(app)
     # set up Markdown
