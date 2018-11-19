@@ -343,7 +343,7 @@ def setup(app):
 
     @app.before_request
     def prepare_reboot_notice():
-        reboot_info = cached_json(lazyjson.File('/opt/dev/reboot.json'))
+        reboot_info = cached_json(lazyjson.File('/opt/dev/reboot.json')).value()
         if 'schedule' in reboot_info:
             flask.g.reboot_timestamp = parse_iso_datetime(reboot_info['schedule'])
             flask.g.reboot_upgrade = reboot_info.get('upgrade', False)
