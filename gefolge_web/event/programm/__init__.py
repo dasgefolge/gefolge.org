@@ -291,7 +291,7 @@ class Programmpunkt:
             return jinja2.Markup('\n'.join(
                 '<p>{} ist <span class="spoiler">{}</span>.</p>'.format(
                     'Dein Ziel' if participant == user else 'Das Ziel für {}'.format(participant.__html__()),
-                    self.event.person(self.data['targets'][str(participant.snowflake)]).__html__()
+                    self.event.person(self.data['targets'][str(participant.snowflake)].value()).__html__()
                 )
                 for participant in participants
             ))
