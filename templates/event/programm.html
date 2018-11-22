@@ -45,6 +45,8 @@
         <thead>
             <tr>
                 <th>Titel</th>
+                <th>von</th>
+                <th>bis ca.</th>
                 <th>Orga</th>
                 <th style="text-align: right;">Interessenten</th>
             </tr>
@@ -53,6 +55,8 @@
             {% for programmpunkt in listed_programm %}
                 <tr>
                     <td>{{programmpunkt}}</td>
+                    <td>{% if programmpunkt.start is not none %}{{programmpunkt.start | dmy_hm}}{% endif %}</td>
+                    <td>{% if programmpunkt.end is not none %}{{programmpunkt.end | hm}}{% endif %}</td>
                     <td>
                         {% if programmpunkt.orga is none %}
                             noch nicht eingetragen
