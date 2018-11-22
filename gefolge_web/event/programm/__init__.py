@@ -48,6 +48,43 @@ class CalendarEvent:
             result.add('url', flask.url_for('event_page', event=self.programmpunkt.event_id, _external=True))
         return result
 
+class Strings:
+    def __init__(self, *, signup_header, signup_button, signup_other_button, edit_signup_button):
+        self.signup_header = signup_header
+        self.signup_button = signup_button
+        self.signup_other_button = signup_other_button
+        self.edit_signup_button = edit_signup_button
+
+    @classmethod
+    def defaults(cls):
+        return cls(
+            signup_header='Interessiert',
+            signup_button='Als interessiert markieren',
+            signup_other_button='{} als interessiert markieren',
+            edit_signup_button='Änderungen speichern'
+        )
+
+    @classmethod
+    def from_json(cls, json_data, defaults=cls.defaults):
+        return cls(
+            signup_header=json_data.get('signupHeader', defaults.signup_header),
+            signup_button=json_data.get('signupButton', defaults.signup_button),
+            signup_other_button=json_data.get('signupOtherButton', defaults.signup_other_button),
+            edit_signup_button=json_data.get('editSignupButton', defaults.edit_signup_button)
+        )
+
+    def to_json(self, defaults=cls.defaults):
+        result = {}
+        if self.signup_header != defaults.signup_header:
+            result['signupHeader'] = self.signup_header
+        if self.signup_button != defaults.signup_button:
+            result['signupButton'] = self.signup_button
+        if self.signup_other_button != defaults.signup_other_button:
+            result['signupOtherButton'] = self.signup_other_button
+        if self.edit_signup_button != defaults.edit_signup_button:
+            result['editSignupButton'] = self.edit_signup_button
+        return result
+
 @class_key.class_key()
 class Programmpunkt:
     def __new__(cls, event, programmpunkt):
@@ -142,6 +179,10 @@ class Programmpunkt:
         return self.event.data['programm'][self.name]
 
     @property
+    def default_strings(self):
+        return Strings.defaults()
+
+    @property
     def description(self):
         return self.data.get('description', '')
 
@@ -178,16 +219,16 @@ class Programmpunkt:
             submit_text = None # don't show submit field unless overridden by a subclass in add_form_details
         elif len(people_allowed_to_sign_up) == 1:
             if more_itertools.one(people_allowed_to_sign_up) == editor:
-                submit_text = self.data.get('signupButton', 'Als interessiert markieren')
+                submit_text = self.strings.signup_button
             else:
-                submit_text = self.data.get('signupOtherButton', '{} als interessiert markieren').format(more_itertools.one(people_allowed_to_sign_up))
+                submit_text = self.strings.signup_other_button.format(more_itertools.one(people_allowed_to_sign_up))
             Form.submit_programmpunkt_form = wtforms.SubmitField(submit_text)
         else:
             Form.person_to_signup = gefolge_web.event.forms.PersonField(self.event, 'Mensch', person_filter=lambda person: person in people_allowed_to_sign_up, default=editor if editor in people_allowed_to_sign_up else people_allowed_to_sign_up[0])
-            submit_text = self.data.get('signupOtherButton', '{} als interessiert markieren').format('Gewählte Person')
+            submit_text = self.strings.signup_other_button.format('Gewählte Person' if self.strings.signup_other_button.startswith('{') else 'gewählte Person')
 
         if self.add_form_details(Form, editor) and submit_text is None:
-            submit_text = self.data.get('editSignupButton', 'Änderungen speichern')
+            submit_text = self.strings.edit_signup_button
 
         if submit_text is not None:
             Form.submit_programmpunkt_form = wtforms.SubmitField(submit_text)
@@ -250,8 +291,8 @@ class Programmpunkt:
             'person': person.snowflake
         })
         if 'signups' not in self.data:
-            self.data['signups'] = [person.snowflake for person in self.signups]
-        if person.snowflake not in self.data['signups']:
+            self.data['signups'] = []
+        if person not in self.signups:
             self.data['signups'].append(person.snowflake)
 
     @property
@@ -282,6 +323,10 @@ class Programmpunkt:
     def start(self):
         if 'start' in self.data:
             del self.data['start']
+
+    @property
+    def strings(self):
+        return Strings.from_json(self.data.get('strings', {}), defaults=self.default_strings)
 
     @property
     def url_part(self):

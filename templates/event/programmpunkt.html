@@ -34,7 +34,7 @@
         {{programmpunkt.user_notes(g.user)}}
     {% endif %}
     {% if programmpunkt.listed %}
-        <h2>{{programmpunkt.data.get('signupHeader', 'Interessiert')}}</h2>
+        <h2>{{programmpunkt.strings.signup_header}}</h2>
         <ol>
             {% for person in programmpunkt.signups %}
                 <li>{{person}}</li>

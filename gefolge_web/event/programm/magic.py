@@ -44,6 +44,15 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
                 return set_code
 
     @property
+    def default_strings(self):
+        return gefolge_web.event.programm.Strings(
+            signup_header='Spieler',
+            signup_button='Platz reservieren',
+            signup_other_button='Platz für {} reservieren',
+            edit_signup_button='Änderungen speichern'
+        )
+
+    @property
     def description(self):
         set_code = self.card_set
         if set_code is None:
@@ -98,10 +107,7 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
 
     @property
     def signups(self):
-        return [
-            self.event.person(snowflake)
-            for snowflake in self.data.get('signups', [FENHL.snowflake])
-        ]
+        return super().signups + [FENHL]
 
 def config():
     return gefolge_web.util.cached_json(lazyjson.File(gefolge_web.util.BASE_PATH / 'games' / 'magic.json'))
