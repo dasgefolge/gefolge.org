@@ -19,6 +19,10 @@
         <h2>Info für die Orga</h2>
         {{programmpunkt.orga_notes}}
     {% endif %}
+    {% if programmpunkt.user_notes(g.user) is not none %}
+        <h2>Persönliche Info</h2>
+        {{programmpunkt.user_notes(g.user)}}
+    {% endif %}
     {% if programmpunkt.listed %}
         <h2>{{programmpunkt.data.get('signupHeader', 'Interessiert')}}</h2>
         <ol>

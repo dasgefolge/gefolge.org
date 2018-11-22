@@ -279,3 +279,19 @@ class Programmpunkt:
     @property
     def url_part(self):
         return self.name
+
+    def user_notes(self, user):
+        """These notes are only shown to the given user. Should be wrapped in spoiler tags if sensitive."""
+        participants = [
+            person
+            for person in self.event.signups
+            if str(person.snowflake) in self.data.get('targets', {}) and (person == user or (person.is_guest and person.via == user))
+        ]
+        if len(participants) > 0:
+            return jinja2.Markup('\n'.join(
+                '<p>{} ist <span class="spoiler">{}</span>.</p>'.format(
+                    'Dein Ziel' if participant == user else 'Das Ziel für {}'.format(participant.__html__()),
+                    self.event.person(self.data['targets'][str(participant.snowflake)]).__html__()
+                )
+                for participant in participants
+            ))
