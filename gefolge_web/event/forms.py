@@ -111,7 +111,7 @@ def ProgrammAddForm(event):
             wtforms.validators.Regexp('^[^/]+$', message='Schrägstriche können hier nicht verwendet werden, weil der Titel in der URL der Programmpunktseite steht.')
         ])
         orga = PersonField(event, 'Orga', optional_label='Orga gesucht', allow_guests=False, default=None)
-        description = wtforms.TextAreaField('Beschreibung')
+        description = gefolge_web.forms.MarkdownField('Beschreibung')
         submit_programm_add_form = wtforms.SubmitField('Programmpunkt erstellen')
 
     return Form()
@@ -128,7 +128,7 @@ def ProgrammEditForm(programmpunkt):
         orga = PersonField(programmpunkt.event, 'Orga', [validate_orga], optional_label='Orga gesucht', allow_guests=False, default=programmpunkt.orga) #TODO disable (https://getbootstrap.com/docs/3.3/css/#forms-control-disabled) if not allowed to edit
         start = wtforms.DateTimeField('Beginn', [wtforms.validators.Optional()], format='%d.%m.%Y %H:%M', default=programmpunkt.start)
         end = wtforms.DateTimeField('Ende', [wtforms.validators.Optional()], format='%d.%m.%Y %H:%M', default=programmpunkt.end)
-        description = wtforms.TextAreaField('Beschreibung', default=programmpunkt.description)
+        description = gefolge_web.forms.MarkdownField('Beschreibung', default=programmpunkt.description)
         submit_programm_edit_form = wtforms.SubmitField('Speichern')
 
     return Form()

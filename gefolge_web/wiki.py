@@ -3,6 +3,7 @@ import markdown
 import markdown.inlinepatterns
 import markdown.util
 import pathlib
+import re
 
 import gefolge_web.login
 import gefolge_web.util
@@ -50,3 +51,17 @@ def get_article_source(namespace, article_name):
     if article_path.exists():
         with article_path.open() as article_f:
             return article_f.read()
+
+def mentions_to_tags(text):
+    while True:
+        match = re.search(DISCORD_MENTION_REGEX, text)
+        if not match:
+            return text
+        text = '{}@{}{}'.format(text[:match.start()], gefolge_web.login.Mensch(match.group(1)), text[match.end():])
+
+def tags_to_mentions(text):
+    while True:
+        match = re.search(DISCORD_TAG_REGEX, text)
+        if not match:
+            return text
+        text = '{}<@{}>{}'.format(text[:match.start()], gefolge_web.login.Mensch.by_tag(match.group(1), int(match.group(2))).snowflake, text[match.end():])

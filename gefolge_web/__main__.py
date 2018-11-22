@@ -6,6 +6,7 @@ sys.path.append('/opt/py')
 
 import flask
 import flask_bootstrap
+import flask_pagedown
 import flask_view_tree
 import flaskext.markdown
 import lazyjson
@@ -43,6 +44,8 @@ with app.app_context():
     emoji_ext.setConfig('emoji_index', pymdownx.emoji.twemoji)
     md._instance.registerExtensions([emoji_ext], {})
     md.register_extension(pymdownx.extra.ExtraExtension)
+    # set up Markdown preview
+    flask_pagedown.Pagedown(app)
 
 @flask_view_tree.index(app)
 @gefolge_web.util.template('index')

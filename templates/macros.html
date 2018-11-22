@@ -76,7 +76,7 @@
                     </label>
                {% endfor %}
             </div>
-        {% elif field.type== 'SubmitField' %}
+        {% elif field.type == 'SubmitField' %}
             <div class="col-sm-offset-2 col-sm-10">
                 <button type="submit" class="btn btn-primary" value="{{field.label.text}}" name="{{field.name}}">{{field.label.text}}</button>
             </div>

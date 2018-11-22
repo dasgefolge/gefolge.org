@@ -53,6 +53,12 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
                 return mensch
 
     @classmethod
+    def by_tag(cls, username, discrim):
+        for mensch in cls:
+            if username == mensch.profile_data['username'] and discrim == mensch.profile_data['discriminator']:
+                return mensch
+
+    @classmethod
     def get(cls, user_id):
         try:
             return cls(user_id)
