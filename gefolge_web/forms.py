@@ -101,7 +101,7 @@ class MenschField(wtforms.SelectField):
     def process_formdata(self, valuelist):
         if valuelist:
             try:
-                if self.optional_label is not None or (valuelist[0] is None or valuelist[0] == 0 or valuelist[0] == '0'):
+                if self.optional_label is not None and (valuelist[0] is None or valuelist[0] == 0 or valuelist[0] == '0'):
                     self.data = None
                 else:
                     self.data = self.value_constructor(valuelist[0])
