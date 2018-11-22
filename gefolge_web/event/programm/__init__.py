@@ -65,7 +65,9 @@ class Strings:
         )
 
     @classmethod
-    def from_json(cls, json_data, defaults=cls.defaults):
+    def from_json(cls, json_data, defaults=None):
+        if defaults is None:
+            defaults = cls.defaults()
         return cls(
             signup_header=json_data.get('signupHeader', defaults.signup_header),
             signup_button=json_data.get('signupButton', defaults.signup_button),
@@ -73,7 +75,9 @@ class Strings:
             edit_signup_button=json_data.get('editSignupButton', defaults.edit_signup_button)
         )
 
-    def to_json(self, defaults=cls.defaults):
+    def to_json(self, defaults=None):
+        if defaults is None:
+            defaults = self.__class__.defaults()
         result = {}
         if self.signup_header != defaults.signup_header:
             result['signupHeader'] = self.signup_header
