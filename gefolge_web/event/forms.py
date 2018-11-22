@@ -86,7 +86,7 @@ def ProfileForm(event, person):
 
     Form.section_programm = gefolge_web.forms.FormSection('Programm')
     if person in event.signups:
-        Form.section_programm_intro = gefolge_web.forms.FormText(jinja2.Markup('Auf der <a href="{}">Programmseite</a> kannst du {} für Programmpunkte als interessiert eintragen.'.format(flask.url_for('event_programm', event=event.event_id), 'dich' if person == flask.g.user else (jinja2.escape(str(person)) if person.is_guest else person.__html__())))) #TODO add support for deleting programm signups, then adjust this text
+        Form.section_programm_intro = gefolge_web.forms.FormText(jinja2.Markup('Auf der <a href="{}">Programmseite</a> kannst du {} für Programmpunkte als interessiert eintragen.'.format(flask.url_for('event_programm', event=event.event_id), 'dich' if person == flask.g.user else person.__html__()))) #TODO add support for deleting programm signups, then adjust this text
     else:
         Form.section_programm_intro = gefolge_web.forms.FormText(jinja2.Markup('Nachdem du dich angemeldet hast, kannst du dich auf der <a href="{}">Programmseite</a> für Programmpunkte als interessiert eintragen.'.format(flask.url_for('event_programm', event=event.event_id))))
 

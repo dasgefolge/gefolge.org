@@ -31,6 +31,9 @@ class Guest:
     def __hash__(self):
         return hash(self.snowflake)
 
+    def __html__(self):
+        return jinja2.escape(str(self))
+
     def __repr__(self):
         return 'gefolge_web.event.model.Guest({!r}, {!r})'.format(self.event, self.snowflake)
 
