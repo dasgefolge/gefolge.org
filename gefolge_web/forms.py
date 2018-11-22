@@ -57,9 +57,10 @@ class MenschField(wtforms.SelectField):
 
     #TODO actually display as a combobox (text field with dropdown menu)
 
-    def __init__(self, label, validators=[], *, person_filter=lambda person: True, **kwargs):
+    def __init__(self, label, validators=[], *, optional_label=None, person_filter=lambda person: True, **kwargs):
+        self.optional_label = optional_label
         self.person_filter = person_filter
-        super().__init__(label, validators, choices=[(person.snowflake, person.long_name) for person in self.people], **kwargs)
+        super().__init__(label, validators, choices=([] if self.optional_label is None else [(0, optional_label)]) + [(person.snowflake, person.long_name) for person in self.people], **kwargs)
 
     @property
     def people(self):
@@ -68,23 +69,31 @@ class MenschField(wtforms.SelectField):
         return list(filter(self.person_filter, gefolge_web.login.Mensch))
 
     def iter_choices(self):
+        if self.optional_label is not None:
+            yield 0, self.optional_label, self.data is None
         for person in self.people:
             yield person.snowflake, person.long_name, person == self.data
 
     def process_data(self, value):
         try:
-            self.data = None if value is None else self.value_constructor(value)
+            self.data = None if value is None or value == 0 or value == '0' else self.value_constructor(value)
         except (TypeError, ValueError):
             self.data = None
 
     def process_formdata(self, valuelist):
         if valuelist:
             try:
-                self.data = self.value_constructor(valuelist[0])
+                if self.optional_label is not None or (valuelist[0] is None or valuelist[0] == 0 or valuelist[0] == '0'):
+                    self.data = None
+                else:
+                    self.data = self.value_constructor(valuelist[0])
             except (TypeError, ValueError):
                 raise ValueError('Invalid choice: could not coerce')
 
     def pre_validate(self, form):
+        if self.optional_label is not None:
+            if self.data is None:
+                return
         for person in self.people:
             if self.data == person:
                 break

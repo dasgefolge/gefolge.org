@@ -329,7 +329,7 @@ class Event(metaclass=EventMeta):
     def signup_guest(self, mensch, guest_name):
         if any(str(guest) == guest_name for guest in self.guests):
             raise ValueError('Duplicate guest name: {!r}'.format(guest_name))
-        available_ids = [i for i in range(100) if not any(guest.snowflake == i for guest in self.guests)]
+        available_ids = [i for i in range(1, 100) if not any(guest.snowflake == i for guest in self.guests)]
         guest_id = random.choice(available_ids)
         gefolge_web.util.log('eventSignupGuest', {
             'event': self.event_id,

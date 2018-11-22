@@ -9,7 +9,7 @@
         {% if g.user == event.orga('Programm') %}<a href="{{(g.view_node / 'delete').url}}" class="btn btn-danger">Löschen</a>{% endif %}
     </h1>
     {% if programmpunkt.orga is none %}
-        <p>Dieser Programmpunkt hat noch keine Orga.</p>
+        <p>Dieser Programmpunkt hat noch keine Orga. Bitte melde dich bei {{event.orga(programmpunkt.orga_role)}} wenn du diesen Programmpunkt organisieren möchtest.</p>
     {% else %}
         <p>Dieser Programmpunkt wird von {{programmpunkt.orga}} organisiert.</p>
     {% endif %}

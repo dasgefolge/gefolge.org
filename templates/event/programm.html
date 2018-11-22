@@ -59,7 +59,7 @@
                     <td>{% if programmpunkt.end is not none and programmpunkt.end < (programmpunkt.start | next_date) %}{{programmpunkt.end | hm}}{% endif %}</td>
                     <td>
                         {% if programmpunkt.orga is none %}
-                            noch nicht eingetragen
+                            Orga gesucht
                         {% else %}
                             {{programmpunkt.orga}}
                         {% endif %}
