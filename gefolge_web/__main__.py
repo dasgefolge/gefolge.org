@@ -45,7 +45,7 @@ with app.app_context():
     md._instance.registerExtensions([emoji_ext], {})
     md.register_extension(pymdownx.extra.ExtraExtension)
     # set up Markdown preview
-    flask_pagedown.Pagedown(app)
+    flask_pagedown.PageDown(app)
 
 @flask_view_tree.index(app)
 @gefolge_web.util.template('index')
