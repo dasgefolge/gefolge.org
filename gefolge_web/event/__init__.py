@@ -105,7 +105,7 @@ def setup(index, app):
         if programm_add_form.submit_programm_add_form.data and programm_add_form.validate():
             gefolge_web.util.log('eventProgrammAdd', {
                 'event': event.event_id,
-                'orga': programm_add_form.orga.data.snowflake,
+                'orga': None if programm_add_form.orga.data is None else programm_add_form.orga.data.snowflake,
                 'programmpunkt': programm_add_form.name.data,
                 'description': programm_add_form.description.data
             })
@@ -113,7 +113,7 @@ def setup(index, app):
                 event.data['programm'] = {}
             event.data['programm'][programm_add_form.name.data] = {
                 'description': programm_add_form.description.data,
-                'orga': programm_add_form.orga.data.snowflake,
+                'orga': None if programm_add_form.orga.data is None else programm_add_form.orga.data.snowflake,
                 'signups': []
             }
             #TODO ping Programm orga on Discord
@@ -272,7 +272,7 @@ def setup(index, app):
             gefolge_web.util.log('eventProgrammEdit', {
                 'event': event.event_id,
                 'programmpunkt': programmpunkt.name,
-                'orga': programm_edit_form.orga.data.snowflake,
+                'orga': None if programm_edit_form.orga.data is None else programm_edit_form.orga.data.snowflake,
                 'start': (None if programm_edit_form.start.data is None else '{:%Y-%m-%d %H:%M:%S}'.format(programm_edit_form.start.data)),
                 'end': (None if programm_edit_form.end.data is None else '{:%Y-%m-%d %H:%M:%S}'.format(programm_edit_form.end.data)),
                 'description': programm_edit_form.description.data

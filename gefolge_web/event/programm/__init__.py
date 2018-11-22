@@ -210,7 +210,14 @@ class Programmpunkt:
 
     @orga.setter
     def orga(self, value):
-        self.data['orga'] = value.snowflake
+        if value is None:
+            del self.orga
+        else:
+            self.data['orga'] = value.snowflake
+
+    @orga.deleter
+    def orga(self):
+        del self.data['orga']
 
     @property
     def orga_notes(self):
