@@ -97,10 +97,6 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
                         self.data['votes'][set_code] = list(filter(lambda snowflake: snowflake != editor.snowflake, self.data['votes'][set_code].value()))
 
     @property
-    def signup_limit(self):
-        return self.data.get('limit', 9)
-
-    @property
     def signups(self):
         return [
             self.event.person(snowflake)
