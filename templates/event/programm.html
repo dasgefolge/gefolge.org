@@ -56,7 +56,7 @@
                 <tr>
                     <td>{{programmpunkt}}</td>
                     <td>{% if programmpunkt.start is not none %}{{programmpunkt.start | dmy_hm}}{% endif %}</td>
-                    <td>{% if programmpunkt.end is not none %}{{programmpunkt.end | hm}}{% endif %}</td>
+                    <td>{% if programmpunkt.end is not none and programmpunkt.end < (programmpunkt.start | next_date) %}{{programmpunkt.end | hm}}{% endif %}</td>
                     <td>
                         {% if programmpunkt.orga is none %}
                             noch nicht eingetragen
