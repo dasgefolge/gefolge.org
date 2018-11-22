@@ -1,4 +1,5 @@
 import decimal
+import flask_pagedown
 import wtforms
 
 import gefolge_web.util
