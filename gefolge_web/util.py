@@ -25,10 +25,11 @@ EDIT_LOG = BASE_PATH / 'web.jlog'
 PARAGRAPH_RE = re.compile(r'(?:\r\n|\r|\n){2,}')
 
 CRASH_NOTICE = """To: fenhl@fenhl.net
-From: {}@{}
+From: {whoami}@{hostname}
 Subject: gefolge.org internal server error
 
-An internal server error occurred on gefolge.org
+An internal server error occurred on gefolge.org.
+User: {user}
 """
 
 @class_key.class_key()
@@ -231,7 +232,11 @@ def log(event_type, event):
 def notify_crash(exc=None):
     whoami = subprocess.run(['whoami'], stdout=subprocess.PIPE, check=True).stdout.decode('utf-8').strip()
     hostname = subprocess.run(['hostname', '-f'], stdout=subprocess.PIPE, check=True).stdout.decode('utf-8').strip()
-    mail_text = CRASH_NOTICE.format(whoami, hostname)
+    try:
+        user = flask.g.user
+    except Exception:
+        user = None
+    mail_text = CRASH_NOTICE.format(whoami=whoami, hostname=hostname, user=user)
     if exc is not None:
         mail_text += '\n' + traceback.format_exc()
     return subprocess.run(['ssmtp', 'fenhl@fenhl.net'], input=mail_text.encode('utf-8'), check=True)
