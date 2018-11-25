@@ -6,6 +6,7 @@
     <meta name="description" content="Das Gefolge" />
     <meta name="author" content="Fenhl & contributors" />
     {{ super() }}
+    {{ pagedown.include_pagedown() }}
 {% endblock %}
 
 {% block title %}{{g.view_node}} — Das Gefolge{% endblock %}
