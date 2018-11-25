@@ -91,21 +91,31 @@
 {% endblock %}
 
 {% block navbar %}
-    <nav>
-        {% if g.view_node is defined %}
-            {% for node in g.view_node.parents | reverse %}
-                {% if node.is_index %}
-                    <span><a href="{{url_for('index')}}"><img src="{{url_for('.static', filename='gefolge.png')}}" style="height: 32px;" /></a></span>
+    <div class="row" style="margin: 5px -10px;">
+        <div class="col-12 col-md-9">
+            <nav>
+                {% if g.view_node is defined %}
+                    {% for node in g.view_node.parents | reverse %}
+                        {% if node.is_index %}
+                            <span><a href="{{url_for('index')}}"><img src="{{url_for('.static', filename='gefolge.png')}}" style="height: 32px;" /></a></span>
+                        {% else %}
+                            <span> / <a href="{{node.url}}">{{node}}</a></span>
+                        {% endif %}
+                    {% endfor %}
+                    <span> / {{g.view_node}}</span>
                 {% else %}
-                    <span> / <a href="{{node.url}}">{{node}}</a></span>
+                    <span><a href="{{url_for('index')}}"><img src="{{url_for('.static', filename='gefolge.png')}}" style="height: 32px;" /></a></span>
+                    <span>Fehler</span>
                 {% endif %}
-            {% endfor %}
-            <span> / {{g.view_node}}</span>
-        {% else %}
-            <span><a href="{{url_for('index')}}"><img src="{{url_for('.static', filename='gefolge.png')}}" style="height: 32px;" /></a></span>
-            <span>Fehler</span>
-        {% endif %}
-    </nav>
+            </nav>
+        </div>
+        <div class="col-12 col-md-3" style="text-align: right;">
+            {% if g.user.is_active %}
+                Angemeldet als {{g.user}}<br /><a href="{{url_for('logout')}}">Abmelden</a>
+            {% else %}
+                <a href="{{url_for('discord.login')}}">Anmelden</a>
+            {% endif %}
+        </div>
 {% endblock %}
 
 {% block content %}

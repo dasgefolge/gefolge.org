@@ -9,7 +9,7 @@
 {% block page_content %}
     <div><img style="max-width: 100%; max-height: 500px;" src="{{url_for('.static', filename='gefolge.png')}}" /></div>
     {% if g.user.is_active %}
-        <p>Du bist als {{g.user}} angemeldet.</p>
+        <p>Du bist als {{g.user}} angemeldet. <a href="{{url_for('logout')}}">Abmelden</a></p>
         <nav>
             {% for node in g.view_node.children | sort %}
                 {% if not loop.first %} • {% endif %}

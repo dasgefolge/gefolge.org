@@ -280,6 +280,11 @@ def setup(index, app):
         else:
             return flask.abort(400)
 
+    @app.route('/logout')
+    def logout():
+        flask_login.logout_user()
+        return flask.redirect(flask.url_for('index'))
+
     @index.child('mensch', 'Menschen', decorators=[member_required])
     @gefolge_web.util.template('menschen-index')
     def menschen():
