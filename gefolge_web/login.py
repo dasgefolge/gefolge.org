@@ -176,7 +176,7 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
     @property
     def timezone(self):
         if 'timezone' in self.userdata:
-            return pytz.timezone(self.userdata['timezone'])
+            return pytz.timezone(self.userdata['timezone'].value())
 
     @property
     def transactions(self):
