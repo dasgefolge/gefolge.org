@@ -165,8 +165,8 @@
 {% block scripts %}
     {{ super() }}
     {% if g.user.timezone is none %}
-        <script src="url_for('.static', filename='luxon.js')"></script>
-        <script src="url_for('.static', filename='strtime.js')"></script>
+        <script src="{{url_for('.static', filename='luxon.js')}}"></script>
+        <script src="{{url_for('.static', filename='strtime.js')}}"></script>
         <script>
             $('.dt-format').each(function(index) {
                 var timestamp = luxon.DateTime.fromISO($(this).data('timestamp'));
