@@ -8,6 +8,7 @@ import jinja2
 import lazyjson
 import pathlib
 import peter
+import pytz
 import random
 import string
 import urllib.parse
@@ -171,6 +172,11 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
     @property
     def profile_path(self):
         return PROFILES_ROOT / '{}.json'.format(self.snowflake)
+
+    @property
+    def timezone(self):
+        if 'timezone' in self.userdata:
+            return pytz.timezone(self.userdata['timezone'])
 
     @property
     def transactions(self):

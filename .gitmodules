@@ -1,0 +1,3 @@
+[submodule "deps/strtime-js"]
+	path = deps/strtime-js
+	url = https://github.com/pineapplemachine/strtime-js.git

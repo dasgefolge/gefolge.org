@@ -278,7 +278,7 @@ def setup(app):
             value = value.value()
         if isinstance(value, str):
             value = parse_iso_datetime(value)
-        return value.strftime(format)
+        return render_template('datetime-format', local_timestamp=value, utc_timestamp=value.astimezone(pytz.utc), format=format)
 
     @app.template_filter()
     def dm(value):
