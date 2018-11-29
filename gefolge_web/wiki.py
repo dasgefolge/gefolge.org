@@ -13,13 +13,13 @@ DISCORD_MENTION_REGEX = r'<@!?([0-9]+)>'
 
 WIKI_ROOT = gefolge_web.util.BASE_PATH / 'wiki'
 
-class DiscordMentionPattern(markdown.inlinepatterns.LinkPattern):
-    def handleMatch(self, m):
-        mensch = gefolge_web.login.Mensch(m.group(2))
+class DiscordMentionPattern(markdown.inlinepatterns.LinkInlineProcessor):
+    def handleMatch(self, m, data):
+        mensch = gefolge_web.login.Mensch(m.group(1))
         el = markdown.util.etree.Element('a')
         el.text = '@{}'.format(mensch.name)
         el.set('href', flask.url_for('profile', mensch=str(mensch.snowflake)))
-        return el
+        return el, m.start(0), m.end(0)
 
 class DiscordMentionExtension(markdown.Extension):
     def extendMarkdown(self, md, md_globals):
