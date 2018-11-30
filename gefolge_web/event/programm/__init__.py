@@ -171,8 +171,12 @@ class Programmpunkt:
             and person in self.event.signups
             and person not in self.signups
             and len(self.signups) < self.signup_limit
-            and not self.data.get('closed', False)
+            and not self.closed
         )
+
+    @property
+    def closed(self):
+        return self.data.get('closed', False)
 
     @property
     def data(self):
