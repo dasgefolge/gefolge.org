@@ -49,28 +49,32 @@
         </table>
         {% if g.user == event.orga('Essen') or event.can_edit(g.user, person) %}
             <h2>Essen</h2>
-            <p>
-                tierische Produkte:
-                {% set animal_products = event.attendee_data(person).get('food', {}).get('animalProducts', 'yes') %}
-                {% if animal_products == 'yes' %}
-                    uneingeschränkt
-                {% elif animal_products == 'vegetarian' %}
-                    vegetarisch
-                {% elif animal_products == 'vegan' %}
-                    vegan
-                {% else %}
-                    (Fehler)
-                {% endif %}
-            </p>
-            <p>
-                {% set allergies = event.attendee_data(person).get('food', {}).get('allergies', '') %}
-                Allergien/Unverträglichkeiten:
-                {% if allergies %}
-                    {{allergies}}
-                {% else %}
-                    keine
-                {% endif %}
-            </p>
+            {% if event.attendee_data(person).get('selbstversorger', False) %}
+                <p>Selbstversorger</p>
+            {% else %}
+                <p>
+                    tierische Produkte:
+                    {% set animal_products = event.attendee_data(person).get('food', {}).get('animalProducts', 'yes') %}
+                    {% if animal_products == 'yes' %}
+                        uneingeschränkt
+                    {% elif animal_products == 'vegetarian' %}
+                        vegetarisch
+                    {% elif animal_products == 'vegan' %}
+                        vegan
+                    {% else %}
+                        (Fehler)
+                    {% endif %}
+                </p>
+                <p>
+                    {% set allergies = event.attendee_data(person).get('food', {}).get('allergies', '') %}
+                    Allergien/Unverträglichkeiten:
+                    {% if allergies %}
+                        {{allergies}}
+                    {% else %}
+                        keine
+                    {% endif %}
+                </p>
+            {% endif %}
         {% endif %}
         <h2>Programm</h2>
         <p>{{person}} ist an folgenden Programmpunkten interessiert:</p>

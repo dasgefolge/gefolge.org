@@ -75,14 +75,17 @@ def ProfileForm(event, person):
         ))
 
     Form.section_food = gefolge_web.forms.FormSection('Essen')
-    Form.section_food_intro = gefolge_web.forms.FormText('Bitte trage hier Informationen zu deiner Ernährung ein. Diese Daten werden nur der Orga angezeigt.')
-    Form.animal_products = gefolge_web.forms.HorizontalButtonGroupField(
-        'tierische Produkte',
-        [wtforms.validators.InputRequired()],
-        choices=[('yes', 'uneingeschränkt', '#808080'), ('vegetarian', 'vegetarisch', '#aac912'), ('vegan', 'vegan', '#55a524')],
-        default=person_data.get('food', {}).get('animalProducts', 'yes')
-    )
-    Form.allergies = wtforms.TextAreaField('Allergien, Unverträglichkeiten', default=person_data.get('food', {}).get('allergies', ''))
+    if person_data.get('selbstversorger', False):
+        Form.section_food_intro = gefolge_web.forms.FormText(jinja2.Markup('Du bist als Selbstversorger eingetragen. Um das zu ändern, wende dich bitte an {}.'.format(gefolge_web.login.Mensch.admin().__html__())))
+    else:
+        Form.section_food_intro = gefolge_web.forms.FormText('Bitte trage hier Informationen zu deiner Ernährung ein. Diese Daten werden nur der Orga angezeigt.')
+        Form.animal_products = gefolge_web.forms.HorizontalButtonGroupField(
+            'tierische Produkte',
+            [wtforms.validators.InputRequired()],
+            choices=[('yes', 'uneingeschränkt', '#808080'), ('vegetarian', 'vegetarisch', '#aac912'), ('vegan', 'vegan', '#55a524')],
+            default=person_data.get('food', {}).get('animalProducts', 'yes')
+        )
+        Form.allergies = wtforms.TextAreaField('Allergien, Unverträglichkeiten', default=person_data.get('food', {}).get('allergies', ''))
 
     Form.section_programm = gefolge_web.forms.FormSection('Programm')
     if person in event.signups:
