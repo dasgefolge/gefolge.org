@@ -4,6 +4,7 @@ import copy
 import datetime
 import dateutil.parser
 import decimal
+import enum
 import flask
 import functools
 import inspect
@@ -78,6 +79,27 @@ class Euro:
     def __sub__(self, other):
         if isinstance(other, Euro):
             return Euro(self.value - other.value)
+        return NotImplemented
+
+class OrderedEnum(enum.Enum):
+    def __ge__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value >= other.value
+        return NotImplemented
+
+    def __gt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value > other.value
+        return NotImplemented
+
+    def __le__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value <= other.value
+        return NotImplemented
+
+    def __lt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value < other.value
         return NotImplemented
 
 class Transaction:
