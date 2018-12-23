@@ -32,10 +32,11 @@ def handle_profile_edit(event, person, profile_form):
         person_data['nights'] = {}
     for i, night in enumerate(event.nights):
         person_data['nights']['{:%Y-%m-%d}'.format(night)] = getattr(profile_form, 'night{}'.format(i)).data
-    if 'food' not in person_data:
-        person_data['food'] = {}
-    person_data['food']['animalProducts'] = profile_form.animal_products.data
-    person_data['food']['allergies'] = profile_form.allergies.data
+    if hasattr(profile_form, 'allergies'):
+        if 'food' not in person_data:
+            person_data['food'] = {}
+        person_data['food']['animalProducts'] = profile_form.animal_products.data
+        person_data['food']['allergies'] = profile_form.allergies.data
 
 def setup(index, app):
     @app.template_test('guest')
