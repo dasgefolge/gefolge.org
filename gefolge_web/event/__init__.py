@@ -296,7 +296,7 @@ def setup(index, app):
         if flask.g.user != event.orga('Programm'):
             flask.flash('Du bist nicht berechtigt, diesen Programmpunkt zu löschen.', 'error')
             return flask.redirect(flask.g.view_node.parent.url)
-        programm_delete_form = gefolge_web.event.forms.ProgrammDeleteForm(programmpunkt)
+        programm_delete_form = gefolge_web.event.forms.ProgrammDeleteForm()
         if programm_delete_form.submit_programm_delete_form.data and programm_delete_form.validate():
             gefolge_web.util.log('eventProgrammDelete', {
                 'event': event.event_id,
