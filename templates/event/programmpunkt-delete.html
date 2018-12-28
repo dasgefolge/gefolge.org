@@ -6,9 +6,9 @@
     <h1>Möchtest du den Programmpunkt „{{programmpunkt}}“ auf {{event}} wirklich löschen?</h1>
     {% if g.user == event.orga('Programm') %}
         <p>
-            <form class="form-horizontal" method="POST" role="form" action="{{g.view_node.url}}">
+            <form class="form-horizontal pull-right" method="POST" role="form" action="{{g.view_node.url}}">
                 {{programm_delete_form.hidden_tag()}}
-                <button type="submit" class="btn btn-danger" value="delete-programmpunkt" name="save">Löschen</button>
+                <button type="submit" class="btn btn-danger" value="Löschen" name="submit_programm_delete_form">Löschen</button>
             </form>
             <a href="{{g.view_node.parent.url}}" class="btn">Abbrechen</a>
         </p>
