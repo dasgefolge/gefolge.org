@@ -158,6 +158,8 @@ class Transaction:
     def __html__(self):
         if self.json_data['type'] == 'bankTransfer':
             return jinja2.Markup('Überweisung')
+        elif self.json_data['type'] == 'bar':
+            return jinja2.Markup('bar')
         elif self.json_data['type'] == 'eventAbrechnung':
             import gefolge_web.event.model
 
