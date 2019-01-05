@@ -50,6 +50,8 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
     def can_edit(self, editor):
         if editor == gefolge_web.login.Mensch.admin():
             return True # always allow the admin to edit since they have write access to the database anyway
+        if self.event.orga('Programm') == editor:
+            return True # allow the Programm orga to edit past events for archival purposes
         if self.event.end < gefolge_web.util.now():
             return False # event frozen
         return self.orga == editor or self.event.orga('Essen') == editor
