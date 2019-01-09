@@ -71,10 +71,10 @@
                     {% endif %}
                 {% endfor %}
             </ul>
-            {% if event.end > g.now or g.user.is_admin %}
+            {% if g.user.is_admin or (event.end is not none and event.end > g.now) %}
                 <p><a href="{{url_for('event_guest_form', event=event.event_id)}}">Weiteren Gast anmelden</a></p>
             {% endif %}
-        {% elif event.end > g.now or g.user.is_admin %}
+        {% elif g.user.is_admin or (event.end is not none and event.end > g.now) %}
             <p><a href="{{url_for('event_guest_form', event=event.event_id)}}">Gast anmelden</a></p>
         {% endif %}
         {% if g.user.is_admin or event.attendee_data(g.user).get('orga', []) | length > 0 %}
@@ -138,7 +138,9 @@
                 {% endif %}
             </div>
         {% endif %}
-        {% if event.end < g.now %}
+        {% if event.end is none %}
+            <p>Der Termin für dieses event steht noch nicht fest.</p>
+        {% elif event.end < g.now %}
             <p>Dieses event ist schon vorbei.</p>
         {% elif event.orga('Abrechnung') is none %}
             <p>Das Orga-Team ist noch nicht vollständig, wir suchen noch jemanden für die Abrechnung. Wenn du das übernehmen möchtest, melde dich bitte bei {{g.admin}}.</p>
