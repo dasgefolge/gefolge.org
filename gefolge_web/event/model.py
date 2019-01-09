@@ -295,10 +295,10 @@ class Event(metaclass=EventMeta):
             gefolge_web.event.programm.Programmpunkt(self, name)
             for name in self.data.get('programm', {})
             if name not in {'custom-magic-draft', 'rtww'} # special, already listed below
-        ), (
+        ), ([] if self.start is None else (
             gefolge_web.event.programm.essen.Abendessen(self, date)
             for date in self.nights
-        ), [
+        )), [
             gefolge_web.event.programm.magic.CustomMagicDraft(self),
         ], (
             [] if werewolf_web is None else [werewolf_web.RealtimeWerewolf(self)]
