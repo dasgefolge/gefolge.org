@@ -47,7 +47,7 @@ def setup(index):
         cal.add('version', '2.0')
         cal.add('x-wr-calname', 'gefolge.org')
         for event in gefolge_web.event.model.Event:
-            if flask.g.user in event.signups:
+            if event.start is not None and flask.g.user in event.signups:
                 cal.add_component(event.to_ical())
                 for calendar_event in event.calendar:
                     if calendar_event.programmpunkt is None or calendar_event.programmpunkt.orga == flask.g.user or flask.g.user in calendar_event.programmpunkt.signups:

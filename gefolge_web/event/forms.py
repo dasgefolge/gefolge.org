@@ -61,18 +61,22 @@ def ProfileForm(event, person):
     class Form(flask_wtf.FlaskForm):
         pass
 
-    Form.section_nights = gefolge_web.forms.FormSection('Zeitraum')
     person_data = event.attendee_data(person)
     if person_data is None:
         person_data = {'id': person.snowflake}
     else:
         person_data = person_data.value()
-    for i, night in enumerate(event.nights):
-        setattr(Form, 'night{}'.format(i), gefolge_web.forms.YesMaybeNoField(
-            '{:%d.%m.}–{:%d.%m.}'.format(night, night + datetime.timedelta(days=1)),
-            [wtforms.validators.InputRequired()],
-            default=person_data.get('nights', {}).get('{:%Y-%m-%d}'.format(night), 'maybe')
-        ))
+
+    Form.section_nights = gefolge_web.forms.FormSection('Zeitraum')
+    if event.start is None:
+        Form.section_nights_intro = gefolge_web.forms.FormText('Coming soon™')
+    else:
+        for i, night in enumerate(event.nights):
+            setattr(Form, 'night{}'.format(i), gefolge_web.forms.YesMaybeNoField(
+                '{:%d.%m.}–{:%d.%m.}'.format(night, night + datetime.timedelta(days=1)),
+                [wtforms.validators.InputRequired()],
+                default=person_data.get('nights', {}).get('{:%Y-%m-%d}'.format(night), 'maybe')
+            ))
 
     Form.section_food = gefolge_web.forms.FormSection('Essen')
     if person_data.get('selbstversorger', False):
