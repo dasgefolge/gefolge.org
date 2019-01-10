@@ -141,6 +141,11 @@ class Event(metaclass=EventMeta):
             return gefolge_web.util.Euro()
 
     @property
+    def ausfall_date(self):
+        if 'ausfallDate' in self.data:
+            return gefolge_web.util.parse_iso_date(self.data['ausfallDate'].value())
+
+    @property
     def calendar(self):
         import gefolge_web.event.programm
 
