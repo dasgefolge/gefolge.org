@@ -197,6 +197,21 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
     def userdata_path(self):
         return USERDATA_ROOT / '{}.json'.format(self.snowflake)
 
+class AnonymousUser(flask_login.AnonymousUserMixin):
+    def __html__(self):
+        return jinja2.Markup('<i>anonymous</i>')
+
+    def __str__(self):
+        return 'anonymous'
+
+    @property
+    def is_admin(self):
+        return False
+
+    @property
+    def timezone(self):
+        return None
+
 def TransferMoneyForm(mensch):
     class Form(flask_wtf.FlaskForm):
         recipient = gefolge_web.forms.MenschField('An', person_filter=lambda person: person != mensch)
@@ -241,6 +256,7 @@ def setup(index, app):
     login_manager = flask_login.LoginManager()
     login_manager.login_view = 'discord.login'
     login_manager.login_message = None # Because discord.login does not show flashes, any login message would be shown after a successful login. This would be confusing.
+    login_manager.anonymous_user = AnonymousUser
 
     @login_manager.user_loader
     def load_user(user_id):
