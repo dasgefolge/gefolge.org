@@ -3,11 +3,20 @@ server {
 
     listen 80;
     listen [::]:80;
+
+    return 301 https://gefolge.org$request_uri;
+}
+
+server{
+    server_name www.gefolge.org;
+
     listen 443 ssl;
     listen [::]:443 ssl;
 
     ssl_certificate /etc/letsencrypt/live/inwx/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/inwx/privkey.pem;
+
+    add_header Strict-Transport-Security "max-age=300; includeSubDomains" always;
 
     return 301 https://gefolge.org$request_uri;
 }
