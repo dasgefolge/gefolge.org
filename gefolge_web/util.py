@@ -259,7 +259,7 @@ def notify_crash(exc=None):
     whoami = subprocess.run(['whoami'], stdout=subprocess.PIPE, check=True).stdout.decode('utf-8').strip()
     hostname = subprocess.run(['hostname', '-f'], stdout=subprocess.PIPE, check=True).stdout.decode('utf-8').strip()
     try:
-        user = flask.g.user
+        user = str(flask.g.user)
     except Exception:
         user = None
     mail_text = CRASH_NOTICE.format(whoami=whoami, hostname=hostname, user=user)
@@ -296,7 +296,7 @@ def setup(app):
     def internal_server_error(e):
         with contextlib.suppress(Exception):
             notify_crash(e)
-        return 'Internal Server Error', 500
+        return 'Internal Server Error', 500 #TODO formatted error page
 
     @app.template_filter()
     def dt_format(value, format='%d.%m.%Y %H:%M:%S'):

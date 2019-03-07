@@ -18,7 +18,7 @@ def key_or_member_required(f):
         elif gefolge_web.login.Mensch.by_api_key() is not None:
             flask.g.user = gefolge_web.login.Mensch.by_api_key()
         else:
-            flask.g.user is None
+            flask.g.user = gefolge_web.login.AnonymousUser()
         if flask.g.user is not None and flask.g.user.is_active:
             return f(*args, **kwargs)
         return flask.Response(
