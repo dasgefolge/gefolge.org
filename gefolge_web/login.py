@@ -7,7 +7,6 @@ import html
 import jinja2
 import lazyjson
 import pathlib
-import peter
 import pytz
 import random
 import string
@@ -16,6 +15,7 @@ import wtforms
 import wtforms.validators
 
 import gefolge_web.forms
+import gefolge_web.peter
 import gefolge_web.util
 
 MENSCHEN = 386753710434287626 # role ID
@@ -326,9 +326,9 @@ def setup(index, app):
                 mensch.add_transaction(gefolge_web.util.Transaction.transfer(recipient, -transfer_money_form.amount.data, transfer_money_form.comment.data))
                 recipient.add_transaction(gefolge_web.util.Transaction.transfer(mensch, transfer_money_form.amount.data, transfer_money_form.comment.data))
                 if flask.g.user != mensch:
-                    peter.bot_cmd('msg', str(mensch.snowflake), '<@{}> ({}) hat {} von deinem Guthaben an <@{}> ({}) übertragen. {}: <https://gefolge.org/me>'.format(Mensch.admin().snowflake, Mensch.admin(), transfer_money_form.amount.data, recipient.snowflake, recipient, 'Kommentar und weitere Infos' if transfer_money_form.comment.data else 'Weitere Infos'))
+                    gefolge_web.peter.msg(mensch, '<@{}> ({}) hat {} von deinem Guthaben an <@{}> ({}) übertragen. {}: <https://gefolge.org/me>'.format(Mensch.admin().snowflake, Mensch.admin(), transfer_money_form.amount.data, recipient.snowflake, recipient, 'Kommentar und weitere Infos' if transfer_money_form.comment.data else 'Weitere Infos'))
                 if flask.g.user != recipient:
-                    peter.bot_cmd('msg', str(recipient.snowflake), '<@{}> ({}) hat {} an dich übertragen. {}: <https://gefolge.org/me>'.format(mensch.snowflake, mensch, transfer_money_form.amount.data, 'Kommentar und weitere Infos' if transfer_money_form.comment.data else 'Weitere Infos'))
+                    gefolge_web.peter.msg(recipient, '<@{}> ({}) hat {} an dich übertragen. {}: <https://gefolge.org/me>'.format(mensch.snowflake, mensch, transfer_money_form.amount.data, 'Kommentar und weitere Infos' if transfer_money_form.comment.data else 'Weitere Infos'))
                 return flask.redirect(flask.g.view_node.url)
         else:
             transfer_money_form = None

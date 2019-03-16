@@ -6,11 +6,11 @@ import itertools
 import jinja2
 import lazyjson
 import pathlib
-import peter
 import pytz
 import random
 
 import gefolge_web.login
+import gefolge_web.peter
 import gefolge_web.util
 
 EVENTS_ROOT = gefolge_web.util.BASE_PATH / 'event'
@@ -198,7 +198,7 @@ class Event(metaclass=EventMeta):
         })
         self.attendee_data(guest)['signup'] = '{:%Y-%m-%d %H:%M:%S}'.format(gefolge_web.util.now()) #TODO Datum der Überweisung verwenden
         if message:
-            peter.bot_cmd('channel-msg', str(self.data.get('channel', SILVESTER_CHANNEL)), '<@{}>: {} ist jetzt für {} angemeldet. Fülle bitte bei Gelegenheit noch das Profil auf <https://gefolge.org/event/{}/mensch/{}/edit> aus. Außerdem kannst du {} auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(guest.via.snowflake, guest, self, self.event_id, guest.snowflake, guest, self.event_id))
+            gefolge_web.peter.channel_msg(self.data.get('channel', SILVESTER_CHANNEL), '<@{}>: {} ist jetzt für {} angemeldet. Fülle bitte bei Gelegenheit noch das Profil auf <https://gefolge.org/event/{}/mensch/{}/edit> aus. Außerdem kannst du {} auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(guest.via.snowflake, guest, self, self.event_id, guest.snowflake, guest, self.event_id))
 
     @property
     def data(self):
@@ -325,11 +325,11 @@ class Event(metaclass=EventMeta):
             person_data['anzahlung'] = anzahlung.value
         self.data['menschen'].append(person_data)
         if 'role' in self.data:
-            peter.bot_cmd('add-role', str(mensch.snowflake), str(self.data['role']))
+            gefolge_web.peter.add_role(mensch, self.data['role'])
         if self.orga('Abrechnung') == gefolge_web.login.Mensch.admin():
-            peter.bot_cmd('channel-msg', str(self.data.get('channel', SILVESTER_CHANNEL)), '<@{}>: du bist jetzt für {} angemeldet. Du kannst dich auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(mensch.snowflake, self, self.event_id))
+            gefolge_web.peter.channel_msg(self.data.get('channel', SILVESTER_CHANNEL), '<@{}>: du bist jetzt für {} angemeldet. Du kannst dich auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(mensch.snowflake, self, self.event_id))
         else:
-            peter.bot_cmd('channel-msg', str(self.data.get('channel', SILVESTER_CHANNEL)), '<@{}>: du bist jetzt für {} angemeldet. Fülle bitte bei Gelegenheit noch dein Profil auf <https://gefolge.org/event/{}/me/edit> aus. Außerdem kannst du dich auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(mensch.snowflake, self, self.event_id, self.event_id))
+            gefolge_web.peter.channel_msg(self.data.get('channel', SILVESTER_CHANNEL), '<@{}>: du bist jetzt für {} angemeldet. Fülle bitte bei Gelegenheit noch dein Profil auf <https://gefolge.org/event/{}/me/edit> aus. Außerdem kannst du dich auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(mensch.snowflake, self, self.event_id, self.event_id))
 
     def signup_guest(self, mensch, guest_name):
         if any(str(guest) == guest_name for guest in self.guests):
@@ -348,7 +348,7 @@ class Event(metaclass=EventMeta):
             'via': mensch.snowflake
         })
         if self.anzahlung == gefolge_web.util.Euro() or self.orga('Abrechnung') == gefolge_web.login.Mensch.admin():
-            peter.bot_cmd('channel-msg', str(self.data.get('channel', SILVESTER_CHANNEL)), '<@{}> hat {} für {} angemeldet'.format(mensch.snowflake, guest_name, self))
+            gefolge_web.peter.channel_msg(self.data.get('channel', SILVESTER_CHANNEL), '<@{}> hat {} für {} angemeldet'.format(mensch.snowflake, guest_name, self))
         return Guest(self, guest_id)
 
     @property
