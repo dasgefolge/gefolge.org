@@ -15,6 +15,10 @@ import pathlib
 import pymdownx.emoji
 import pymdownx.extra
 try:
+    import spacealert.web # extension for the Space Alert brainscan database, closed-source for IP reasons
+except ImportError:
+    spacealert = None
+try:
     import werewolf_web # extension for Werewolf games, closed-source to allow the admin to make relevant changes before a game without giving away information to players
 except ImportError:
     werewolf_web = None
@@ -60,5 +64,7 @@ with app.app_context():
     gefolge_web.event.setup(index, app)
     games_index = gefolge_web.games.setup(index)
     gefolge_web.util.setup(app)
+    if spacealert is not None:
+        spacealert.web.setup(games_index)
     if werewolf_web is not None:
         werewolf_web.setup(games_index)
