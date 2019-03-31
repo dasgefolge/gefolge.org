@@ -14,6 +14,7 @@ import os
 import pathlib
 import pymdownx.emoji
 import pymdownx.extra
+import pymdownx.tilde
 try:
     import spacealert.web # extension for the Space Alert brainscan database, closed-source for IP reasons
 except ImportError:
