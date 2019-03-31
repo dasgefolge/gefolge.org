@@ -48,6 +48,7 @@ with app.app_context():
     emoji_ext.setConfig('emoji_index', pymdownx.emoji.twemoji)
     md._instance.registerExtensions([emoji_ext], {})
     md.register_extension(pymdownx.extra.ExtraExtension)
+    md.register_extension(pymdownx.tilde.DeleteSubExtension)
     # set up Markdown preview
     flask_pagedown.PageDown(app)
 
