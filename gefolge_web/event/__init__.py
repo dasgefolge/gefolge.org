@@ -274,8 +274,8 @@ def setup(index, app):
                 'event': event.event_id,
                 'programmpunkt': programmpunkt.name,
                 'orga': None if programm_edit_form.orga.data is None else programm_edit_form.orga.data.snowflake,
-                'start': (None if programm_edit_form.start.data is None else '{:%Y-%m-%dT%H:%M:%SZ}'.format(programm_edit_form.start.data)),
-                'end': (None if programm_edit_form.end.data is None else '{:%Y-%m-%dT%H:%M:%SZ}'.format(programm_edit_form.end.data)),
+                'start': (None if programm_edit_form.start.data is None else '{:%Y-%m-%dT%H:%M:%S}'.format(programm_edit_form.start.data)),
+                'end': (None if programm_edit_form.end.data is None else '{:%Y-%m-%dT%H:%M:%S}'.format(programm_edit_form.end.data)),
                 'description': programm_edit_form.description.data
             })
             programmpunkt.orga = programm_edit_form.orga.data

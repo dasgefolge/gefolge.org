@@ -94,7 +94,7 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
             self.event.data['essen'] = {}
         if '{:%Y-%m-%d}'.format(self.date) not in self.event.data['essen']:
             self.event.data['essen']['{:%Y-%m-%d}'.format(self.date)] = {}
-        self.event.data['essen']['{:%Y-%m-%d}'.format(self.date)]['dinnerEnd'] = '{:%Y-%m-%dT%H:%M:%SZ}'.format(value)
+        self.event.data['essen']['{:%Y-%m-%d}'.format(self.date)]['dinnerEnd'] = '{:%Y-%m-%dT%H:%M:%S}'.format(value)
 
     @end.deleter
     def end(self):
@@ -151,7 +151,7 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
             self.event.data['essen'] = {}
         if '{:%Y-%m-%d}'.format(self.date) not in self.event.data['essen']:
             self.event.data['essen']['{:%Y-%m-%d}'.format(self.date)] = {}
-        self.event.data['essen']['{:%Y-%m-%d}'.format(self.date)]['dinnerStart'] = '{:%Y-%m-%dT%H:%M:%SZ}'.format(value)
+        self.event.data['essen']['{:%Y-%m-%d}'.format(self.date)]['dinnerStart'] = '{:%Y-%m-%dT%H:%M:%S}'.format(value)
 
     @start.deleter
     def start(self):

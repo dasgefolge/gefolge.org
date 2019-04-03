@@ -251,7 +251,7 @@ def jlog_append(line, log_path):
 def log(event_type, event):
     event = copy.copy(event)
     event['by'] = flask.g.user.snowflake
-    event['time'] = '{:%Y-%m-%dT%H:%M:%SZ}'.format(now())
+    event['time'] = '{:%Y-%m-%dT%H:%M:%S}'.format(now())
     event['type'] = event_type
     jlog_append(event, EDIT_LOG)
 

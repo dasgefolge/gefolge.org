@@ -196,7 +196,7 @@ class Event(metaclass=EventMeta):
             'event': self.event_id,
             'person': guest.snowflake
         })
-        self.attendee_data(guest)['signup'] = '{:%Y-%m-%dT%H:%M:%SZ}'.format(gefolge_web.util.now()) #TODO Datum der Überweisung verwenden
+        self.attendee_data(guest)['signup'] = '{:%Y-%m-%dT%H:%M:%S}'.format(gefolge_web.util.now()) #TODO Datum der Überweisung verwenden
         if message:
             gefolge_web.peter.channel_msg(self.data.get('channel', SILVESTER_CHANNEL), '<@{}>: {} ist jetzt für {} angemeldet. Fülle bitte bei Gelegenheit noch das Profil auf <https://gefolge.org/event/{}/mensch/{}/edit> aus. Außerdem kannst du {} auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(guest.via.snowflake, guest, self, self.event_id, guest.snowflake, guest, self.event_id))
 
@@ -319,7 +319,7 @@ class Event(metaclass=EventMeta):
             self.data['menschen'] = []
         person_data = {
             'id': mensch.snowflake,
-            'signup': '{:%Y-%m-%dT%H:%M:%SZ}'.format(gefolge_web.util.now())
+            'signup': '{:%Y-%m-%dT%H:%M:%S}'.format(gefolge_web.util.now())
         }
         if anzahlung is not None:
             person_data['anzahlung'] = anzahlung.value
