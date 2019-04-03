@@ -116,7 +116,7 @@ class Transaction:
             'type': 'eventAnzahlung',
             'amount': amount.value,
             'default': -event.anzahlung.value,
-            'time': '{:%Y-%m-%d %H:%M:%S}'.format(time.astimezone(pytz.utc)),
+            'time': '{:%Y-%m-%dT%H:%M:%SZ}'.format(time.astimezone(pytz.utc)),
             'event': event.event_id
         }
         if guest is not None:
@@ -138,7 +138,7 @@ class Transaction:
         return cls({
             'type': 'sponsorWerewolfCard',
             'amount': -amount.value,
-            'time': '{:%Y-%m-%d %H:%M:%S}'.format(now(pytz.utc)),
+            'time': '{:%Y-%m-%dT%H:%M:%SZ}'.format(now(pytz.utc)),
             'faction': card['faction'],
             'role': card['role']
         })
@@ -148,7 +148,7 @@ class Transaction:
         json_data = {
             'type': 'transfer',
             'amount': amount.value,
-            'time': '{:%Y-%m-%d %H:%M:%S}'.format(now(pytz.utc)),
+            'time': '{:%Y-%m-%dT%H:%M:%SZ}'.format(now(pytz.utc)),
             'mensch': mensch.snowflake
         }
         if comment:
@@ -251,7 +251,7 @@ def jlog_append(line, log_path):
 def log(event_type, event):
     event = copy.copy(event)
     event['by'] = flask.g.user.snowflake
-    event['time'] = '{:%Y-%m-%d %H:%M:%S}'.format(now())
+    event['time'] = '{:%Y-%m-%dT%H:%M:%SZ}'.format(now())
     event['type'] = event_type
     jlog_append(event, EDIT_LOG)
 

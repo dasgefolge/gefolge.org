@@ -211,7 +211,7 @@ class Programmpunkt:
         if value is None:
             del self.end
         else:
-            self.data['end'] = '{:%Y-%m-%d %H:%M:%S}'.format(value)
+            self.data['end'] = '{:%Y-%m-%dT%H:%M:%SZ}'.format(value)
 
     @end.deleter
     def end(self):
@@ -327,7 +327,7 @@ class Programmpunkt:
         if value is None:
             del self.start
         else:
-            self.data['start'] = '{:%Y-%m-%d %H:%M:%S}'.format(value)
+            self.data['start'] = '{:%Y-%m-%dT%H:%M:%SZ}'.format(value)
 
     @start.deleter
     def start(self):
