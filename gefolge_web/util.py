@@ -155,6 +155,14 @@ class Transaction:
             json_data['comment'] = comment
         return cls(json_data)
 
+    @classmethod
+    def wurstmineberg(cls, amount):
+        return cls({
+            'type': 'wurstmineberg',
+            'amount': -amount.value,
+            'time': '{:%Y-%m-%dT%H:%M:%SZ}'.format(now(pytz.utc))
+        })
+
     def __html__(self):
         if self.json_data['type'] == 'bankTransfer':
             return jinja2.Markup('Überweisung')
@@ -195,6 +203,8 @@ class Transaction:
 
             mensch = gefolge_web.login.Mensch(self.json_data['mensch'])
             return jinja2.Markup('{} {} übertragen'.format('von' if self.amount > Euro() else 'an', mensch.__html__()))
+        elif self.json_data['type'] == 'wurstmineberg':
+            return jinja2.Markup('an <a href="https://wurstmineberg.de/">Wurstmineberg</a> übertragen')
         else:
             raise NotImplementedError('transaction type {} not implemented'.format(self.json_data['type']))
 

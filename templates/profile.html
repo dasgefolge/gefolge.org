@@ -49,6 +49,15 @@
         {% else %}
             <p>Du hast aber im Moment kein Guthaben.</p>
         {% endif %}
+        {% if mensch.is_wurstmineberg_member %}
+            <h2>Wurstmineberg</h2>
+            <p>Wenn du möchtest, kannst du Geld von deinem Guthaben für die Finanzierung des server verwenden, auf dem Wurstmineberg läuft. Details siehe <a href="https://wurstmineberg.de/about#finance">Wurstmineberg website</a>.</p>
+            {% if g.user.is_admin or mensch.balance.value > 0 %}
+                {{gen_form(wurstmineberg_transfer_money_form, g.view_node.url)}}
+            {% else %}
+                <p>Du hast aber im Moment kein Guthaben.</p>
+            {% endif %}
+        {% endif %}
         <h2>Transaktionen</h2>
         <ul>
             {% for transaction in mensch.transactions | reverse %}
