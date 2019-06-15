@@ -52,7 +52,7 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
             return True # always allow the admin to edit since they have write access to the database anyway
         if self.event.orga('Programm') == editor:
             return True # allow the Programm orga to edit past events for archival purposes
-        if self.event.end < gefolge_web.util.now():
+        if self.event.end < gefolge_web.util.now(self.event.timezone):
             return False # event frozen
         return self.orga == editor or self.event.orga('Essen') == editor
 
@@ -80,9 +80,9 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
     @property
     def end(self):
         if 'dinnerEnd' in self.data:
-            return gefolge_web.util.parse_iso_datetime(self.data['dinnerEnd'])
+            return gefolge_web.util.parse_iso_datetime(self.data['dinnerEnd'], tz=self.event.timezone)
         elif self.date.month == 12 and self.date.day == 31:
-            return pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(self.date, datetime.time(23, 55)), is_dst=None)
+            return self.event.timezone.localize(datetime.datetime.combine(self.date, datetime.time(23, 55)), is_dst=None)
         else:
             return self.start + datetime.timedelta(hours=1)
 
@@ -137,11 +137,11 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
     @property
     def start(self):
         if 'dinnerStart' in self.data:
-            return gefolge_web.util.parse_iso_datetime(self.data['dinnerStart'])
+            return gefolge_web.util.parse_iso_datetime(self.data['dinnerStart'], tz=self.event.timezone)
         elif self.date.month == 12 and self.date.day == 31:
-            return pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(self.date, datetime.time(22)), is_dst=None)
+            return self.event.timezone.localize(datetime.datetime.combine(self.date, datetime.time(22)), is_dst=None)
         else:
-            return pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(self.date, datetime.time(19)), is_dst=None)
+            return self.event.timezone.localize(datetime.datetime.combine(self.date, datetime.time(19)), is_dst=None)
 
     @start.setter
     def start(self, value):

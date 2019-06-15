@@ -81,6 +81,10 @@ class Location:
     def prefix(self):
         return self.data.get('prefix', 'in')
 
+    @property
+    def timezone(self):
+        return pytz.timezone(self.data['timezone'].value())
+
 class EventMeta(type):
     def __iter__(self):
         # iterating over the Event class yields all events
@@ -154,8 +158,8 @@ class Event(metaclass=EventMeta):
                 self, 'neujahr',
                 text='Neujahr',
                 html='Neujahr',
-                start=pytz.timezone('Europe/Berlin').localize(datetime.datetime(self.end.year, 1, 1), is_dst=None),
-                end=pytz.timezone('Europe/Berlin').localize(datetime.datetime(self.end.year, 1, 1, 1), is_dst=None)
+                start=self.timezone.localize(datetime.datetime(self.end.year, 1, 1), is_dst=None),
+                end=self.timezone.localize(datetime.datetime(self.end.year, 1, 1, 1), is_dst=None)
             )] if self.end.year > self.start.year else []
         ), [gefolge_web.event.programm.CalendarEvent(
             self, 'endreinigung',
@@ -178,7 +182,7 @@ class Event(metaclass=EventMeta):
         if len(editor_data.get('orga', [])) > 0:
             # Orga darf alle bearbeiten
             return True
-        if gefolge_web.util.now() > self.end:
+        if gefolge_web.util.now(self.timezone) > self.end:
             # nach Ende des event darf nur noch die Orga bearbeiten
             return False
         if editor == profile:
@@ -196,7 +200,7 @@ class Event(metaclass=EventMeta):
             'event': self.event_id,
             'person': guest.snowflake
         })
-        self.attendee_data(guest)['signup'] = '{:%Y-%m-%dT%H:%M:%S}'.format(gefolge_web.util.now()) #TODO Datum der Überweisung verwenden
+        self.attendee_data(guest)['signup'] = '{:%Y-%m-%dT%H:%M:%S}'.format(gefolge_web.util.now(self.timezone)) #TODO Datum der Überweisung verwenden
         if message:
             gefolge_web.peter.channel_msg(self.data.get('channel', SILVESTER_CHANNEL), '<@{}>: {} ist jetzt für {} angemeldet. Fülle bitte bei Gelegenheit noch das Profil auf <https://gefolge.org/event/{}/mensch/{}/edit> aus. Außerdem kannst du {} auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(guest.via.snowflake, guest, self, self.event_id, guest.snowflake, guest, self.event_id))
 
@@ -207,7 +211,7 @@ class Event(metaclass=EventMeta):
     @property
     def end(self):
         if 'end' in self.data:
-            return gefolge_web.util.parse_iso_datetime(self.data['end'].value())
+            return gefolge_web.util.parse_iso_datetime(self.data['end'].value(), tz=self.timezone)
 
     def essen(self, date):
         import gefolge_web.event.programm.essen
@@ -319,7 +323,7 @@ class Event(metaclass=EventMeta):
             self.data['menschen'] = []
         person_data = {
             'id': mensch.snowflake,
-            'signup': '{:%Y-%m-%dT%H:%M:%S}'.format(gefolge_web.util.now())
+            'signup': '{:%Y-%m-%dT%H:%M:%S}'.format(gefolge_web.util.now(self.timezone))
         }
         if anzahlung is not None:
             person_data['anzahlung'] = anzahlung.value
@@ -368,7 +372,16 @@ class Event(metaclass=EventMeta):
     @property
     def start(self):
         if 'start' in self.data:
-            return gefolge_web.util.parse_iso_datetime(self.data['start'].value())
+            return gefolge_web.util.parse_iso_datetime(self.data['start'].value(), tz=self.timezone)
+
+    @property
+    def timezone(self):
+        if 'timezone' in self.data:
+            return pytz.timezone(self.data['timezone'].value())
+        elif self.location is not None:
+            return self.location.timezone
+        else:
+            return pytz.timezone('Europe/Berlin')
 
     def to_ical(self):
         result = icalendar.Event()

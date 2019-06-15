@@ -109,7 +109,7 @@ class Transaction:
     @classmethod
     def anzahlung(cls, event, amount=None, *, guest=None, time=None):
         if time is None:
-            time = now()
+            time = now(pytz.utc)
         if amount is None:
             amount = -event.anzahlung
         json_data = {
@@ -236,7 +236,7 @@ class Transaction:
 
     @property
     def time(self):
-        return parse_iso_datetime(self.json_data['time'], tz=pytz.utc).astimezone(pytz.timezone('Europe/Berlin'))
+        return parse_iso_datetime(self.json_data['time'], tz=pytz.utc)
 
 def cached_json(file):
     try:
@@ -261,7 +261,7 @@ def jlog_append(line, log_path):
 def log(event_type, event):
     event = copy.copy(event)
     event['by'] = flask.g.user.snowflake
-    event['time'] = '{:%Y-%m-%dT%H:%M:%S}'.format(now())
+    event['time'] = '{:%Y-%m-%dT%H:%M:%SZ}'.format(now(pytz.utc))
     event['type'] = event_type
     jlog_append(event, EDIT_LOG)
 
@@ -352,7 +352,7 @@ def setup(app):
             value = value.value()
         value = int(value)
         timestamp, data_center, worker, sequence = snowflake.melt(value, twepoch=DISCORD_EPOCH)
-        return pytz.utc.localize(datetime.datetime.fromtimestamp(timestamp / 1000)).astimezone(pytz.timezone('Europe/Berlin'))
+        return pytz.utc.localize(datetime.datetime.fromtimestamp(timestamp / 1000))
 
     @app.template_filter()
     def natjoin(value):
@@ -389,7 +389,7 @@ def setup(app):
     def prepare_reboot_notice():
         reboot_info = cached_json(lazyjson.File('/opt/dev/reboot.json')).value()
         if 'schedule' in reboot_info:
-            flask.g.reboot_timestamp = parse_iso_datetime(reboot_info['schedule'])
+            flask.g.reboot_timestamp = parse_iso_datetime(reboot_info['schedule'], tz=pytz.utc)
             flask.g.reboot_upgrade = reboot_info.get('upgrade', False)
             flask.g.reboot_end_time = None if flask.g.reboot_upgrade else flask.g.reboot_timestamp + datetime.timedelta(minutes=15)
         else:

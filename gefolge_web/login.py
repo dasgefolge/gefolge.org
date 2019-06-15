@@ -222,6 +222,14 @@ class AnonymousUser(flask_login.AnonymousUserMixin):
     def timezone(self):
         return None
 
+def ProfileForm(mensch):
+    class Form(flask_wtf.FlaskForm):
+        #TODO timezone field
+        timezone_notice = gefolge_web.forms.FormText('„Automatisch“ heißt, dass deine aktuelle Systemzeit verwendet wird, um deine Zeitzone zu erraten. Das kann fehlerhaft sein, wenn es mehrere verschiedene Zeitzonen gibt, die aktuell zu deiner Systemzeit passen aber verschiedene Regeln zur Sommerzeit haben. Wenn du JavaScript deaktivierst, werden alle Uhrzeiten in ihrer ursprünglichen Zeitzone angezeigt und unterpunktet. Du kannst immer mit dem Mauszeiger auf eine Uhrzeit zeigen, um ihre Zeitzone zu sehen.')
+        submit_profile_form = wtforms.SubmitField('Speichern')
+
+    return Form()
+
 def TransferMoneyForm(mensch):
     class Form(flask_wtf.FlaskForm):
         recipient = gefolge_web.forms.MenschField('An', person_filter=lambda person: person != mensch)

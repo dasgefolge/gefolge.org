@@ -1,10 +1,12 @@
 import flask
+import flask_wtf
 import markdown
 import markdown.inlinepatterns
 import markdown.util
 import pathlib
 import re
 
+import gefolge_web.forms
 import gefolge_web.login
 import gefolge_web.util
 
@@ -26,13 +28,20 @@ class DiscordMentionExtension(markdown.Extension):
         config = self.getConfigs()
         md.inlinePatterns.add('discord-mention', DiscordMentionPattern(DISCORD_MENTION_REGEX, md), '<reference')
 
+def WikiEditForm(article_namespace, article_name, article_source):
+    class Form(flask_wtf.FlaskForm):
+        source = gefolge_web.forms.MarkdownField('Text', default=article_source)
+        submit_wiki_edit_form = wtforms.SubmitField('Speichern')
+
+    return Form()
+
 def setup(index, md):
     md.register_extension(DiscordMentionExtension)
 
     @index.child('wiki', decorators=[gefolge_web.login.member_required])
     @gefolge_web.util.template('wiki-index')
     def wiki_index():
-        {}
+        return {}
 
     @wiki_index.children()
     @gefolge_web.util.template('wiki')
@@ -44,6 +53,31 @@ def setup(index, md):
             'article_name': article_name,
             'article_namespace': 'wiki',
             'article_source': source
+        }
+
+    @wiki_article.children()
+    def wiki_article_namespaced(article_name, article_namespace):
+        if article_namespace == 'event':
+            return flask.redirect(flask.url_for('event_page', event=article_name))
+        elif article_namespace == 'wiki':
+            return flask.redirect(flask.g.view_node.parent.url)
+        else:
+            raise NotImplementedError('Wiki namespace {} not implemented'.format(article_namespace))
+
+    @wiki_article_namespaced.child('edit')
+    @gefolge_web.util.template('wiki-edit')
+    def wiki_edit(article_name, article_namespace):
+        source = get_article_source(article_namespace, article_name)
+        wiki_edit_form = WikiEditForm(article_namespace, article_name, article_source)
+        if wiki_edit_form.submit_wiki_edit_form.data and wiki_edit_form.validate():
+            article_path = WIKI_ROOT / namespace / '{}.md'.format(article_name)
+            #TODO save new article source
+            return flask.redirect(flask.g.view_node.parent.url)
+        return {
+            'article_name': article_name,
+            'article_namespace': article_namespace,
+            'article_source': source,
+            'wiki_edit_form': wiki_edit_form
         }
 
 def get_article_source(namespace, article_name):

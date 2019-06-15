@@ -203,7 +203,7 @@ def setup(index, app):
             nonlocal snip_start
             nonlocal snip_end
 
-            timestamp = pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(date, datetime.time(hour)), is_dst=None)
+            timestamp = event.timezone.localize(datetime.datetime.combine(date, datetime.time(hour)), is_dst=None)
             if filled_until is not None and filled_until > timestamp:
                 return '' # this cell is already filled
             if timestamp < event.start or timestamp >= event.end:
@@ -213,7 +213,7 @@ def setup(index, app):
                 return jinja2.Markup('<td></td>') # nothing planned yet
             elif len(events_starting_now) == 1:
                 calendar_event = more_itertools.one(events_starting_now)
-                hours = math.ceil((min(calendar_event.end, pytz.timezone('Europe/Berlin').localize(datetime.datetime.combine(date + datetime.timedelta(days=1), datetime.time()), is_dst=None)) - timestamp) / datetime.timedelta(hours=1))
+                hours = math.ceil((min(calendar_event.end, event.timezone.localize(datetime.datetime.combine(date + datetime.timedelta(days=1), datetime.time()), is_dst=None)) - timestamp) / datetime.timedelta(hours=1))
                 filled_until = timestamp + datetime.timedelta(hours=hours) #TODO support for events that go past midnight
                 if hour < 6 and hour + hours >= 6:
                     # goes over 06:00, remove snip entirely

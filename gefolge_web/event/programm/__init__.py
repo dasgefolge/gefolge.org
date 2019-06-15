@@ -159,14 +159,14 @@ class Programmpunkt:
             return True # always allow the admin to edit since they have write access to the database anyway
         if self.event.orga('Programm') == editor:
             return True # allow the Programm orga to edit past events for archival purposes
-        if self.event.end < gefolge_web.util.now():
+        if self.event.end < gefolge_web.util.now(self.event.timezone):
             return False # event frozen
         return self.orga == editor
 
     def can_signup(self, editor, person):
         if editor == gefolge_web.login.Mensch.admin():
             return True # always allow the admin to edit since they have write access to the database anyway
-        if self.event.end < gefolge_web.util.now():
+        if self.event.end < gefolge_web.util.now(self.event.timezone):
             return False # event frozen
         return (
             (editor == person or (person.is_guest and person.via == editor) or editor == self.event.orga('Programm'))
@@ -204,7 +204,7 @@ class Programmpunkt:
     def end(self):
         end_str = self.data.get('end')
         if end_str is not None:
-            return gefolge_web.util.parse_iso_datetime(end_str)
+            return gefolge_web.util.parse_iso_datetime(end_str, tz=self.event.timezone)
 
     @end.setter
     def end(self, value):
@@ -320,7 +320,7 @@ class Programmpunkt:
     def start(self):
         start_str = self.data.get('start')
         if start_str is not None:
-            return gefolge_web.util.parse_iso_datetime(start_str)
+            return gefolge_web.util.parse_iso_datetime(start_str, tz=self.event.timezone)
 
     @start.setter
     def start(self, value):
