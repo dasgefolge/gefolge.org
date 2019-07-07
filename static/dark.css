@@ -1,0 +1,80 @@
+@media (prefers-color-scheme: dark) {
+    body,
+    .form-control {
+        background-color: black;
+        color: #bbb;
+    }
+
+    img[src="/static/gefolge.png"] {
+        filter: invert(1);
+    }
+
+    a:focus, a:hover {
+        color: #43a2f2;
+    }
+
+    blockquote {
+        border-left: 5px solid #444;
+    }
+
+    code {
+        color: #f9f2f4;
+        background-color: #c7254e;
+    }
+
+    .alert-danger,
+    .table > tbody > tr > td.danger {
+        background-color: #a94442;
+    }
+
+    .alert-danger,
+    .text-danger {
+        color: #f2dede;
+    }
+
+    .alert-danger {
+        border-color: #b0564e;
+    }
+
+    .alert-info,
+    .table > tbody > tr > td.info {
+        background-color: #31708f;
+    }
+
+    .alert-info,
+    .test-info {
+        color: #d9edf7;
+    }
+
+    .alert-info {
+        border-color: #4e7495;
+    }
+
+    .alert-success,
+    .table > tbody > tr > td.success {
+        background-color: #3c763d;
+    }
+
+    .alert-success,
+    .text-success {
+        color: #dff0d8;
+    }
+
+    .alert-success {
+        border-color: #457d4f;
+    }
+
+    .alert-warning,
+    .table > tobdy > tr > td.warning {
+        background-color: #8a6d3b;
+    }
+
+    .alert-warning,
+    .text-warning {
+        color: #fcf8e3;
+    }
+
+    .alert-warning {
+        border-color: #8c8352;
+    }
+}
