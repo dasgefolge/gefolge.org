@@ -307,10 +307,10 @@ class Event(metaclass=EventMeta):
         ), ([] if self.start is None else (
             gefolge_web.event.programm.essen.Abendessen(self, date)
             for date in self.nights
-        )), [
-            gefolge_web.event.programm.magic.CustomMagicDraft(self),
-        ], (
-            [] if werewolf_web is None else [werewolf_web.RealtimeWerewolf(self)]
+        )), (
+            [] if self.event_id in gefolge_web.event.programm.magic.config().get('skippedEvents', []) else [gefolge_web.event.programm.magic.CustomMagicDraft(self)]
+        ), (
+            [] if werewolf_web is None or not werewolf_web.Setup(self).data_path.parent.exists() else [werewolf_web.RealtimeWerewolf(self)]
         )))
 
     def signup(self, mensch, anzahlung=None):
