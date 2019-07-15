@@ -97,8 +97,11 @@ def ProfileForm(event, person):
     else:
         Form.section_programm_intro = gefolge_web.forms.FormText(jinja2.Markup('Nachdem du dich angemeldet hast, kannst du dich auf der <a href="{}">Programmseite</a> für Programmpunkte als interessiert eintragen.'.format(flask.url_for('event_programm', event=event.event_id))))
 
+    header_generated = False
     if person not in event.signups and person == flask.g.user and event.anzahlung is not None and event.ausfall > event.anzahlung_total + event.anzahlung:
-        Form.section_money = gefolge_web.forms.FormSection('Anzahlung')
+        if not header_generated:
+            Form.section_signup = gefolge_web.forms.FormSection('Anmeldung')
+            header_generated = True
         if event.ausfall_date is None:
             Form.section_money_intro = gefolge_web.forms.FormText('Wir können erst buchen, wenn die Ausfallgebühr von {} gesichert ist. Dazu fehlen noch {}, also {} Anmeldungen. Damit wir früher buchen können, kannst du freiwillig eine höhere Anzahlung bezahlen. Du bekommst den zusätzlichen Betrag wieder gutgeschrieben, wenn sich genug weitere Menschen angemeldet haben, dass ihre Anzahlungen ihn decken. Er wird nur behalten, um die Ausfallgebühr zu bezahlen, falls das event komplett ausfällt.'.format(event.ausfall, event.ausfall - event.anzahlung_total, math.ceil((event.ausfall - event.anzahlung_total).value / event.anzahlung.value)))
         else:
@@ -109,8 +112,13 @@ def ProfileForm(event, person):
             wtforms.validators.NumberRange(max=event.ausfall - event.anzahlung_total, message='Wir benötigen nur noch %(max)s, um die Ausfallgebühr abzudecken.'),
             wtforms.validators.NumberRange(max=person.balance, message=jinja2.Markup('Dein aktuelles Guthaben ist {}. Auf <a href="{}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.'.format(flask.g.user.balance, flask.url_for('profile', mensch=flask.g.user.snowflake))))
         ], default=event.anzahlung)
+    if person == flask.g.user and event.location is not None and event.location.hausordnung is not None and not person_data.get('hausordnung', False): #TODO track last-changed event and hide if current version has already been accepted
+        if not header_generated:
+            Form.section_signup = gefolge_web.forms.FormSection('Anmeldung')
+            header_generated = True
+        Form.hausordnung = wtforms.BooleanField(jinja2.Markup('Ich habe die <a href="{}">Hausordnung</a> zur Kenntnis genommen.'.format(event.location.hausordnung)), [wtforms.validators.DataRequired()])
 
-    Form.submit_profile_form = wtforms.SubmitField('Speichern' if person in event.signups else 'Anmelden')
+    Form.submit_profile_form = wtforms.SubmitField('Anmelden' if header_generated or person not in event.signups else 'Speichern')
     return Form()
 
 def ProgrammAddForm(event):

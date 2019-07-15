@@ -89,6 +89,10 @@ class Location:
         return gefolge_web.util.cached_json(lazyjson.File(LOCATIONS_ROOT / '{}.json'.format(self.loc_id)))
 
     @property
+    def hausordnung(self):
+        return self.data.get('hausordnung')
+
+    @property
     def prefix(self):
         return self.data.get('prefix', 'in ')
 

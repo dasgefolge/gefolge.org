@@ -16,6 +16,7 @@ import gefolge_web.util
 
 def handle_profile_edit(event, person, profile_form):
     person_data = event.attendee_data(person)
+    # Zeitraum
     gefolge_web.util.log('eventProfileEdit', {
         'event': event.event_id,
         'person': person.snowflake,
@@ -32,11 +33,16 @@ def handle_profile_edit(event, person, profile_form):
         person_data['nights'] = {}
     for i, night in enumerate(event.nights):
         person_data['nights']['{:%Y-%m-%d}'.format(night)] = getattr(profile_form, 'night{}'.format(i)).data
+    # Essen
     if hasattr(profile_form, 'allergies'):
         if 'food' not in person_data:
             person_data['food'] = {}
         person_data['food']['animalProducts'] = profile_form.animal_products.data
         person_data['food']['allergies'] = profile_form.allergies.data
+    # Programm
+    # Anmeldung
+    if hasattr(profile_form, 'hausordnung') and profile_form.hausordnung.data:
+        person_data['hausordnung'] = True
 
 def setup(index, app):
     @app.template_test('guest')
