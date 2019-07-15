@@ -41,7 +41,7 @@ class CalendarEvent:
             result.add('uid', 'gefolge-event-{}-{}-{}@gefolge.org'.format(self.programmpunkt.event.event_id, self.programmpunkt.name, self.uid))
         else:
             result.add('uid', 'gefolge-event-{}-{}@gefolge.org'.format(self.programmpunkt.event_id, self.uid))
-        result.add('location', str(self.programmpunkt.location))
+        result.add('location', self.programmpunkt.location.address)
         if isinstance(self.programmpunkt, Programmpunkt):
             result.add('url', flask.url_for('event_programmpunkt', event=self.programmpunkt.event.event_id, programmpunkt=self.programmpunkt.name, _external=True))
         else:

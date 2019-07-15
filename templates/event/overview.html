@@ -11,7 +11,7 @@
             {% if event.end < g.now %}fand{% else %}findet{% endif %}
             vom {{event.start | dmy_hm}} bis zum {{event.end | dmy_hm}}
             {% if event.location is not none %}
-                {{event.location.prefix}}{{event.location}} statt.
+                {{event.location}} statt.
             {% else %}
                 statt. Der Ort steht noch nicht fest.
             {% endif %}

@@ -61,11 +61,18 @@ class Location:
         self.loc_id = loc_id
 
     def __html__(self):
+        result = jinja2.Markup()
+        if 'host' in self.data:
+            result += jinja2.Markup('bei ')
+            result += gefolge_web.login.Mensch(self.data['host'].value()).__html__()
+            result += jinja2.Markup(' ')
+        result += jinja2.escape(self.prefix)
         website = self.data.get('website')
         if website is None:
-            return jinja2.escape(str(self))
+            result += jinja2.escape(str(self))
         else:
-            return jinja2.Markup('<a href="{}">{}</a>'.format(jinja2.escape(website), self))
+            result += jinja2.Markup('<a href="{}">{}</a>'.format(jinja2.escape(website), jinja2.escape(str(self))))
+        return result
 
     def __repr__(self):
         return 'gefolge_web.event.model.Location({!r})'.format(self.loc_id)
@@ -74,12 +81,16 @@ class Location:
         return self.data.get('name', self.loc_id)
 
     @property
+    def address(self):
+        return self.data['address'].value()
+
+    @property
     def data(self):
         return gefolge_web.util.cached_json(lazyjson.File(LOCATIONS_ROOT / '{}.json'.format(self.loc_id)))
 
     @property
     def prefix(self):
-        return self.data.get('prefix', 'in')
+        return self.data.get('prefix', 'in ')
 
     @property
     def timezone(self):
@@ -391,7 +402,7 @@ class Event(metaclass=EventMeta):
         #TODO date created
         #TODO date last modified
         result.add('uid', 'gefolge-event-{}@gefolge.org'.format(self.event_id))
-        result.add('location', str(self.location))
+        result.add('location', self.location.address)
         result.add('url', flask.url_for('event_page', event=self.event_id, _external=True))
         return result
 
