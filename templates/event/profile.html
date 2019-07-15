@@ -88,7 +88,7 @@
         {% if event.can_edit(g.user, person) and event.location.hausordnung is not none and not event.attendee_data(person).get('hausordnung', False) and person is not guest %}
             <h2>Anmeldung</h2>
             {% if g.user == person %}
-                <p><strong>Wichtig:</strong> Bitte lies dir noch die <a href="{{event.location.hausordnung}}">Hausordnung</a> durch. <a href="{{url_for('event_profile_edit', event=event.event_id, person=person.snowflake)}}" class="btn btn-primary">bearbeite</a> dann dein Profil um deine Anmeldung zu bestätigen.</p>
+                <p><strong>Wichtig:</strong> Bitte lies dir noch die <a href="{{event.location.hausordnung}}">Hausordnung</a> durch. <a href="{{url_for('event_profile_edit', event=event.event_id, person=person.snowflake)}}">bearbeite</a> dann dein Profil um deine Anmeldung zu bestätigen.</p>
             {% else %}
                 <p><strong>Wichtig:</strong> {{person}} hat die Hausordnung noch nicht zur Kenntnis genommen.</p>
             {% endif %}
