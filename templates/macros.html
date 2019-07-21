@@ -56,16 +56,29 @@
         {% elif field.type == 'HorizontalButtonGroupField' %}
             <label for="input_description" class="col-sm-2 control-label">{{field.label}}</label>
             <style>
-                {% for choice, color in field.choice_colors %}
+                {% for choice, color_light, color_dark in field.choice_colors %}
                     .btn.hbgf-{{field.id}}-{{choice}} {
-                        color: {{color}};
-                        border-color: {{color}};
+                        color: {{color_light}};
+                        border-color: {{color_light}};
                     }
 
                     .btn.hbgf-{{field.id}}-{{choice}}.active {
                         color: white;
-                        border-color: {{color}};
-                        background-color: {{color}};
+                        border-color: {{color_light}};
+                        background-color: {{color_light}};
+                    }
+
+                    @media (prefers-color-scheme: dark) {
+                        .btn.hbgf-{{field.id}}-{{choice}} {
+                            color: {{color_dark}};
+                            border-color: {{color_dark}};
+                        }
+
+                        .btn.hbgf-{{field.id}}-{{choice}}.active {
+                            color: black;
+                            border-color: {{color_dark}};
+                            background-color: {{color_dark}};
+                        }
                     }
                 {% endfor %}
             </style>

@@ -15,7 +15,7 @@ def cmd(cmd, *args, check=True, expected_response=object()):
         if process.returncode == 0 and response == expected_response:
             return True
         else:
-            #TODO send email if failed
+            #TODO send email
             return False
 
 # one function for every IPC command implemented in listen_ipc

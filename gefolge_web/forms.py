@@ -47,9 +47,16 @@ class HorizontalButtonGroupField(wtforms.RadioField):
     def __init__(self, label, validators=None, choices=None, **kwargs):
         super_choices = []
         self.choice_colors = []
-        for name, choice_label, color in choices:
+        for choice in choices:
+            if len(choice) == 3:
+                name, choice_label, color_light = choice
+                color_dark = color_light
+            elif len(choice) == 4:
+                name, choice_label, color_light, color_dark = choice
+            else:
+                raise ValueError('Choice must have 3 or 4 elements, found {!r} ({} elements)'.format(choice, len(choice)))
             super_choices.append((name, choice_label))
-            self.choice_colors.append((name, color))
+            self.choice_colors.append((name, color_light, color_dark))
         super().__init__(label, validators, choices=super_choices, **kwargs)
         self.type = 'HorizontalButtonGroupField'
 
