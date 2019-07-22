@@ -239,7 +239,7 @@ class Programmpunkt:
             submit_text = self.strings.signup_other_button.format('Gewählte Person' if self.strings.signup_other_button.startswith('{') else 'gewählte Person')
 
         if 'challonge' in self.data:
-            Form.challonge_username = wtforms.TextField(jinja2.Markup('<a href="">Challonge</a> username'), [wtforms.validators.Regexp('^[0-9A-Za-z_]*$')], description='optional')
+            Form.challonge_username = wtforms.TextField(jinja2.Markup('<a href="https://challonge.com/">Challonge</a> username'), [wtforms.validators.Regexp('^[0-9A-Za-z_]*$')], description={'placeholder': 'optional'})
 
         if self.add_form_details(Form, editor) and submit_text is None:
             submit_text = self.strings.edit_signup_button
