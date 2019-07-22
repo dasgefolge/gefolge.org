@@ -29,18 +29,27 @@
         </p>
         <h2>Aufladen</h2>
         <p>Du kannst dein Guthaben per Überweisung an {{g.admin}} aufladen.</p>
-        {% if 'konto' in g.admin.userdata %}
-            <p>Mit SEPA-Überweisung an:</p>
-            <p>
-                {{g.admin.userdata['konto']['name']}}<br />
-                IBAN: {{g.admin.userdata['konto']['iban']}}<br />
-                BIC: {{g.admin.userdata['konto']['bic']}}<br />
-                Verwendungszweck: gefolge.org {{mensch.snowflake}}
-            </p>
-        {% endif %}
-        {% if 'payPal' in g.admin.userdata %}
-            <p>Mit PayPal: <a href="https://www.paypal.me/{{g.admin.userdata['payPal']}}">paypal.me/{{g.admin.userdata['payPal']}}</a></p>
-        {% endif %}
+        {% set num_cols = (1 if 'konto' in g.admin.userdata else 0) + (1 if 'payPal' in g.admin.userdata else 0) %}
+        <div class="row">
+            {% if 'konto' in g.admin.userdata %}
+                <div class="col-md-{{12 / num_cols}}">
+                    <h3>SEPA-Überweisung</h3>
+                    <p>
+                        Name: {{g.admin.userdata['konto']['name']}}<br />
+                        IBAN: {{g.admin.userdata['konto']['iban']}}<br />
+                        BIC: {{g.admin.userdata['konto']['bic']}}<br />
+                        Verwendungszweck: gefolge.org {{mensch.snowflake}}
+                    </p>
+                </div>
+            {% endif %}
+            {% if 'payPal' in g.admin.userdata %}
+                <div class="col-md-{{12 / num_cols}}">
+                    <h3>PayPal</h3>
+                    <p><a href="https://www.paypal.me/{{g.admin.userdata['payPal']}}">paypal.me/{{g.admin.userdata['payPal']}}</a></p>
+                    <p>Bitte schreibe „gefolge.org {{mensch.snowflake}}“ in die Mitteilung.</p>
+                </div>
+            {% endif %}
+        </div>
         <h2>Übertragen</h2>
         <p>Du kannst Geld von deinem Guthaben an andere Gefolgemenschen übertragen.</p>
         {% if g.user.is_admin or mensch.balance.value > 0 %}
