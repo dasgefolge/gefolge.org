@@ -208,6 +208,12 @@ class Event(metaclass=EventMeta):
             return True
         return False
 
+    def capacity(self, night):
+        if 'capacity' in self.data:
+            return self.data['capacity']['{:%Y-%m-%d}'.format(night)].value()
+        else:
+            return self.location.data['capacity'].value()
+
     def confirm_guest_signup(self, guest, *, message=None):
         if message is None:
             message = not self.orga('Abrechnung').is_admin
@@ -236,11 +242,14 @@ class Event(metaclass=EventMeta):
         else:
             raise ValueError('Datum liegt außerhalb des event')
 
-    @property
-    def free(self):
-        return self.location.data['capacity'].value() - max(
-            len(self.night_signups(night)) + len(self.night_maybes(night))
-            for night in self.nights
+    def free(self, start=None, end=None):
+        if start is None:
+            start = self.start.date()
+        if end is None:
+            end = self.end.date()
+        return min(
+            self.capacity(night) - len(self.night_signups(night)) + len(self.night_maybes(night))
+            for night in gefolge_web.util.date_range(start, end)
         )
 
     @property

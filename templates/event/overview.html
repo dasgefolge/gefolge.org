@@ -32,19 +32,38 @@
             {# Menschen #}
             <a href="{{(g.view_node / 'mensch').url}}">{% if event.signups | length == 1 %}ein Mensch{% else %}{{event.signups | length}} Menschen{% endif %}</a> {% if num_programm > 1 and event.signups | length < 2 %}ist{% elif num_programm == 1 and event.signups | length > 1 %}sind{% endif %} angemeldet.
             {# freie Plätze #}
-            {% if 'capacity' in event.location.data %}
+            {% if 'capacity' in event.data %}
+                {% macro block_overview(block_start, block_end, capacity, free) %}
+                    Vom {{block_start | dm}} bis zum {{block_end | dm}} gibt es {{capacity}} Betten,
+                    {% if free > 0 %}
+                        von denen noch {% if free > 1 %}{{free}} frei sind{% else %}eins frei ist{% endif %}.
+                    {% elif free == 0 %}
+                        die mindestens in einer Nacht genau alle belegt sind (die Warteliste ist für diesen Zeitraum im Moment leer).
+                    {% else %}
+                        die mindestens in einer Nacht alle belegt sind und es {% if free < -1 %}stehen {{(-free)}} Menschen{% else %}steht ein Mensch{% endif %} auf der Warteliste.
+                    {% endif %}
+                {% endmacro %}
+                {% set block_start = event.start.date() %}
+                {% for block_end in event.nights %}
+                    {% if event.capacity(block_end) != event.capacity(block_start) %}
+                        {{block_overview(block_start, block_end, event.capacity(block_start), event.free(block_start, block_end))}}
+                        {% set block_start = block_end %}
+                    {% endif %}
+                {% endwhile %}
+                {{block_overview(block_start, event.end.date(), event.capacity(block_start), event.free(block_start, event.end.date()))}}
+            {% elif 'capacity' in event.location.data %}
                 {% set capacity = event.location.data['capacity'].value() %}
                 {% set naive_free = capacity - (event.signups | length) %}
-                {% set free = event.free %}
+                {% set free = event.free() %}
                 {% if free != naive_free %}
                     Weil {% if free - naive_free > 1 %}{{free - naive_free}} Paare von Menschen jeweils nicht gleichzeitig da sind{% else %}zwei Menschen nicht gleichzeitig da sind{% endif %}, sind aber erst {{capacity - free}} Plätze belegt.
                 {% endif %}
                 {% if free > 0 %}
                     Das Haus hat {{capacity}} Betten, es {% if free > 1 %}sind{% else %}ist{% endif %} also noch {{free}} Bett{% if free > 1 %}en{% endif %} frei.
                 {% elif free == 0 %}
-                    Damit ist das Haus exakt voll. Die Warteliste ist im Moment leer.
+                    Damit ist das Haus zumindest zeitweise exakt voll. Die Warteliste ist im Moment leer. {#TODO check for free nights, adjust message accordingly #}
                 {% else %}
-                    Das Haus hat {{capacity}} Betten, es {% if free < -1 %}stehen{% else %}steht{% endif %} also {{(-free)}} Mensch{% if free < -1 %}en{% endif %} auf der Warteliste.
+                    Das Haus hat {{capacity}} Betten, es {% if free < -1 %}stehen{% else %}steht{% endif %} also {{(-free)}} Mensch{% if free < -1 %}en{% endif %} auf der Warteliste. (Möglicherweise sind für manche Nächte noch Plätze frei.) {#TODO check for free nights, adjust message accordingly #}
                 {% endif %}
             {% endif %}
         {% else %}
@@ -134,9 +153,9 @@
             {% endif %}
         {% endif %}
     {% else %}
-        {% if 'capacity' in event.location.data and event.free <= 0 %}
+        {% if 'capacity' in event.location.data and event.free() <= 0 %}
             <div class="alert alert-warning">
-                <strong>Achtung:</strong> Das Haus ist schon voll. Du kannst dich trotzdem anmelden und kommst dann auf die Warteliste. Wenn jemand absagt, rückt der erste Mensch auf der Warteliste nach. {#TODO check for free nights, adjust message accordingly #}
+                <strong>Achtung:</strong> Das Haus ist zumindest zeitweise schon voll. Du kannst dich trotzdem anmelden und kommst dann auf die Warteliste. Wenn jemand absagt, rückt der erste Mensch auf der Warteliste nach. {#TODO check for free nights, adjust message accordingly #}
                 {% if event.anzahlung is none or event.anzahlung.value > 0 %}
                     Falls kein Platz für dich frei wird, bekommst du deine Anzahlung natürlich zurück.
                 {% endif %}

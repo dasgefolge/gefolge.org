@@ -5,9 +5,9 @@
 {% block page_content %}
     {% if event.end > g.now or g.user.is_admin %}
         <p>Hier kannst du Gäste für {{event}} anmelden.</p>
-        {% if 'capacity' in event.location.data and event.free <= 0 %}
+        {% if 'capacity' in event.location.data and event.free() <= 0 %}
             <div class="alert alert-warning">
-                <strong>Achtung:</strong> Das Haus ist schon voll. Du kannst den Gast trotzdem anmelden. Er kommt dann auf die Warteliste. Wenn jemand absagt, rückt der erste Mensch auf der Warteliste nach. {#TODO check for free nights, adjust message accordingly #}
+                <strong>Achtung:</strong> Das Haus ist zumindest zeitweise schon voll. Du kannst den Gast trotzdem anmelden. Er kommt dann auf die Warteliste. Wenn jemand absagt, rückt der erste Mensch auf der Warteliste nach. {#TODO check for free nights, adjust message accordingly #}
                 {% if event.anzahlung is none or event.anzahlung.value > 0 %}
                     Falls kein Platz frei wird, {% if event.orga('Abrechnung') == g.admin %}bekommst du{% else %}bekommt der Gast{% endif %} die Anzahlung natürlich zurück.
                 {% endif %}
