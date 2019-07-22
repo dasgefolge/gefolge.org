@@ -49,7 +49,7 @@
                         {{block_overview(block_start, block_end, event.capacity(block_start), event.free(block_start, block_end))}}
                         {% set block_start = block_end %}
                     {% endif %}
-                {% endwhile %}
+                {% endfor %}
                 {{block_overview(block_start, event.end.date(), event.capacity(block_start), event.free(block_start, event.end.date()))}}
             {% elif 'capacity' in event.location.data %}
                 {% set capacity = event.location.data['capacity'].value() %}
