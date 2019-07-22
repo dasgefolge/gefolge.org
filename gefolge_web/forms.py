@@ -1,6 +1,7 @@
 import decimal
 import flask_pagedown.fields
 import wtforms
+import wtforms.ext.dateutil.fields
 
 import gefolge_web.util
 
@@ -10,6 +11,11 @@ class AnnotatedStringField(wtforms.StringField):
         self.type = 'AnnotatedStringField'
         self.prefix = prefix
         self.suffix = suffix
+
+class DateTimeField(wtforms.ext.dateutil.fields.DateTimeField):
+    def __init__(self, *args, display_format='%d.%m.%Y %H:%M', tz=pytz.timezone('Europe/Berlin'), **kwargs):
+        super().__init__(*args, display_format=display_format, **kwargs)
+        self.timezone = tz
 
 class EuroField(AnnotatedStringField):
     """A form field that validates to the Euro class. Some code derived from wtforms.DecimalField."""

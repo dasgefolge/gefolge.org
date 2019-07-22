@@ -144,8 +144,8 @@ def ProgrammEditForm(programmpunkt):
 
     class Form(flask_wtf.FlaskForm):
         orga = PersonField(programmpunkt.event, 'Orga', [validate_orga], optional_label='Orga gesucht', allow_guests=False, default=programmpunkt.orga) #TODO disable (https://getbootstrap.com/docs/3.3/css/#forms-control-disabled) if not allowed to edit
-        start = wtforms.DateTimeField('Beginn', [wtforms.validators.Optional()], format='%d.%m.%Y %H:%M', default=programmpunkt.start)
-        end = wtforms.DateTimeField('Ende', [wtforms.validators.Optional()], format='%d.%m.%Y %H:%M', default=programmpunkt.end)
+        start = gefolge_web.forms.DateTimeField('Beginn', [wtforms.validators.Optional()], tz=programmpunkt.timezone, default=programmpunkt.start)
+        end = gefolge_web.forms.DateTimeField('Ende', [wtforms.validators.Optional()], tz=programmpunkt.timezone, default=programmpunkt.end)
         description = gefolge_web.forms.MarkdownField('Beschreibung', default=programmpunkt.description)
         submit_programm_edit_form = wtforms.SubmitField('Speichern')
 

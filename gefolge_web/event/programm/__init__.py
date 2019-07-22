@@ -204,7 +204,7 @@ class Programmpunkt:
     def end(self):
         end_str = self.data.get('end')
         if end_str is not None:
-            return gefolge_web.util.parse_iso_datetime(end_str, tz=self.event.timezone)
+            return gefolge_web.util.parse_iso_datetime(end_str, tz=self.timezone)
 
     @end.setter
     def end(self, value):
@@ -320,7 +320,7 @@ class Programmpunkt:
     def start(self):
         start_str = self.data.get('start')
         if start_str is not None:
-            return gefolge_web.util.parse_iso_datetime(start_str, tz=self.event.timezone)
+            return gefolge_web.util.parse_iso_datetime(start_str, tz=self.timezone)
 
     @start.setter
     def start(self, value):
@@ -337,6 +337,15 @@ class Programmpunkt:
     @property
     def strings(self):
         return Strings.from_json(self.data.get('strings', {}), defaults=self.default_strings)
+
+    @property
+    def timezone(self):
+        if 'timezone' in self.data:
+            return pytz.timezone(self.data['timezone'].value())
+        elif self.location is not None:
+            return self.location.timezone
+        else:
+            return pytz.timezone('Europe/Berlin')
 
     @property
     def url_part(self):
