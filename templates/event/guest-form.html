@@ -35,6 +35,9 @@
                         <li>Bis zum {{event.ausfall_date | dmy}} müssen wir die Ausfallgebühr von {{event.ausfall}} abdecken. Dazu fehlen noch {{((event.ausfall - event.anzahlung_total).value / event.anzahlung.value) | round(0, 'ceil') | int}} Anmeldungen.</li>
                     {% endif %}
                 {% endif %}
+                {% if event.location.hausordnung is not none %}
+                    <li>Du bist dafür verantwortlich, dass der Gast die <a href="{{event.location.hausordnung}}">Hausordnung</a> einhält.</li>
+                {% endif %}
             </ul>
             {% if event.anzahlung.value > 0 and event.orga('Abrechnung') == g.admin and not g.user.is_admin and g.user.balance < event.anzahlung %}
                 <p>Dein aktuelles Guthaben ist {{g.user.balance}}, es fehlen also noch {{event.anzahlung - g.user.balance}} für die Anzahlung. Auf <a href="{{url_for('profile', mensch=g.user.snowflake)}}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.</p>
