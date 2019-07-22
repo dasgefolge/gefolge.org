@@ -1,3 +1,4 @@
+import challonge # package: pychal
 import class_key
 import flask
 import flask_wtf
@@ -237,6 +238,9 @@ class Programmpunkt:
             Form.person_to_signup = gefolge_web.event.forms.PersonField(self.event, 'Mensch', person_filter=lambda person: person in people_allowed_to_sign_up, default=editor if editor in people_allowed_to_sign_up else people_allowed_to_sign_up[0])
             submit_text = self.strings.signup_other_button.format('Gewählte Person' if self.strings.signup_other_button.startswith('{') else 'gewählte Person')
 
+        if 'challonge' in self.data:
+            Form.challonge_username = wtforms.TextField(jinja2.Markup('<a href="">Challonge</a> username'), [wtforms.validators.Regexp('^[0-9A-Za-z_]*$')], description='optional')
+
         if self.add_form_details(Form, editor) and submit_text is None:
             submit_text = self.strings.edit_signup_button
 
@@ -292,6 +296,12 @@ class Programmpunkt:
                 flask.flash('Du bist nicht berechtigt, {} für diesen Programmpunkt anzumelden.'.format(person_to_signup), 'error')
                 return flask.redirect(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.name))
             self.signup(person_to_signup)
+        if 'challonge' in self.data:
+            if form.challonge.data:
+                challonge.participants.create(self.data['challonge'], challonge_username=form.challonge.data, misc='id{}'.format(person_to_signup.snowflake))
+            else:
+                challonge.participants.create(self.data['challonge'], name=person_to_signup.name, misc='id{}'.format(person_to_signup.snowflake))
+
         self.process_form_details(form, editor)
 
     def signup(self, person):

@@ -4,6 +4,7 @@ import sys
 
 sys.path.append('/opt/py')
 
+import challonge # package: pychal
 import flask
 import flask_bootstrap
 import flask_pagedown
@@ -40,6 +41,9 @@ with app.app_context():
     # load config
     if gefolge_web.util.CONFIG_PATH.exists():
         app.config.update(gefolge_web.util.cached_json(lazyjson.File(gefolge_web.util.CONFIG_PATH)).value())
+    # set up Challonge API client
+    if 'challonge' in app.config:
+        challonge.set_credentials(app.config['challonge']['username'], app.config['challonge']['apiKey'])
     # set up Bootstrap
     flask_bootstrap.Bootstrap(app)
     # set up Markdown

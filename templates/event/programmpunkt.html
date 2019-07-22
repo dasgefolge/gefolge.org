@@ -23,6 +23,9 @@
     {% else %}
         <p>Dieser Programmpunkt wird von {{programmpunkt.orga}} organisiert.</p>
     {% endif %}
+    {% if challonge_url is not none %}
+        <p><a href="{{challonge_url}}">Bracket und Ergebnisse</a></p>
+    {% endif %}
     <h2>Beschreibung</h2>
     {{programmpunkt.description | markdown}}
     {% if programmpunkt.orga_notes is not none and (g.user.is_admin or g.user == event.orga(programmpunkt.orga_role) or g.user == programmpunkt.orga) %}
