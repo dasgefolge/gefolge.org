@@ -297,8 +297,8 @@ class Programmpunkt:
                 return flask.redirect(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.name))
             self.signup(person_to_signup)
         if 'challonge' in self.data:
-            if form.challonge.data:
-                challonge.participants.create(self.data['challonge'], challonge_username=form.challonge.data, misc='id{}'.format(person_to_signup.snowflake))
+            if form.challonge_username.data:
+                challonge.participants.create(self.data['challonge'], challonge_username=form.challonge_username.data, misc='id{}'.format(person_to_signup.snowflake))
             else:
                 challonge.participants.create(self.data['challonge'], name=person_to_signup.name, misc='id{}'.format(person_to_signup.snowflake))
 
