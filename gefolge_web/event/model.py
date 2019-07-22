@@ -250,7 +250,7 @@ class Event(metaclass=EventMeta):
         if end is None:
             end = self.end.date()
         return min(
-            self.capacity(night) - len(self.night_signups(night)) + len(self.night_maybes(night))
+            self.capacity(night) - len(self.night_signups(night)) - len(self.night_maybes(night))
             for night in gefolge_web.util.date_range(start, end)
         )
 
