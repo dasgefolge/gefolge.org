@@ -43,14 +43,14 @@
                         die mindestens in einer Nacht alle belegt sind und es {% if free < -1 %}stehen {{(-free)}} Menschen{% else %}steht ein Mensch{% endif %} auf der Warteliste.
                     {% endif %}
                 {% endmacro %}
-                {% set block_start = event.start.date() %}
+                {% set ns = namespace(block_start=event.start.date()) %}
                 {% for block_end in event.nights %}
-                    {% if event.capacity(block_end) != event.capacity(block_start) %}
-                        {{block_overview(block_start, block_end, event.capacity(block_start), event.free(block_start, block_end))}}
-                        {% set block_start = block_end %}
+                    {% if event.capacity(block_end) != event.capacity(ns.block_start) %}
+                        {{block_overview(ns.block_start, block_end, event.capacity(ns.block_start), event.free(ns.block_start, block_end))}}
+                        {% set ns.block_start = block_end %}
                     {% endif %}
                 {% endfor %}
-                {{block_overview(block_start, event.end.date(), event.capacity(block_start), event.free(block_start, event.end.date()))}}
+                {{block_overview(ns.block_start, event.end.date(), event.capacity(ns.block_start), event.free(ns.block_start, event.end.date()))}}
             {% elif 'capacity' in event.location.data %}
                 {% set capacity = event.location.data['capacity'].value() %}
                 {% set naive_free = capacity - (event.signups | length) %}
