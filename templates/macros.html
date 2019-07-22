@@ -53,6 +53,18 @@
                     </label>
                 </div>
             </div>
+        {% elif field.type == 'DateTimeField' %}
+            <label for="input_description" class="col-sm-2 control-label">{{field.label}}</label>
+            <div class="col-sm-10">
+                <div class="input-group dt-field" data-format="{{field.moment_format}}" data-timestamp="{{field.default}}" data-timezone="{{field.timezone}}">
+                    {% if 'placeholder' in field.description %}
+                        {{field(class="form-control", placeholder=field.description['placeholder'])}}
+                    {% else %}
+                        {{field(class="form-control")}}
+                    {% endif %}
+                    <span class="input-group-addon">{{field.timezone}}</span>
+                </div>
+            </div>
         {% elif field.type == 'HorizontalButtonGroupField' %}
             <label for="input_description" class="col-sm-2 control-label">{{field.label}}</label>
             <style>

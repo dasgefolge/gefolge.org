@@ -14,8 +14,9 @@ class AnnotatedStringField(wtforms.StringField):
         self.suffix = suffix
 
 class DateTimeField(wtforms.ext.dateutil.fields.DateTimeField):
-    def __init__(self, *args, display_format='%d.%m.%Y %H:%M', tz=pytz.timezone('Europe/Berlin'), **kwargs):
-        super().__init__(*args, display_format=display_format, **kwargs)
+    def __init__(self, *args, formats=('%d.%m.%Y %H:%M', 'DD.MM.YYYY HH:mm'), tz=pytz.timezone('Europe/Berlin'), **kwargs):
+        super().__init__(*args, **kwargs, display_format=formats[0])
+        self.moment_format = formats[1]
         self.timezone = tz
 
 class EuroField(AnnotatedStringField):
