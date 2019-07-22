@@ -176,13 +176,15 @@ class Event(metaclass=EventMeta):
                 start=self.timezone.localize(datetime.datetime(self.end.year, 1, 1), is_dst=None),
                 end=self.timezone.localize(datetime.datetime(self.end.year, 1, 1, 1), is_dst=None)
             )] if self.end.year > self.start.year else []
-        ), [gefolge_web.event.programm.CalendarEvent(
-            self, 'endreinigung',
-            text='Endreinigung',
-            html='Endreinigung',
-            start=self.end - datetime.timedelta(hours=2),
-            end=self.end
-        )], itertools.chain.from_iterable(
+        ), (
+            [gefolge_web.event.programm.CalendarEvent(
+                self, 'endreinigung',
+                text='Endreinigung',
+                html='Endreinigung',
+                start=self.end - datetime.timedelta(hours=2),
+                end=self.end
+            )] if self.location is not None and 'host' not in self.location.data else []
+        ), itertools.chain.from_iterable(
             programmpunkt.calendar_events
             for programmpunkt in self.programm
         )))
