@@ -32,7 +32,7 @@
         {% set num_cols = (1 if 'konto' in g.admin.userdata else 0) + (1 if 'payPal' in g.admin.userdata else 0) %}
         <div class="row">
             {% if 'konto' in g.admin.userdata %}
-                <div class="col-md-{{12 / num_cols}}">
+                <div class="col-md-{{12 / num_cols | int}}">
                     <h3>SEPA-Überweisung</h3>
                     <p>
                         Name: {{g.admin.userdata['konto']['name']}}<br />
@@ -43,7 +43,7 @@
                 </div>
             {% endif %}
             {% if 'payPal' in g.admin.userdata %}
-                <div class="col-md-{{12 / num_cols}}">
+                <div class="col-md-{{12 / num_cols | int}}">
                     <h3>PayPal</h3>
                     <p><a href="https://www.paypal.me/{{g.admin.userdata['payPal']}}">paypal.me/{{g.admin.userdata['payPal']}}</a></p>
                     <p>Bitte schreibe „gefolge.org {{mensch.snowflake}}“ in die Mitteilung.</p>
