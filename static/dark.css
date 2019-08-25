@@ -65,7 +65,7 @@
     }
 
     .alert-warning,
-    .table > tobdy > tr > td.warning {
+    .table > tbody > tr > td.warning {
         background-color: #8a6d3b;
     }
 
