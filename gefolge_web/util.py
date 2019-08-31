@@ -1,5 +1,4 @@
 import class_key
-import contextlib
 import copy
 import datetime
 import dateutil.parser
@@ -302,11 +301,18 @@ def render_template(template_name=None, **kwargs):
     return jinja2.Markup(flask.render_template(template_path, **kwargs))
 
 def setup(app):
+    for error_code in {403, 404}:
+        app.register_error_handler(error_code, lambda e: (render_template('error.{}'.format(error_code)), error_code))
+
     @app.errorhandler(500)
     def internal_server_error(e):
-        with contextlib.suppress(Exception):
+        try:
             notify_crash(e)
-        return 'Internal Server Error', 500 #TODO formatted error page
+        except Exception:
+            reported = False
+        else:
+            reported = True
+        return render_template('error.500', reported=reported), 500
 
     @app.template_filter()
     def dt_format(value, format='%d.%m.%Y %H:%M:%S'):

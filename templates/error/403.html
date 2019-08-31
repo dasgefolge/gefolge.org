@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Fehler — Das Gefolge{% endblock %}
+
+{% block nav %}
+    <div class="row">
+        <div class="col-12 col-md-9">
+            <nav>
+                <span><a href="{{url_for('index')}}"><img src="{{url_for('.static', filename='gefolge.png')}}" style="height: 32px;" /></a></span>
+                <span>Fehler</span>
+            </nav>
+        </div>
+        <div class="col-12 col-md-3" style="text-align: right;">
+            {% if g.user.is_active %}
+                Angemeldet als {{g.user}}<br /><a href="{{url_for('logout')}}">Abmelden</a>
+            {% else %}
+                <a href="{{url_for('discord.login')}}">Anmelden</a>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block page_content %}
+    <h1>Fehler 403: Forbidden</h1>
+    <p>Du darfst auf diese Seite nicht zugreifen. Das kann z.B. daran liegen, dass sie nur für Admins gedacht ist. Falls du meist, dass du Zugriff haben solltest, sprich es bitte im <a href="https://discordapp.com/channels/355761290809180170/397832322432499712">#dev</a> an.</p>
+    <nav><a href="/">Zurück zur Hauptseite von gefolge.org</a></nav>
+{% endblock %}
