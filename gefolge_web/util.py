@@ -170,7 +170,10 @@ class Transaction:
         elif self.json_data['type'] == 'eventAbrechnung':
             import gefolge_web.event.model
 
-            event = gefolge_web.event.model.Event(self.json_data['event'])
+            try:
+                event = gefolge_web.event.model.Event(self.json_data['event'])
+            except FileNotFoundError:
+                event = jinja2.Markup('abgesagtes event <code>{}</code>'.format(jinja2.escape(self.json_data['event'])))
             if 'guest' in self.json_data:
                 return jinja2.Markup('Abrechnung von {} für {}'.format(event.__html__(), jinja2.escape(event.person(self.json_data['guest']))))
             else:
@@ -178,7 +181,10 @@ class Transaction:
         elif self.json_data['type'] == 'eventAnzahlung':
             import gefolge_web.event.model
 
-            event = gefolge_web.event.model.Event(self.json_data['event'])
+            try:
+                event = gefolge_web.event.model.Event(self.json_data['event'])
+            except FileNotFoundError:
+                event = jinja2.Markup('abgesagtes event <code>{}</code>'.format(jinja2.escape(self.json_data['event'])))
             if 'guest' in self.json_data:
                 return jinja2.Markup('Anzahlung für {} für {}'.format(event.__html__(), jinja2.escape(event.person(self.json_data['guest']))))
             else:
@@ -186,7 +192,10 @@ class Transaction:
         elif self.json_data['type'] == 'eventAnzahlungReturn':
             import gefolge_web.event.model
 
-            event = gefolge_web.event.model.Event(self.json_data['event'])
+            try:
+                event = gefolge_web.event.model.Event(self.json_data['event'])
+            except FileNotFoundError:
+                event = jinja2.Markup('abgesagtes event <code>{}</code>'.format(jinja2.escape(self.json_data['event'])))
             return jinja2.Markup('{}Rückzahlung der erhöhten Anzahlung für {}{}'.format('Teilweise ' if self.json_data['extraRemaining'] > 0 else '', event.__html__(), ' (noch {})'.format(Euro(self.json_data['extraRemaining'])) if self.json_data['extraRemaining'] > 0 else ''))
         elif self.json_data['type'] == 'payPal':
             return jinja2.Markup('PayPal-Überweisung')
