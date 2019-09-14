@@ -1,13 +1,14 @@
-import challonge # package: pychal
 import datetime
-import flask
-import icalendar
 import itertools
-import jinja2
 import math
-import more_itertools
-import pytz
 import re
+
+import challonge # PyPI: pychal
+import flask # PyPI: Flask
+import icalendar # PyPI: icalendar
+import jinja2 # PyPI: Jinja2
+import more_itertools # PyPI: more-itertools
+import pytz # PyPI: pytz
 
 import gefolge_web.event.forms
 import gefolge_web.event.model

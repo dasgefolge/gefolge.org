@@ -1,13 +1,15 @@
-import challonge # package: pychal
-import class_key
-import flask
-import flask_wtf
-import icalendar
-import jinja2
-import more_itertools
-import pytz
 import re
-import wtforms
+
+import challonge # PyPI: pychal
+import flask # PyPI: Flask
+import flask_wtf # PyPI: Flask-WTF
+import icalendar # PyPI: icalendar
+import jinja2 # PyPI: Jinja2
+import more_itertools # PyPI: more-itertools
+import pytz # PyPI: pytz
+import wtforms # PyPI: WTForms
+
+import class_key # https://github.com/fenhl/python-class-key
 
 import gefolge_web.login
 import gefolge_web.util
@@ -95,7 +97,7 @@ class Strings:
 class Programmpunkt:
     def __new__(cls, event, programmpunkt):
         try:
-            import werewolf_web
+            import werewolf_web # extension for Werewolf games, closed-source to allow the admin to make relevant changes before a game without giving away information to players
         except ImportError:
             werewolf_web = None
 

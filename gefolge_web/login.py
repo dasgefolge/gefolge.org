@@ -1,19 +1,21 @@
-import flask
-import flask_dance.contrib.discord
-import flask_login
-import flask_wtf
 import functools
 import html
-import jinja2
-import lazyjson
 import pathlib
-import pytz
 import random
-import requests
 import string
 import urllib.parse
-import wtforms
-import wtforms.validators
+
+import flask # PyPI: Flask
+import flask_dance.contrib.discord # PyPI: Flask-Dance
+import flask_login # PyPI: Flask-Login
+import flask_wtf # PyPI: Flask-WTF
+import jinja2 # PyPI: Jinja2
+import pytz # PyPI: pytz
+import requests # PyPI: requests
+import wtforms # PyPI: WTForms
+import wtforms.validators # PyPI: WTForms
+
+import lazyjson # https://github.com/fenhl/lazyjson
 
 import gefolge_web.forms
 import gefolge_web.peter

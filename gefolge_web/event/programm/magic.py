@@ -1,7 +1,9 @@
-import flask
-import lazyjson
 import pathlib
-import wtforms
+
+import flask # PyPI: Flask
+import wtforms # PyPI: WTForms
+
+import lazyjson # https://github.com/fenhl/lazyjson
 
 import gefolge_web.event.programm
 import gefolge_web.forms

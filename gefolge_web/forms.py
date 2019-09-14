@@ -1,8 +1,9 @@
 import decimal
-import flask_pagedown.fields
-import pytz
-import wtforms
-import wtforms.ext.dateutil.fields
+
+import flask_pagedown.fields # PyPI: Flask-PageDown
+import pytz # PyPI: pytz
+import wtforms # PyPI: WTForms
+import wtforms.ext.dateutil.fields # PyPI: WTForms
 
 import gefolge_web.util
 

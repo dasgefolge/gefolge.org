@@ -1,11 +1,12 @@
 import datetime
-import flask
-import flask_wtf
-import jinja2
 import math
 import re
-import wtforms
-import wtforms.validators
+
+import flask # PyPI: Flask
+import flask_wtf # PyPI: Flask-WTF
+import jinja2 # PyPI: jinja2
+import wtforms # PyPI: WTForms
+import wtforms.validators # PyPI: WTForms
 
 import gefolge_web.event.model
 import gefolge_web.event.programm

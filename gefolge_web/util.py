@@ -1,22 +1,24 @@
-import class_key
 import copy
 import datetime
-import dateutil.parser
 import decimal
 import enum
-import flask
 import functools
 import inspect
-import jinja2
-import lazyjson
-import more_itertools
 import pathlib
-import pytz
 import re
-import simplejson
-import snowflake
 import subprocess
 import traceback
+
+import dateutil.parser # PyPI: python-dateutil
+import flask # PyPI: Flask
+import jinja2 # PyPI: Jinja2
+import more_itertools # PyPI: more-itertools
+import pytz # PyPI: pytz
+import simplejson # PyPI: simplejson
+
+import class_key # https://github.com/fenhl/python-class-key
+import lazyjson # https://github.com/fenhl/lazyjson
+import snowflake # https://github.com/fenhl/python-snowflake
 
 BASE_PATH = pathlib.Path('/usr/local/share/fidera') #TODO use basedir
 CONFIG_PATH = BASE_PATH / 'config.json'
@@ -201,7 +203,7 @@ class Transaction:
             return jinja2.Markup('PayPal-Überweisung')
         elif self.json_data['type'] == 'sponsorWerewolfCard':
             try:
-                import werewolf_web
+                import werewolf_web # extension for Werewolf games, closed-source to allow the admin to make relevant changes before a game without giving away information to players
             except ImportError:
                 return jinja2.Markup('<i>Werwölfe</i>-Karte gesponsert: {}'.format(jinja2.escape(self.json_data['role'])))
             else:

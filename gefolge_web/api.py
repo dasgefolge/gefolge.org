@@ -1,8 +1,9 @@
-import flask
-import flask_login
 import functools
-import icalendar
 import pathlib
+
+import flask # PyPI: Flask
+import flask_login # PyPI: Flask-Login
+import icalendar # PyPI: icalendar
 
 import gefolge_web.event.model
 import gefolge_web.login

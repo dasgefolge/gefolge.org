@@ -1,13 +1,15 @@
-import class_key
 import datetime
-import flask
-import icalendar
 import itertools
-import jinja2
-import lazyjson
 import pathlib
-import pytz
 import random
+
+import flask # PyPI: Flask
+import icalendar # PyPI: icalendar
+import jinja2 # PyPI: Jinja2
+import pytz # PyPI: pytz
+
+import class_key # https://github.com/fenhl/python-class-key
+import lazyjson # https://github.com/fenhl/lazyjson
 
 import gefolge_web.login
 import gefolge_web.peter
@@ -322,7 +324,7 @@ class Event(metaclass=EventMeta):
         import gefolge_web.event.programm.essen
         import gefolge_web.event.programm.magic
         try:
-            import werewolf_web
+            import werewolf_web # extension for Werewolf games, closed-source to allow the admin to make relevant changes before a game without giving away information to players
         except ImportError:
             werewolf_web = None
 

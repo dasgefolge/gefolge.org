@@ -1,10 +1,11 @@
-import flask
-import flask_wtf
-import markdown
-import markdown.inlinepatterns
-import markdown.util
 import pathlib
 import re
+
+import flask # PyPI: Flask
+import flask_wtf # PyPI: Flask-WTF
+import markdown # PyPI: Markdown
+import markdown.inlinepatterns # PyPI: Markdown
+import markdown.util # PyPI: Markdown
 
 import gefolge_web.forms
 import gefolge_web.login

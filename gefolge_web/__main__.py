@@ -4,18 +4,21 @@ import sys
 
 sys.path.append('/opt/py')
 
-import challonge # package: pychal
-import flask
-import flask_bootstrap
-import flask_pagedown
-import flask_view_tree
-import flaskext.markdown
-import lazyjson
 import os
 import pathlib
-import pymdownx.emoji
-import pymdownx.extra
-import pymdownx.tilde
+
+import challonge # PyPI: pychal
+import flask # PyPI: Flask
+import flask_bootstrap # PyPI: Flask-Bootstrap
+import flask_pagedown # PyPI: Flask-PageDown
+import flaskext.markdown # PyPI: Flask-Markdown
+import pymdownx.emoji # PyPI: pymdown-extensions
+import pymdownx.extra # PyPI: pymdown-extensions
+import pymdownx.tilde # PyPI: pymdown-extensions
+
+import flask_view_tree # https://github.com/fenhl/flask-view-tree
+import lazyjson # https://github.com/fenhl/lazyjson
+
 try:
     import spacealert.web # extension for the Space Alert brainscan database, closed-source for IP reasons
 except ImportError:
