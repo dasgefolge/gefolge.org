@@ -40,7 +40,7 @@
         <h2>{{programmpunkt.strings.signup_header}}</h2>
         <ol>
             {% for person in programmpunkt.signups %}
-                <li>{{person}}</li>
+                <li>{{person}} (<a href="{{url_for('event_profile', event=event.event_id, person=person.snowflake)}}">Eventprofil</a>)</li>
             {% endfor %}
         </ol>
     {% endif %}
