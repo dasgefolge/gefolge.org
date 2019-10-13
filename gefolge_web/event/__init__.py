@@ -125,7 +125,7 @@ def setup(index, app):
                 'orga': None if programm_add_form.orga.data is None else programm_add_form.orga.data.snowflake,
                 'signups': []
             }
-            #TODO ping Programm orga on Discord
+            gefolge_web.peter.channel_msg(event.channel, 'Neuer Programmpunkt auf {}: {} (<https://gefolge.org/event/{}/programm/{}>)'.format('<@&{}>'.format(event.data['role']) if 'role' in event.data else event, programm_add_form.name.data, event.event_id, urllib.parse.quote(programm_add_form.name.data)))
             return flask.redirect((flask.g.view_node / 'programm' / programm_add_form.name.data).url)
         return {
             'event': event,
