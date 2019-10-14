@@ -77,4 +77,14 @@
     .alert-warning {
         border-color: #8c8352;
     }
+
+    .spoiler:not(:hover), .spoiler:not(:hover) *, .censor, .censor * {
+        background: #bbb;
+        color: #bbb;
+    }
+
+    /* Markdown form fields */
+    .flask-pagedown-input {
+        background: url("/static/markdown-mark-white.png") no-repeat calc(100% - 5px) 5px;
+    }
 }

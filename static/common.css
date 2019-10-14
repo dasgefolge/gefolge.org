@@ -6,3 +6,61 @@
 .muted > a:hover {
     color: #2a6496;
 }
+
+/* blockquotes with regular-sized text */
+blockquote {
+    font-size: 14px;
+}
+
+/* spoiler tags */
+.spoiler:not(:hover), .spoiler:not(:hover) *, .censor, .censor * {
+    background: #000;
+    color: #000;
+}
+
+span.spoiler {
+    display: inline-block;
+    min-width: 200px;
+}
+
+/* divider table rows */
+.table > tbody > tr.top-divider > td {
+    border-top: 2px solid #ddd;
+}
+
+.table > tbody > tr.bottom-divider > td {
+    border-bottom: 2px solid #ddd;
+}
+
+/* Markdown form fields */
+.flask-pagedown-input {
+    background: url("/static/markdown-mark.png") no-repeat calc(100% - 5px) 5px;
+    background-size: 28px;
+    padding-right: 40px;
+}
+
+/* button group toggles */
+.btn-group-toggle .btn + .btn {
+    margin-left: 0; /* for adjacent buttons of different colors, show both borders */
+}
+
+/* event Programm table */
+.table > tbody > tr > td.programm-meta {
+    background-color: #e6b8af;
+}
+
+.table > tbody > tr > td.programm-essen {
+    background-color: #d0e0e3;
+}
+
+.table > tbody > tr > td.programm-trip {
+    background-color: #c9daf8;
+}
+
+.table > tbody > tr > td.programm-reqsignup {
+    background-color: #fce5cd;
+}
+
+.table > tbody > tr > td.programm-other {
+    background-color: #fff2cc;
+}
