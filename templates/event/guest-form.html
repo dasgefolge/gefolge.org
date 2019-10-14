@@ -32,7 +32,7 @@
                     {% if event.ausfall_date is none %}
                         <li>Wir können erst buchen, wenn die Ausfallgebühr von {{event.ausfall}} gesichert ist. Dazu fehlen noch {{((event.ausfall - event.anzahlung_total).value / event.anzahlung.value) | round(0, 'ceil') | int}} Anmeldungen.</li>
                     {% else %}
-                        <li>Bis zum {{event.ausfall_date | dmy}} müssen wir die Ausfallgebühr von {{event.ausfall}} abdecken. Dazu fehlen noch {{((event.ausfall - event.anzahlung_total).value / event.anzahlung.value) | round(0, 'ceil') | int}} Anmeldungen.</li>
+                        <li>Bis zum {{event.ausfall_date | dmy(event.timezone)}} müssen wir die Ausfallgebühr von {{event.ausfall}} abdecken. Dazu fehlen noch {{((event.ausfall - event.anzahlung_total).value / event.anzahlung.value) | round(0, 'ceil') | int}} Anmeldungen.</li>
                     {% endif %}
                 {% endif %}
                 {% if event.location.hausordnung is not none %}

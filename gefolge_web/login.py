@@ -139,6 +139,10 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
         """Returns the username discriminator as a string with leading zeroes."""
         return '{:04}'.format(self.profile_data['discriminator'])
 
+    @property
+    def event_timezone_override(self):
+        return self.userdata.get('eventTimezoneOverride', True)
+
     def get_id(self): # required by flask_login
         return str(self.snowflake)
 
@@ -217,6 +221,10 @@ class AnonymousUser(flask_login.AnonymousUserMixin):
         return 'anonymous'
 
     @property
+    def event_timezone_override(self):
+        return True
+
+    @property
     def is_admin(self):
         return False
 
@@ -226,8 +234,9 @@ class AnonymousUser(flask_login.AnonymousUserMixin):
 
 def ProfileForm(mensch):
     class Form(flask_wtf.FlaskForm):
-        #TODO timezone field
+        timezone = gefolge_web.forms.TimezoneField(featured=['Europe/Berlin', 'Etc/UTC'], default=mensch.timezone)
         timezone_notice = gefolge_web.forms.FormText('„Automatisch“ heißt, dass deine aktuelle Systemzeit verwendet wird, um deine Zeitzone zu erraten. Das kann fehlerhaft sein, wenn es mehrere verschiedene Zeitzonen gibt, die aktuell zu deiner Systemzeit passen aber verschiedene Regeln zur Sommerzeit haben. Wenn du JavaScript deaktivierst, werden alle Uhrzeiten in ihrer ursprünglichen Zeitzone angezeigt und unterpunktet. Du kannst immer mit dem Mauszeiger auf eine Uhrzeit zeigen, um ihre Zeitzone zu sehen.')
+        event_timezone_override = wtforms.BooleanField(jinja2.Markup('Auf Eventseiten immer die vor Ort gültige Zeitzone verwenden'), default=mensch.event_timezone_override)
         submit_profile_form = wtforms.SubmitField('Speichern')
 
     return Form()
@@ -385,6 +394,32 @@ def setup(index, app):
     @profile.catch_init(ValueError)
     def profile_catch_init(exc, value):
         return gefolge_web.util.render_template('profile-404', snowflake=value), 404
+
+    @profile.child('edit', 'bearbeiten', methods=['GET', 'POST'])
+    @gefolge_web.util.template('profile-edit')
+    def profile_edit(mensch):
+        if flask.g.user != mensch and not flask.g.user.is_admin:
+            flask.flash('Du bist nicht berechtigt, dieses Profil zu bearbeiten.', 'error')
+            return flask.redirect(flask.g.view_node.parent.url)
+        profile_form = ProfileForm(mensch)
+        if profile_form.submit_profile_form.data and profile_form.validate():
+            gefolge_web.util.log('profileEdit', {
+                'mensch': mensch.snowflake,
+                'timezone': None if profile_form.timezone.data is None else str(profile_form.timezone.data),
+                'eventTimezoneOverride': profile_form.event_timezone_override.data
+            })
+            if profile_form.timezone.data is None:
+                if 'timezone' in mensch.userdata:
+                    del mensch.userdata['timezone']
+            else:
+                mensch.userdata['timezone'] = str(profile_form.timezone.data)
+            mensch.userdata['eventTimezoneOverride'] = profile_form.event_timezone_override.data
+            return flask.redirect(flask.g.view_node.parent.url)
+        else:
+            return {
+                'mensch': mensch,
+                'profile_form': profile_form
+            }
 
     @profile.child('reset-key')
     def reset_api_key(mensch):

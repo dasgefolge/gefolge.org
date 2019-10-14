@@ -139,6 +139,48 @@ class MenschField(wtforms.SelectField):
 
         return gefolge_web.login.Mensch(snowflake)
 
+class TimezoneField(wtforms.SelectField):
+    def __init__(self, label='Zeitzone', validators=[], *, featured=[], include_auto=True, **kwargs):
+        self.include_auto = include_auto
+        timezones = featured + [timezone for timezone in pytz.all_timezones if timezone not in featured]
+        timezones = [pytz.timezone(tz) for tz in timezones]
+        super().__init__(label, validators, choices=([('auto', 'automatisch')] if self.include_auto else []) + [(str(tz), str(tz)) for tz in self.timezones], **kwargs)
+
+    def iter_choices(self):
+        if self.include_auto:
+            yield 'auto', 'automatisch', self.data is None
+        for tz in self.timezones:
+            yield str(tz), str(tz), tz == self.data
+
+    def process_data(self, value):
+        try:
+            self.data = None if value is None or value == 'auto' else self.value_constructor(value)
+        except (TypeError, ValueError):
+            self.data = None
+
+    def process_formdata(self, valuelist):
+        if valuelist:
+            try:
+                if self.include_auto and (valuelist[0] is None or valuelist[0] == 'auto'):
+                    self.data = None
+                else:
+                    self.data = self.value_constructor(valuelist[0])
+            except (TypeError, ValueError):
+                raise ValueError('Invalid choice: could not coerce')
+
+    def pre_validate(self, form):
+        if self.include_auto:
+            if self.data is None:
+                return
+        for tz in self.timezones:
+            if self.data == tz:
+                break
+        else:
+            raise ValueError('Not a valid choice')
+
+    def value_constructor(self, tz_name):
+        return pytz.timezone(tz_name)
+
 class YesMaybeNoField(HorizontalButtonGroupField):
     """A form field that validates to yes, maybe, or no. Displayed as a horizontal button group."""
 

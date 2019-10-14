@@ -9,7 +9,7 @@
             ist geplant aber hat noch keinen Termin.
         {% else %}
             {% if event.end < g.now %}fand{% else %}findet{% endif %}
-            vom {{event.start | dmy_hm}} bis zum {{event.end | dmy_hm}}
+            vom {{event.start | dmy_hm(event.timezone)}} bis zum {{event.end | dmy_hm(event.timezone)}}
             {% if event.location is not none %}
                 {{event.location}} statt.
             {% else %}
@@ -34,7 +34,7 @@
             {# freie Plätze #}
             {% if 'capacity' in event.data %}
                 {% macro block_overview(block_start, block_end, capacity, free) %}
-                    Vom {{block_start | dm}} bis zum {{block_end | dm}} gibt es {{capacity}} Betten,
+                    Vom {{block_start | dm(event.timezone)}} bis zum {{block_end | dm(event.timezone)}} gibt es {{capacity}} Betten,
                     {% if free > 0 %}
                         von denen noch {% if free > 1 %}{{free}} frei sind{% else %}eins frei ist{% endif %}.
                     {% elif free == 0 %}
@@ -77,7 +77,7 @@
     {% endif %}
     <h1 id="signup">Anmeldung</h1>
     {% if g.user in event.menschen %}
-        <p>Du hast dich am {{event.attendee_data(g.user)['signup'] | dmy}} angemeldet.</p>
+        <p>Du hast dich am {{event.attendee_data(g.user)['signup'] | dmy(event.timezone)}} angemeldet.</p>
         <p>Du kannst <a href="{{(g.view_node / 'mensch' / g.user).url}}">deine Anmeldungsdaten</a> jederzeit <a href="{{(g.view_node / 'mensch' / g.user / 'edit').url}}">bearbeiten</a>. Einige Teile der Eventanmeldung sind noch in Arbeit (z.B. Zimmerverteilung). Wenn etwas Neues fertig ist, wirst du auf Discord angepingt.</p> {#TODO#}
         {% if event.guests | selectattr("via", "equalto", g.user) | length > 0 %}
             <h2>Gäste</h2>
@@ -117,7 +117,7 @@
                     {% if event.ausfall_date is none %}
                         <p>Wir können erst buchen, wenn die Ausfallgebühr von {{event.ausfall}} gesichert ist. Dazu fehlen noch {{event.ausfall - event.anzahlung_total}}, also {{((event.ausfall - event.anzahlung_total).value / event.anzahlung.value) | round(0, 'ceil') | int}} Anmeldungen.</p>
                     {% else %}
-                        <p>Bis zum {{event.ausfall_date | dmy}} müssen wir die Ausfallgebühr von {{event.ausfall}} abdecken. Dazu fehlen noch {{event.ausfall - event.anzahlung_total}}, also {{((event.ausfall - event.anzahlung_total).value / event.anzahlung.value) | round(0, 'ceil') | int}} Anmeldungen.</p>
+                        <p>Bis zum {{event.ausfall_date | dmy(event.timezone)}} müssen wir die Ausfallgebühr von {{event.ausfall}} abdecken. Dazu fehlen noch {{event.ausfall - event.anzahlung_total}}, also {{((event.ausfall - event.anzahlung_total).value / event.anzahlung.value) | round(0, 'ceil') | int}} Anmeldungen.</p>
                     {% endif %}
                 {% else %}
                     <p>Die Ausfallgebühr von {{event.ausfall}} ist jetzt durch die Anzahlungen abgedeckt. Das Haus kann also gebucht werden.</p>
@@ -130,7 +130,7 @@
                     {% for date in event.nights %}
                         {% set date_info = event.essen(date) %}
                         <li>
-                            <a href="{{url_for('event_programmpunkt', event=event.event_id, programmpunkt=date_info.name)}}">{{date | dm}}</a>:
+                            <a href="{{url_for('event_programmpunkt', event=event.event_id, programmpunkt=date_info.name)}}">{{date | dm(event.timezone)}}</a>:
                             {% if date_info.description == '' %}
                                 noch nicht eingetragen
                             {% else %}

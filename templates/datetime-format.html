@@ -1,4 +1,6 @@
-{%- if g.user.timezone is none -%}
+{%- if event_timezone is not none and g.user.event_timezone_override -%}
+    <span title="{{event_timezone}}">{{local_timestamp.astimezone(event_timezone).strftime(format)}}</span>
+{%- elif g.user.timezone is none -%}
     <span class="dt-format" data-timestamp="{{utc_timestamp.isoformat()}}" data-format="{{format}}"><abbr title="{{local_timestamp.tzinfo}}">{{local_timestamp.strftime(format)}}</abbr></span>
 {%- else -%}
     <span title="{{g.user.timezone}}">{{local_timestamp.astimezone(g.user.timezone).strftime(format)}}</span>

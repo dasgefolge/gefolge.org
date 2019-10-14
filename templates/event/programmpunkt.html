@@ -11,11 +11,11 @@
     {% if programmpunkt.start is none %}
         <p>Beginn: noch nicht eingetragen</p>
     {% else %}
-        <p>Beginn: {{programmpunkt.start | dmy_hm}}</p>
+        <p>Beginn: {{programmpunkt.start | dmy_hm(event.timezone)}}</p>
         {% if programmpunkt.end is none %}
             <p>Ende: noch nicht eingetragen</p>
         {% else %}
-            <p>Ende: ca. {{programmpunkt.end | dmy_hm}}</p>
+            <p>Ende: ca. {{programmpunkt.end | dmy_hm(event.timezone)}}</p>
         {% endif %}
     {% endif %}
     {% if programmpunkt.orga is none %}

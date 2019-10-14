@@ -326,35 +326,35 @@ def setup(app):
         return render_template('error.500', reported=reported), 500
 
     @app.template_filter()
-    def dt_format(value, format='%d.%m.%Y %H:%M:%S'):
+    def dt_format(value, format='%d.%m.%Y %H:%M:%S', event_timezone=None):
         if isinstance(value, lazyjson.Node):
             value = value.value()
         if isinstance(value, str):
             value = parse_iso_datetime(value)
         if hasattr(value, 'astimezone'):
-            return render_template('datetime-format', local_timestamp=value, utc_timestamp=value.astimezone(pytz.utc), format=format)
+            return render_template('datetime-format', local_timestamp=value, utc_timestamp=value.astimezone(pytz.utc), format=format, event_timezone=event_timezone)
         else:
             return value.strftime(format)
 
     @app.template_filter()
-    def dm(value):
-        return dt_format(value, '%d.%m.')
+    def dm(value, event_timezone=None):
+        return dt_format(value, '%d.%m.', event_timezone=event_timezone)
 
     @app.template_filter()
-    def dmy(value):
-        return dt_format(value, '%d.%m.%Y')
+    def dmy(value, event_timezone=None):
+        return dt_format(value, '%d.%m.%Y', event_timezone=event_timezone)
 
     @app.template_filter()
-    def dmy_hm(value):
-        return dt_format(value, '%d.%m.%Y %H:%M')
+    def dmy_hm(value, event_timezone=None):
+        return dt_format(value, '%d.%m.%Y %H:%M', event_timezone=event_timezone)
 
     @app.template_filter()
-    def dmy_hms(value):
-        return dt_format(value, '%d.%m.%Y %H:%M:%S')
+    def dmy_hms(value, event_timezone=None):
+        return dt_format(value, '%d.%m.%Y %H:%M:%S', event_timezone=event_timezone)
 
     @app.template_filter()
-    def hm(value):
-        return dt_format(value, '%H:%M')
+    def hm(value, event_timezone=None):
+        return dt_format(value, '%H:%M', event_timezone=event_timezone)
 
     @app.template_filter()
     def length(value):

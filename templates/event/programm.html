@@ -8,9 +8,9 @@
             <tr>
                 <th></th>
                 {% for night in event.nights %}
-                    <th>{{night | dm }}</th>
+                    <th>{{night | dm(event.timezone) }}</th>
                 {% endfor %}
-                <th>{{event.end | dm }}</th>
+                <th>{{event.end | dm(event.timezone) }}</th>
             </tr>
         </thead>
         <tbody>
@@ -55,8 +55,8 @@
             {% for programmpunkt in listed_programm %}
                 <tr>
                     <td>{{programmpunkt}}</td>
-                    <td>{% if programmpunkt.start is not none %}{{programmpunkt.start | dmy_hm}}{% endif %}</td>
-                    <td>{% if programmpunkt.end is not none and programmpunkt.end < (programmpunkt.start | next_date) %}{{programmpunkt.end | hm}}{% endif %}</td>
+                    <td>{% if programmpunkt.start is not none %}{{programmpunkt.start | dmy_hm(event.timezone)}}{% endif %}</td>
+                    <td>{% if programmpunkt.end is not none and programmpunkt.end < (programmpunkt.start | next_date) %}{{programmpunkt.end | hm(event.timezone)}}{% endif %}</td>
                     <td>
                         {% if programmpunkt.orga is none %}
                             Orga gesucht

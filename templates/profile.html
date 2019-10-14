@@ -4,9 +4,15 @@
 
 {% block page_content %}
     {% if mensch.profile_data['nick'] is none %}
-        <h1>{{mensch.profile_data['username']}}<span class="muted">#{{mensch.discrim}}</span></h1>
+        <h1>
+            {{mensch.profile_data['username']}}<span class="muted">#{{mensch.discrim}}</span>
+            {% if g.user.is_admin or g.user == mensch %}<a href="{{url_for('profile_edit', mensch=mensch.snowflake)}}" class="btn btn-primary">Bearbeiten</a>{% endif %}
+        </h1>
     {% else %}
-        <h1>{{mensch.profile_data['nick']}}</h1>
+        <h1>
+            {{mensch.profile_data['nick']}}
+            {% if g.user.is_admin or g.user == mensch %}<a href="{{url_for('profile_edit', mensch=mensch.snowflake)}}" class="btn btn-primary">Bearbeiten</a>{% endif %}
+        </h1>
         <h2>{{mensch.profile_data['username']}}<span class="muted">#{{mensch.discrim}}</span></h1>
     {% endif %}
     <p>Profil für Discord snowflake {{mensch.snowflake}}. (<a href="https://discordapp.com/users/{{mensch.snowflake}}/">Discord-Profil</a>)</p>
