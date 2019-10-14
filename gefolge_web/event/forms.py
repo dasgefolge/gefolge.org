@@ -131,6 +131,18 @@ def ProgrammAddForm(event):
         ])
         orga = PersonField(event, 'Orga', optional_label='Orga gesucht', allow_guests=False, default=None)
         description = gefolge_web.forms.MarkdownField('Beschreibung')
+        css_class = gefolge_web.forms.HorizontalButtonGroupField(
+            'Farbe',
+            [wtforms.validators.InputRequired()],
+            choices=[
+                ('programm-meta', 'Kernprogramm, meta', '#e6b8af', '#5b0f00'),
+                ('programm-essen', 'Essen', '#d0e0e3', '#0c343d'),
+                ('programm-trip', 'Ausflug', '#c9daf8', '#1c4587'),
+                ('programm-reqsignup', 'Voranmeldung nötig', '#fce5cd', '#783f04'),
+                ('programm-other', 'Sonstiges', '#fff2cc', '#7f6000')
+            ],
+            default='programm-other'
+        )
         submit_programm_add_form = wtforms.SubmitField('Programmpunkt erstellen')
 
     return Form()

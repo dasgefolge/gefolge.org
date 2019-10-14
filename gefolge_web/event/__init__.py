@@ -116,13 +116,15 @@ def setup(index, app):
                 'event': event.event_id,
                 'orga': None if programm_add_form.orga.data is None else programm_add_form.orga.data.snowflake,
                 'programmpunkt': programm_add_form.name.data,
-                'description': programm_add_form.description.data
+                'description': programm_add_form.description.data,
+                'cssClass': programm_add_form.css_class.data
             })
             if 'programm' not in event.data:
                 event.data['programm'] = {}
             event.data['programm'][programm_add_form.name.data] = {
                 'description': programm_add_form.description.data,
                 'orga': None if programm_add_form.orga.data is None else programm_add_form.orga.data.snowflake,
+                'cssClass': programm_add_form.css_class.data,
                 'signups': []
             }
             gefolge_web.peter.channel_msg(event.channel, 'Neuer Programmpunkt auf {}: {} (<https://gefolge.org/event/{}/programm/{}>)'.format('<@&{}>'.format(event.data['role']) if 'role' in event.data else event, programm_add_form.name.data, event.event_id, urllib.parse.quote(programm_add_form.name.data)))
