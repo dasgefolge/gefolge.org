@@ -246,7 +246,7 @@ class AnonymousUser(flask_login.AnonymousUserMixin):
 
 def ProfileForm(mensch):
     class Form(flask_wtf.FlaskForm):
-        nickname = gefolge_web.forms.AnnotatedStringField('Name', [wtforms.validators.Optional(), wtforms.validators.Regexp('^([^@#:]{2,32})$')], prefix='@', , description={'placeholder': mensch.profile_data['username']}, default=mensch.nickname)
+        nickname = gefolge_web.forms.AnnotatedStringField('Name', [wtforms.validators.Optional(), wtforms.validators.Regexp('^([^@#:]{2,32})$')], prefix='@', description={'placeholder': mensch.profile_data['username']}, default=mensch.nickname)
         nickname_notice = gefolge_web.forms.FormText('Dieser Name wird u.A. im Gefolge-Discord, auf dieser website und auf events verwendet. Du kannst ihn auch im Gefolge-Discord über das Servermenü ändern. Wenn du das Feld leer lässt, wird dein Discord username verwendet.')
         timezone = gefolge_web.forms.TimezoneField(featured=['Europe/Berlin', 'Etc/UTC'], default=mensch.timezone)
         timezone_notice = gefolge_web.forms.FormText('„Automatisch“ heißt, dass deine aktuelle Systemzeit verwendet wird, um deine Zeitzone zu erraten. Das kann fehlerhaft sein, wenn es mehrere verschiedene Zeitzonen gibt, die aktuell zu deiner Systemzeit passen aber verschiedene Regeln zur Sommerzeit haben. Wenn du JavaScript deaktivierst, werden alle Uhrzeiten in ihrer ursprünglichen Zeitzone angezeigt und unterpunktet. Du kannst immer mit dem Mauszeiger auf eine Uhrzeit zeigen, um ihre Zeitzone zu sehen.')
