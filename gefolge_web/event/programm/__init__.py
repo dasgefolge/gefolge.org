@@ -43,7 +43,8 @@ class CalendarEvent:
 
     @property
     def subtitle(self):
-        return self.programmpunkt.subtitle
+        if isinstance(self.programmpunkt, Programmpunkt):
+            return self.programmpunkt.subtitle
 
     def to_ical(self):
         result = icalendar.Event()
