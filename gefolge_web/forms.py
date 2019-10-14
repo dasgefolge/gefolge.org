@@ -143,7 +143,7 @@ class TimezoneField(wtforms.SelectField):
     def __init__(self, label='Zeitzone', validators=[], *, featured=[], include_auto=True, **kwargs):
         self.include_auto = include_auto
         timezones = featured + [timezone for timezone in pytz.all_timezones if timezone not in featured]
-        timezones = [pytz.timezone(tz) for tz in timezones]
+        self.timezones = [pytz.timezone(tz) for tz in timezones]
         super().__init__(label, validators, choices=([('auto', 'automatisch')] if self.include_auto else []) + [(str(tz), str(tz)) for tz in self.timezones], **kwargs)
 
     def iter_choices(self):
