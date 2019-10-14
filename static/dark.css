@@ -87,4 +87,25 @@
     .flask-pagedown-input {
         background: url("/static/markdown-mark-white.png") no-repeat calc(100% - 5px) 5px;
     }
+
+    /* event Programm table */
+    .table > tbody > tr > td.programm-meta {
+        background-color: #5b0f00;
+    }
+
+    .table > tbody > tr > td.programm-essen {
+        background-color: #0c343d;
+    }
+
+    .table > tbody > tr > td.programm-trip {
+        background-color: #1c4587;
+    }
+
+    .table > tbody > tr > td.programm-reqsignup {
+        background-color: #783f04;
+    }
+
+    .table > tbody > tr > td.programm-other {
+        background-color: #7f6000;
+    }
 }
