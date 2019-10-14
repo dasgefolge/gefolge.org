@@ -41,6 +41,10 @@ class CalendarEvent:
         else:
             return 'programm-meta'
 
+    @property
+    def subtitle(self):
+        return self.programmpunkt.subtitle
+
     def to_ical(self):
         result = icalendar.Event()
         result.add('summary', self.text)
@@ -361,6 +365,14 @@ class Programmpunkt:
     @property
     def strings(self):
         return Strings.from_json(self.data.get('strings', {}), defaults=self.default_strings)
+
+    @property
+    def subtitle(self):
+        return self.data.get('ibSubtitle')
+
+    @subtitle.setter
+    def subtitle(self, value):
+        self.data['subtitle'] = value
 
     @property
     def timezone(self):

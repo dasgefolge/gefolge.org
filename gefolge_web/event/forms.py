@@ -129,6 +129,8 @@ def ProgrammAddForm(event):
             wtforms.validators.NoneOf([programmpunkt.name for programmpunkt in event.programm], message='Es gibt bereits einen Programmpunkt mit diesem Titel.'),
             wtforms.validators.Regexp('^[^/]+$', message='Schrägstriche können hier nicht verwendet werden, weil der Titel in der URL der Programmpunktseite steht.')
         ])
+        subtitle = wtforms.StringField('Untertitel', [wtforms.validators.Length(max=40)])
+        subtitle_notice = gefolge_web.forms.FormText('Wird auf dem info-beamer und in im Zeitplan angezeigt.')
         orga = PersonField(event, 'Orga', optional_label='Orga gesucht', allow_guests=False, default=None)
         description = gefolge_web.forms.MarkdownField('Beschreibung')
         css_class = gefolge_web.forms.HorizontalButtonGroupField(
@@ -156,6 +158,8 @@ def ProgrammEditForm(programmpunkt):
         raise wtforms.validators.ValidationError('Bitte wende dich an {}, wenn du die Orga für diesen Programmpunkt abgeben möchtest.'.format(programmpunkt.event.orga(programmpunkt.orga_role)))
 
     class Form(flask_wtf.FlaskForm):
+        subtitle = wtforms.StringField('Untertitel', [wtforms.validators.Length(max=40)], default=programmpunkt.subtitle)
+        subtitle_notice = gefolge_web.forms.FormText('Wird auf dem info-beamer und in im Zeitplan angezeigt.')
         orga = PersonField(programmpunkt.event, 'Orga', [validate_orga], optional_label='Orga gesucht', allow_guests=False, default=programmpunkt.orga) #TODO disable (https://getbootstrap.com/docs/3.3/css/#forms-control-disabled) if not allowed to edit
         start = gefolge_web.forms.DateTimeField('Beginn', [wtforms.validators.Optional()], tz=programmpunkt.timezone, default=programmpunkt.start)
         end = gefolge_web.forms.DateTimeField('Ende', [wtforms.validators.Optional()], tz=programmpunkt.timezone, default=programmpunkt.end)

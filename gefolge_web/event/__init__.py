@@ -116,12 +116,14 @@ def setup(index, app):
                 'event': event.event_id,
                 'orga': None if programm_add_form.orga.data is None else programm_add_form.orga.data.snowflake,
                 'programmpunkt': programm_add_form.name.data,
+                'subtitle': programm_add_form.subtitle.data,
                 'description': programm_add_form.description.data,
                 'cssClass': programm_add_form.css_class.data
             })
             if 'programm' not in event.data:
                 event.data['programm'] = {}
             event.data['programm'][programm_add_form.name.data] = {
+                'ibSubtitle': programm_add_form.subtitle.data,
                 'description': programm_add_form.description.data,
                 'orga': None if programm_add_form.orga.data is None else programm_add_form.orga.data.snowflake,
                 'cssClass': programm_add_form.css_class.data,
@@ -235,7 +237,7 @@ def setup(index, app):
                 if snip_end > hour >= 6:
                     # at or after 06:00, must stop snip at start hour
                     snip_end = hour
-                return jinja2.Markup('<td rowspan="{}" class="{}">{}</td>'.format(hours, calendar_event.css_class, calendar_event.__html__()))
+                return jinja2.Markup('<td rowspan="{}" class="{}">{}{}</td>'.format(hours, calendar_event.css_class, calendar_event.__html__(), '<br />{}'.format(jinja2.escape(calendar_event.subtitle)) if calendar_event.subtitle else ''))
             else:
                 #TODO support for events that go past midnight
                 return jinja2.Markup('<td class="danger">{} Programmpunkte</td>'.format(len(events_starting_now)))
@@ -288,11 +290,13 @@ def setup(index, app):
             gefolge_web.util.log('eventProgrammEdit', {
                 'event': event.event_id,
                 'programmpunkt': programmpunkt.name,
+                'subtitle': programm_edit_form.subtitle.data,
                 'orga': None if programm_edit_form.orga.data is None else programm_edit_form.orga.data.snowflake,
                 'start': (None if programm_edit_form.start.data is None else '{:%Y-%m-%dT%H:%M:%S}'.format(programm_edit_form.start.data)),
                 'end': (None if programm_edit_form.end.data is None else '{:%Y-%m-%dT%H:%M:%S}'.format(programm_edit_form.end.data)),
                 'description': programm_edit_form.description.data
             })
+            programmpunkt.subtitle = programm_edit_form.subtitle.data
             programmpunkt.orga = programm_edit_form.orga.data
             programmpunkt.start = programm_edit_form.start.data
             programmpunkt.end = programm_edit_form.end.data
