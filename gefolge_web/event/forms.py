@@ -135,11 +135,11 @@ def ProgrammAddForm(event):
             'Farbe',
             [wtforms.validators.InputRequired()],
             choices=[
-                ('programm-meta', 'Kernprogramm, meta', '#e6b8af', '#5b0f00'),
-                ('programm-essen', 'Essen', '#d0e0e3', '#0c343d'),
-                ('programm-trip', 'Ausflug', '#c9daf8', '#1c4587'),
-                ('programm-reqsignup', 'Voranmeldung nötig', '#fce5cd', '#783f04'),
-                ('programm-other', 'Sonstiges', '#fff2cc', '#7f6000')
+                ('programm-meta', 'Kernprogramm, meta', '#a61c00', '#cc4125'),
+                ('programm-essen', 'Essen', '#45818e', '#76a5af'),
+                ('programm-trip', 'Ausflug', '#3c78d8', '#6d9eeb'),
+                ('programm-reqsignup', 'Voranmeldung nötig', '#e69138', '#f6b26b'),
+                ('programm-other', 'Sonstiges', '#f1c232', '#ffd966')
             ],
             default='programm-other'
         )
