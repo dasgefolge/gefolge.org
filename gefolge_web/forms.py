@@ -1,3 +1,4 @@
+import datetime
 import decimal
 
 import flask_pagedown.fields # PyPI: Flask-PageDown
@@ -179,7 +180,10 @@ class TimezoneField(wtforms.SelectField):
             raise ValueError('Not a valid choice')
 
     def value_constructor(self, tz_name):
-        return pytz.timezone(tz_name)
+        if isinstance(tz_name, datetime.tzinfo):
+            return tz_name
+        else:
+            return pytz.timezone(tz_name)
 
 class YesMaybeNoField(HorizontalButtonGroupField):
     """A form field that validates to yes, maybe, or no. Displayed as a horizontal button group."""
