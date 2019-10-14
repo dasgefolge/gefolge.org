@@ -42,7 +42,7 @@
                 </div>
                 <div class="col-12 col-md-3" style="text-align: right;">
                     {% if g.user.is_active %}
-                        Angemeldet als {{g.user}}<br /><a href="{{url_for('logout')}}">Abmelden</a>
+                        Angemeldet als {{g.user}}<br /><a href="{{url_for('profile_edit', mensch=g.user.snowflake)}}">Einstellungen</a> • <a href="{{url_for('logout')}}">Abmelden</a>
                     {% else %}
                         <a href="{{url_for('discord.login')}}">Anmelden</a>
                     {% endif %}
