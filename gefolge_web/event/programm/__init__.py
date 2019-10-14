@@ -34,6 +34,13 @@ class CalendarEvent:
     def __str__(self):
         return self.text
 
+    @property
+    def css_class(self):
+        if isinstance(self.programmpunkt, Programmpunkt):
+            return 'programm-meta'
+        else:
+            return self.programmpunkt.css_class
+
     def to_ical(self):
         result = icalendar.Event()
         result.add('summary', self.text)
@@ -183,6 +190,10 @@ class Programmpunkt:
     @property
     def closed(self):
         return self.data.get('closed', False)
+
+    @property
+    def css_class(self):
+        return self.data.get('cssClass', 'programm-other')
 
     @property
     def data(self):

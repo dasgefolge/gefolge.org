@@ -233,7 +233,7 @@ def setup(index, app):
                 if snip_end > hour >= 6:
                     # at or after 06:00, must stop snip at start hour
                     snip_end = hour
-                return jinja2.Markup('<td rowspan="{}">{}</td>'.format(hours, calendar_event.__html__())) #TODO color-coding
+                return jinja2.Markup('<td rowspan="{}" class="{}">{}</td>'.format(hours, calendar_event.css_class, calendar_event.__html__()))
             else:
                 #TODO support for events that go past midnight
                 return jinja2.Markup('<td class="danger">{} Programmpunkte</td>'.format(len(events_starting_now)))

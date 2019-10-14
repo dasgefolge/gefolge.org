@@ -62,6 +62,9 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
             return True # always allow the admin to edit since they have write access to the database anyway
         return False
 
+    def css_class(self):
+        return 'programm-essen'
+
     @property
     def data(self):
         return self.event.data.get('essen', {}).get('{:%Y-%m-%d}'.format(self.date), {})
