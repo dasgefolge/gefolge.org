@@ -62,6 +62,7 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
             return True # always allow the admin to edit since they have write access to the database anyway
         return False
 
+    @property
     def css_class(self):
         return 'programm-essen'
 
