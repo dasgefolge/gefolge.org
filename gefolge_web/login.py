@@ -182,6 +182,18 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
             return self.profile_data['nick']
 
     @property
+    def nickname(self):
+        return self.profile_data.get('nick')
+
+    @nickname.setter
+    def nickname(self, value):
+        gefolge_web.peter.set_display_name(self, value or '')
+
+    @nickname.deleter
+    def nickname(self):
+        gefolge_web.peter.set_display_name(self, '')
+
+    @property
     def profile_data(self):
         return gefolge_web.util.cached_json(lazyjson.File(self.profile_path)).value()
 
@@ -234,6 +246,8 @@ class AnonymousUser(flask_login.AnonymousUserMixin):
 
 def ProfileForm(mensch):
     class Form(flask_wtf.FlaskForm):
+        nickname = gefolge_web.forms.AnnotatedStringField('Name', [wtforms.validators.Optional(), wtforms.validators.Regexp('^([^@#:]{2,32})$')], prefix='@', , description={'placeholder': mensch.profile_data['username']}, default=mensch.nickname)
+        nickname_notice = gefolge_web.forms.FormText('Dieser Name wird u.A. im Gefolge-Discord, auf dieser website und auf events verwendet. Du kannst ihn auch im Gefolge-Discord über das Servermenü ändern. Wenn du das Feld leer lässt, wird dein Discord username verwendet.')
         timezone = gefolge_web.forms.TimezoneField(featured=['Europe/Berlin', 'Etc/UTC'], default=mensch.timezone)
         timezone_notice = gefolge_web.forms.FormText('„Automatisch“ heißt, dass deine aktuelle Systemzeit verwendet wird, um deine Zeitzone zu erraten. Das kann fehlerhaft sein, wenn es mehrere verschiedene Zeitzonen gibt, die aktuell zu deiner Systemzeit passen aber verschiedene Regeln zur Sommerzeit haben. Wenn du JavaScript deaktivierst, werden alle Uhrzeiten in ihrer ursprünglichen Zeitzone angezeigt und unterpunktet. Du kannst immer mit dem Mauszeiger auf eine Uhrzeit zeigen, um ihre Zeitzone zu sehen.')
         event_timezone_override = wtforms.BooleanField(jinja2.Markup('Auf Eventseiten immer die vor Ort gültige Zeitzone verwenden'), default=mensch.event_timezone_override)
@@ -405,9 +419,11 @@ def setup(index, app):
         if profile_form.submit_profile_form.data and profile_form.validate():
             gefolge_web.util.log('profileEdit', {
                 'mensch': mensch.snowflake,
+                'nickname': profile_form.nickname.data,
                 'timezone': None if profile_form.timezone.data is None else str(profile_form.timezone.data),
                 'eventTimezoneOverride': profile_form.event_timezone_override.data
             })
+            mensch.nickname = profile_form.nickname.data
             if profile_form.timezone.data is None:
                 if 'timezone' in mensch.userdata:
                     del mensch.userdata['timezone']

@@ -31,3 +31,6 @@ def msg(rcpt, msg, *, check=True):
 
 def quit(*, check=True):
     cmd('quit', check=check, expected_response='shutdown complete')
+
+def set_display_name(user, display_name):
+    cmd('set-display-name', str(user.snowflake), display_name, expected_response='display name set')
