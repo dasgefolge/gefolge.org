@@ -37,9 +37,9 @@ class CalendarEvent:
     @property
     def css_class(self):
         if isinstance(self.programmpunkt, Programmpunkt):
-            return 'programm-meta'
-        else:
             return self.programmpunkt.css_class
+        else:
+            return 'programm-meta'
 
     def to_ical(self):
         result = icalendar.Event()
