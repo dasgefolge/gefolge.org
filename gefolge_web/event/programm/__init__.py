@@ -373,7 +373,7 @@ class Programmpunkt:
 
     @subtitle.setter
     def subtitle(self, value):
-        self.data['subtitle'] = value
+        self.data['ibSubtitle'] = value
 
     @property
     def timezone(self):
