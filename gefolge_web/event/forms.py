@@ -75,7 +75,7 @@ def ProfileForm(event, person):
         for i, night in enumerate(event.nights):
             night_data = event.night_going(person_data, night)
             if event.free(night) > 0:
-                setattr(Form, 'night{}'.format(i), gefolge_web.forms.YesMaybeNoField(
+                setattr(Form, 'night{}'.format(i), gefolge_web.forms.HorizontalButtonGroupField(
                     '{:%d.%m.}–{:%d.%m.}'.format(night, night + datetime.timedelta(days=1)),
                     [wtforms.validators.InputRequired()],
                     [('yes', 'Ja', '#449d44'), ('maybe', 'Vielleicht', '#d58512'), ('no', 'Nein', '#ac2925')],
