@@ -297,14 +297,14 @@ class Event(metaclass=EventMeta):
         return [
             person
             for person in self.signups
-            if self.night_going(person) == 'maybe'
+            if self.night_going(person, night) == 'maybe'
         ]
 
     def night_signups(self, night):
         return [
             person
             for person in self.signups
-            if self.night_going(person) == 'yes'
+            if self.night_going(person, night) == 'yes'
         ]
 
     @property

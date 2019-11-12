@@ -28,7 +28,7 @@
                 <tr>
                     <td></td>
                     {% for night in event.nights %}
-                        {% set attending_night = event.night_going(person) %}
+                        {% set attending_night = event.night_going(person, night) %}
                         {% if attending_night == 'yes' %}
                             <td style="text-align: center;" colspan="2" class="success" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
                                 <span class="fa fa-check"></span>
