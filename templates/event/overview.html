@@ -37,10 +37,8 @@
                     Vom {{block_start | dm(event.timezone)}} bis zum {{block_end | dm(event.timezone)}} gibt es {{capacity}} Betten,
                     {% if free > 0 %}
                         von denen noch {% if free > 1 %}{{free}} frei sind{% else %}eins frei ist{% endif %}.
-                    {% elif free == 0 %}
-                        die mindestens in einer Nacht genau alle belegt sind (die Warteliste ist für diesen Zeitraum im Moment leer).
                     {% else %}
-                        die mindestens in einer Nacht alle belegt sind und es {% if free < -1 %}stehen {{(-free)}} Menschen{% else %}steht ein Mensch{% endif %} auf der Warteliste.
+                        die mindestens in einer Nacht alle belegt sind.
                     {% endif %}
                 {% endmacro %}
                 {% set ns = namespace(block_start=event.start.date()) %}
@@ -56,14 +54,12 @@
                 {% set naive_free = capacity - (event.signups | length) %}
                 {% set free = event.free() %}
                 {% if free != naive_free %}
-                    Weil {% if free - naive_free > 1 %}{{free - naive_free}} Paare von Menschen jeweils nicht gleichzeitig da sind{% else %}zwei Menschen nicht gleichzeitig da sind{% endif %}, sind aber erst {{capacity - free}} Plätze belegt.
+                    Wegen „vielleicht“s und Menschen, die an verschiedenen Tagen da sind, sind aber erst {{capacity - free}} Plätze belegt.
                 {% endif %}
                 {% if free > 0 %}
                     Das Haus hat {{capacity}} Betten, es {% if free > 1 %}sind{% else %}ist{% endif %} also noch {{free}} Bett{% if free > 1 %}en{% endif %} frei.
-                {% elif free == 0 %}
-                    Damit ist das Haus zumindest zeitweise exakt voll. Die Warteliste ist im Moment leer. {#TODO check for free nights, adjust message accordingly #}
                 {% else %}
-                    Das Haus hat {{capacity}} Betten, es {% if free < -1 %}stehen{% else %}steht{% endif %} also {{(-free)}} Mensch{% if free < -1 %}en{% endif %} auf der Warteliste. (Möglicherweise sind für manche Nächte noch Plätze frei.) {#TODO check for free nights, adjust message accordingly #}
+                    Damit ist das Haus zumindest zeitweise voll. {#TODO check for free nights, adjust message accordingly #}
                 {% endif %}
             {% endif %}
         {% else %}

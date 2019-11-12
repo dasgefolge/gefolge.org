@@ -73,11 +73,28 @@ def ProfileForm(event, person):
         Form.section_nights_intro = gefolge_web.forms.FormText('Coming soon™')
     else:
         for i, night in enumerate(event.nights):
-            setattr(Form, 'night{}'.format(i), gefolge_web.forms.YesMaybeNoField(
-                '{:%d.%m.}–{:%d.%m.}'.format(night, night + datetime.timedelta(days=1)),
-                [wtforms.validators.InputRequired()],
-                default=person_data.get('nights', {}).get('{:%Y-%m-%d}'.format(night), 'maybe')
-            ))
+            night_data = event.night_going(person_data, night)
+            if event.free(night) > 0:
+                setattr(Form, 'night{}'.format(i), gefolge_web.forms.YesMaybeNoField(
+                    '{:%d.%m.}–{:%d.%m.}'.format(night, night + datetime.timedelta(days=1)),
+                    [wtforms.validators.InputRequired()],
+                    [('yes', 'Ja', '#449d44'), ('maybe', 'Vielleicht', '#d58512'), ('no', 'Nein', '#ac2925')],
+                    default=night_data
+                ))
+            elif night_data == 'yes':
+                setattr(Form, 'night{}'.format(i), gefolge_web.forms.HorizontalButtonGroupField(
+                    '{:%d.%m.}–{:%d.%m.}'.format(night, night + datetime.timedelta(days=1)),
+                    [wtforms.validators.InputRequired()],
+                    [('yes', 'Ja', '#449d44'), ('maybe', 'Warteliste', '#269abc'), ('no', 'Nein', '#ac2925')],
+                    default=night_data
+                ))
+            else:
+                setattr(Form, 'night{}'.format(i), gefolge_web.forms.HorizontalButtonGroupField(
+                    '{:%d.%m.}–{:%d.%m.}'.format(night, night + datetime.timedelta(days=1)),
+                    [wtforms.validators.InputRequired()],
+                    [('maybe', 'Warteliste', '#269abc'), ('no', 'Nein', '#ac2925')],
+                    default=night_data
+                ))
 
     Form.section_food = gefolge_web.forms.FormSection('Essen')
     if person_data.get('selbstversorger', False):

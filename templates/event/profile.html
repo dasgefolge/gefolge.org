@@ -28,15 +28,21 @@
                 <tr>
                     <td></td>
                     {% for night in event.nights %}
-                        {% set attending_night = event.attendee_data(person).get('nights', {}).get('{:%Y-%m-%d}'.format(night), 'maybe') %}
+                        {% set attending_night = event.night_going(person) %}
                         {% if attending_night == 'yes' %}
                             <td style="text-align: center;" colspan="2" class="success" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
                                 <span class="fa fa-check"></span>
                             </td>
                         {% elif attending_night == 'maybe' %}
-                            <td style="text-align: center;" colspan="2" class="warning" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
-                                <span class="fa fa-question"></span>
-                            </td>
+                            {% if event.free(night) <= 0 %}
+                                <td style="text-align: center;" colspan="2" class="info" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
+                                    <span class="fa fa-clock-o"></span>
+                                </td>
+                            {% else %}
+                                <td style="text-align: center;" colspan="2" class="warning" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
+                                    <span class="fa fa-question"></span>
+                                </td>
+                            {% endif %}
                         {% elif attending_night == 'no' %}
                             <td style="text-align: center;" colspan="2" class="danger" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
                                 <span class="fa fa-times"></span>

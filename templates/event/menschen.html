@@ -24,7 +24,12 @@
                 <th></th>
                 <th></th>
                 {% for night in event.nights %}
-                    <th style="text-align: center;" colspan="2"><span class="text-success">{{event.night_signups(night) | length}}</span>+<span class="text-warning">{{event.night_maybes(night) | length}}</span></th>
+                    <th style="text-align: center;" colspan="2"><span class="text-success">{{event.night_signups(night) | length}}</span>+
+                    {%- if event.free(night) <= 0 -%}
+                        <span class="text-info">{{event.night_maybes(night) | length}}</span></th>
+                    {% else -%}
+                        <span class="text-warning">{{event.night_maybes(night) | length}}</span></th>
+                    {% endif %}
                 {% endfor %}
                 <th></th>
                 <th></th>
@@ -37,15 +42,21 @@
                     <td>{{person}}</td>
                     <td></td>
                     {% for night in event.nights %}
-                        {% set attending_night = event.attendee_data(person).get('nights', {}).get('{:%Y-%m-%d}'.format(night), 'maybe') %}
+                        {% set attending_night = event.night_going(person) %}
                         {% if attending_night == 'yes' %}
                             <td style="text-align: center;" colspan="2" class="success" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
                                 <span class="fa fa-check"></span>
                             </td>
                         {% elif attending_night == 'maybe' %}
-                            <td style="text-align: center;" colspan="2" class="warning" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
-                                <span class="fa fa-question"></span>
-                            </td>
+                            {% if event.free(night) <= 0 %}
+                                <td style="text-align: center;" colspan="2" class="info" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
+                                    <span class="fa fa-clock-o"></span>
+                                </td>
+                            {% else %}
+                                <td style="text-align: center;" colspan="2" class="warning" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
+                                    <span class="fa fa-question"></span>
+                                </td>
+                            {% endif %}
                         {% elif attending_night == 'no' %}
                             <td style="text-align: center;" colspan="2" class="danger" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
                                 <span class="fa fa-times"></span>

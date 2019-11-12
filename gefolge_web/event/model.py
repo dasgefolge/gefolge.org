@@ -251,12 +251,15 @@ class Event(metaclass=EventMeta):
             raise ValueError('Datum liegt außerhalb des event')
 
     def free(self, start=None, end=None):
+        if end is None:
+            if start is None:
+                end = self.end.date()
+            else:
+                end = start + datetime.timedelta(days=1)
         if start is None:
             start = self.start.date()
-        if end is None:
-            end = self.end.date()
         return min(
-            self.capacity(night) - len(self.night_signups(night)) - len(self.night_maybes(night))
+            self.capacity(night) - len(self.night_signups(night))
             for night in gefolge_web.util.date_range(start, end)
         )
 
@@ -282,18 +285,26 @@ class Event(metaclass=EventMeta):
             if 'via' not in person
         ]
 
+    def night_going(self, attendee_data, night):
+        if hasattr(attendee_data, 'snowflake'):
+            attendee_data = self.attendee_data(attendee_data)
+        result = attendee_data.get('nights', {}).get('{:%Y-%m-%d}'.format(night), {'going': 'maybe', 'lastUpdated': None})
+        if isinstance(result, dict):
+            result = result['going']
+        return result
+
     def night_maybes(self, night):
         return [
             person
             for person in self.signups
-            if self.attendee_data(person).get('nights', {}).get('{:%Y-%m-%d}'.format(night), 'maybe') == 'maybe'
+            if self.night_going(person) == 'maybe'
         ]
 
     def night_signups(self, night):
         return [
             person
             for person in self.signups
-            if self.attendee_data(person).get('nights', {}).get('{:%Y-%m-%d}'.format(night), 'maybe') == 'yes'
+            if self.night_going(person) == 'yes'
         ]
 
     @property

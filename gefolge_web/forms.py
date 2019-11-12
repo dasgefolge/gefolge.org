@@ -184,9 +184,3 @@ class TimezoneField(wtforms.SelectField):
             return tz_name
         else:
             return pytz.timezone(tz_name)
-
-class YesMaybeNoField(HorizontalButtonGroupField):
-    """A form field that validates to yes, maybe, or no. Displayed as a horizontal button group."""
-
-    def __init__(self, label, validators=None, default='maybe', **kwargs):
-        super().__init__(label, validators, choices=[('yes', 'Ja', '#449d44'), ('maybe', 'Vielleicht', '#d58512'), ('no', 'Nein', '#ac2925')], default=default, **kwargs)
