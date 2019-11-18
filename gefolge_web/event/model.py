@@ -440,8 +440,13 @@ class Event(metaclass=EventMeta):
 
     def travel_with(self, person, travel):
         """Helper method since Jinja doesn't have while loops"""
+        seen = set()
         while self.attendee_data(person)[travel].get('type') == 'with':
             person = self.person(self.attendee_data(person)[travel]['with'].value())
+            if person in seen:
+                return person
+            else:
+                seen.add(person)
         return person
 
     @property
