@@ -312,14 +312,18 @@ class Programmpunkt:
             else:
                 person_to_signup = form.person_to_signup.data
             if not self.can_signup(editor, person_to_signup):
-                flask.flash('Du bist nicht berechtigt, {} für diesen Programmpunkt anzumelden.'.format(person_to_signup), 'error')
+                flask.flash(jinja2.Markup('Du bist nicht berechtigt, {} für diesen Programmpunkt anzumelden.'.format(person_to_signup.__html__())), 'error')
                 return flask.redirect(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.name))
+            if 'challonge' in self.data:
+                try:
+                    if form.challonge_username.data:
+                        challonge.participants.create(self.data['challonge'], name=person_to_signup.name, challonge_username=form.challonge_username.data, misc='id{}'.format(person_to_signup.snowflake))
+                    else:
+                        challonge.participants.create(self.data['challonge'], name=person_to_signup.name, misc='id{}'.format(person_to_signup.snowflake))
+                except challonge.api.ChallongeException as e:
+                    flask.flash(jinja2.Markup('Bei der Anmeldung auf Challonge ist ein Fehler aufgetreten. Bitte versuche es nochmal. Falls du Hilfe brauchst, wende dich bitte an {}. Fehlermeldung: {}'.format(gefolge_web.login.Mensch.admin().__html__(), jinja2.escape(e))), 'error')
+                    return flask.redirect(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.name))
             self.signup(person_to_signup)
-        if 'challonge' in self.data:
-            if form.challonge_username.data:
-                challonge.participants.create(self.data['challonge'], name=None, challonge_username=form.challonge_username.data, misc='id{}'.format(person_to_signup.snowflake))
-            else:
-                challonge.participants.create(self.data['challonge'], name=person_to_signup.name, misc='id{}'.format(person_to_signup.snowflake))
 
         self.process_form_details(form, editor)
 
