@@ -9,14 +9,15 @@
             <tr>
                 <th rowspan="2">Name</th>
                 <th colspan="{{(event.nights | length) * 2 + 2}}">Zeitraum</th>
+                <th rowspan="2">Anreise</th>
                 <th rowspan="2">Sonstiges</th>
                 <th rowspan="2">Details</th>
             </tr>
             <tr>
                 {% for night in event.nights %}
-                    <th style="text-align: center;" colspan="2">{{night | dm(event.timezone)}}</th>
+                    <th style="text-align: center;" colspan="2">{{night | dm}}</th>
                 {% endfor %}
-                <th style="text-align: center;" colspan="2">{{event.end | dm(event.timezone)}}</th>
+                <th style="text-align: center;" colspan="2">{{event.end.date() | dm}}</th>
             </tr>
         </thead>
         <tfoot>
@@ -45,36 +46,79 @@
                         {% set attending_night = event.night_going(person, night) %}
                         {% if attending_night == 'yes' %}
                             <td style="text-align: center;" colspan="2" class="success" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
-                                <span class="fa fa-check"></span>
+                                <span class="fa fa-fw fa-check"></span>
                             </td>
                         {% elif attending_night == 'maybe' %}
                             {% if event.free(night) <= 0 %}
                                 <td style="text-align: center;" colspan="2" class="info" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
-                                    <span class="fa fa-clock-o"></span>
+                                    <span class="fa fa-fw fa-clock-o"></span>
                                 </td>
                             {% else %}
                                 <td style="text-align: center;" colspan="2" class="warning" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
-                                    <span class="fa fa-question"></span>
+                                    <span class="fa fa-fw fa-question"></span>
                                 </td>
                             {% endif %}
                         {% elif attending_night == 'no' %}
                             <td style="text-align: center;" colspan="2" class="danger" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
-                                <span class="fa fa-times"></span>
+                                <span class="fa fa-fw fa-times"></span>
                             </td>
                         {% endif %}
                     {% endfor %}
                     <td></td>
+                    {% set anreise = event.attendee_data(person).get('anreise', {}) %}
+                    <td {% if anreise.get('type') is none %}class="warning"{% endif %}>
+                        {% if anreise.get('type') is none %}
+                            <i title="noch nicht eingetragen" class="fa fa-fw fa-question"></i>
+                        {% elif anreise['type'] == 'car' %}
+                            <i title="Auto" class="fa fa-fw fa-car"></i>
+                            {% if 'start' in anreise %}
+                                {{anreise['start'] | hm(event.timezone)}}
+                                {%- if anreise.get('end', anreise['start']) != anreise['start'] -%}
+                                    ~{{anreise['end'] | hm(event.timezone)}}
+                                {% endif %}
+                            {% endif %}
+                        {% elif anreise['type'] == 'public' %}
+                            <i title="Bus & Bahn" class="fa fa-fw fa-subway"></i>
+                            {% if anreise.get('legs', []) | length > 0 %}
+                                {{(anreise['legs'] | last)['arrival'] | hm(event.timezone)}}
+                            {% endif %}
+                            {#TODO Verspätung #}
+                        {% elif anreise['type'] == 'with' %}
+                            {% set ns = namespace(person=person) %}
+                            {% while event.attendee_data(ns.person)['anreise'].get('type') == 'with' %}
+                                {% set ns.person = event.person(event.attendee_data(ns.person)['anreise']['with'].value()) %}
+                            {% endwhile %}
+                            <i class="fa fa-fw fa-user-plus"></i> mit {{ns.person}}
+                        {% elif anreise['type'] == 'other' %}
+                            <i title="sonstige" class="fa fa-fw fa-rocket"></i> {{anreise.get('note', '')}}
+                        {% else %}
+                            <span class="text-danger">Unbekannte Anreiseart: {{anreise['type']}}</span>
+                        {% endif %}
+                    </td>
                     <td>
-                        {% if event.attendee_data(person).get('orga', []) | length > 0 %}
-                            Orga: {{event.attendee_data(person)['orga'] | natjoin}}
-                        {% elif person is guest %}
+                        {% for aufgabe in event.attendee_data(person).get('orga', []) %}
+                            {% if aufgabe == 'Abrechnung' %}
+                                <i title="Orga: Abrechnung" class="fa fa-fw fa-euro"></i>
+                            {% elif aufgabe == 'Buchung' %}
+                                <i title="Orga: Buchung" class="fa fa-fw fa-home"></i>
+                            {% elif aufgabe == 'Essen' %}
+                                <i title="Orga: Essen" class="fa fa-fw fa-cutlery"></i>
+                            {% elif aufgabe == 'Programm' %}
+                                <i title="Orga: Programm" class="fa fa-fw fa-calendar"></i>
+                            {% elif aufgabe == 'Schlüssel' %}
+                                <i title="Orga: Schlüssel" class="fa fa-fw fa-key"></i>
+                            {% else %}
+                                (Orga: {{aufgabe}})
+                            {% endif %}
+                        {% endfor %}
+                        {% if person is guest %}
                             (via {{person.via}})
                         {% endif %}
                     </td>
                     <td>
-                        <a href="{{url_for('event_profile', event=event.event_id, person=person.snowflake)}}"><span class="fa fa-eye"></span></a>
+                        <a href="{{url_for('event_profile', event=event.event_id, person=person.snowflake)}}"><span class="fa fa-fw fa-eye"></span></a>
                         {% if event.can_edit(g.user, person) %}
-                            <a href="{{url_for('event_profile_edit', event=event.event_id, person=person.snowflake)}}"><span class="fa fa-edit"></span></a>
+                            <a href="{{url_for('event_profile_edit', event=event.event_id, person=person.snowflake)}}"><span class="fa fa-fw fa-edit"></span></a>
                         {% endif %}
                     </td>
                 </tr>

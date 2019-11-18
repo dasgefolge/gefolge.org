@@ -96,6 +96,9 @@ def ProfileForm(event, person):
                     default=night_data
                 ))
 
+    Form.section_travel = gefolge_web.forms.FormSection('An-/Abreise')
+    Form.section_travel_intro = gefolge_web.forms.FormText(jinja2.Markup('Um die Infos zu deiner An-/Abreise zu ändern, wende dich bitte an {}.'.format(gefolge_web.login.Mensch.admin().__html__()))) #TODO form
+
     Form.section_food = gefolge_web.forms.FormSection('Essen')
     if person_data.get('selbstversorger', False):
         Form.section_food_intro = gefolge_web.forms.FormText(jinja2.Markup('Du bist als Selbstversorger eingetragen. Um das zu ändern, wende dich bitte an {}.'.format(gefolge_web.login.Mensch.admin().__html__())))

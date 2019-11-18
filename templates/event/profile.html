@@ -19,9 +19,9 @@
             <thead>
                 <tr>
                     {% for night in event.nights %}
-                        <th style="text-align: center;" colspan="2">{{night | dm(event.timezone)}}</th>
+                        <th style="text-align: center;" colspan="2">{{night | dm}}</th>
                     {% endfor %}
-                    <th style="text-align: center;" colspan="2">{{event.end | dm(event.timezone)}}</th>
+                    <th style="text-align: center;" colspan="2">{{event.end.date() | dm}}</th>
                 </tr>
             </thead>
             <tbody>
@@ -53,6 +53,65 @@
                 </tr>
             </tbody>
         </table>
+        {% for travel in ['Anreise, Abreise'] %}
+            <h2>{{travel}}</h2>
+            {% set travel_data = event.attendee_data(person).get(travel | lower, {}) %}
+            {% if travel_data.get('type') is none %}
+                <p>Noch nicht eingetragen.</p>
+            {% elif travel_data['type'] == 'car' %}
+                {% if 'start' in travel_data %}
+                    <p>
+                        Mit dem Auto
+                        {% if travel_data.get('end', travel_data['start']) == travel_data['start'] %}
+                            um {{travel_data['start'] | hm(event.timezone)}}
+                        {%- else %}
+                            zwischen {{travel_data['start'] | hm(event.timezone)}} und {{travel_data['end'] | hm(event.timezone)}}
+                        {%- endif -%}
+                        .
+                    {% endif %}
+                {% else %}
+                    <p>Mit dem Auto (Zeit noch nicht eingetragen).</p>
+                {% endif %}
+            {% elif travel_data['type'] == 'public' %}
+                {% if travel_data.get('legs', []) | length > 0 %}
+                    <ul>
+                        {% for leg in travel_data['legs'] %}
+                            {% if loop.first and 'from' in leg %}
+                                <li>Ab {{leg['from']}}</li>
+                            {% endif %}
+                            <li>
+                                {{leg.get('trainID', 'Bus/Bahn')}}{% if 'to' in leg %} nach {{leg['to']}}{% endif -%}
+                                {%- if 'departure' in leg -%}
+                                    , Abfahrt {{leg['departure'] | hm(event.timezone)}}
+                                {%- endif -%}
+                                {%- if 'arrival' in leg -%}
+                                    , Ankunft {{leg['arrival'] | hm(event.timezone)}}
+                                {% endif %}
+                                {#TODO Verspätung #}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>Mit Bus & Bahn (Details noch nicht eingetragen).</p>
+                {% endif %}
+            {% elif travel_data['type'] == 'with' %}
+                {% set ns = namespace(person=person) %}
+                {% while event.attendee_data(ns.person)[travel | lower].get('type') == 'with' %}
+                    {% set ns.person = event.person(event.attendee_data(ns.person)[travel | lower]['with'].value()) %}
+                {% endwhile %}
+                <p>Mit {{ns.person}}.</p>
+            {% elif travel_data['type'] == 'other' %}
+                <p>
+                    {% if travel_data.get('note', '') %}
+                        {{travel_data['note']}}
+                    {% else %}
+                        Sonstige.
+                    {% endif %}
+                </p>
+            {% else %}
+                <div class="alert alert-danger">Unbekannte {{travel}}art: {{travel_data['type']}}</div>
+            {% endif %}
+        {% endfor %}
         {% if event.can_edit(g.user, person) %}
             <h2>Essen</h2>
             {% if event.attendee_data(person).get('selbstversorger', False) %}
