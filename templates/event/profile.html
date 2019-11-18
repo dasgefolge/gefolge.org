@@ -80,14 +80,20 @@
                                 <li>Ab {{leg['from']}}</li>
                             {% endif %}
                             <li>
+                                {#TODO Verspätung #}
                                 {{leg.get('trainID', 'Bus/Bahn')}}{% if 'to' in leg %} bis {{leg['to']}}{% endif -%}
                                 {%- if 'departure' in leg -%}
                                     , Abfahrt {{leg['departure'] | hm(event.timezone)}}
                                 {%- endif -%}
                                 {%- if 'arrival' in leg -%}
                                     , Ankunft {{leg['arrival'] | hm(event.timezone)}}
+                                {%- endif -%}
+                                {%- if 'coach' in leg -%}
+                                    , Wagen {{leg['coach']}}
+                                {%- endif -%}
+                                {%- if 'seat' in leg -%}
+                                    , Platz {{leg['seat']}}
                                 {% endif %}
-                                {#TODO Verspätung #}
                             </li>
                         {% endfor %}
                     </ul>
