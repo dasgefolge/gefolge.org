@@ -10,6 +10,7 @@
                 <th rowspan="2">Name</th>
                 <th colspan="{{(event.nights | length) * 2 + 2}}">Zeitraum</th>
                 <th rowspan="2">Anreise</th>
+                <th class="hidden-xs" rowspan="2">Abreise</th>
                 <th rowspan="2">Sonstiges</th>
                 <th rowspan="2">Details</th>
             </tr>
@@ -34,6 +35,7 @@
                 {% endfor %}
                 <th></th>
                 <th></th>
+                <th class="hidden-xs" rowspan="2"></th>
                 <th></th>
                 <th></th>
             </tr>
@@ -66,32 +68,38 @@
                         {% endif %}
                     {% endfor %}
                     <td></td>
-                    {% set anreise = event.attendee_data(person).get('anreise', {}) %}
-                    <td {% if anreise.get('type') is none %}class="warning"{% endif %}>
-                        {% if anreise.get('type') is none %}
-                            <i title="noch nicht eingetragen" class="fa fa-fw fa-question"></i>
-                        {% elif anreise['type'] == 'car' %}
-                            <i title="Auto" class="fa fa-fw fa-car"></i>
-                            {% if 'start' in anreise %}
-                                {{anreise['start'] | hm(event.timezone)}}
-                                {%- if anreise.get('end', anreise['start']) != anreise['start'] -%}
-                                    ~{{anreise['end'] | hm(event.timezone)}}
+                    {% for travel in ['Anreise', 'Abreise'] %}
+                        {% set travel_data = event.attendee_data(person).get(travel | lower, {}) %}
+                        <td class="{% if travel_data.get('type') is none %}warning{% endif %}{% if travel != 'Anreise' %} hidden-xs{% endif %}">
+                            {% if travel_data.get('type') is none %}
+                                <i title="noch nicht eingetragen" class="fa fa-fw fa-question"></i>
+                            {% elif travel_data['type'] == 'car' %}
+                                <i title="Auto" class="fa fa-fw fa-car"></i>
+                                {% if 'start' in travel_data %}
+                                    {{travel_data['start'] | hm(event.timezone)}}
+                                    {%- if travel_data.get('end', travel_data['start']) != travel_data['start'] -%}
+                                        ~{{travel_data['end'] | hm(event.timezone)}}
+                                    {% endif %}
                                 {% endif %}
+                            {% elif travel_data['type'] == 'public' %}
+                                <i title="Bus & Bahn" class="fa fa-fw fa-subway"></i>
+                                {% if travel_data.get('legs', []) | length > 0 %}
+                                    {% if travel == 'Anreise' %}
+                                        {{(travel_data['legs'] | last)['arrival'] | hm(event.timezone)}}
+                                    {% else %}
+                                        {{(travel_data['legs'] | first)['departure'] | hm(event.timezone)}}
+                                    {% endif %}
+                                {% endif %}
+                                {#TODO Verspätung #}
+                            {% elif travel_data['type'] == 'with' %}
+                                <i class="fa fa-fw fa-user-plus"></i> mit {{event.travel_with(person, travel | lower)}}
+                            {% elif travel_data['type'] == 'other' %}
+                                <i title="sonstige" class="fa fa-fw fa-rocket"></i> {{travel_data.get('note', '')}}
+                            {% else %}
+                                <span class="text-danger">Unbekannte {{travel}}art: {{travel_data['type']}}</span>
                             {% endif %}
-                        {% elif anreise['type'] == 'public' %}
-                            <i title="Bus & Bahn" class="fa fa-fw fa-subway"></i>
-                            {% if anreise.get('legs', []) | length > 0 %}
-                                {{(anreise['legs'] | last)['arrival'] | hm(event.timezone)}}
-                            {% endif %}
-                            {#TODO Verspätung #}
-                        {% elif anreise['type'] == 'with' %}
-                            <i class="fa fa-fw fa-user-plus"></i> mit {{event.travel_with(person, 'anreise')}}
-                        {% elif anreise['type'] == 'other' %}
-                            <i title="sonstige" class="fa fa-fw fa-rocket"></i> {{anreise.get('note', '')}}
-                        {% else %}
-                            <span class="text-danger">Unbekannte Anreiseart: {{anreise['type']}}</span>
-                        {% endif %}
-                    </td>
+                        </td>
+                    {% endfor %}
                     <td>
                         {% for aufgabe in event.attendee_data(person).get('orga', []) %}
                             {% if aufgabe == 'Abrechnung' %}

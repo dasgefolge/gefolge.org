@@ -80,7 +80,7 @@
                                 <li>Ab {{leg['from']}}</li>
                             {% endif %}
                             <li>
-                                {{leg.get('trainID', 'Bus/Bahn')}}{% if 'to' in leg %} nach {{leg['to']}}{% endif -%}
+                                {{leg.get('trainID', 'Bus/Bahn')}}{% if 'to' in leg %} bis {{leg['to']}}{% endif -%}
                                 {%- if 'departure' in leg -%}
                                     , Abfahrt {{leg['departure'] | hm(event.timezone)}}
                                 {%- endif -%}
