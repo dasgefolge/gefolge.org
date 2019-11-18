@@ -2,6 +2,7 @@ import datetime
 import itertools
 import math
 import re
+import urllib.parse
 
 import challonge # PyPI: pychal
 import flask # PyPI: Flask
