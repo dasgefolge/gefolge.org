@@ -53,7 +53,7 @@
                 </tr>
             </tbody>
         </table>
-        {% for travel in ['Anreise, Abreise'] %}
+        {% for travel in ['Anreise', 'Abreise'] %}
             <h2>{{travel}}</h2>
             {% set travel_data = event.attendee_data(person).get(travel | lower, {}) %}
             {% if travel_data.get('type') is none %}
