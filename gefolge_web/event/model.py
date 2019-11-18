@@ -438,6 +438,12 @@ class Event(metaclass=EventMeta):
         result.add('url', flask.url_for('event_page', event=self.event_id, _external=True))
         return result
 
+    def travel_with(self, person, travel):
+        """Helper method since Jinja doesn't have while loops"""
+        while self.attendee_data(person)[travel].get('type') == 'with':
+            person = self.person(self.attendee_data(person)[travel]['with'].value())
+        return person
+
     @property
     def url_part(self):
         return self.event_id

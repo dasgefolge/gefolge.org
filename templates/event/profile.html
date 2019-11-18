@@ -95,11 +95,7 @@
                     <p>Mit Bus & Bahn (Details noch nicht eingetragen).</p>
                 {% endif %}
             {% elif travel_data['type'] == 'with' %}
-                {% set ns = namespace(person=person) %}
-                {% while event.attendee_data(ns.person)[travel | lower].get('type') == 'with' %}
-                    {% set ns.person = event.person(event.attendee_data(ns.person)[travel | lower]['with'].value()) %}
-                {% endwhile %}
-                <p>Mit {{ns.person}}.</p>
+                <p>Mit {{event.travel_with(person, travel | lower)}}.</p>
             {% elif travel_data['type'] == 'other' %}
                 <p>
                     {% if travel_data.get('note', '') %}

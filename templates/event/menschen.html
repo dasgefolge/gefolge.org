@@ -84,11 +84,7 @@
                             {% endif %}
                             {#TODO Verspätung #}
                         {% elif anreise['type'] == 'with' %}
-                            {% set ns = namespace(person=person) %}
-                            {% while event.attendee_data(ns.person)['anreise'].get('type') == 'with' %}
-                                {% set ns.person = event.person(event.attendee_data(ns.person)['anreise']['with'].value()) %}
-                            {% endwhile %}
-                            <i class="fa fa-fw fa-user-plus"></i> mit {{ns.person}}
+                            <i class="fa fa-fw fa-user-plus"></i> mit {{event.travel_with(person, 'anreise')}}
                         {% elif anreise['type'] == 'other' %}
                             <i title="sonstige" class="fa fa-fw fa-rocket"></i> {{anreise.get('note', '')}}
                         {% else %}
