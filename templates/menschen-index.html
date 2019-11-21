@@ -8,6 +8,7 @@
         <thead>
             <tr>
                 <th>Mensch</th>
+                <th>Discord username</th>
                 <th>Auf Discord seit</th>
                 <th>Im Gefolge Discord server seit</th>
                 {% if g.user.is_admin %}
@@ -20,6 +21,7 @@
                 {% set mensch = profile.var %}
                 <tr>
                     <td>{{mensch}}</td>
+                    <td>{{mensch.__str__()}}</td>
                     <td>{{mensch.snowflake | melt | dmy_hms}}</td>
                     <td>{{mensch.profile_data['joined'] | dmy_hms}}</td>
                     {% if g.user.is_admin %}
