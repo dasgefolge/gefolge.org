@@ -30,21 +30,21 @@
                         {% set attending_night = event.night_going(person, night) %}
                         {% if attending_night == 'yes' %}
                             <td class="success">
-                                <span class="fa fa-check"></span> Ja
+                                <span class="fa fa-fw fa-check"></span> Ja
                             </td>
                         {% elif attending_night == 'maybe' %}
                             {% if event.free(night) < 1 or (event.free(night) == 1 and event.night_maybes(night) | length > 1) %}
                                 <td class="info">
-                                    <span class="fa fa-clock-o"></span> Warteliste
+                                    <span class="fa fa-fw fa-clock-o"></span> Warteliste
                                 </td>
                             {% else %}
                                 <td class="warning">
-                                    <span class="fa fa-question"></span> Vielleicht
+                                    <span class="fa fa-fw fa-question"></span> Vielleicht
                                 </td>
                             {% endif %}
                         {% elif attending_night == 'no' %}
                             <td class="danger">
-                                <span class="fa fa-times"></span> Nein
+                                <span class="fa fa-fw fa-times"></span> Nein
                             </td>
                         {% endif %}
                         {% set status_change = event.night_status_change(person, night) %}

@@ -24,10 +24,7 @@ def handle_profile_edit(event, person, profile_form):
         'event': event.event_id,
         'person': person.snowflake,
         'nights': {
-            '{:%Y-%m-%d}'.format(night): {
-                'going': getattr(profile_form, 'night{}'.format(i)).data,
-                'lastUpdated': '{:%Y-%m-%dT%H:%M:%SZ}'.format(gefolge_web.util.now(pytz.utc))
-            }
+            '{:%Y-%m-%d}'.format(night): getattr(profile_form, 'night{}'.format(i)).data
             for i, night in enumerate(event.nights)
         },
         'food': {
@@ -38,10 +35,12 @@ def handle_profile_edit(event, person, profile_form):
     if 'nights' not in person_data:
         person_data['nights'] = {}
     for i, night in enumerate(event.nights):
-        person_data['nights']['{:%Y-%m-%d}'.format(night)] = {
-            'going': getattr(profile_form, 'night{}'.format(i)).data,
-            'lastUpdated': '{:%Y-%m-%dT%H:%M:%SZ}'.format(gefolge_web.util.now(pytz.utc))
-        }
+        # don't change lastUpdated if the status for this night stays the same
+        if '{:%Y-%m-%d}'.format(night) not in person_data.get('nights', {}) or getattr(profile_form, 'night{}'.format(i)).data != event.night_going(person_data, night):
+            person_data['nights']['{:%Y-%m-%d}'.format(night)] = {
+                'going': getattr(profile_form, 'night{}'.format(i)).data,
+                'lastUpdated': '{:%Y-%m-%dT%H:%M:%SZ}'.format(gefolge_web.util.now(pytz.utc))
+            }
     # Essen
     if hasattr(profile_form, 'allergies'):
         if 'food' not in person_data:
