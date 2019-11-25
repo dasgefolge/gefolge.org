@@ -47,7 +47,12 @@
                                 <span class="fa fa-times"></span> Nein
                             </td>
                         {% endif %}
-                        <td>{{event.night_status_change(person, night) | dmy_hms(event.timezone)}}</td>
+                        {% set status_change = event.night_status_change(person, night) %}
+                        {% if status_change is none %}
+                            <i title="wurde nicht aufgezeichnet" class="fa fa-fw fa-question"></i>
+                        {% else %}
+                            <td>{{status_change | dmy_hms(event.timezone)}}</td>
+                        {% endif %}
                     </tr>
                 {% endfor %}
             </tbody>
