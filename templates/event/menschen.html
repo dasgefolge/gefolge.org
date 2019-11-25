@@ -27,7 +27,7 @@
                 <th></th>
                 {% for night in event.nights %}
                     <th style="text-align: center;" colspan="2"><span class="text-success">{{event.night_signups(night) | length}}</span>+
-                    {%- if event.free(night) <= 0 -%}
+                    {%- if event.free(night) < 1 or (event.free(night) == 1 and event.night_maybes(night) | length > 1) -%}
                         <span class="text-info">{{event.night_maybes(night) | length}}</span></th>
                     {% else -%}
                         <span class="text-warning">{{event.night_maybes(night) | length}}</span></th>
