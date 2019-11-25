@@ -49,7 +49,7 @@
                         {% endif %}
                         {% set status_change = event.night_status_change(person, night) %}
                         {% if status_change is none %}
-                            <i title="wurde nicht aufgezeichnet" class="fa fa-fw fa-question"></i>
+                            <td class="warning"><i title="wurde nicht aufgezeichnet" class="fa fa-fw fa-question"></i></td>
                         {% else %}
                             <td>{{status_change | dmy_hms(event.timezone)}}</td>
                         {% endif %}
