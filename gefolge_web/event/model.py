@@ -293,6 +293,17 @@ class Event(metaclass=EventMeta):
             result = result['going']
         return result
 
+    def night_status_change(self, attendee_data, night):
+        if hasattr(attendee_data, 'snowflake'):
+            attendee_data = self.attendee_data(attendee_data)
+        result = attendee_data.get('nights', {}).get('{:%Y-%m-%d}'.format(night), {'going': 'maybe', 'lastUpdated': None})
+        if isinstance(result, str):
+            result = None
+        else:
+            result = result['lastUpdated']
+        if result is not None:
+            return gefolge_web.util.parse_iso_datetime(result, tz=pytz.utc)
+
     def night_maybes(self, night):
         return [
             person

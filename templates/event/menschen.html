@@ -48,21 +48,21 @@
                     {% for night in event.nights %}
                         {% set attending_night = event.night_going(person, night) %}
                         {% if attending_night == 'yes' %}
-                            <td style="text-align: center;" colspan="2" class="success" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
+                            <td style="text-align: center;" colspan="2" class="success" title="{{night | dm}}–{{night | next_date | dm}}">
                                 <span class="fa fa-fw fa-check"></span>
                             </td>
                         {% elif attending_night == 'maybe' %}
                             {% if event.free(night) < 1 or (event.free(night) == 1 and event.night_maybes(night) | length > 1) %}
-                                <td style="text-align: center;" colspan="2" class="info" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
+                                <td style="text-align: center;" colspan="2" class="info" title="{{night | dm}}–{{night | next_date | dm}}">
                                     <span class="fa fa-fw fa-clock-o"></span>
                                 </td>
                             {% else %}
-                                <td style="text-align: center;" colspan="2" class="warning" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
+                                <td style="text-align: center;" colspan="2" class="warning" title="{{night | dm}}–{{night | next_date | dm}}">
                                     <span class="fa fa-fw fa-question"></span>
                                 </td>
                             {% endif %}
                         {% elif attending_night == 'no' %}
-                            <td style="text-align: center;" colspan="2" class="danger" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
+                            <td style="text-align: center;" colspan="2" class="danger" title="{{night | dm}}–{{night | next_date | dm}}">
                                 <span class="fa fa-fw fa-times"></span>
                             </td>
                         {% endif %}

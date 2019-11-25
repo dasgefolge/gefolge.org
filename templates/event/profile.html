@@ -18,39 +18,38 @@
         <table class="table table-responsive">
             <thead>
                 <tr>
-                    {% for night in event.nights %}
-                        <th style="text-align: center;" colspan="2">{{night | dm}}</th>
-                    {% endfor %}
-                    <th style="text-align: center;" colspan="2">{{event.end.date() | dm}}</th>
+                    <th style="text-align: right;">Nacht</th>
+                    <th>Status</th>
+                    <th>seit</th>
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td></td>
-                    {% for night in event.nights %}
+                {% for night in event.nights %}
+                    <tr>
+                        <td style="text-align: right;">{{night | dm}}–{{night | next_date | dm}}</td>
                         {% set attending_night = event.night_going(person, night) %}
                         {% if attending_night == 'yes' %}
-                            <td style="text-align: center;" colspan="2" class="success" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
-                                <span class="fa fa-check"></span>
+                            <td class="success">
+                                <span class="fa fa-check"></span> Ja
                             </td>
                         {% elif attending_night == 'maybe' %}
                             {% if event.free(night) < 1 or (event.free(night) == 1 and event.night_maybes(night) | length > 1) %}
-                                <td style="text-align: center;" colspan="2" class="info" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
-                                    <span class="fa fa-clock-o"></span>
+                                <td class="info">
+                                    <span class="fa fa-clock-o"></span> Warteliste
                                 </td>
                             {% else %}
-                                <td style="text-align: center;" colspan="2" class="warning" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
-                                    <span class="fa fa-question"></span>
+                                <td class="warning">
+                                    <span class="fa fa-question"></span> Vielleicht
                                 </td>
                             {% endif %}
                         {% elif attending_night == 'no' %}
-                            <td style="text-align: center;" colspan="2" class="danger" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
-                                <span class="fa fa-times"></span>
+                            <td class="danger">
+                                <span class="fa fa-times"></span> Nein
                             </td>
                         {% endif %}
-                    {% endfor %}
-                    <td></td>
-                </tr>
+                        <td>{{event.night_status_change(person, night) | dmy_hms(event.timezone)}}</td>
+                    </tr>
+                {% endfor %}
             </tbody>
         </table>
         {% for travel in ['Anreise', 'Abreise'] %}
