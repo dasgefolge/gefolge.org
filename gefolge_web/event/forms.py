@@ -65,36 +65,34 @@ def ProfileForm(event, person):
     person_data = event.attendee_data(person)
     if person_data is None:
         person_data = {'id': person.snowflake}
+        new_signup = True
     else:
         person_data = person_data.value()
+        new_signup = False
 
     Form.section_nights = gefolge_web.forms.FormSection('Zeitraum')
     if event.start is None:
         Form.section_nights_intro = gefolge_web.forms.FormText('Coming soon™')
     else:
         for i, night in enumerate(event.nights):
-            night_data = event.night_going(person_data, night)
-            if event.free(night) > 0:
-                setattr(Form, 'night{}'.format(i), gefolge_web.forms.HorizontalButtonGroupField(
-                    '{:%d.%m.}–{:%d.%m.}'.format(night, night + datetime.timedelta(days=1)),
-                    [wtforms.validators.InputRequired()],
-                    [('yes', 'Ja', '#449d44'), ('maybe', 'Vielleicht', '#d58512'), ('no', 'Nein', '#ac2925')],
-                    default=night_data
-                ))
-            elif night_data == 'yes':
-                setattr(Form, 'night{}'.format(i), gefolge_web.forms.HorizontalButtonGroupField(
-                    '{:%d.%m.}–{:%d.%m.}'.format(night, night + datetime.timedelta(days=1)),
-                    [wtforms.validators.InputRequired()],
-                    [('yes', 'Ja', '#449d44'), ('maybe', 'Warteliste', '#269abc'), ('no', 'Nein', '#ac2925')],
-                    default=night_data
-                ))
+            default = event.night_going(person_data, night)
+            if new_signup:
+                night_data = None
             else:
-                setattr(Form, 'night{}'.format(i), gefolge_web.forms.HorizontalButtonGroupField(
-                    '{:%d.%m.}–{:%d.%m.}'.format(night, night + datetime.timedelta(days=1)),
-                    [wtforms.validators.InputRequired()],
-                    [('maybe', 'Warteliste', '#269abc'), ('no', 'Nein', '#ac2925')],
-                    default=night_data
-                ))
+                night_data = default
+            free_when_maybe = event.free(night) + (1 if night_data == 'yes' else 0) # die Anzahl Plätze, die frei wären, wenn person auf vielleicht gehen würde
+            maybes_when_maybe = event.night_maybes(night) + (0 if night_data == 'maybe' else 1) # die Anzahl Personen auf vielleicht wenn person auf vielleicht gehen würde
+            maybe_is_waiting = free_when_maybe < 1 or free_when_maybe == 1 and maybes_when_maybe > 1 # es gibt keine freien Plätze mehr, oder genau einen und es ist sonst schon wer auf vielleicht
+            yes_available = night_data == 'yes' or not maybe_is_waiting # person ist schon auf ja oder es gibt aktuell keine Warteliste
+            setattr(Form, 'night{}'.format(i), gefolge_web.forms.HorizontalButtonGroupField(
+                '{:%d.%m.}–{:%d.%m.}'.format(night, night + datetime.timedelta(days=1)),
+                [wtforms.validators.InputRequired()],
+                ([('yes', 'Ja', '#449d44')] if yes_available else []) + [
+                    (('maybe', 'Warteliste', '#269abc') if maybe_is_waiting else ('maybe', 'Vielleicht', '#d58512')),
+                    ('no', 'Nein', '#ac2925')
+                ],
+                default=default
+            ))
 
     Form.section_travel = gefolge_web.forms.FormSection('An-/Abreise')
     Form.section_travel_intro = gefolge_web.forms.FormText(jinja2.Markup('Um die Infos zu deiner An-/Abreise zu ändern, wende dich bitte an {}.'.format(gefolge_web.login.Mensch.admin().__html__()))) #TODO form
