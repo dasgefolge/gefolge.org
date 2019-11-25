@@ -81,7 +81,7 @@ def ProfileForm(event, person):
             else:
                 night_data = default
             free_when_maybe = event.free(night) + (1 if night_data == 'yes' else 0) # die Anzahl Plätze, die frei wären, wenn person auf vielleicht gehen würde
-            maybes_when_maybe = event.night_maybes(night) + (0 if night_data == 'maybe' else 1) # die Anzahl Personen auf vielleicht wenn person auf vielleicht gehen würde
+            maybes_when_maybe = len(event.night_maybes(night)) + (0 if night_data == 'maybe' else 1) # die Anzahl Personen auf vielleicht wenn person auf vielleicht gehen würde
             maybe_is_waiting = free_when_maybe < 1 or free_when_maybe == 1 and maybes_when_maybe > 1 # es gibt keine freien Plätze mehr, oder genau einen und es ist sonst schon wer auf vielleicht
             yes_available = night_data == 'yes' or not maybe_is_waiting # person ist schon auf ja oder es gibt aktuell keine Warteliste
             setattr(Form, 'night{}'.format(i), gefolge_web.forms.HorizontalButtonGroupField(

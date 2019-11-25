@@ -34,7 +34,7 @@
                                 <span class="fa fa-check"></span>
                             </td>
                         {% elif attending_night == 'maybe' %}
-                            {% if event.free(night) < 1 or (event.free(night) == 1 and event.night_maybes(night) > 1) %}
+                            {% if event.free(night) < 1 or (event.free(night) == 1 and event.night_maybes(night) | length > 1) %}
                                 <td style="text-align: center;" colspan="2" class="info" title="{{night | dm(event.timezone)}}–{{night | next_date | dm(event.timezone)}}">
                                     <span class="fa fa-clock-o"></span>
                                 </td>
