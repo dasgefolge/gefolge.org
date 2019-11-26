@@ -49,7 +49,8 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
     @property
     def default_strings(self):
         return gefolge_web.event.programm.Strings(
-            signup_header='Spieler',
+            signups_header='Spieler',
+            signup_form_header='Anmeldung',
             signup_button='Platz reservieren',
             signup_other_button='Platz für {} reservieren',
             edit_signup_button='Änderungen speichern'

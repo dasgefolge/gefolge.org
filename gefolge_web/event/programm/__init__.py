@@ -65,8 +65,9 @@ class CalendarEvent:
         return result
 
 class Strings:
-    def __init__(self, *, signup_header, signup_button, signup_other_button, edit_signup_button):
-        self.signup_header = signup_header
+    def __init__(self, *, signups_header, signup_form_header, signup_button, signup_other_button, edit_signup_button):
+        self.signups_header = signups_header
+        self.signup_form_header = signup_form_header
         self.signup_button = signup_button
         self.signup_other_button = signup_other_button
         self.edit_signup_button = edit_signup_button
@@ -74,7 +75,8 @@ class Strings:
     @classmethod
     def defaults(cls):
         return cls(
-            signup_header='Interessiert',
+            signups_header='Interessiert',
+            signup_form_header='Anmeldung',
             signup_button='Als interessiert markieren',
             signup_other_button='{} als interessiert markieren',
             edit_signup_button='Änderungen speichern'
@@ -85,7 +87,8 @@ class Strings:
         if defaults is None:
             defaults = cls.defaults()
         return cls(
-            signup_header=json_data.get('signupHeader', defaults.signup_header),
+            signups_header=json_data.get('signupHeader', defaults.signups_header),
+            signup_form_header=json_data.get('signupFormHeader', defaults.signup_form_header),
             signup_button=json_data.get('signupButton', defaults.signup_button),
             signup_other_button=json_data.get('signupOtherButton', defaults.signup_other_button),
             edit_signup_button=json_data.get('editSignupButton', defaults.edit_signup_button)
@@ -95,8 +98,10 @@ class Strings:
         if defaults is None:
             defaults = self.__class__.defaults()
         result = {}
-        if self.signup_header != defaults.signup_header:
-            result['signupHeader'] = self.signup_header
+        if self.signups_header != defaults.signups_header:
+            result['signupHeader'] = self.signups_header
+        if self.signup_form_header != defaults.signup_form_header:
+            result['signupFormHeader'] = self.signup_form_header
         if self.signup_button != defaults.signup_button:
             result['signupButton'] = self.signup_button
         if self.signup_other_button != defaults.signup_other_button:
