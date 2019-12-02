@@ -12,6 +12,7 @@ import flask # PyPI: Flask
 import flask_bootstrap # PyPI: Flask-Bootstrap
 import flask_pagedown # PyPI: Flask-PageDown
 import flaskext.markdown # PyPI: Flask-Markdown
+import jinja2 # PyPI: jinja2
 import pymdownx.emoji # PyPI: pymdown-extensions
 import pymdownx.extra # PyPI: pymdown-extensions
 import pymdownx.tilde # PyPI: pymdown-extensions
@@ -41,6 +42,10 @@ app = application = flask.Flask('gefolge_web', root_path=DOCUMENT_ROOT, instance
 
 with app.app_context():
     app.url_map.strict_slashes = False
+    app.jinja_env.autoescape = jinja2.select_autoescape(
+        default_for_string=True,
+        enabled_extensions=('html', 'xml', 'j2')
+    )
     # load config
     if gefolge_web.util.CONFIG_PATH.exists():
         app.config.update(gefolge_web.util.cached_json(lazyjson.File(gefolge_web.util.CONFIG_PATH)).value())
