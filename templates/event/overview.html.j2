@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base.html.j2" %}
 
 {% block title %}{{event.__str__()}}{% endblock %}
 
@@ -82,7 +82,7 @@
                     {% if guest in event.signups %}
                         <li><a href="{{(g.view_node / 'mensch' / guest).url}}">{{guest}}</a>: Anmeldung bestätigt</li>
                     {% else %}
-                        <li>{{guest}}: noch nicht angemeldet</li> {#TODO link to event/guest-confirm.html #}
+                        <li>{{guest}}: noch nicht angemeldet</li> {#TODO link to event/guest-confirm.html.j2 #}
                     {% endif %}
                 {% endfor %}
             </ul>

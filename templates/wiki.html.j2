@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base.html.j2" %}
 
 {% block title %}{% if article_namespace == 'wiki' %}{{article_name}} — GefolgeWiki{% else %}{{article_namespace}}/{{article_name}} — GefolgeWiki{% endif %}{% endblock %}
 

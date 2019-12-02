@@ -306,9 +306,9 @@ def parse_iso_datetime(datetime_str, *, tz=pytz.timezone('Europe/Berlin')):
 
 def render_template(template_name=None, **kwargs):
     if template_name is None:
-        template_path = '{}.html'.format(flask.request.endpoint.replace('.', '/'))
+        template_path = '{}.html.j2'.format(flask.request.endpoint.replace('.', '/'))
     else:
-        template_path = '{}.html'.format(template_name.replace('.', '/'))
+        template_path = '{}.html.j2'.format(template_name.replace('.', '/'))
     return jinja2.Markup(flask.render_template(template_path, **kwargs))
 
 def setup(app):
