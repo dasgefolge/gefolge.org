@@ -226,6 +226,13 @@ class Programmpunkt:
         self.data['description'] = value
 
     @property
+    def details(self):
+        if 'challonge' in self.data:
+            return jinja2.Markup('<p><a href="https://challonge.com/{}">Bracket und Ergebnisse</a></p>'.format(
+                challonge.tournaments.show(self.data['challonge'].value())['url']
+            ))
+
+    @property
     def end(self):
         end_str = self.data.get('end')
         if end_str is not None:

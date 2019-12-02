@@ -23,8 +23,8 @@
     {% else %}
         <p>Dieser Programmpunkt wird von {{programmpunkt.orga}} organisiert.</p>
     {% endif %}
-    {% if challonge_url is not none %}
-        <p><a href="{{challonge_url}}">Bracket und Ergebnisse</a></p>
+    {% if programmpunkt.details is not none %}
+        {{programmpunkt.details}}
     {% endif %}
     <h2>Beschreibung</h2>
     {{programmpunkt.description | markdown}}

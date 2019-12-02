@@ -4,7 +4,6 @@ import math
 import re
 import urllib.parse
 
-import challonge # PyPI: pychal
 import flask # PyPI: Flask
 import icalendar # PyPI: icalendar
 import jinja2 # PyPI: Jinja2
@@ -270,12 +269,7 @@ def setup(index, app):
             programmpunkt.process_form_submission(programmpunkt_form, flask.g.user)
             return flask.redirect(flask.g.view_node.url)
         else:
-            if 'challonge' in programmpunkt.data:
-                challonge_url = 'https://challonge.com/{}'.format(challonge.tournaments.show(programmpunkt.data['challonge'].value())['url'])
-            else:
-                challonge_url = None
             return {
-                'challonge_url': challonge_url,
                 'event': event,
                 'programmpunkt': programmpunkt,
                 'programmpunkt_form': programmpunkt_form if hasattr(programmpunkt_form, 'submit_programmpunkt_form') else None
