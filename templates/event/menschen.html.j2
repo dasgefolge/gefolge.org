@@ -70,8 +70,10 @@
                     <td></td>
                     {% for travel in ['Anreise', 'Abreise'] %}
                         {% set travel_data = event.attendee_data(person).get(travel | lower, {}) %}
-                        <td class="{% if travel_data.get('type') is none %}warning{% endif %}{% if travel != 'Anreise' %} hidden-xs{% endif %}">
-                            {% if travel_data.get('type') is none %}
+                        <td class="{% if travel_data.get('ok', false) %}success{% elif travel_data.get('type') is none %}warning{% endif %}{% if travel != 'Anreise' %} hidden-xs{% endif %}">
+                            {% if travel_data.get('ok', false) %}
+                                <i title="{% if travel == 'Anreise' %}angekommen{% else %}abgereist{% endif %}" class="fa fa-fw fa-check"></i>
+                            {% elif travel_data.get('type') is none %}
                                 <i title="noch nicht eingetragen" class="fa fa-fw fa-question"></i>
                             {% elif travel_data['type'] == 'car' %}
                                 <i title="Auto" class="fa fa-fw fa-car"></i>

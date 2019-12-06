@@ -60,6 +60,11 @@
         {% for travel in ['Anreise', 'Abreise'] %}
             <h2>{{travel}}</h2>
             {% set travel_data = event.attendee_data(person).get(travel | lower, {}) %}
+            {% if travel_data.get('ok', false) %}
+                <p>{{person}} ist schon {% if travel == 'Anreise' %}angekommen{% else %}abgereist{% endif %}.</p>
+            {% else %}
+                {#TODO „als angekommen/abgereist markieren“ button #}
+            {% endif %}
             {% if travel_data.get('type') is none %}
                 <p>Noch nicht eingetragen.</p>
             {% elif travel_data['type'] == 'car' %}
