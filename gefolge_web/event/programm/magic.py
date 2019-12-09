@@ -113,5 +113,18 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
     def signups(self):
         return super().signups + [FENHL]
 
+    @property
+    def subtitle(self):
+        if 'ibSubtitle' in self.data:
+            return self.data['ibSubtitle'].value()
+        set_code = self.card_set
+        if set_code is not None:
+            set_info = gefolge_web.util.cached_json(lazyjson.File(LORE_SEEKER_REPO / 'data' / 'sets' / '{}.json'.format(set_code)))
+            return set_info['name']
+
+    @subtitle.setter
+    def subtitle(self, value):
+        self.data['ibSubtitle'] = value #TODO allow resetting to default
+
 def config():
     return gefolge_web.util.cached_json(lazyjson.File(gefolge_web.util.BASE_PATH / 'games' / 'magic.json'))
