@@ -115,7 +115,7 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
 
     @property
     def subtitle(self):
-        if 'ibSubtitle' in self.data:
+        if self.data.get('ibSubtitle'):
             return self.data['ibSubtitle'].value()
         set_code = self.card_set
         if set_code is not None:
