@@ -68,7 +68,7 @@ class EventRooms:
         return 'rooms' in self.location.data
 
     def __iter__(self):
-        for section in self.location.data.get('rooms', {}):
+        for section in self.location.data.get('rooms', {}).values():
             for room_name in section:
                 yield self.room(room_name)
 
