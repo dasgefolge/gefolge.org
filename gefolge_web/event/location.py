@@ -3,6 +3,8 @@ import dataclasses
 import jinja2 # PyPI: Jinja2
 import pytz # PyPI: pytz
 
+import lazyjson # https://github.com/fenhl/lazyjson
+
 import gefolge_web.event.model
 import gefolge_web.login
 import gefolge_web.util
