@@ -57,6 +57,14 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% if event.rooms %}
+            <h2>Zimmer</h2>
+            {% if event.rooms.get(person) %}
+                <p>{{event.rooms.get(person).description}}</p>
+            {% else %}
+                <p>Noch nicht ausgewählt.</p>
+            {% endif %}
+        {% endif %}
         {% for travel in ['Anreise', 'Abreise'] %}
             <h2>{{travel}}</h2>
             {% set travel_data = event.attendee_data(person).get(travel | lower, {}) %}
@@ -123,14 +131,6 @@
                 <div class="alert alert-danger">Unbekannte {{travel}}art: {{travel_data['type']}}</div>
             {% endif %}
         {% endfor %}
-        {% if event.rooms %}
-            <h2>Zimmer</h2>
-            {% if event.rooms.get(person) %}
-                <p>{{event.rooms.get(person)}}</p>
-            {% else %}
-                <p>Noch nicht ausgewählt.</p>
-            {% endif %}
-        {% endif %}
         {% if event.can_edit(g.user, person) %}
             <h2>Essen</h2>
             {% if event.attendee_data(person).get('selbstversorger', False) %}

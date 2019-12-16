@@ -1,0 +1,9 @@
+Zimmer
+{{event.rooms | selectattr('reserved') | natjoin}}
+{% if event.rooms | selectattr('reserved') | length == 1 %}
+    ist
+{% else %}
+    sind
+{% endif %}
+reserviert für Menschen, die früh schlafen gehen wollen oder besonders viel Ruhe brauchen. Falls das auf dich zutrifft, melde dich bitte im
+<a href="https://discordapp.com/channels/355761290809180170/387264349678338049">#silvester</a>. {#TODO use channel from event data #}

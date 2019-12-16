@@ -66,8 +66,65 @@ class EventRooms:
     def __bool__(self):
         return 'rooms' in self.location.data
 
+    def __iter__(self):
+        for section in self.location.data.get('rooms', {}):
+            for room_name in section:
+                yield self.room(room_name)
+
     def get(self, person):
         data = self.event.attendee_data(person)
-        if data is None:
+        if data is None or data.get('room') is None:
             return None
-        return data.get('room')
+        return self.room(data['room'].value())
+
+    def room(self, room_name):
+        return Room(self.location, self.event, room_name)
+
+@dataclasses.dataclass(frozen=True)
+class Room:
+    location: Location
+    event: gefolge_web.event.model.Event
+    name: str
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def beds(self):
+        return self.data['beds'].value()
+
+    @property
+    def data(self):
+        return more_itertools.one(
+            section
+            for section in self.location.data['rooms']
+            if self.name in section
+        )[self.name]
+
+    @property
+    def description(self):
+        return f'Zimmer {self} ({self.section}, {self.free} von {self.beds} Betten frei)'
+
+    @property
+    def free(self): #TODO night-based
+        return self.beds - len(self.people)
+
+    @property
+    def people(self): #TODO night-based
+        return [
+            person
+            for person in self.event.signups
+            if self.event.attendee_data(person).get('room') == self.name
+        ]
+
+    @property
+    def reserved(self, room_name):
+        return self.data.get('reserved', False)
+
+    @property
+    def section(self):
+        return more_itertools.one(
+            section
+            for section in self.location.data['rooms']
+            if self.name in section
+        ).key

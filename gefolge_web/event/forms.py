@@ -94,6 +94,17 @@ def ProfileForm(event, person):
                 default=default
             ))
 
+    if event.rooms:
+        Form.section_room = gefolge_web.forms.FormSection('Zimmer')
+        if any(room.reserved for room in event.rooms):
+            Form.section_room_intro = gefolge_web.forms.FormText(gefolge_web.util.render_template('event.form-notes-zimmer', event=event))
+        Form.room = wtforms.SelectField('Zimmer', choices=[('', 'noch nicht ausgewählt')] + [
+            (str(room), str(room))
+            for room in event.rooms
+            if person in room.people
+            or room.free and not room.reserved
+        ], default='' if event.rooms.get(person) is None else str(event.rooms.get(person)))
+
     Form.section_travel = gefolge_web.forms.FormSection('An-/Abreise')
     Form.section_travel_intro = gefolge_web.forms.FormText(jinja2.Markup('Um die Infos zu deiner An-/Abreise zu ändern, wende dich bitte an {}.'.format(gefolge_web.login.Mensch.admin().__html__()))) #TODO form
 
