@@ -9,6 +9,9 @@
             <tr>
                 <th rowspan="2">Name</th>
                 <th colspan="{{(event.nights | length) * 2 + 2}}">Zeitraum</th>
+                {% if event.rooms %}
+                    <th rowspan="2">Z<span class="hidden-xs">immer</span></th>
+                {% endif %}
                 <th rowspan="2">Anreise</th>
                 <th class="hidden-xs" rowspan="2">Abreise</th>
                 <th rowspan="2">Sonstiges</th>
@@ -34,6 +37,9 @@
                     {% endif %}
                 {% endfor %}
                 <th></th>
+                {% if event.rooms %}
+                    <th></th>
+                {% endif %}
                 <th></th>
                 <th class="hidden-xs" rowspan="2"></th>
                 <th></th>
@@ -68,6 +74,15 @@
                         {% endif %}
                     {% endfor %}
                     <td></td>
+                    {% if event.rooms %}
+                        {% if event.rooms.get(person) %}
+                            <td>{{event.rooms.get(person)}}</td>
+                        {% else %}
+                            <td class="warning">
+                                <i title="noch nicht ausgewählt" class="fa fa-fw fa-question"></i>
+                            </td>
+                        {% endif %}
+                    {% endif %}
                     {% for travel in ['Anreise', 'Abreise'] %}
                         {% set travel_data = event.attendee_data(person).get(travel | lower, {}) %}
                         <td class="{% if travel_data.get('ok', false) %}success{% elif travel_data.get('type') is none %}warning{% endif %}{% if travel != 'Anreise' %} hidden-xs{% endif %}">
