@@ -118,7 +118,7 @@ class Room:
         ]
 
     @property
-    def reserved(self, room_name):
+    def reserved(self):
         return self.data.get('reserved', False)
 
     @property
