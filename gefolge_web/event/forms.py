@@ -99,7 +99,7 @@ def ProfileForm(event, person):
         if any(room.reserved for room in event.rooms):
             Form.section_room_intro = gefolge_web.forms.FormText(gefolge_web.util.render_template('event.form-notes-zimmer', event=event))
         Form.room = wtforms.SelectField('Zimmer', choices=[('', 'noch nicht ausgewählt')] + [
-            (str(room), str(room))
+            (str(room), room.description)
             for room in event.rooms
             if person in room.people
             or room.free and not room.reserved
