@@ -1,6 +1,7 @@
 import dataclasses
 
 import jinja2 # PyPI: Jinja2
+import more_itertools # PyPI: more-itertools
 import pytz # PyPI: pytz
 
 import lazyjson # https://github.com/fenhl/lazyjson
