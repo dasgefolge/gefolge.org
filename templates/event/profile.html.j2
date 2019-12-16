@@ -131,7 +131,7 @@
                 <div class="alert alert-danger">Unbekannte {{travel}}art: {{travel_data['type']}}</div>
             {% endif %}
         {% endfor %}
-        {% if event.can_edit(g.user, person) %}
+        {% if person == g.user or (person.is_guest and person.via == g.user) or event.can_edit(g.user, person) %}
             <h2>Essen</h2>
             {% if event.attendee_data(person).get('selbstversorger', False) %}
                 <p>Selbstversorger</p>
