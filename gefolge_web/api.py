@@ -89,3 +89,45 @@ def setup(index):
         for calendar_event in event.calendar:
             cal.add_component(calendar_event.to_ical())
         return flask.Response(cal.to_ical(), mimetype='text/calendar')
+
+    @api_event.child('overview.json')
+    def api_event_overview(event):
+        """Returns info about an event, in mostly the same format as the event config file, but restricted to what the user can access."""
+
+        def person_json(person):
+            result = {
+                'id': person.snowflake,
+                'nights': {
+                    f'{night:%Y-%m-%d}': {
+                        'going': event.night_going(person, night),
+                        'lastUpdated': event.night_status_change(person, night)
+                    } for night in event.nights
+                },
+                'orga': person.data.get('orga', [])
+            }
+            if person.is_guest:
+                result['via'] = person.via.snowflake
+            return result
+
+        result = {
+            'name': str(event),
+            'menschen': [person_json(person) for person in event.signups],
+            'calendarEvents': [
+                {
+                    'end': f'{calendar_event.end:%Y-%m-%dT%H:%M:%S}',
+                    'ibSubtitle': calendar_event.info_beamer_subtitle,
+                    'programmpunkt': calendar_event.programmpunkt.name,
+                    'start': f'{calendar_event.start:%Y-%m-%dT%H:%M:%S}',
+                    'subtitle': calendar_event.subtitle,
+                    'text': str(calendar_event)
+                } for calendar_event in event.calendar
+            ]
+        }
+        if event.end is not None:
+            result['end'] = f'{event.end:%Y-%m-%dT%H:%M:%S}'
+        if event.location is not None:
+            result['location'] = event.location.data.value()
+            result['location']['id'] = event.location.loc_id
+        if event.start is not None:
+            result['start'] = f'{event.start:%Y-%m-%dT%H:%M:%S}'
+        return result

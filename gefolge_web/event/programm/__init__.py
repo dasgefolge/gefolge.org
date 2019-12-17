@@ -42,6 +42,18 @@ class CalendarEvent:
             return 'programm-meta'
 
     @property
+    def info_beamer_subtitle(self):
+        import gefolge_web.event.programm.essen
+
+        if isinstance(self.programmpunkt, gefolge_web.event.programm.essen.Abendessen):
+            if self.subtitle is None:
+                return f'Orga: {self.programmpunkt.orga.name}'
+            else:
+                return f'{self.subtitle} (Orga: {self.programmpunkt.orga.name})'
+        else:
+            return self.subtitle
+
+    @property
     def subtitle(self):
         if isinstance(self.programmpunkt, Programmpunkt):
             return self.programmpunkt.subtitle
