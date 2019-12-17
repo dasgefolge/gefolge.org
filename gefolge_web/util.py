@@ -287,7 +287,7 @@ def notify_crash(exc=None):
         url = str(flask.g.view_node.url)
     except Exception:
         url = None
-    mail_text = CRASH_NOTICE.format(whoami=whoami, hostname=hostname, user=user)
+    mail_text = CRASH_NOTICE.format(whoami=whoami, hostname=hostname, user=user, url=url)
     if exc is not None:
         mail_text += '\n' + traceback.format_exc()
     return subprocess.run(['ssmtp', 'fenhl@fenhl.net'], input=mail_text.encode('utf-8'), check=True)
