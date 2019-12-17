@@ -43,6 +43,7 @@ def setup(index):
 
     @api_calendars_index.child('signups.ics')
     def calendar_signups():
+        """Ein Kalender im iCalendar-Format mit allen events und Programmpunkten, für die du angemeldet bist."""
         cal = icalendar.Calendar()
         cal.add('prodid', '-//Gefolge//gefolge.org//DE')
         cal.add('version', '2.0')
@@ -62,6 +63,7 @@ def setup(index):
 
     @api_discord_index.child('voice-state.json')
     def discord_voice_state():
+        """Infos, wer gerade in welchen voice channels ist."""
         with DISCORD_VOICE_STATE_PATH.open() as f:
             return flask.Response(f.read(), mimetype='application/json')
 
@@ -82,6 +84,7 @@ def setup(index):
 
     @event_calendars.child('all.ics')
     def event_calendar_all(event):
+        """Ein Kalender im iCalendar-Format mit allen Programmpunkten von diesem event."""
         cal = icalendar.Calendar()
         cal.add('prodid', '-//Gefolge//gefolge.org//DE')
         cal.add('version', '2.0')
@@ -92,7 +95,7 @@ def setup(index):
 
     @api_event.child('overview.json')
     def api_event_overview(event):
-        """Returns info about an event, in mostly the same format as the event config file, but restricted to what the user can access."""
+        """Infos zu diesem event."""
 
         def person_json(person):
             result = {
@@ -103,7 +106,7 @@ def setup(index):
                         'lastUpdated': event.night_status_change(person, night)
                     } for night in event.nights
                 },
-                'orga': person.data.get('orga', [])
+                'orga': event.attendee_data(person).get('orga', [])
             }
             if person.is_guest:
                 result['via'] = person.via.snowflake
