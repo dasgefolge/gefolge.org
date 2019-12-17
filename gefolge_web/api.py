@@ -78,6 +78,10 @@ def setup(index):
     def api_event(event):
         return {}
 
+    @api_event.catch_init(FileNotFoundError)
+    def api_event_catch_init(exc, value):
+        return gefolge_web.util.render_template('event.404', event_id=value), 404
+
     @api_event.child('calendar')
     @gefolge_web.util.template('api-dir')
     def event_calendars(event):
