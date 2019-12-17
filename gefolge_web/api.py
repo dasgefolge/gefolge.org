@@ -6,6 +6,7 @@ import flask_login # PyPI: Flask-Login
 import icalendar # PyPI: icalendar
 
 import gefolge_web.event.model
+import gefolge_web.event.programm
 import gefolge_web.login
 import gefolge_web.util
 
@@ -97,6 +98,18 @@ def setup(index):
     def api_event_overview(event):
         """Infos zu diesem event."""
 
+        def cal_event_json(calendar_event):
+            result = {
+                'end': f'{calendar_event.end:%Y-%m-%dT%H:%M:%S}',
+                'ibSubtitle': calendar_event.info_beamer_subtitle,
+                'start': f'{calendar_event.start:%Y-%m-%dT%H:%M:%S}',
+                'subtitle': calendar_event.subtitle,
+                'text': str(calendar_event)
+            }
+            if isinstance(calendar_event.programmpunkt, gefolge_web.event.programm.Programmpunkt):
+                result['programmpunkt'] = calendar_event.programmpunkt.name
+            return result
+
         def person_json(person):
             result = {
                 'id': person.snowflake,
@@ -115,16 +128,7 @@ def setup(index):
         result = {
             'name': str(event),
             'menschen': [person_json(person) for person in event.signups],
-            'calendarEvents': [
-                {
-                    'end': f'{calendar_event.end:%Y-%m-%dT%H:%M:%S}',
-                    'ibSubtitle': calendar_event.info_beamer_subtitle,
-                    'programmpunkt': calendar_event.programmpunkt.name,
-                    'start': f'{calendar_event.start:%Y-%m-%dT%H:%M:%S}',
-                    'subtitle': calendar_event.subtitle,
-                    'text': str(calendar_event)
-                } for calendar_event in event.calendar
-            ]
+            'calendarEvents': [cal_event_json(cal_event) for cal_event in event.calendar]
         }
         if event.end is not None:
             result['end'] = f'{event.end:%Y-%m-%dT%H:%M:%S}'
