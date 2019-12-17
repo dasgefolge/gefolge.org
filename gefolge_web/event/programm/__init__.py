@@ -44,6 +44,7 @@ class CalendarEvent:
     @property
     def info_beamer_subtitle(self):
         import gefolge_web.event.programm.essen
+        import gefolge_web.event.programm.magic
 
         if isinstance(self.programmpunkt, gefolge_web.event.programm.essen.Abendessen):
             if self.programmpunkt.orga is None:
@@ -54,6 +55,11 @@ class CalendarEvent:
                 return f'Orga: {orga}'
             else:
                 return f'{self.subtitle} (Orga: {orga})'
+        elif isinstance(self.programmpunkt, gefolge_web.event.programm.magic.CustomMagicDraft):
+            if len(self.programmpunkt.signups) < 8:
+                return f'noch {8 - len(self.programmpunkt.signups)} Spieler gesucht'
+            else:
+                return self.subtitle
         else:
             return self.subtitle
 
