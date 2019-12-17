@@ -46,10 +46,14 @@ class CalendarEvent:
         import gefolge_web.event.programm.essen
 
         if isinstance(self.programmpunkt, gefolge_web.event.programm.essen.Abendessen):
-            if self.subtitle is None:
-                return f'Orga: {self.programmpunkt.orga.name}'
+            if self.programmpunkt.orga is None:
+                orga = 'noch nicht eingetragen'
             else:
-                return f'{self.subtitle} (Orga: {self.programmpunkt.orga.name})'
+                orga = self.programmpunkt.orga.name
+            if self.subtitle is None:
+                return f'Orga: {orga}'
+            else:
+                return f'{self.subtitle} (Orga: {orga})'
         else:
             return self.subtitle
 
