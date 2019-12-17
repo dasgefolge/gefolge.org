@@ -120,7 +120,7 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
         set_code = self.card_set
         if set_code is not None:
             set_info = gefolge_web.util.cached_json(lazyjson.File(LORE_SEEKER_REPO / 'data' / 'sets' / '{}.json'.format(set_code)))
-            return set_info['name']
+            return set_info['name'].value()
 
     @subtitle.setter
     def subtitle(self, value):

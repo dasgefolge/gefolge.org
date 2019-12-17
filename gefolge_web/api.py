@@ -116,7 +116,7 @@ def setup(index):
                 'nights': {
                     f'{night:%Y-%m-%d}': {
                         'going': event.night_going(person, night),
-                        'lastUpdated': event.night_status_change(person, night)
+                        'lastUpdated': f'{event.night_status_change(person, night):%Y-%m-%dT%H:%M:%SZ}'
                     } for night in event.nights
                 },
                 'orga': event.attendee_data(person).get('orga', [])
