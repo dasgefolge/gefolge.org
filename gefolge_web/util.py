@@ -32,6 +32,7 @@ Subject: gefolge.org internal server error
 
 An internal server error occurred on gefolge.org.
 User: {user}
+URL: {url}
 """
 
 @class_key.class_key()
@@ -282,6 +283,10 @@ def notify_crash(exc=None):
         user = str(flask.g.user)
     except Exception:
         user = None
+    try:
+        url = str(flask.g.view_node.url)
+    except Exception:
+        url = None
     mail_text = CRASH_NOTICE.format(whoami=whoami, hostname=hostname, user=user)
     if exc is not None:
         mail_text += '\n' + traceback.format_exc()
