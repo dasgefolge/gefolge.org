@@ -102,7 +102,7 @@ def ProfileForm(event, person):
             (str(room), room.description)
             for room in event.rooms
             if person in room.people
-            or room.free and not room.reserved
+            or room.free > 0 and not room.reserved
         ], default='' if event.rooms.get(person) is None else str(event.rooms.get(person)))
 
     Form.section_travel = gefolge_web.forms.FormSection('An-/Abreise')
