@@ -18,6 +18,29 @@ def cmd(cmd, *args, check=True, expected_response=object()):
             #TODO send email
             return False
 
+def escape(text):
+    # used in external scripts
+    #FROM https://docs.rs/serenity/0.7.4/src/serenity/utils/message_builder.rs.html#556-568
+    # Remove invite links and popular scam websites, mostly to prevent the
+    # current user from triggering various ad detectors and prevent embeds.
+    text = text.replace('discord.gg', 'discord\u2024gg') \
+        .replace('discord.me', 'discord\u2024me') \
+        .replace('discordlist.net', 'discordlist\u2024net') \
+        .replace('discordservers.com', 'discordservers\u2024com') \
+        .replace('discordapp.com/invite', 'discordapp\u2024com/invite') \
+        # Remove right-to-left override and other similar annoying symbols
+        .replace('\u202e', ' ') \ # RTL Override
+        .replace('\u200f', ' ') \ # RTL Mark
+        .replace('\u202b', ' ') \ # RTL Embedding
+        .replace('\u200b', ' ') \ # Zero-width space
+        .replace('\u200d', ' ') \ # Zero-width joiner
+        .replace('\u200c', ' ') \ # Zero-width non-joiner
+        # Remove everyone and here mentions. Has to be put after ZWS replacement
+        # because it utilises it itself.
+        .replace('@everyone', '@\u200beveryone') \
+        .replace('@here', '@\u200bhere')
+    return text.replace('*', '\\*').replace('`', '\\`').replace('_', '\\_')
+
 # one function for every IPC command implemented in listen_ipc
 
 def add_role(user, role, *, check=True):
