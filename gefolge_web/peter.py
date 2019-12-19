@@ -28,15 +28,15 @@ def escape(text):
         .replace('discordlist.net', 'discordlist\u2024net') \
         .replace('discordservers.com', 'discordservers\u2024com') \
         .replace('discordapp.com/invite', 'discordapp\u2024com/invite') \
-        # Remove right-to-left override and other similar annoying symbols
+        \ # Remove right-to-left override and other similar annoying symbols
         .replace('\u202e', ' ') \ # RTL Override
         .replace('\u200f', ' ') \ # RTL Mark
         .replace('\u202b', ' ') \ # RTL Embedding
         .replace('\u200b', ' ') \ # Zero-width space
         .replace('\u200d', ' ') \ # Zero-width joiner
         .replace('\u200c', ' ') \ # Zero-width non-joiner
-        # Remove everyone and here mentions. Has to be put after ZWS replacement
-        # because it utilises it itself.
+        \ # Remove everyone and here mentions. Has to be put after ZWS replacement
+        \ # because it utilises it itself.
         .replace('@everyone', '@\u200beveryone') \
         .replace('@here', '@\u200bhere')
     return text.replace('*', '\\*').replace('`', '\\`').replace('_', '\\_')
