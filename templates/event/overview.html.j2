@@ -74,7 +74,7 @@
     <h1 id="signup">Anmeldung</h1>
     {% if g.user in event.menschen %}
         <p>Du hast dich am {{event.attendee_data(g.user)['signup'] | dmy(event.timezone)}} angemeldet.</p>
-        <p>Du kannst <a href="{{(g.view_node / 'mensch' / g.user).url}}">deine Anmeldungsdaten</a> jederzeit <a href="{{(g.view_node / 'mensch' / g.user / 'edit').url}}">bearbeiten</a>. Einige Teile der Eventanmeldung sind noch in Arbeit (z.B. Zimmerverteilung). Wenn etwas Neues fertig ist, wirst du auf Discord angepingt.</p> {#TODO#}
+        <p>Du kannst <a href="{{(g.view_node / 'mensch' / g.user).url}}">deine Anmeldungsdaten</a> jederzeit <a href="{{(g.view_node / 'mensch' / g.user / 'edit').url}}">bearbeiten</a>. Einige Teile der Eventanmeldung sind noch in Arbeit (z.B. Bettwäsche-Börse). Wenn etwas Neues fertig ist, wirst du auf Discord angepingt.</p> {#TODO#}
         {% if event.guests | selectattr("via", "equalto", g.user) | length > 0 %}
             <h2>Gäste</h2>
             <ul>
