@@ -20,7 +20,7 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
         super().__init__(event, programmpunkt)
 
     def __repr__(self):
-        return 'gefolge_web.event.programm.essen.Abendessen({!r}, {!r})'.format(self.event, self.name)
+        return 'gefolge_web.event.programm.essen.Abendessen({!r}, {!r})'.format(self.event, self.url_part)
 
     def assert_exists(self):
         if self.date < self.event.start.date():

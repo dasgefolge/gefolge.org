@@ -330,9 +330,9 @@ def setup(index, app):
         if programm_delete_form.submit_programm_delete_form.data and programm_delete_form.validate():
             gefolge_web.util.log('eventProgrammDelete', {
                 'event': event.event_id,
-                'programmpunkt': programmpunkt.name
+                'programmpunkt': programmpunkt.url_part
             })
-            del event.data['programm'][programmpunkt.name]
+            del event.data['programm'][programmpunkt.url_part]
             return flask.redirect(flask.g.view_node.parent.parent.url)
         else:
             return {

@@ -35,7 +35,7 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
 
     def assert_exists(self):
         if self.event.event_id in config().get('skippedEvents', []):
-            raise ValueError('Es gibt auf {} keinen Programmpunkt namens {}.'.format(self.event, self.name))
+            raise ValueError('Es gibt auf {} (noch) keinen Custom Magic Draft.'.format(self.event))
 
     @property
     def card_set(self):

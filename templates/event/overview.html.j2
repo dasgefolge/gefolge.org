@@ -126,7 +126,7 @@
                     {% for date in event.nights %}
                         {% set date_info = event.essen(date) %}
                         <li>
-                            <a href="{{url_for('event_programmpunkt', event=event.event_id, programmpunkt=date_info.name)}}">{{date | dm(event.timezone)}}</a>:
+                            <a href="{{url_for('event_programmpunkt', event=event.event_id, programmpunkt=date_info.url_part)}}">{{date | dm(event.timezone)}}</a>:
                             {% if date_info.description == '' %}
                                 noch nicht eingetragen
                             {% else %}

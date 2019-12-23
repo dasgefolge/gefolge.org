@@ -76,12 +76,12 @@ class CalendarEvent:
         #TODO date created
         #TODO date last modified
         if isinstance(self.programmpunkt, Programmpunkt):
-            result.add('uid', 'gefolge-event-{}-{}-{}@gefolge.org'.format(self.programmpunkt.event.event_id, self.programmpunkt.name, self.uid))
+            result.add('uid', 'gefolge-event-{}-{}-{}@gefolge.org'.format(self.programmpunkt.event.event_id, self.programmpunkt.url_part, self.uid))
         else:
             result.add('uid', 'gefolge-event-{}-{}@gefolge.org'.format(self.programmpunkt.event_id, self.uid))
         result.add('location', self.programmpunkt.location.address)
         if isinstance(self.programmpunkt, Programmpunkt):
-            result.add('url', flask.url_for('event_programmpunkt', event=self.programmpunkt.event.event_id, programmpunkt=self.programmpunkt.name, _external=True))
+            result.add('url', flask.url_for('event_programmpunkt', event=self.programmpunkt.event.event_id, programmpunkt=self.programmpunkt.url_part, _external=True))
         else:
             result.add('url', flask.url_for('event_page', event=self.programmpunkt.event_id, _external=True))
         return result
@@ -165,14 +165,14 @@ class Programmpunkt:
         self.assert_exists()
 
     def __html__(self):
-        return jinja2.Markup('<a href="{}">{}</a>'.format(jinja2.escape(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.name)), jinja2.escape(str(self))))
+        return jinja2.Markup('<a href="{}">{}</a>'.format(jinja2.escape(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.url_part)), jinja2.escape(str(self))))
 
     @property
     def __key__(self):
         return self.start is None, self.start, self.event, self.url_part
 
     def __repr__(self):
-        return 'gefolge_web.event.programm.Programmpunkt({!r}, {!r})'.format(self.event, self.name)
+        return 'gefolge_web.event.programm.Programmpunkt({!r}, {!r})'.format(self.event, self.url_part)
 
     def __str__(self):
         return self.name
@@ -235,9 +235,9 @@ class Programmpunkt:
     def data(self):
         if 'programm' not in self.event.data:
             self.event.data['programm'] = {}
-        if self.name not in self.event.data['programm']:
-            self.event.data['programm'][self.name] = {}
-        return self.event.data['programm'][self.name]
+        if self.url_part not in self.event.data['programm']:
+            self.event.data['programm'][self.url_part] = {}
+        return self.event.data['programm'][self.url_part]
 
     @property
     def default_strings(self):
@@ -364,7 +364,7 @@ class Programmpunkt:
                 person_to_signup = form.person_to_signup.data
             if not self.can_signup(editor, person_to_signup):
                 flask.flash(jinja2.Markup('Du bist nicht berechtigt, {} für diesen Programmpunkt anzumelden.'.format(person_to_signup.__html__())), 'error')
-                return flask.redirect(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.name))
+                return flask.redirect(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.url_part))
             if 'challonge' in self.data:
                 try:
                     if form.challonge_username.data:
@@ -373,7 +373,7 @@ class Programmpunkt:
                         challonge.participants.create(self.data['challonge'], name=person_to_signup.name, misc='id{}'.format(person_to_signup.snowflake))
                 except challonge.api.ChallongeException as e:
                     flask.flash(jinja2.Markup('Bei der Anmeldung auf Challonge ist ein Fehler aufgetreten. Bitte versuche es nochmal. Falls du Hilfe brauchst, wende dich bitte an {}. Fehlermeldung: {}'.format(gefolge_web.login.Mensch.admin().__html__(), jinja2.escape(e))), 'error')
-                    return flask.redirect(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.name))
+                    return flask.redirect(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.url_part))
             self.signup(person_to_signup)
 
         self.process_form_details(form, editor)
@@ -381,7 +381,7 @@ class Programmpunkt:
     def signup(self, person):
         gefolge_web.util.log('eventProgrammSignup', {
             'event': self.event.event_id,
-            'programmpunkt': self.name,
+            'programmpunkt': self.url_part,
             'person': person.snowflake
         })
         if 'signups' not in self.data:

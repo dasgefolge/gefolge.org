@@ -111,7 +111,7 @@ def setup(index):
                 'text': str(calendar_event)
             }
             if isinstance(calendar_event.programmpunkt, gefolge_web.event.programm.Programmpunkt):
-                result['programmpunkt'] = calendar_event.programmpunkt.name
+                result['programmpunkt'] = calendar_event.programmpunkt.url_part
             return result
 
         def person_json(person):
