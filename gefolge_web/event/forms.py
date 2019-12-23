@@ -180,8 +180,8 @@ def ProgrammForm(event, programmpunkt):
     Form.subtitle_notice = gefolge_web.forms.FormText('Wird auf dem info-beamer und in im Zeitplan angezeigt.')
     if programmpunkt is None:
         Form.orga = PersonField(event, 'Orga', [validate_orga], optional_label='Orga gesucht', allow_guests=False, default=None if programmpunkt is None else programmpunkt.orga) #TODO disable (https://getbootstrap.com/docs/3.3/css/#forms-control-disabled) if not allowed to edit
-    Form.start = gefolge_web.forms.DateTimeField('Beginn', [wtforms.validators.Optional()], tz=programmpunkt.timezone, default=None if programmpunkt is None else programmpunkt.start)
-    Form.end = gefolge_web.forms.DateTimeField('Ende', [wtforms.validators.Optional()], tz=programmpunkt.timezone, default=None if programmpunkt is None else programmpunkt.end)
+    Form.start = gefolge_web.forms.DateTimeField('Beginn', [wtforms.validators.Optional()], tz=event.timezone if programmpunkt is None else programmpunkt.timezone, default=None if programmpunkt is None else programmpunkt.start)
+    Form.end = gefolge_web.forms.DateTimeField('Ende', [wtforms.validators.Optional()], tz=event.timezone if programmpunkt is None else programmpunkt.timezone, default=None if programmpunkt is None else programmpunkt.end)
     if programmpunkt is None or programmpunkt.description_editable:
         Form.description = gefolge_web.forms.MarkdownField('Beschreibung', default='' if programmpunkt is None else programmpunkt.description)
     if flask.g.user == event.orga('Programm'):
