@@ -167,7 +167,7 @@ def ProgrammForm(event, programmpunkt):
             wtforms.validators.InputRequired(),
             wtforms.validators.Regexp('^[0-9a-z-]+$', message='Darf nur aus Kleinbuchstaben, Zahlen und „-“ bestehen.'),
             wtforms.validators.NoneOf([programmpunkt.url_part for programmpunkt in event.programm], message='Es gibt bereits einen Programmpunkt mit diesem Titel.'),
-        ], prefix=f'https://gefolge.org/event/{event_id}/programm/')
+        ], prefix=f'https://gefolge.org/event/{event.event_id}/programm/')
     Form.display_name = wtforms.StringField('Titel', [
         wtforms.validators.InputRequired(),
         wtforms.validators.NoneOf([
