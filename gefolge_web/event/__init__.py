@@ -285,7 +285,7 @@ def setup(index, app):
             'table': table
         }
 
-    @event_programm.children(gefolge_web.event.programm.Programmpunkt, methods=['GET', 'POST'])
+    @event_programm.children(gefolge_web.event.programm.Programmpunkt.from_url_part_or_name, methods=['GET', 'POST'])
     @gefolge_web.util.template('event.programmpunkt')
     def event_programmpunkt(event, programmpunkt):
         programmpunkt_form = programmpunkt.form(flask.g.user)

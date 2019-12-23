@@ -164,6 +164,23 @@ class Programmpunkt:
         self.url_part = programmpunkt
         self.assert_exists()
 
+    @classmethod
+    def from_url_part_or_name(cls, event, programmpunkt):
+        try:
+            return cls(event, programmpunkt)
+        except ValueError as e:
+            candidates = [
+                iter_programm
+                for iter_programm in event.programm
+                if iter_programm.name == programmpunkt
+            ]
+            if len(candidates) == 0:
+                raise
+            elif len(candidates) == 1:
+                return candidates[0]
+            else:
+                raise ValueError('Es gibt auf {} mehrere Programmpunkte mit dem Namen {}.'.format(event, programmpunkt)) from e
+
     def __html__(self):
         return jinja2.Markup('<a href="{}">{}</a>'.format(jinja2.escape(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.url_part)), jinja2.escape(str(self))))
 
