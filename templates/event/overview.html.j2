@@ -141,7 +141,7 @@
             {% if g.user.is_admin or event.orga('Programm') == g.user %}
                 <h2>Programm</h2>
                 <h3>Programmpunkt erstellen</h3>
-                {{gen_form(programm_add_form, g.view_node.url)}}
+                {{gen_form(programm_form, g.view_node.url)}}
             {% endif %}
             {% if g.user.is_admin or event.orga('Schlüssel') == g.user %}
                 <h2>Schlüssel</h2>

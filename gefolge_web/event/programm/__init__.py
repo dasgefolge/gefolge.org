@@ -161,7 +161,7 @@ class Programmpunkt:
             self.event = gefolge_web.event.model.Event(event)
         else:
             self.event = event
-        self.name = programmpunkt
+        self.url_part = programmpunkt
         self.assert_exists()
 
     def __html__(self):
@@ -169,7 +169,7 @@ class Programmpunkt:
 
     @property
     def __key__(self):
-        return self.start is None, self.start, self.event, self.name
+        return self.start is None, self.start, self.event, self.url_part
 
     def __repr__(self):
         return 'gefolge_web.event.programm.Programmpunkt({!r}, {!r})'.format(self.event, self.name)
@@ -181,8 +181,8 @@ class Programmpunkt:
         return False # subclasses may override
 
     def assert_exists(self):
-        if self.name not in self.event.data.get('programm', {}):
-            raise ValueError('Es gibt auf {} keinen Programmpunkt namens {}.'.format(self.event, self.name))
+        if self.url_part not in self.event.data.get('programm', {}):
+            raise ValueError('Es gibt auf {} keinen Programmpunkt mit der URL {}.'.format(self.event, self.url_part))
 
     @property
     def calendar_events(self):
@@ -227,6 +227,10 @@ class Programmpunkt:
     def css_class(self):
         return self.data.get('cssClass', 'programm-other')
 
+    @css_class.setter
+    def css_class(self, value):
+        self.data['cssClass'] = value
+
     @property
     def data(self):
         if 'programm' not in self.event.data:
@@ -246,6 +250,10 @@ class Programmpunkt:
     @description.setter
     def description(self, value):
         self.data['description'] = value
+
+    @property
+    def description_editable(self):
+        return True # subclasses which auto-generate the description should return False
 
     @property
     def details(self):
@@ -311,6 +319,14 @@ class Programmpunkt:
         return self.event.location #TODO add support for Programm at different locations
 
     @property
+    def name(self):
+        return self.data.get('name', self.url_part)
+
+    @name.setter
+    def name(self, value):
+        self.data['name'] = value
+
+    @property
     def orga(self):
         orga_id = self.data.get('orga')
         if orga_id is not None:
@@ -325,7 +341,8 @@ class Programmpunkt:
 
     @orga.deleter
     def orga(self):
-        del self.data['orga']
+        if 'orga' in self.data:
+            del self.data['orga']
 
     @property
     def orga_notes(self):
@@ -421,10 +438,6 @@ class Programmpunkt:
             return self.location.timezone
         else:
             return pytz.timezone('Europe/Berlin')
-
-    @property
-    def url_part(self):
-        return self.name
 
     def user_notes(self, user):
         """These notes are only shown to the given user. Should be wrapped in spoiler tags if sensitive."""

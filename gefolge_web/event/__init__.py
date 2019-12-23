@@ -57,6 +57,27 @@ def handle_profile_edit(event, person, profile_form):
     if hasattr(profile_form, 'hausordnung') and profile_form.hausordnung.data:
         person_data['hausordnung'] = True
 
+def handle_programm_edit(programmpunkt, programm_form):
+    gefolge_web.util.log('eventProgrammEdit', {
+        'event': programmpunkt.event.event_id,
+        'programmpunkt': programmpunkt.url_part,
+        'subtitle': programm_form.subtitle.data,
+        'orga': programm_form.orga.data.snowflake if hasattr(programm_form, 'orga') and programm_form.orga.data is not None else '(unchanged)',
+        'start': (None if programm_form.start.data is None else '{:%Y-%m-%dT%H:%M:%S}'.format(programm_form.start.data)),
+        'end': (None if programm_form.end.data is None else '{:%Y-%m-%dT%H:%M:%S}'.format(programm_form.end.data)),
+        'description': programm_form.description.data if hasattr(programm_form, 'description') else None
+    })
+    programmpunkt.name = programm_form.display_name.data
+    programmpunkt.subtitle = programm_form.subtitle.data
+    if hasattr(programm_form, 'orga'):
+        programmpunkt.orga = programm_form.orga.data
+    programmpunkt.start = programm_form.start.data
+    programmpunkt.end = programm_form.end.data
+    if hasattr(programm_form, 'description'):
+        programmpunkt.description = programm_form.description.data
+    if hasattr(programm_form, 'css_class'):
+        programmpunkt.css_class = programm_form.css_class.data
+
 def setup(index, app):
     @app.template_test('guest')
     def is_guest(value):
@@ -121,33 +142,30 @@ def setup(index, app):
                 mensch = gefolge_web.login.Mensch(snowflake)
                 event.signup(mensch)
             return flask.redirect(flask.g.view_node.url)
-        programm_add_form = gefolge_web.event.forms.ProgrammAddForm(event)
-        if programm_add_form.submit_programm_add_form.data and programm_add_form.validate():
+        programm_form = gefolge_web.event.forms.ProgrammForm(event, None)
+        if programm_form.submit_programm_form.data and programm_form.validate():
             gefolge_web.util.log('eventProgrammAdd', {
                 'event': event.event_id,
-                'orga': None if programm_add_form.orga.data is None else programm_add_form.orga.data.snowflake,
-                'programmpunkt': programm_add_form.name.data,
-                'subtitle': programm_add_form.subtitle.data,
-                'description': programm_add_form.description.data,
-                'cssClass': programm_add_form.css_class.data
+                'programmpunkt': programm_form.url_part.data
             })
             if 'programm' not in event.data:
                 event.data['programm'] = {}
-            event.data['programm'][programm_add_form.name.data] = {
-                'ibSubtitle': programm_add_form.subtitle.data,
-                'description': programm_add_form.description.data,
-                'orga': None if programm_add_form.orga.data is None else programm_add_form.orga.data.snowflake,
-                'cssClass': programm_add_form.css_class.data,
-                'signups': []
-            }
-            gefolge_web.peter.channel_msg(event.channel, 'Neuer Programmpunkt auf {}: {} (<https://gefolge.org/event/{}/programm/{}>)'.format('<@&{}>'.format(event.data['role']) if 'role' in event.data else event, programm_add_form.name.data, event.event_id, urllib.parse.quote(programm_add_form.name.data)))
-            return flask.redirect((flask.g.view_node / 'programm' / programm_add_form.name.data).url)
+            event.data['programm'][programm_form.url_part.data] = {}
+            programmpunkt = gefolge_web.event.programm.Programmpunkt(event, programm_form.url_part.data)
+            handle_programm_edit(programmpunkt, programm_form)
+            gefolge_web.peter.channel_msg(event.channel, 'Neuer Programmpunkt auf {}: {} (<https://gefolge.org/event/{}/programm/{}>)'.format(
+                '<@&{}>'.format(event.data['role']) if 'role' in event.data else event,
+                programmpunkt,
+                event.event_id,
+                urllib.parse.quote(programmpunkt.url_part)
+            ))
+            return flask.redirect((flask.g.view_node / 'programm' / programmpunkt.url_part).url)
         return {
             'event': event,
             'article_source': gefolge_web.wiki.get_article_source('event', event.event_id),
             'confirm_signup_form': confirm_signup_form,
             'profile_form': profile_form,
-            'programm_add_form': programm_add_form
+            'programm_form': programm_form
         }
 
     @event_page.catch_init(FileNotFoundError)
@@ -291,28 +309,15 @@ def setup(index, app):
         if not programmpunkt.can_edit(flask.g.user):
             flask.flash('Du bist nicht berechtigt, diesen Programmpunkt zu bearbeiten.', 'error')
             return flask.redirect(flask.g.view_node.parent.url)
-        programm_edit_form = gefolge_web.event.forms.ProgrammEditForm(programmpunkt)
-        if programm_edit_form.submit_programm_edit_form.data and programm_edit_form.validate():
-            gefolge_web.util.log('eventProgrammEdit', {
-                'event': event.event_id,
-                'programmpunkt': programmpunkt.name,
-                'subtitle': programm_edit_form.subtitle.data,
-                'orga': None if programm_edit_form.orga.data is None else programm_edit_form.orga.data.snowflake,
-                'start': (None if programm_edit_form.start.data is None else '{:%Y-%m-%dT%H:%M:%S}'.format(programm_edit_form.start.data)),
-                'end': (None if programm_edit_form.end.data is None else '{:%Y-%m-%dT%H:%M:%S}'.format(programm_edit_form.end.data)),
-                'description': programm_edit_form.description.data
-            })
-            programmpunkt.subtitle = programm_edit_form.subtitle.data
-            programmpunkt.orga = programm_edit_form.orga.data
-            programmpunkt.start = programm_edit_form.start.data
-            programmpunkt.end = programm_edit_form.end.data
-            programmpunkt.description = programm_edit_form.description.data
+        programm_form = gefolge_web.event.forms.ProgrammForm(event, programmpunkt)
+        if programm_form.submit_programm_form.data and programm_form.validate():
+            handle_programm_edit(programmpunkt, programm_form)
             return flask.redirect(flask.g.view_node.parent.url)
         else:
             return {
                 'event': event,
                 'programmpunkt': programmpunkt,
-                'programm_edit_form': programm_edit_form
+                'programm_form': programm_form
             }
 
     @event_programmpunkt.child('delete', 'löschen', methods=['GET', 'POST'])

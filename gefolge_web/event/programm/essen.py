@@ -22,12 +22,6 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
     def __repr__(self):
         return 'gefolge_web.event.programm.essen.Abendessen({!r}, {!r})'.format(self.event, self.name)
 
-    def __str__(self):
-        if self.date.month == 12 and self.date.day == 31:
-            return 'Silvesterbuffet'
-        else:
-            return 'Abendessen'
-
     def assert_exists(self):
         if self.date < self.event.start.date():
             raise ValueError('Am {:%d.%m.%Y} hat {} noch nicht angefangen.'.format(self.date, self.event))
@@ -108,6 +102,13 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
     @property
     def listed(self):
         return False
+
+    @property
+    def name(self):
+        if self.date.month == 12 and self.date.day == 31:
+            return 'Silvesterbuffet'
+        else:
+            return 'Abendessen'
 
     @property
     def orga(self):

@@ -151,18 +151,41 @@ def ProfileForm(event, person):
     Form.submit_profile_form = wtforms.SubmitField('Anmelden' if header_generated or person not in event.signups else 'Speichern')
     return Form()
 
-def ProgrammAddForm(event):
+def ProgrammForm(event, programmpunkt):
+    def validate_orga(form, field):
+        if field.data == programmpunkt.orga:
+            return
+        if flask.g.user == programmpunkt.event.orga(programmpunkt.orga_role):
+            return
+        raise wtforms.validators.ValidationError('Bitte wende dich an {}, wenn du die Orga für diesen Programmpunkt abgeben möchtest.'.format(programmpunkt.event.orga(programmpunkt.orga_role)))
+
     class Form(flask_wtf.FlaskForm):
-        name = wtforms.StringField('Titel', [
+        pass
+
+    if programmpunkt is None:
+        Form.url_part = gefolge_web.forms.AnnotatedStringField('URL', [
             wtforms.validators.InputRequired(),
-            wtforms.validators.NoneOf([programmpunkt.name for programmpunkt in event.programm], message='Es gibt bereits einen Programmpunkt mit diesem Titel.'),
-            wtforms.validators.Regexp('^[^/]+$', message='Schrägstriche können hier nicht verwendet werden, weil der Titel in der URL der Programmpunktseite steht.')
-        ])
-        subtitle = wtforms.StringField('Untertitel', [wtforms.validators.Length(max=40)])
-        subtitle_notice = gefolge_web.forms.FormText('Wird auf dem info-beamer und in im Zeitplan angezeigt.')
-        orga = PersonField(event, 'Orga', optional_label='Orga gesucht', allow_guests=False, default=None)
-        description = gefolge_web.forms.MarkdownField('Beschreibung')
-        css_class = gefolge_web.forms.HorizontalButtonGroupField(
+            wtforms.validators.Regexp('^[0-9a-z-]+$', message='Darf nur aus Kleinbuchstaben, Zahlen und „-“ bestehen.'),
+            wtforms.validators.NoneOf([programmpunkt.url_part for programmpunkt in event.programm], message='Es gibt bereits einen Programmpunkt mit diesem Titel.'),
+        ], prefix=f'https://gefolge.org/event/{event_id}/programm/')
+    Form.display_name = wtforms.StringField('Titel', [
+        wtforms.validators.InputRequired(),
+        wtforms.validators.NoneOf([
+            other.name
+            for other in event.programm
+            if programmpunkt is None or other != programmpunkt
+        ], message='Es gibt bereits einen Programmpunkt mit diesem Titel.')
+    ])
+    Form.subtitle = wtforms.StringField('Untertitel', [wtforms.validators.Length(max=40)], default='' if programmpunkt is None else programmpunkt.subtitle)
+    Form.subtitle_notice = gefolge_web.forms.FormText('Wird auf dem info-beamer und in im Zeitplan angezeigt.')
+    if programmpunkt is None:
+        Form.orga = PersonField(event, 'Orga', [validate_orga], optional_label='Orga gesucht', allow_guests=False, default=None if programmpunkt is None else programmpunkt.orga) #TODO disable (https://getbootstrap.com/docs/3.3/css/#forms-control-disabled) if not allowed to edit
+    Form.start = gefolge_web.forms.DateTimeField('Beginn', [wtforms.validators.Optional()], tz=programmpunkt.timezone, default=None if programmpunkt is None else programmpunkt.start)
+    Form.end = gefolge_web.forms.DateTimeField('Ende', [wtforms.validators.Optional()], tz=programmpunkt.timezone, default=None if programmpunkt is None else programmpunkt.end)
+    if programmpunkt is None or programmpunkt.description_editable:
+        Form.description = gefolge_web.forms.MarkdownField('Beschreibung', default='' if programmpunkt is None else programmpunkt.description)
+    if flask.g.user == event.orga('Programm'):
+        Form.css_class = gefolge_web.forms.HorizontalButtonGroupField(
             'Farbe',
             [wtforms.validators.InputRequired()],
             choices=[
@@ -174,28 +197,15 @@ def ProgrammAddForm(event):
             ],
             default='programm-other'
         )
-        submit_programm_add_form = wtforms.SubmitField('Programmpunkt erstellen')
+    Form.submit_programm_form = wtforms.SubmitField('Programmpunkt erstellen' if programmpunkt is None else 'Speichern')
 
     return Form()
+
+def ProgrammAddForm(event):
+    return ProgrammForm(event, None)
 
 def ProgrammEditForm(programmpunkt):
-    def validate_orga(form, field):
-        if field.data == programmpunkt.orga:
-            return
-        if flask.g.user == programmpunkt.event.orga(programmpunkt.orga_role):
-            return
-        raise wtforms.validators.ValidationError('Bitte wende dich an {}, wenn du die Orga für diesen Programmpunkt abgeben möchtest.'.format(programmpunkt.event.orga(programmpunkt.orga_role)))
-
-    class Form(flask_wtf.FlaskForm):
-        subtitle = wtforms.StringField('Untertitel', [wtforms.validators.Length(max=40)], default=programmpunkt.subtitle)
-        subtitle_notice = gefolge_web.forms.FormText('Wird auf dem info-beamer und in im Zeitplan angezeigt.')
-        orga = PersonField(programmpunkt.event, 'Orga', [validate_orga], optional_label='Orga gesucht', allow_guests=False, default=programmpunkt.orga) #TODO disable (https://getbootstrap.com/docs/3.3/css/#forms-control-disabled) if not allowed to edit
-        start = gefolge_web.forms.DateTimeField('Beginn', [wtforms.validators.Optional()], tz=programmpunkt.timezone, default=programmpunkt.start)
-        end = gefolge_web.forms.DateTimeField('Ende', [wtforms.validators.Optional()], tz=programmpunkt.timezone, default=programmpunkt.end)
-        description = gefolge_web.forms.MarkdownField('Beschreibung', default=programmpunkt.description)
-        submit_programm_edit_form = wtforms.SubmitField('Speichern')
-
-    return Form()
+    return ProgrammForm(programmpunkt.event, programmpunkt)
 
 class ProgrammDeleteForm(flask_wtf.FlaskForm):
     submit_programm_delete_form = wtforms.SubmitField('Löschen')

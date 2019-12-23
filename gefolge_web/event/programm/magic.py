@@ -23,9 +23,6 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
     def __repr__(self):
         return 'gefolge_web.event.programm.CustomMagicDraft({!r})'.format(self.event)
 
-    def __str__(self):
-        return 'Custom Magic Draft'
-
     def add_form_details(self, Form, editor):
         if self.card_set is None:
             Form.section_sets_intro = gefolge_web.forms.FormText('Welche(s) set(s) würdest du am liebsten draften? Du kannst auch ohne abzustimmen einen Platz reservieren.')
@@ -73,6 +70,10 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
         if value != self.description:
             raise NotImplementedError()
 
+    @property
+    def description_editable(self):
+        return False
+
     def draftable_sets(self):
         result = {}
         for set_path in (LORE_SEEKER_REPO / 'data' / 'sets').iterdir():
@@ -83,6 +84,10 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
                 if set_config.get('boosters', True) and set_config.get('drafted') is None:
                     result[set_code] = set_info, set_config
         return sorted(result.items(), key=lambda kv: (kv[1][0]['releaseDate'].value(), kv[0]))
+
+    @property
+    def name(self):
+        return 'Custom Magic Draft'
 
     @property
     def orga(self):
