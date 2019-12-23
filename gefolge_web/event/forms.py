@@ -175,7 +175,7 @@ def ProgrammForm(event, programmpunkt):
             for other in event.programm
             if programmpunkt is None or other != programmpunkt
         ], message='Es gibt bereits einen Programmpunkt mit diesem Titel.')
-    ])
+    ], default='' if programmpunkt is None else programmpunkt.name)
     Form.subtitle = wtforms.StringField('Untertitel', [wtforms.validators.Length(max=40)], default='' if programmpunkt is None else programmpunkt.subtitle)
     Form.subtitle_notice = gefolge_web.forms.FormText('Wird auf dem info-beamer und in im Zeitplan angezeigt.')
     if programmpunkt is None:
