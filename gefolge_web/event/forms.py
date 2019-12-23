@@ -201,12 +201,6 @@ def ProgrammForm(event, programmpunkt):
 
     return Form()
 
-def ProgrammAddForm(event):
-    return ProgrammForm(event, None)
-
-def ProgrammEditForm(programmpunkt):
-    return ProgrammForm(programmpunkt.event, programmpunkt)
-
 class ProgrammDeleteForm(flask_wtf.FlaskForm):
     submit_programm_delete_form = wtforms.SubmitField('Löschen')
 
