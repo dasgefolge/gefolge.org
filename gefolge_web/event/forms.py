@@ -176,7 +176,7 @@ def ProgrammForm(event, programmpunkt):
     else:
         Form.orga_notice = gefolge_web.forms.FormText(
             jinja2.Markup('Bitte wende dich an {}, wenn du die Orga für diesen Programmpunkt abgeben möchtest.'.format(programmpunkt.event.orga(programmpunkt.orga_role).__html__())),
-            label='Orga'
+            display_label='Orga'
         )
     Form.start = gefolge_web.forms.DateTimeField('Beginn', [wtforms.validators.Optional()], tz=event.timezone if programmpunkt is None else programmpunkt.timezone, default=None if programmpunkt is None else programmpunkt.start)
     Form.end = gefolge_web.forms.DateTimeField('Ende', [wtforms.validators.Optional()], tz=event.timezone if programmpunkt is None else programmpunkt.timezone, default=None if programmpunkt is None else programmpunkt.end)
