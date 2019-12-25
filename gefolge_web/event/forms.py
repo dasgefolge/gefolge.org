@@ -174,7 +174,10 @@ def ProgrammForm(event, programmpunkt):
     if programmpunkt is None or flask.g.user == programmpunkt.event.orga(programmpunkt.orga_role):
         Form.orga = PersonField(event, 'Orga', optional_label='Orga gesucht', allow_guests=False, default=None if programmpunkt is None else programmpunkt.orga)
     else:
-        Form.orga_notice = gefolge_web.forms.FormText(label='Orga', jinja2.Markup('Bitte wende dich an {}, wenn du die Orga für diesen Programmpunkt abgeben möchtest.'.format(programmpunkt.event.orga(programmpunkt.orga_role).__html__())))
+        Form.orga_notice = gefolge_web.forms.FormText(
+            jinja2.Markup('Bitte wende dich an {}, wenn du die Orga für diesen Programmpunkt abgeben möchtest.'.format(programmpunkt.event.orga(programmpunkt.orga_role).__html__())),
+            label='Orga'
+        )
     Form.start = gefolge_web.forms.DateTimeField('Beginn', [wtforms.validators.Optional()], tz=event.timezone if programmpunkt is None else programmpunkt.timezone, default=None if programmpunkt is None else programmpunkt.start)
     Form.end = gefolge_web.forms.DateTimeField('Ende', [wtforms.validators.Optional()], tz=event.timezone if programmpunkt is None else programmpunkt.timezone, default=None if programmpunkt is None else programmpunkt.end)
     if programmpunkt is None or programmpunkt.description_editable:
