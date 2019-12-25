@@ -152,13 +152,6 @@ def ProfileForm(event, person):
     return Form()
 
 def ProgrammForm(event, programmpunkt):
-    def validate_orga(form, field):
-        if field.data == programmpunkt.orga:
-            return
-        if flask.g.user == programmpunkt.event.orga(programmpunkt.orga_role):
-            return
-        raise wtforms.validators.ValidationError('Bitte wende dich an {}, wenn du die Orga für diesen Programmpunkt abgeben möchtest.'.format(programmpunkt.event.orga(programmpunkt.orga_role)))
-
     class Form(flask_wtf.FlaskForm):
         pass
 
@@ -178,8 +171,10 @@ def ProgrammForm(event, programmpunkt):
     ], default='' if programmpunkt is None else programmpunkt.name)
     Form.subtitle = wtforms.StringField('Untertitel', [wtforms.validators.Length(max=40)], default='' if programmpunkt is None else programmpunkt.subtitle)
     Form.subtitle_notice = gefolge_web.forms.FormText('Wird auf dem info-beamer und in im Zeitplan angezeigt.')
-    if programmpunkt is None:
-        Form.orga = PersonField(event, 'Orga', [validate_orga], optional_label='Orga gesucht', allow_guests=False, default=None if programmpunkt is None else programmpunkt.orga) #TODO disable (https://getbootstrap.com/docs/3.3/css/#forms-control-disabled) if not allowed to edit
+    if programmpunkt is None or flask.g.user == programmpunkt.event.orga(programmpunkt.orga_role):
+        Form.orga = PersonField(event, 'Orga', optional_label='Orga gesucht', allow_guests=False, default=None if programmpunkt is None else programmpunkt.orga)
+    else:
+        Form.orga_notice = gefolge_web.forms.FormText(label='Orga', jinja2.Markup('Bitte wende dich an {}, wenn du die Orga für diesen Programmpunkt abgeben möchtest.'.format(programmpunkt.event.orga(programmpunkt.orga_role).__html__())))
     Form.start = gefolge_web.forms.DateTimeField('Beginn', [wtforms.validators.Optional()], tz=event.timezone if programmpunkt is None else programmpunkt.timezone, default=None if programmpunkt is None else programmpunkt.start)
     Form.end = gefolge_web.forms.DateTimeField('Ende', [wtforms.validators.Optional()], tz=event.timezone if programmpunkt is None else programmpunkt.timezone, default=None if programmpunkt is None else programmpunkt.end)
     if programmpunkt is None or programmpunkt.description_editable:

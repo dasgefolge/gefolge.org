@@ -49,7 +49,8 @@ class FormSection(wtforms.Field):
         super().__init__(**kwargs)
 
 class FormText(wtforms.Field):
-    def __init__(self, text, **kwargs):
+    def __init__(self, text, *, label='', **kwargs):
+        self.label = label
         self.text = text
         super().__init__(**kwargs)
 
