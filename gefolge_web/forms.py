@@ -141,6 +141,24 @@ class MenschField(wtforms.SelectField):
 
         return gefolge_web.login.Mensch(snowflake)
 
+class RadioFieldWithSubfields(wtforms.RadioField): # subfield in the sense that there can be additional fields grouped with each option, not in the sense used by WTForms
+    def __init__(self, label, validators=None, choices=None, *, _form=None, **kwargs):
+        super_choices = []
+        self.subforms = []
+        for choice in choices:
+            if len(choice) == 2:
+                name, choice_label = choice
+                #TODO make empty subform
+            elif len(choice) == 3:
+                name, choice_label, subform = choice
+            else:
+                raise ValueError('Choice must have 2 or 3 elements, found {!r} ({} elements)'.format(choice, len(choice)))
+            super_choices.append((name, choice_label))
+            subform = subform.bind(form=_form, name=name)
+            self.subforms.append(subform)
+        super().__init__(label, validators, choices=super_choices, _form=_form, **kwargs)
+        self.type = 'RadioFieldWithSubfields'
+
 class TimezoneField(wtforms.SelectField):
     def __init__(self, label='Zeitzone', validators=[], *, featured=[], include_auto=True, **kwargs):
         self.include_auto = include_auto
