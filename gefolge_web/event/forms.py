@@ -171,7 +171,7 @@ def ProgrammForm(event, programmpunkt):
     ], default='' if programmpunkt is None else programmpunkt.name)
     Form.subtitle = wtforms.StringField('Untertitel', [wtforms.validators.Length(max=40)], default='' if programmpunkt is None else programmpunkt.subtitle)
     Form.subtitle_notice = gefolge_web.forms.FormText('Wird auf dem info-beamer und in im Zeitplan angezeigt.')
-    if programmpunkt is None or flask.g.user == programmpunkt.event.orga(programmpunkt.orga_role):
+    if programmpunkt is None or flask.g.user.is_admin or flask.g.user == programmpunkt.event.orga(programmpunkt.orga_role):
         Form.orga = PersonField(event, 'Orga', optional_label='Orga gesucht', allow_guests=False, default=None if programmpunkt is None else programmpunkt.orga)
     elif flask.g.user == programmpunkt.orga:
         Form.orga_notice = gefolge_web.forms.FormText(
@@ -182,7 +182,7 @@ def ProgrammForm(event, programmpunkt):
     Form.end = gefolge_web.forms.DateTimeField('Ende', [wtforms.validators.Optional()], tz=event.timezone if programmpunkt is None else programmpunkt.timezone, default=None if programmpunkt is None else programmpunkt.end)
     if programmpunkt is None or programmpunkt.description_editable:
         Form.description = gefolge_web.forms.MarkdownField('Beschreibung', default='' if programmpunkt is None else programmpunkt.description)
-    if flask.g.user == event.orga('Programm'):
+    if flask.g.user.is_admin or flask.g.user == event.orga('Programm'):
         Form.css_class = gefolge_web.forms.HorizontalButtonGroupField(
             'Farbe',
             [wtforms.validators.InputRequired()],
@@ -193,7 +193,7 @@ def ProgrammForm(event, programmpunkt):
                 ('programm-reqsignup', 'Voranmeldung nötig', '#e69138', '#f6b26b'),
                 ('programm-other', 'Sonstiges', '#f1c232', '#ffd966')
             ],
-            default='programm-other'
+            default='programm-other' if programmpunkt is None else programmpunkt.css_class
         )
     Form.submit_programm_form = wtforms.SubmitField('Programmpunkt erstellen' if programmpunkt is None else 'Speichern')
 
