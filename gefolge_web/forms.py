@@ -5,6 +5,7 @@ import flask_pagedown.fields # PyPI: Flask-PageDown
 import pytz # PyPI: pytz
 import wtforms # PyPI: WTForms
 import wtforms.ext.dateutil.fields # PyPI: WTForms
+import wtforms.validators # PyPI: WTForms
 
 import gefolge_web.util
 
@@ -150,7 +151,7 @@ class OtherInputRequired:
         try:
             other = form[self.fieldname]
         except KeyError:
-            raise ValidationError(
+            raise wtforms.validators.ValidationError(
                 field.gettext(f"Invalid field name '{self.fieldname}'.")
             )
         if not other.raw_data or not other.raw_data[0]:
@@ -159,7 +160,7 @@ class OtherInputRequired:
             else:
                 message = self.message
 
-            raise ValidationError(message)
+            raise wtforms.validators.ValidationError(message)
 
 class RadioFieldWithSubfields(wtforms.RadioField): # subfield in the sense that there can be additional fields grouped with each option, not in the sense used by WTForms
     def __init__(self, label, validators=None, choices=None, *, _form=None, **kwargs):
