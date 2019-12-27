@@ -14,6 +14,7 @@ import gefolge_web.event.forms
 import gefolge_web.event.model
 import gefolge_web.event.programm
 import gefolge_web.login
+import gefolge_web.peter
 import gefolge_web.util
 
 def handle_profile_edit(event, person, profile_form):
@@ -57,7 +58,7 @@ def handle_profile_edit(event, person, profile_form):
     if hasattr(profile_form, 'hausordnung') and profile_form.hausordnung.data:
         person_data['hausordnung'] = True
 
-def handle_programm_edit(programmpunkt, programm_form):
+def handle_programm_edit(programmpunkt, programm_form, is_new):
     gefolge_web.util.log('eventProgrammEdit', {
         'event': programmpunkt.event.event_id,
         'programmpunkt': programmpunkt.url_part,
@@ -70,7 +71,17 @@ def handle_programm_edit(programmpunkt, programm_form):
     programmpunkt.name = programm_form.display_name.data
     programmpunkt.subtitle = programm_form.subtitle.data
     if hasattr(programm_form, 'orga'):
+        old_orga = programmpunkt.orga
         programmpunkt.orga = programm_form.orga.data
+        if is_new and progammpunkt.orga != old_orga:
+            if progammpunkt.orga is None:
+                gefolge_web.peter.channel_msg(progammpunkt.event.channel, f'{programmpunkt} auf {programmpunkt.event} sucht jetzt eine Orga')
+            else:
+                gefolge_web.peter.channel_msg(progammpunkt.event.channel, '{} auf {} wird jetzt von {} organisiert'.format(
+                    programmpunkt,
+                    programmpunkt.event,
+                    progammpunkt.orga if progammpunkt.orga.is_guest else f'<@{progammpunkt.orga.snowflake}>'
+                ))
     programmpunkt.start = programm_form.start.data
     programmpunkt.end = programm_form.end.data
     if hasattr(programm_form, 'description'):
@@ -152,10 +163,11 @@ def setup(index, app):
                 event.data['programm'] = {}
             event.data['programm'][programm_form.url_part.data] = {}
             programmpunkt = gefolge_web.event.programm.Programmpunkt(event, programm_form.url_part.data)
-            handle_programm_edit(programmpunkt, programm_form)
-            gefolge_web.peter.channel_msg(event.channel, 'Neuer Programmpunkt auf {}: {} (<https://gefolge.org/event/{}/programm/{}>)'.format(
+            handle_programm_edit(programmpunkt, programm_form, True)
+            gefolge_web.peter.channel_msg(event.channel, 'Neuer Programmpunkt auf {}: {} ({}, <https://gefolge.org/event/{}/programm/{}>)'.format(
                 '<@&{}>'.format(event.data['role']) if 'role' in event.data else event,
                 programmpunkt,
+                'Orga gesucht' if programmpunkt.orga is None else f'Orga: <@{programmpunkt.orga.snowflake}>',
                 event.event_id,
                 urllib.parse.quote(programmpunkt.url_part)
             ))
@@ -311,7 +323,7 @@ def setup(index, app):
             return flask.redirect(flask.g.view_node.parent.url)
         programm_form = gefolge_web.event.forms.ProgrammForm(event, programmpunkt)
         if programm_form.submit_programm_form.data and programm_form.validate():
-            handle_programm_edit(programmpunkt, programm_form)
+            handle_programm_edit(programmpunkt, programm_form, False)
             return flask.redirect(flask.g.view_node.parent.url)
         else:
             return {
@@ -323,7 +335,7 @@ def setup(index, app):
     @event_programmpunkt.child('delete', 'löschen', methods=['GET', 'POST'])
     @gefolge_web.util.template('event.programmpunkt-delete')
     def event_programmpunkt_delete(event, programmpunkt):
-        if flask.g.user != event.orga('Programm'):
+        if flask.g.user != event.orga('Programm') and not flask.g.user.is_admin:
             flask.flash('Du bist nicht berechtigt, diesen Programmpunkt zu löschen.', 'error')
             return flask.redirect(flask.g.view_node.parent.url)
         programm_delete_form = gefolge_web.event.forms.ProgrammDeleteForm()
