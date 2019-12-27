@@ -179,7 +179,7 @@ def ProgrammForm(event, programmpunkt):
             display_label='Orga'
         )
     Form.start = gefolge_web.forms.DateTimeField('Beginn', [wtforms.validators.Optional()], tz=event.timezone if programmpunkt is None else programmpunkt.timezone, default=None if programmpunkt is None else programmpunkt.start)
-    Form.end = gefolge_web.forms.DateTimeField('Ende', [wtforms.validators.Optional()], tz=event.timezone if programmpunkt is None else programmpunkt.timezone, default=None if programmpunkt is None else programmpunkt.end)
+    Form.end = gefolge_web.forms.DateTimeField('Ende', [wtforms.validators.Optional(), gefolge_web.forms.OtherInputRequired('start', 'Bitte entweder auch den Beginn eintragen oder den Endzeitpunkt erstmal weglassen.')], tz=event.timezone if programmpunkt is None else programmpunkt.timezone, default=None if programmpunkt is None else programmpunkt.end)
     if programmpunkt is None or programmpunkt.description_editable:
         Form.description = gefolge_web.forms.MarkdownField('Beschreibung', default='' if programmpunkt is None else programmpunkt.description)
     if flask.g.user.is_admin or flask.g.user == event.orga('Programm'):

@@ -141,6 +141,26 @@ class MenschField(wtforms.SelectField):
 
         return gefolge_web.login.Mensch(snowflake)
 
+class OtherInputRequired:
+    def __init__(self, fieldname, message=None):
+        self.fieldname = fieldname
+        self.message = message
+
+    def __call__(self, form, field):
+        try:
+            other = form[self.fieldname]
+        except KeyError:
+            raise ValidationError(
+                field.gettext(f"Invalid field name '{self.fieldname}'.")
+            )
+        if not other.raw_data or not other.raw_data[0]:
+            if self.message is None:
+                message = field.gettext(f'Another field {self.fieldname} is required.')
+            else:
+                message = self.message
+
+            raise ValidationError(message)
+
 class RadioFieldWithSubfields(wtforms.RadioField): # subfield in the sense that there can be additional fields grouped with each option, not in the sense used by WTForms
     def __init__(self, label, validators=None, choices=None, *, _form=None, **kwargs):
         super_choices = []
