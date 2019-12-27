@@ -148,7 +148,7 @@ class RadioFieldWithSubfields(wtforms.RadioField): # subfield in the sense that 
         for choice in choices:
             if len(choice) == 2:
                 name, choice_label = choice
-                #TODO make empty subform
+                subform = flask_wtf.FlaskForm()
             elif len(choice) == 3:
                 name, choice_label, subform = choice
             else:

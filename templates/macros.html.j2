@@ -99,7 +99,24 @@
                     <label class="btn hbgf-{{field.id}}-{{subfield.data}} {% if subfield.checked %}active{% endif %}">
                         <input type="radio" id="{{subfield.id}}" name="{{subfield.name}}" value="{{subfield.data}}" {% if subfield.checked %}checked="checked"{% endif %}>{{subfield.label.text}}</input>
                     </label>
-               {% endfor %}
+                {% endfor %}
+            </div>
+        {% elif field.type == 'RadioFieldWithSubfields' %}
+            <label for="input_description" class="col-sm-2 control-label">{{field.label}}</label>
+            <div class="col-sm-10">
+                {% for subfield in field %}
+                    <div class="radio">
+                        <label>
+                            {{subfield()}} {{subfield.label}}
+                        </label>
+                    </div>
+                    {#TODO indent subform #}
+                    {% for subform_field in field.subforms[loop.index] %}
+                        {% if not bootstrap_is_hidden_field(subform_field) %}
+                            {{gen_field(field.subforms[loop.index], subform_field)}}
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
             </div>
         {% elif field.type == 'SubmitField' %}
             <div class="col-sm-offset-2 col-sm-10">

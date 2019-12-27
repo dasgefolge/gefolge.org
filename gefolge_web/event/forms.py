@@ -106,6 +106,10 @@ def ProfileForm(event, person):
         ], default='' if event.rooms.get(person) is None else str(event.rooms.get(person)))
 
     Form.section_travel = gefolge_web.forms.FormSection('An-/Abreise')
+    for travel in ('Anreise', 'Abreise'):
+        setattr(form, travel.lower(), gefolge_web.forms.RadioFieldWithSubfields(travel, [wtforms.validators.InputRequired()], [
+            #TODO
+        ]))
     Form.section_travel_intro = gefolge_web.forms.FormText(jinja2.Markup('Um die Infos zu deiner An-/Abreise zu ändern, wende dich bitte an {}.'.format(gefolge_web.login.Mensch.admin().__html__()))) #TODO form
 
     Form.section_food = gefolge_web.forms.FormSection('Essen')
