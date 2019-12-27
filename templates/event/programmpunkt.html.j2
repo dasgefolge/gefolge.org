@@ -6,7 +6,7 @@
     <h1>
         Programmpunkt „{{programmpunkt.__str__()}}“ auf {{event}}
         {% if programmpunkt.can_edit(g.user) %}<a href="{{(g.view_node / 'edit').url}}" class="btn btn-primary">Bearbeiten</a>{% endif %}
-        {% if g.user == event.orga('Programm') %}<a href="{{(g.view_node / 'delete').url}}" class="btn btn-danger">Löschen</a>{% endif %}
+        {% if g.user.is_admin or g.user == event.orga('Programm') %}<a href="{{(g.view_node / 'delete').url}}" class="btn btn-danger">Löschen</a>{% endif %}
     </h1>
     {% if programmpunkt.start is none %}
         <p>Beginn: noch nicht eingetragen</p>
