@@ -102,9 +102,13 @@
                                 <i title="Bus & Bahn" class="fa fa-fw fa-subway"></i>
                                 {% if travel_data.get('legs', []) | length > 0 %}
                                     {% if travel == 'Anreise' %}
-                                        {{(travel_data['legs'] | last)['arrival'] | hm(event.timezone)}}
+                                        {% if 'arrival' in (travel_data['legs'] | last) %}
+                                            {{(travel_data['legs'] | last)['arrival'] | hm(event.timezone)}}
+                                        {% endif %}
                                     {% else %}
-                                        {{(travel_data['legs'] | first)['departure'] | hm(event.timezone)}}
+                                        {% if 'departure' in (travel_data['legs'] | first) %}
+                                            {{(travel_data['legs'] | first)['departure'] | hm(event.timezone)}}
+                                        {% endif %}
                                     {% endif %}
                                 {% endif %}
                                 {#TODO Verspätung #}
