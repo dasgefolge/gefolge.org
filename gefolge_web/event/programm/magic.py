@@ -90,6 +90,10 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
         return 'Custom Magic Draft'
 
     @property
+    def name_editable(self):
+        return False
+
+    @property
     def orga(self):
         return FENHL
 

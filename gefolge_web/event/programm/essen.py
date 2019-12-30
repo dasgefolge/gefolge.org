@@ -111,6 +111,10 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
             return 'Abendessen'
 
     @property
+    def name_editable(self):
+        return False
+
+    @property
     def orga(self):
         return self.event.person(self.data.get('orga', self.event.orga('Essen')))
 

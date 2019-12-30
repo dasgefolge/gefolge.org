@@ -344,6 +344,10 @@ class Programmpunkt:
         self.data['name'] = value
 
     @property
+    def name_editable(self):
+        return True # subclasses which auto-generate the display name should return False
+
+    @property
     def orga(self):
         orga_id = self.data.get('orga')
         if orga_id is not None:

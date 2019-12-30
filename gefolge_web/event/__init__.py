@@ -68,7 +68,8 @@ def handle_programm_edit(programmpunkt, programm_form, is_new):
         'end': (None if programm_form.end.data is None else '{:%Y-%m-%dT%H:%M:%S}'.format(programm_form.end.data)),
         'description': programm_form.description.data if hasattr(programm_form, 'description') else None
     })
-    programmpunkt.name = programm_form.display_name.data
+    if hasattr(programm_form, 'display_name'):
+        programmpunkt.name = programm_form.display_name.data
     programmpunkt.subtitle = programm_form.subtitle.data
     if hasattr(programm_form, 'orga'):
         old_orga = programmpunkt.orga

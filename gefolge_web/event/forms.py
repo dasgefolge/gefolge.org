@@ -161,14 +161,15 @@ def ProgrammForm(event, programmpunkt):
             wtforms.validators.Regexp('^[0-9a-z-]+$', message='Darf nur aus Kleinbuchstaben, Zahlen und „-“ bestehen.'),
             wtforms.validators.NoneOf([programmpunkt.url_part for programmpunkt in event.programm], message='Es gibt bereits einen Programmpunkt mit diesem Titel.'),
         ], prefix=f'https://gefolge.org/event/{event.event_id}/programm/')
-    Form.display_name = wtforms.StringField('Titel', [
-        wtforms.validators.InputRequired(),
-        wtforms.validators.NoneOf([
-            other.name
-            for other in event.programm
-            if programmpunkt is None or other != programmpunkt
-        ], message='Es gibt bereits einen Programmpunkt mit diesem Titel.')
-    ], default='' if programmpunkt is None else programmpunkt.name)
+    if programmpunkt is None or programmpunkt.name_editable:
+        Form.display_name = wtforms.StringField('Titel', [
+            wtforms.validators.InputRequired(),
+            wtforms.validators.NoneOf([
+                other.name
+                for other in event.programm
+                if programmpunkt is None or other != programmpunkt
+            ], message='Es gibt bereits einen Programmpunkt mit diesem Titel.')
+        ], default='' if programmpunkt is None else programmpunkt.name)
     Form.subtitle = wtforms.StringField('Untertitel', [wtforms.validators.Length(max=40)], default='' if programmpunkt is None else programmpunkt.subtitle)
     Form.subtitle_notice = gefolge_web.forms.FormText('Wird auf dem info-beamer und in im Zeitplan angezeigt.')
     if programmpunkt is None or flask.g.user.is_admin or flask.g.user == programmpunkt.event.orga(programmpunkt.orga_role):
