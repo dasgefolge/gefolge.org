@@ -58,7 +58,11 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
 
     @property
     def css_class(self):
-        return 'programm-essen'
+        return self.data.get('cssClass', 'programm-essen')
+
+    @css_class.setter
+    def css_class(self, value):
+        self.data['cssClass'] = value
 
     @property
     def data(self):
