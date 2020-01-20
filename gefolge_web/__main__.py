@@ -35,7 +35,6 @@ import gefolge_web.event
 import gefolge_web.games
 import gefolge_web.login
 import gefolge_web.util
-import gefolge_web.wiki
 
 DOCUMENT_ROOT = os.environ.get('FLASK_ROOT_PATH', '/opt/git/github.com/dasgefolge/gefolge.org/master')
 
@@ -83,7 +82,6 @@ with app.app_context():
         wiki_name='GefolgeWiki',
         wiki_root=gefolge_web.util.BASE_PATH / 'wiki'
     )
-    gefolge_web.wiki.setup(index, md)
     gefolge_web.event.setup(index, app)
     games_index = gefolge_web.games.setup(index)
     gefolge_web.util.setup(app)

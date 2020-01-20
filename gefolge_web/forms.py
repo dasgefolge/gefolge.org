@@ -72,23 +72,6 @@ class HorizontalButtonGroupField(wtforms.RadioField):
         super().__init__(label, validators, choices=super_choices, **kwargs)
         self.type = 'HorizontalButtonGroupField'
 
-class MarkdownField(flask_pagedown.fields.PageDownField):
-    def _value(self):
-        import gefolge_web.wiki
-
-        if self.raw_data:
-            return self.raw_data[0]
-        elif self.data is not None:
-            return gefolge_web.wiki.mentions_to_tags(self.data)
-        else:
-            return ''
-
-    def process_formdata(self, valuelist):
-        import gefolge_web.wiki
-
-        if valuelist:
-            self.data = gefolge_web.wiki.tags_to_mentions(valuelist[0])
-
 class MenschField(wtforms.SelectField):
     """A form field that validates to a Mensch. Displayed as a combobox."""
 
