@@ -6,12 +6,12 @@
     {% if mensch.profile_data['nick'] is none %}
         <h1>
             {{mensch.profile_data['username']}}<span class="muted">#{{mensch.discrim}}</span>
-            <a href="{{url_for('profile', mensch=mensch.snowflake)}}" class="btn btn-danger">Abbrechen</a>
+            <a href="{{mensch.profile_url}}" class="btn btn-danger">Abbrechen</a>
         </h1>
     {% else %}
         <h1>
             {{mensch.profile_data['nick']}}
-            <a href="{{url_for('profile', mensch=mensch.snowflake)}}" class="btn btn-danger">Abbrechen</a>
+            <a href="{{mensch.profile_url}}" class="btn btn-danger">Abbrechen</a>
         </h1>
         <h2>{{mensch.profile_data['username']}}<span class="muted">#{{mensch.discrim}}</span></h1>
     {% endif %}

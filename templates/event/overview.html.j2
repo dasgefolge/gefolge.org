@@ -66,10 +66,10 @@
             Aktuell ist noch niemand angemeldet.
         {% endif %}
     </p>
-    {% if article_source is none %}
-        <p>Eventbeschreibung coming soon™</p>
+    {% if g.wiki.exists('event', event.event_id) %}
+        {{ g.wiki.source('event', event.event_id) | markdown }}
     {% else %}
-        {{ article_source | markdown }}
+        <p>Eventbeschreibung coming soon™</p>
     {% endif %}
     <h1 id="signup">Anmeldung</h1>
     {% if g.user in event.menschen %}
@@ -172,7 +172,7 @@
             {% if g.user.is_admin or g.user.balance >= event.anzahlung %}
                 {{gen_form(profile_form, g.view_node.url)}}
             {% else %}
-                <p>Dein aktuelles Guthaben ist {{g.user.balance}}, es fehlen also noch {{event.anzahlung - g.user.balance}} für die Anzahlung. Auf <a href="{{url_for('profile', mensch=g.user.snowflake)}}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.</p>
+                <p>Dein aktuelles Guthaben ist {{g.user.balance}}, es fehlen also noch {{event.anzahlung - g.user.balance}} für die Anzahlung. Auf <a href="{{g.user.profile_url}}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.</p>
             {% endif %}
         {% else %}
             {% if 'konto' in event.attendee_data(event.orga('Abrechnung')) %}

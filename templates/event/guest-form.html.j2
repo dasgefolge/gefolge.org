@@ -40,7 +40,7 @@
                 {% endif %}
             </ul>
             {% if event.anzahlung.value > 0 and event.orga('Abrechnung') == g.admin and not g.user.is_admin and g.user.balance < event.anzahlung %}
-                <p>Dein aktuelles Guthaben ist {{g.user.balance}}, es fehlen also noch {{event.anzahlung - g.user.balance}} für die Anzahlung. Auf <a href="{{url_for('profile', mensch=g.user.snowflake)}}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.</p>
+                <p>Dein aktuelles Guthaben ist {{g.user.balance}}, es fehlen also noch {{event.anzahlung - g.user.balance}} für die Anzahlung. Auf <a href="{{g.user.profile_url}}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.</p>
             {% else %}
                 {{gen_form(signup_guest_form, url_for('event_guest_form', event=event.event_id))}}
             {% endif %}

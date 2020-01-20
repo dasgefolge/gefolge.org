@@ -175,7 +175,6 @@ def setup(index, app):
             return flask.redirect((flask.g.view_node / 'programm' / programmpunkt.url_part).url)
         return {
             'event': event,
-            'article_source': gefolge_web.wiki.get_article_source('event', event.event_id),
             'confirm_signup_form': confirm_signup_form,
             'profile_form': profile_form,
             'programm_form': programm_form

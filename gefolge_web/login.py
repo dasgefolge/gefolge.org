@@ -76,7 +76,7 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
         return hash(self.snowflake)
 
     def __html__(self):
-        return jinja2.Markup('<a title="{}" href="{}">@{}</a>'.format(self, flask.url_for('profile', mensch=str(self.snowflake)), jinja2.escape(self.name)))
+        return jinja2.Markup('<a title="{}" href="{}">@{}</a>'.format(self, self.profile_url, jinja2.escape(self.name)))
 
     def __repr__(self):
         return 'gefolge_web.login.Mensch({!r})'.format(self.snowflake)
@@ -200,6 +200,10 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
     @property
     def profile_path(self):
         return PROFILES_ROOT / '{}.json'.format(self.snowflake)
+
+    @property
+    def profile_url(self):
+        return flask.url_for('profile', mensch=str(self.snowflake))
 
     @property
     def timezone(self):

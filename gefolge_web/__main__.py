@@ -18,6 +18,7 @@ import pymdownx.extra # PyPI: pymdown-extensions
 import pymdownx.tilde # PyPI: pymdown-extensions
 
 import flask_view_tree # https://github.com/fenhl/flask-view-tree
+import flask_wiki # https://github.com/fenhl/flask-wiki
 import lazyjson # https://github.com/fenhl/lazyjson
 
 try:
@@ -74,6 +75,14 @@ with app.app_context():
     # set up submodules
     gefolge_web.api.setup(index)
     gefolge_web.login.setup(index, app)
+    flask_wiki.child(
+        index,
+        edit_decorators=[gefolge_web.login.member_required],
+        md=md,
+        user_class=gefolge_web.login.Mensch,
+        wiki_name='GefolgeWiki',
+        wiki_root=gefolge_web.util.BASE_PATH / 'wiki'
+    )
     gefolge_web.wiki.setup(index, md)
     gefolge_web.event.setup(index, app)
     games_index = gefolge_web.games.setup(index)
