@@ -1,14 +1,14 @@
-{% extends "base.html.j2" %}
+{% extends 'base.html.j2' %}
 
 {% block title %}{{wiki_name}}{% endblock %}
 
 {% block page_content %}
     <h1>{{wiki_name}}</h1>
-    {% for namespace in g.view_node.children | sort %}
+    {% for namespace, articles in g.wiki.namespaces() %}
         <h2>{{namespace}}</h2>
         <ul>
-            {% for article in namespace.children | sort %}
-                <li>{{article}}</li>
+            {% for article in articles %}
+                <li><a href="{{(g.view_node / article / namespace).url}}">{{article}}</a></li>
             {% else %}
                 <li>(Dieser namespace ist leer.)</li>
             {% endfor %}

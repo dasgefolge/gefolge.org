@@ -1,12 +1,12 @@
-{% extends "base.html.j2" %}
+{% extends 'base.html.j2' %}
 
-{% block title %}Artikel nicht gefunden — GefolgeWiki{% endblock %}
+{% block title %}Artikel nicht gefunden — {{wiki_name}}{% endblock %}
 
 {% block page_content %}
     <h1>Artikel nicht gefunden</h1>
-    <p>Es wurde kein Artikel mit Name „{{article_name}}“ gefunden.</p>
+    <p>Es wurde kein Artikel mit Name „{{title}}“ im wiki namespace „{{namespace}}“ gefunden.</p>
     <p>
-        Diesen Artikel erstellen (coming soon™) {#TODO#}
-        • <a href="{{url_for('wiki_index')}}">GefolgeWiki-Hauptseite</a>
+        <a href="{{url_for('wiki_article_edit', title=title, namespace=namespace)}}">Diesen Artikel erstellen</a>
+        • <a href="{{url_for('wiki_index')}}">{{wiki_name}}-Hauptseite</a>
     </p>
 {% endblock %}

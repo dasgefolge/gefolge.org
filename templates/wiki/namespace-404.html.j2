@@ -1,0 +1,9 @@
+{% extends 'base.html.j2' %}
+
+{% block title %}Namespace nicht gefunden — {{wiki_name}}{% endblock %}
+
+{% block page_content %}
+    <h1>Namespace nicht gefunden</h1>
+    <p>Es wurde kein Namespace mit Name „{{namespace}}“ gefunden. Falls du meinst, dass einer existieren sollte, kannst du einen Admin bitten, ihn anzulegen.</p>
+    <p><a href="{{url_for('wiki_index')}}">{{wiki_name}}-Hauptseite</a></p>
+{% endblock %}
