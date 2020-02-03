@@ -100,7 +100,7 @@ def setup(index):
 
     @api_event.child('overview.json')
     def api_event_overview(event):
-        """Infos zu diesem event."""
+        """Infos zu diesem event im auf https://gefolge.org/wiki/event-json/meta dokumentierten Format."""
 
         def cal_event_json(calendar_event):
             result = {
@@ -126,6 +126,7 @@ def setup(index):
                 'orga': event.attendee_data(person).get('orga', [])
             }
             if person.is_guest:
+                result['name'] = str(person)
                 result['via'] = person.via.snowflake
             return result
 
