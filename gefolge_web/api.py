@@ -115,7 +115,9 @@ def setup(index):
             return result
 
         def person_json(person):
+            attendee_data = event.attendee_data(person)
             result = {
+                'bedsheets': attendee_data.get('bedsheets', 1),
                 'id': person.snowflake,
                 'nights': {
                     f'{night:%Y-%m-%d}': {
@@ -123,18 +125,34 @@ def setup(index):
                         'lastUpdated': None if event.night_status_change(person, night) is None else f'{event.night_status_change(person, night):%Y-%m-%dT%H:%M:%SZ}'
                     } for night in event.nights
                 },
-                'orga': event.attendee_data(person).get('orga', [])
+                'orga': attendee_data.get('orga', [])
             }
+            if person == flask.g.user or (person.is_guest and person.via == flask.g.user) or event.can_edit(flask.g.user, person):
+                result['alkohol'] = attendee_data.get('alkohol', True)
+                result['selbstversorger'] = attendee_data.get('selbstversorger', False)
+            if (person == flask.g.user or person == event.orga('Abrechnung')) and 'konto' in attendee_data:
+                result['konto'] = attendee_data['konto'].value()
             if person.is_guest:
                 result['name'] = str(person)
                 result['via'] = person.via.snowflake
+            if flask.g.user == person or flask.g.user == event.orga('Abrechnung'):
+                result['paid'] = attendee_data.get('paid', {})
             return result
+
+        def programmpunkt_json(programmpunkt):
+            return {
+                'name': programmpunkt.name,
+                'signups': [signup.snowflake for signup in programmpunkt.signups]
+            }
 
         result = {
             'name': str(event),
             'menschen': [person_json(person) for person in event.signups],
+            'programm': {programmpunkt.url_part: programmpunkt_json(programmpunkt) for programmpunkt in event.programm},
             'calendarEvents': [cal_event_json(cal_event) for cal_event in event.calendar]
         }
+        if event.anzahlung is not None:
+            result['anzahlung'] = event.anzahlung.value
         if event.end is not None:
             result['end'] = f'{event.end:%Y-%m-%dT%H:%M:%S}'
         if event.location is not None:
