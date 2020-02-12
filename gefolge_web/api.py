@@ -130,8 +130,11 @@ def setup(index):
             if person == flask.g.user or (person.is_guest and person.via == flask.g.user) or event.can_edit(flask.g.user, person):
                 result['alkohol'] = attendee_data.get('alkohol', True)
                 result['selbstversorger'] = attendee_data.get('selbstversorger', False)
-            if (person == flask.g.user or person == event.orga('Abrechnung')) and 'konto' in attendee_data:
-                result['konto'] = attendee_data['konto'].value()
+            if (person == flask.g.user or person == event.orga('Abrechnung')):
+                if 'konto' in attendee_data:
+                    result['konto'] = attendee_data['konto'].value()
+                elif (not person.is_guest) and 'konto' in person.userdata:
+                    result['konto'] = person.userdata['konto'].value()
             if person.is_guest:
                 result['name'] = str(person)
                 result['via'] = person.via.snowflake
