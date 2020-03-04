@@ -13,6 +13,7 @@ import lazyjson # https://github.com/fenhl/lazyjson
 
 import gefolge_web.login
 import gefolge_web.peter
+import gefolge_web.util
 
 EVENTS_ROOT = gefolge_web.util.BASE_PATH / 'event'
 ORGA_ROLES = ['Abrechnung', 'Buchung', 'Essen', 'Programm', 'Schlüssel']
@@ -249,6 +250,15 @@ class Event(metaclass=EventMeta):
             result = result['going']
         return result
 
+    def night_log(self, attendee_data, night):
+        if hasattr(attendee_data, 'snowflake'):
+            attendee_data = self.attendee_data(attendee_data)
+        result = attendee_data.get('nights', {}).get('{:%Y-%m-%d}'.format(night), {'going': 'maybe', 'lastUpdated': None})
+        if isinstance(result, str):
+            return []
+        else:
+            return result.get('log', [])
+
     def night_status_change(self, attendee_data, night):
         if hasattr(attendee_data, 'snowflake'):
             attendee_data = self.attendee_data(attendee_data)
@@ -410,6 +420,35 @@ class Event(metaclass=EventMeta):
         result.add('location', self.location.address)
         result.add('url', flask.url_for('event_page', event=self.event_id, _external=True))
         return result
+
+    def transaction(self, mensch):
+        return self.transactions()[mensch] #TODO include guests
+
+    def transactions(self):
+        details = {person: [] for person in self.signups}
+        # Anzahlung
+        for person in self.signups:
+            if 'anzahlung' in self.attendee_data(person):
+                anzahlung = self.attendee_data(person)['anzahlung'].value()
+            else:
+                anzahlung = self.anzahlung.value
+            if anzahlung != 0:
+                details[person].append({
+                    'amount': anzahlung,
+                    'label': 'Anzahlung',
+                    'type': 'flat'
+                })
+        raise NotImplementedError() #TODO populate details
+        return {
+            person: {
+                'amount': sum(detail['amount'] for detail in details),
+                'details': details,
+                'event': self.event_id,
+                'time': '{:%Y-%m-%dT%H:%M:%SZ}'.format(gefolge_web.util.now(pytz.utc)),
+                'type': 'eventAbrechnung'
+            }
+            for person, details in details.items()
+        }
 
     def travel_with(self, person, travel):
         """Helper method since Jinja doesn't have while loops"""
