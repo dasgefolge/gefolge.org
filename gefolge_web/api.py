@@ -151,6 +151,7 @@ def setup(index):
             }
 
         result = {
+            'capacity': {f'{night:%Y-%m-%d}': event.capacity(night) for night in event.nights},
             'name': str(event),
             'menschen': [person_json(person) for person in event.signups],
             'programm': {programmpunkt.url_part: programmpunkt_json(programmpunkt) for programmpunkt in event.programm},
