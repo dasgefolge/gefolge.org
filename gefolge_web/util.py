@@ -26,14 +26,11 @@ DISCORD_EPOCH = 1420070400000
 EDIT_LOG = BASE_PATH / 'web.jlog'
 PARAGRAPH_RE = re.compile(r'(?:\r\n|\r|\n){2,}')
 
-CRASH_NOTICE = """To: fenhl@fenhl.net
-From: {whoami}@{hostname}
-Subject: gefolge.org internal server error
-
-An internal server error occurred on gefolge.org.
+CRASH_NOTICE = """An internal server error occurred on gefolge.org.
 User: {user}
 URL: {url}
-"""
+
+{tb}"""
 
 @class_key.class_key()
 class Euro:
@@ -276,9 +273,7 @@ def log(event_type, event):
     event['type'] = event_type
     jlog_append(event, EDIT_LOG)
 
-def notify_crash(exc=None):
-    whoami = subprocess.run(['whoami'], stdout=subprocess.PIPE, check=True).stdout.decode('utf-8').strip()
-    hostname = subprocess.run(['hostname', '-f'], stdout=subprocess.PIPE, check=True).stdout.decode('utf-8').strip()
+def notify_crash():
     try:
         user = str(flask.g.user)
     except Exception:
@@ -287,10 +282,13 @@ def notify_crash(exc=None):
         url = str(flask.g.view_node.url)
     except Exception:
         url = None
-    mail_text = CRASH_NOTICE.format(whoami=whoami, hostname=hostname, user=user, url=url)
-    if exc is not None:
-        mail_text += '\n' + traceback.format_exc()
-    return subprocess.run(['ssmtp', 'fenhl@fenhl.net'], input=mail_text.encode('utf-8'), check=True)
+    exc_text = CRASH_NOTICE.format(user=user, url=url, tb=traceback.format_exc())
+    try:
+        # notify local nightd (fails if night provider data isn't on this server)
+        with pathlib.Path('/opt/night/provider/net/gefolge/error.txt').open('w') as f:
+            f.write(exc_text)
+    except Exception:
+        subprocess.run(['mail', '-s', 'gefolge.org internal server error', 'fenhl@fenhl.net'], input=exc_text.encode('utf-8'), check=True)
 
 def now(tz=pytz.timezone('Europe/Berlin')):
     return pytz.utc.localize(datetime.datetime.utcnow()).astimezone(tz)
@@ -323,7 +321,7 @@ def setup(app):
     @app.errorhandler(500)
     def internal_server_error(e):
         try:
-            notify_crash(e)
+            notify_crash()
         except Exception:
             reported = False
         else:
