@@ -11,7 +11,7 @@ import challonge # PyPI: pychal
 import flask # PyPI: Flask
 import flask_bootstrap # PyPI: Flask-Bootstrap
 import flask_pagedown # PyPI: Flask-PageDown
-import flask_sqlalchemy # Flask-SQLAlchemy
+import flask_sqlalchemy # PyPI: Flask-SQLAlchemy
 import flaskext.markdown # PyPI: Flask-Markdown
 import jinja2 # PyPI: jinja2
 import pymdownx.emoji # PyPI: pymdown-extensions
