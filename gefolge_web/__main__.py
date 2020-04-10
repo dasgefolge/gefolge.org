@@ -11,6 +11,7 @@ import challonge # PyPI: pychal
 import flask # PyPI: Flask
 import flask_bootstrap # PyPI: Flask-Bootstrap
 import flask_pagedown # PyPI: Flask-PageDown
+import flask_sqlalchemy # Flask-SQLAlchemy
 import flaskext.markdown # PyPI: Flask-Markdown
 import jinja2 # PyPI: jinja2
 import pymdownx.emoji # PyPI: pymdown-extensions
@@ -47,8 +48,11 @@ with app.app_context():
         enabled_extensions=('html', 'xml', 'j2')
     )
     # load config
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///gefolge'
     if gefolge_web.util.CONFIG_PATH.exists():
         app.config.update(gefolge_web.util.cached_json(lazyjson.File(gefolge_web.util.CONFIG_PATH)).value())
+    # set up database
+    db = flask_sqlalchemy.SQLAlchemy(app)
     # set up Challonge API client
     if 'challonge' in app.config:
         challonge.set_credentials(app.config['challonge']['username'], app.config['challonge']['apiKey'])
@@ -76,11 +80,11 @@ with app.app_context():
     gefolge_web.login.setup(index, app)
     flask_wiki.child(
         index,
+        db=db,
         edit_decorators=[gefolge_web.login.member_required],
         md=md,
         user_class=gefolge_web.login.Mensch,
-        wiki_name='GefolgeWiki',
-        wiki_root=gefolge_web.util.BASE_PATH / 'wiki'
+        wiki_name='GefolgeWiki'
     )
     gefolge_web.event.setup(index, app)
     games_index = gefolge_web.games.setup(index)
