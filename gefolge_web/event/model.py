@@ -361,6 +361,10 @@ class Event(metaclass=EventMeta):
         else:
             gefolge_web.peter.channel_msg(self.channel, '<@{}>: du bist jetzt für {} angemeldet. Fülle bitte bei Gelegenheit noch dein Profil auf <https://gefolge.org/event/{}/me/edit> aus. Außerdem kannst du dich auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(mensch.snowflake, self, self.event_id, self.event_id), check=False)
 
+    @property
+    def signup_block_reason(self):
+        return self.data.get('signupBlockReason')
+
     def signup_guest(self, mensch, guest_name):
         if any(str(guest) == guest_name for guest in self.guests):
             raise ValueError('Duplicate guest name: {!r}'.format(guest_name))

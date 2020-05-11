@@ -115,6 +115,8 @@ def setup(index, app):
             if flask.g.user in event.signups:
                 flask.flash('Du bist schon angemeldet.', 'error')
                 return flask.redirect(flask.g.view_node.url)
+            if event.signup_block_reason is not None:
+                flask.flash(event.signup_block_reason, 'error')
             if event.anzahlung is not None and event.anzahlung > gefolge_web.util.Euro():
                 if hasattr(profile_form, 'anzahlung'):
                     anzahlung = profile_form.anzahlung.data
