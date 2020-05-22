@@ -6,6 +6,7 @@
     <h1>
         {% if namespace == 'wiki' %}{{title}}{% else %}{{namespace}}/{{title}}{% endif %} — {{wiki_name}}
         <a href="{{url_for('wiki_article_edit', title=title, namespace=namespace)}}" class="btn btn-primary">Bearbeiten</a>
+        <a href="{{url_for('wiki_article_history', title=title, namespace=namespace)}}" class="btn btn-link">Versionsgeschichte</a>
     </h1>
     {{ g.wiki.source(namespace, title) | markdown }}
 {% endblock %}

@@ -1,6 +1,6 @@
 {% extends 'base.html.j2' %}
 
-{% block title %}bearbeiten — {% if namespace == 'wiki' %}{{title}}{% else %}{{namespace}}/{{title}}{% endif %} — GefolgeWiki{% endblock %}
+{% block title %}bearbeiten — {% if namespace == 'wiki' %}{{title}}{% else %}{{namespace}}/{{title}}{% endif %} — {{wiki_name}}{% endblock %}
 
 {% block page_content %}
     <h1>
