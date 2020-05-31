@@ -7,7 +7,7 @@
     {% if current_events | length > 0 %}
         <h2>laufende Events</h2>
         <ul>
-            {% for event in future_events %}
+            {% for event in current_events %}
                 <li>{{event}}{% if event.start is not none and event.end is not none %} ({{event.start | dmy(event.timezone)}}–{{event.end | dmy(event.timezone)}}){% endif %}</li>
             {% endfor %}
         </ul>
