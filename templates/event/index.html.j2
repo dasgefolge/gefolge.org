@@ -4,16 +4,28 @@
 
 {% block page_content %}
     <h1>Events</h1>
-    <h2>zukünftige Events</h2>
-    <ul>
-        {% for event in future_events %}
-            <li>{{event}}{% if event.start is not none and event.end is not none %} ({{event.start | dmy(event.timezone)}}–{{event.end | dmy(event.timezone)}}){% endif %}</li>
-        {% endfor %}
-    </ul>
-    <h2>vergangene Events</h2>
-    <ul>
-        {% for event in past_events %}
-            <li>{{event}}{% if event.start is not none and event.end is not none %} ({{event.start | dmy(event.timezone)}}–{{event.end | dmy(event.timezone)}}){% endif %}</li>
-        {% endfor %}
-    </ul>
+    {% if current_events | length > 0 %}
+        <h2>laufende Events</h2>
+        <ul>
+            {% for event in future_events %}
+                <li>{{event}}{% if event.start is not none and event.end is not none %} ({{event.start | dmy(event.timezone)}}–{{event.end | dmy(event.timezone)}}){% endif %}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {% if future_events | length > 0 %}
+        <h2>zukünftige Events</h2>
+        <ul>
+            {% for event in future_events %}
+                <li>{{event}}{% if event.start is not none and event.end is not none %} ({{event.start | dmy(event.timezone)}}–{{event.end | dmy(event.timezone)}}){% endif %}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {% if past_events | length > 0 %}
+        <h2>vergangene Events</h2>
+        <ul>
+            {% for event in past_events %}
+                <li>{{event}}{% if event.start is not none and event.end is not none %} ({{event.start | dmy(event.timezone)}}–{{event.end | dmy(event.timezone)}}){% endif %}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
 {% endblock %}
