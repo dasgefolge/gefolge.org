@@ -81,7 +81,7 @@ with app.app_context():
     flask_wiki.child(
         index,
         db=db,
-        edit_decorators=[gefolge_web.login.member_required],
+        decorators=[gefolge_web.login.member_required],
         md=md,
         user_class=gefolge_web.login.Mensch,
         wiki_name='GefolgeWiki'
