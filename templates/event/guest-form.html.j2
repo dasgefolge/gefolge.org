@@ -27,7 +27,7 @@
                         <li>Die Anmeldung gilt erst mit Überweisung der Anzahlung, die auf der nächsten Seite angezeigt wird.</li>
                     {% endif %}
                 {% endif %}
-                <li>Du bist dafür verantwortlich, die Anmeldedaten für den Gast aktuell zu halten und ihn über wichtige Dinge, die im <a href="https://discordapp.com/channels/355761290809180170/387264349678338049">#silvester</a> besprochen werden, zu informieren.</li> {#TODO use channel from event data #}
+                <li>Du bist dafür verantwortlich, die Anmeldedaten für den Gast aktuell zu halten und ihn über wichtige Dinge, die im <a href="https://discord.com/channels/355761290809180170/387264349678338049">#silvester</a> besprochen werden, zu informieren.</li> {#TODO use channel from event data #}
                 {% if event.ausfall > event.anzahlung_total %}
                     {% if event.ausfall_date is none %}
                         <li>Wir können erst buchen, wenn die Ausfallgebühr von {{event.ausfall}} gesichert ist. Dazu fehlen noch {{((event.ausfall - event.anzahlung_total).value / event.anzahlung.value) | round(0, 'ceil') | int}} Anmeldungen.</li>

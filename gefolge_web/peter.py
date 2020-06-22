@@ -29,6 +29,7 @@ def escape(text):
     text = text.replace('discordlist.net', 'discordlist\u2024net')
     text = text.replace('discordservers.com', 'discordservers\u2024com')
     text = text.replace('discordapp.com/invite', 'discordapp\u2024com/invite')
+    text = text.replace('discord.com/invite', 'discord\u2024com/invite')
     # Remove right-to-left override and other similar annoying symbols
     text = text.replace('\u202e', ' ') # RTL Override
     text = text.replace('\u200f', ' ') # RTL Mark
