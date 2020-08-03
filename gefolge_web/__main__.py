@@ -35,9 +35,11 @@ import gefolge_web.api
 import gefolge_web.event
 import gefolge_web.games
 import gefolge_web.login
+import gefolge_web.peter
 import gefolge_web.util
 
 DOCUMENT_ROOT = os.environ.get('FLASK_ROOT_PATH', '/opt/git/github.com/dasgefolge/gefolge.org/master')
+WIKI_CHANNEL_ID = 739623881719021728
 
 app = application = flask.Flask('gefolge_web', root_path=DOCUMENT_ROOT, instance_path=DOCUMENT_ROOT)
 
@@ -74,6 +76,16 @@ with app.app_context():
 def index():
     pass
 
+def wiki_save_hook(namespace, title, text, author, summary):
+    if namespace == 'wiki':
+        url = f'https://gefolge.org/wiki/{title}'
+    else:
+        url = f'https://gefolge.org/wiki/{title}/{namespace}'
+    msg = f'<{url}> wurde von <@{author.snowflake}> bearbeitet'
+    if summary:
+        msg += f':\n> {gefolge_web.peter.escape(summary)}'
+    gefolge_web.peter.channel_msg(WIKI_CHANNEL_ID, msg)
+
 with app.app_context():
     # set up submodules
     gefolge_web.api.setup(index)
@@ -83,6 +95,7 @@ with app.app_context():
         db=db,
         decorators=[gefolge_web.login.member_required],
         md=md,
+        save_hook=wiki_save_hook,
         user_class=gefolge_web.login.Mensch,
         wiki_name='GefolgeWiki'
     )

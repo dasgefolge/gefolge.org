@@ -19,7 +19,6 @@ def cmd(cmd, *args, check=True, expected_response=object()):
             return False
 
 def escape(text):
-    # used in external scripts
     text = str(text)
     #FROM https://docs.rs/serenity/0.7.4/src/serenity/utils/message_builder.rs.html#556-568
     # Remove invite links and popular scam websites, mostly to prevent the
