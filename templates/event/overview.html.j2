@@ -161,7 +161,7 @@
             </div>
         {% endif %}
         {% if event.signup_block_reason is not none %}
-            <p>{{event.signup_block_reason}}</p>
+            <p>{{event.signup_block_reason | markdown}}</p>
         {% elif event.end is none %}
             <p>Der Termin für dieses event steht noch nicht fest.</p>
         {% elif event.end < g.now %}
