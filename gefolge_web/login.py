@@ -16,9 +16,9 @@ import wtforms # PyPI: WTForms
 import wtforms.validators # PyPI: WTForms
 
 import lazyjson # https://github.com/fenhl/lazyjson
+import peter # https://github.com/dasgefolge/peter-discord
 
 import gefolge_web.forms
-import gefolge_web.peter
 import gefolge_web.util
 
 MENSCHEN = 386753710434287626 # role ID
@@ -187,11 +187,11 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
 
     @nickname.setter
     def nickname(self, value):
-        gefolge_web.peter.set_display_name(self, value or '')
+        peter.set_display_name(self, value or '')
 
     @nickname.deleter
     def nickname(self):
-        gefolge_web.peter.set_display_name(self, '')
+        peter.set_display_name(self, '')
 
     @property
     def profile_data(self):
@@ -385,9 +385,9 @@ def setup(index, app):
                 mensch.add_transaction(gefolge_web.util.Transaction.transfer(recipient, -transfer_money_form.amount.data, transfer_money_form.comment.data))
                 recipient.add_transaction(gefolge_web.util.Transaction.transfer(mensch, transfer_money_form.amount.data, transfer_money_form.comment.data))
                 if flask.g.user != mensch:
-                    gefolge_web.peter.msg(mensch, '<@{}> ({}) hat {} von deinem Guthaben an <@{}> ({}) übertragen. {}: <https://gefolge.org/me>'.format(Mensch.admin().snowflake, Mensch.admin(), transfer_money_form.amount.data, recipient.snowflake, recipient, 'Kommentar und weitere Infos' if transfer_money_form.comment.data else 'Weitere Infos'))
+                    peter.msg(mensch, '<@{}> ({}) hat {} von deinem Guthaben an <@{}> ({}) übertragen. {}: <https://gefolge.org/me>'.format(Mensch.admin().snowflake, Mensch.admin(), transfer_money_form.amount.data, recipient.snowflake, recipient, 'Kommentar und weitere Infos' if transfer_money_form.comment.data else 'Weitere Infos'))
                 if flask.g.user != recipient:
-                    gefolge_web.peter.msg(recipient, '<@{}> ({}) hat {} an dich übertragen. {}: <https://gefolge.org/me>'.format(mensch.snowflake, mensch, transfer_money_form.amount.data, 'Kommentar und weitere Infos' if transfer_money_form.comment.data else 'Weitere Infos'))
+                    peter.msg(recipient, '<@{}> ({}) hat {} an dich übertragen. {}: <https://gefolge.org/me>'.format(mensch.snowflake, mensch, transfer_money_form.amount.data, 'Kommentar und weitere Infos' if transfer_money_form.comment.data else 'Weitere Infos'))
                 return flask.redirect(flask.g.view_node.url)
             wurstmineberg_transfer_money_form = WurstminebergTransferMoneyForm(mensch)
             if wurstmineberg_transfer_money_form.submit_wurstmineberg_transfer_money_form.data and wurstmineberg_transfer_money_form.validate():

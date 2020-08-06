@@ -10,9 +10,9 @@ import pytz # PyPI: pytz
 
 import class_key # https://github.com/fenhl/python-class-key
 import lazyjson # https://github.com/fenhl/lazyjson
+import peter # https://github.com/dasgefolge/peter-discord
 
 import gefolge_web.login
-import gefolge_web.peter
 import gefolge_web.util
 
 EVENTS_ROOT = gefolge_web.util.BASE_PATH / 'event'
@@ -186,7 +186,7 @@ class Event(metaclass=EventMeta):
         })
         self.attendee_data(guest)['signup'] = '{:%Y-%m-%dT%H:%M:%S}'.format(gefolge_web.util.now(self.timezone)) #TODO Datum der Überweisung verwenden
         if message:
-            gefolge_web.peter.channel_msg(self.channel, '<@{}>: {} ist jetzt für {} angemeldet. Fülle bitte bei Gelegenheit noch das Profil auf <https://gefolge.org/event/{}/mensch/{}/edit> aus. Außerdem kannst du {} auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(guest.via.snowflake, guest, self, self.event_id, guest.snowflake, guest, self.event_id))
+            peter.channel_msg(self.channel, '<@{}>: {} ist jetzt für {} angemeldet. Fülle bitte bei Gelegenheit noch das Profil auf <https://gefolge.org/event/{}/mensch/{}/edit> aus. Außerdem kannst du {} auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(guest.via.snowflake, guest, self, self.event_id, guest.snowflake, guest, self.event_id))
 
     @property
     def data(self):
@@ -355,11 +355,11 @@ class Event(metaclass=EventMeta):
             person_data['anzahlung'] = anzahlung.value
         self.data['menschen'].append(person_data)
         if 'role' in self.data:
-            gefolge_web.peter.add_role(mensch, self.data['role'], check=False)
+            peter.add_role(mensch, self.data['role'], check=False)
         if self.orga('Abrechnung') == gefolge_web.login.Mensch.admin():
-            gefolge_web.peter.channel_msg(self.channel, '<@{}>: du bist jetzt für {} angemeldet. Du kannst dich auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(mensch.snowflake, self, self.event_id), check=False)
+            peter.channel_msg(self.channel, '<@{}>: du bist jetzt für {} angemeldet. Du kannst dich auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(mensch.snowflake, self, self.event_id), check=False)
         else:
-            gefolge_web.peter.channel_msg(self.channel, '<@{}>: du bist jetzt für {} angemeldet. Fülle bitte bei Gelegenheit noch dein Profil auf <https://gefolge.org/event/{}/me/edit> aus. Außerdem kannst du dich auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(mensch.snowflake, self, self.event_id, self.event_id), check=False)
+            peter.channel_msg(self.channel, '<@{}>: du bist jetzt für {} angemeldet. Fülle bitte bei Gelegenheit noch dein Profil auf <https://gefolge.org/event/{}/me/edit> aus. Außerdem kannst du dich auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(mensch.snowflake, self, self.event_id, self.event_id), check=False)
 
     @property
     def signup_block_reason(self):
@@ -382,7 +382,7 @@ class Event(metaclass=EventMeta):
             'via': mensch.snowflake
         })
         if self.anzahlung == gefolge_web.util.Euro() or self.orga('Abrechnung') == gefolge_web.login.Mensch.admin():
-            gefolge_web.peter.channel_msg(self.channel, '<@{}> hat {} für {} angemeldet'.format(mensch.snowflake, guest_name, self))
+            peter.channel_msg(self.channel, '<@{}> hat {} für {} angemeldet'.format(mensch.snowflake, guest_name, self))
         return Guest(self, guest_id)
 
     @property

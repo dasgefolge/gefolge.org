@@ -10,11 +10,12 @@ import jinja2 # PyPI: Jinja2
 import more_itertools # PyPI: more-itertools
 import pytz # PyPI: pytz
 
+import peter # https://github.com/dasgefolge/peter-discord
+
 import gefolge_web.event.forms
 import gefolge_web.event.model
 import gefolge_web.event.programm
 import gefolge_web.login
-import gefolge_web.peter
 import gefolge_web.util
 
 def handle_profile_edit(event, person, profile_form):
@@ -76,9 +77,9 @@ def handle_programm_edit(programmpunkt, programm_form, is_new):
         programmpunkt.orga = programm_form.orga.data
         if is_new and progammpunkt.orga != old_orga:
             if progammpunkt.orga is None:
-                gefolge_web.peter.channel_msg(progammpunkt.event.channel, f'{programmpunkt} auf {programmpunkt.event} sucht jetzt eine Orga')
+                peter.channel_msg(progammpunkt.event.channel, f'{programmpunkt} auf {programmpunkt.event} sucht jetzt eine Orga')
             else:
-                gefolge_web.peter.channel_msg(progammpunkt.event.channel, '{} auf {} wird jetzt von {} organisiert'.format(
+                peter.channel_msg(progammpunkt.event.channel, '{} auf {} wird jetzt von {} organisiert'.format(
                     programmpunkt,
                     programmpunkt.event,
                     progammpunkt.orga if progammpunkt.orga.is_guest else f'<@{progammpunkt.orga.snowflake}>'
@@ -169,7 +170,7 @@ def setup(index, app):
             event.data['programm'][programm_form.url_part.data] = {}
             programmpunkt = gefolge_web.event.programm.Programmpunkt(event, programm_form.url_part.data)
             handle_programm_edit(programmpunkt, programm_form, True)
-            gefolge_web.peter.channel_msg(event.channel, 'Neuer Programmpunkt auf {}: {} ({}, <https://gefolge.org/event/{}/programm/{}>)'.format(
+            peter.channel_msg(event.channel, 'Neuer Programmpunkt auf {}: {} ({}, <https://gefolge.org/event/{}/programm/{}>)'.format(
                 '<@&{}>'.format(event.data['role']) if 'role' in event.data else event,
                 programmpunkt,
                 'Orga gesucht' if programmpunkt.orga is None else f'Orga: <@{programmpunkt.orga.snowflake}>',

@@ -21,6 +21,7 @@ import pymdownx.tilde # PyPI: pymdown-extensions
 import flask_view_tree # https://github.com/fenhl/flask-view-tree
 import flask_wiki # https://github.com/fenhl/flask-wiki
 import lazyjson # https://github.com/fenhl/lazyjson
+import peter # https://github.com/dasgefolge/peter-discord
 
 try:
     import spacealert.web # extension for the Space Alert brainscan database, closed-source for IP reasons
@@ -35,7 +36,6 @@ import gefolge_web.api
 import gefolge_web.event
 import gefolge_web.games
 import gefolge_web.login
-import gefolge_web.peter
 import gefolge_web.util
 
 DOCUMENT_ROOT = os.environ.get('FLASK_ROOT_PATH', '/opt/git/github.com/dasgefolge/gefolge.org/master')
@@ -83,8 +83,8 @@ def wiki_save_hook(namespace, title, text, author, summary):
         url = f'https://gefolge.org/wiki/{title}/{namespace}'
     msg = f'<{url}> wurde von <@{author.snowflake}> bearbeitet'
     if summary:
-        msg += f':\n> {gefolge_web.peter.escape(summary)}'
-    gefolge_web.peter.channel_msg(WIKI_CHANNEL_ID, msg)
+        msg += f':\n> {peter.escape(summary)}'
+    peter.channel_msg(WIKI_CHANNEL_ID, msg)
 
 with app.app_context():
     # set up submodules

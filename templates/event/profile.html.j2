@@ -179,6 +179,7 @@
         {% endif %}
         {% if event.end <= g.now %}
             <h2>Abrechnung</h2>
+            {#
             {% if person.is_guest %}
                 <p>Siehe <a href="{{url_for('event_profile', event=event.event_id, person=person.via.snowflake)}}">Eventprofil</a> für {{person.via}}.</p>
             {% else %}
@@ -186,6 +187,8 @@
                 {% set transaction = event.transaction(person) %}
                 <p>{{transaction.amount}}{{transaction.details}}</p>
             {% endif %}
+            #}
+            <p>Coming soon™</p> {#TODO#}
         {% endif %}
     {% else %}
         <p>{{person}} ist nicht für {{event}} angemeldet.</p>
