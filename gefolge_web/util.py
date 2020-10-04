@@ -18,10 +18,12 @@ import simplejson # PyPI: simplejson
 
 import class_key # https://github.com/fenhl/python-class-key
 import lazyjson # https://github.com/fenhl/lazyjson
+import peter # https://github.com/dasgefolge/peter-discord
 import snowflake # https://github.com/fenhl/python-snowflake
 
 BASE_PATH = pathlib.Path('/usr/local/share/fidera') #TODO use basedir
 CONFIG_PATH = BASE_PATH / 'config.json'
+DEV_CHANNEL_ID = 397832322432499712
 DISCORD_EPOCH = 1420070400000
 EDIT_LOG = BASE_PATH / 'web.jlog'
 PARAGRAPH_RE = re.compile(r'(?:\r\n|\r|\n){2,}')
@@ -288,7 +290,10 @@ def notify_crash():
         with pathlib.Path('/opt/night/provider/net/gefolge/error.txt').open('w') as f:
             f.write(exc_text)
     except Exception:
-        subprocess.run(['mail', '-s', 'gefolge.org internal server error', 'fenhl@fenhl.net'], input=exc_text.encode('utf-8'), check=True)
+        try:
+            peter.channel_msg(DEV_CHANNEL_ID, exc_text)
+        except Exception:
+            subprocess.run(['mail', '-s', 'gefolge.org internal server error', 'fenhl@fenhl.net'], input=exc_text.encode('utf-8'), check=True)
 
 def now(tz=pytz.timezone('Europe/Berlin')):
     return pytz.utc.localize(datetime.datetime.utcnow()).astimezone(tz)
