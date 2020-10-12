@@ -3,7 +3,7 @@ upstream _dev_gefolge {
 }
 
 server {
-    server_name gefolge.org;
+    server_name dev.gefolge.org;
 
     listen 443 ssl;
     listen [::]:443 ssl;
