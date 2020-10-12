@@ -13,6 +13,12 @@ import gefolge_web.util
 LOCATIONS_ROOT = gefolge_web.util.BASE_PATH / 'loc'
 
 class Location:
+    def __new__(cls, loc_id):
+        if loc_id == 'online':
+            return Online()
+        else:
+            return super().__new__(cls)
+
     def __init__(self, loc_id):
         self.loc_id = loc_id
 
@@ -41,12 +47,20 @@ class Location:
         return self.data['address'].value()
 
     @property
+    def capacity(self):
+        return self.data['capacity'].value()
+
+    @property
     def data(self):
         return gefolge_web.util.cached_json(lazyjson.File(LOCATIONS_ROOT / '{}.json'.format(self.loc_id)))
 
     @property
     def hausordnung(self):
         return self.data.get('hausordnung')
+
+    @property
+    def is_online(self):
+        return False
 
     @property
     def prefix(self):
@@ -58,6 +72,28 @@ class Location:
     @property
     def timezone(self):
         return pytz.timezone(self.data['timezone'].value())
+
+class Online(Location):
+    def __new__(cls, loc_id='online'):
+        return object.__new__(cls)
+
+    def __init__(self, loc_id='online'):
+        super().__init__('online')
+
+    @property
+    def capacity(self):
+        return float('inf')
+
+    @property
+    def is_online(self):
+        return True
+
+    def rooms_for(self, event):
+        return None
+
+    @property
+    def timezone(self):
+        return pytz.timezone('Europe/Berlin')
 
 @dataclasses.dataclass(frozen=True)
 class EventRooms:

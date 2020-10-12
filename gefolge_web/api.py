@@ -151,7 +151,6 @@ def setup(index):
             }
 
         result = {
-            'capacity': {f'{night:%Y-%m-%d}': event.capacity(night) for night in event.nights},
             'name': str(event),
             'menschen': [person_json(person) for person in event.signups],
             'programm': {programmpunkt.url_part: programmpunkt_json(programmpunkt) for programmpunkt in event.programm},
@@ -159,11 +158,18 @@ def setup(index):
         }
         if event.anzahlung is not None:
             result['anzahlung'] = event.anzahlung.value
+        if event.location is not None and event.location.is_online:
+            result['capacity'] = None
+        else:
+            result['capacity'] = {f'{night:%Y-%m-%d}': event.capacity(night) for night in event.nights}
         if event.end is not None:
             result['end'] = f'{event.end:%Y-%m-%dT%H:%M:%S}'
         if event.location is not None:
-            result['location'] = event.location.data.value()
-            result['location']['id'] = event.location.loc_id
+            if event.location.is_online:
+                result['location'] = 'online'
+            else:
+                result['location'] = event.location.data.value()
+                result['location']['id'] = event.location.loc_id
         if event.start is not None:
             result['start'] = f'{event.start:%Y-%m-%dT%H:%M:%S}'
         return result

@@ -11,17 +11,29 @@
             {% if event.end < g.now %}fand{% else %}findet{% endif %}
             vom {{event.start | dmy_hm(event.timezone)}} bis zum {{event.end | dmy_hm(event.timezone)}}
             {% if event.location is not none %}
-                {{event.location}} statt.
+                {% if event.location.is_online %}
+                    online statt.
+                {% else %}
+                    {{event.location}} statt.
+                {% endif %}
             {% else %}
                 statt. Der Ort steht noch nicht fest.
             {% endif %}
         {% endif %}
     </p>
-    {% if event.orga_unassigned | length > 0 %}
+    {% if (event.location is none or not event.location.is_online) and event.orga_unassigned | length > 0 %}
         <p>Wir suchen noch Orga-Menschen für folgende Aufgaben: {{event.orga_unassigned | natjoin}}</p>
     {% endif %}
     <p>
-        {% if event.signups | length > 0 %}
+        {% if event.location is not none and event.location.is_online %}
+            {# Programmpunkte #}
+            {% set num_programm = event.programm | selectattr('listed') | length %}
+            {% if num_programm > 0 %}
+                Aktuell {% if num_programm == 1 %}ist{% else %}sind{% endif %} <a href="{{(g.view_node / 'programm').url}}">{% if num_programm == 1 %}ein Programmpunkt{% else %}{{num_programm}} Programmpunkte{% endif %}</a> geplant.
+            {% else %}
+                Aktuell sind noch keine Programmpunkte geplant.
+            {% endif %}
+        {% elif event.signups | length > 0 %}
             {# Programmpunkte #}
             {% set num_programm = event.programm | selectattr('listed') | length %}
             {% if num_programm > 0 %}
@@ -72,7 +84,9 @@
         <p>Eventbeschreibung coming soon™</p>
     {% endif %}
     <h1 id="signup">Anmeldung</h1>
-    {% if g.user in event.menschen %}
+    {% if event.location is not none and event.location.is_online %}
+        <p>Es gibt keine Anmeldung für das event insgesamt. Du kannst dich einfach für <a href="{{(g.view_node / 'programm').url}}">Programmpunkte</a> als interessiert eintragen.</p>
+    {% elif g.user in event.menschen %}
         <p>Du hast dich am {{event.attendee_data(g.user)['signup'] | dmy(event.timezone)}} angemeldet.</p>
         <p>Du kannst <a href="{{(g.view_node / 'mensch' / g.user).url}}">deine Anmeldungsdaten</a> jederzeit <a href="{{(g.view_node / 'mensch' / g.user / 'edit').url}}">bearbeiten</a>. Einige Teile der Eventanmeldung sind noch in Arbeit (z.B. Bettwäsche-Börse). Wenn etwas Neues fertig ist, wirst du auf Discord angepingt.</p> {#TODO#}
         {% if event.guests | selectattr("via", "equalto", g.user) | length > 0 %}
@@ -91,65 +105,6 @@
             {% endif %}
         {% elif g.user.is_admin or (event.end is not none and event.end > g.now) %}
             <p><a href="{{url_for('event_guest_form', event=event.event_id)}}">Gast anmelden</a></p>
-        {% endif %}
-        {% if g.user.is_admin or event.attendee_data(g.user).get('orga', []) | length > 0 %}
-            <h1 id="orga">Orga</h1>
-            {% if g.user.is_admin or event.orga('Abrechnung') == g.user %}
-                <h2>Abrechnung</h2>
-                {% if event.orga('Abrechnung') is none %}
-                    <p>Dieses Event hat noch keine Abrechnungsorga.</p>
-                {% elif event.orga('Abrechnung').is_admin %}
-                    <p>Dieses Event läuft über das Guthabensystem.</p>
-                {% elif 'konto' in event.attendee_data(event.orga('Abrechnung')) %}
-                    <p>Bitte überprüfe regelmäßig dein Konto {{event.attendee_data(g.user)['konto']['iban']}} auf Anzahlungen.</p>
-                    {{gen_form(confirm_signup_form, g.view_node.url)}}
-                {% else %}
-                    <p>Um die Anmeldungen zu eröffnen, gib bitte {{g.admin}} deine Kontodaten.</p>
-                {% endif %}
-                {% if event.end <= g.now %}
-                    <p>Abrechnungsübersicht coming soon™</p> {#TODO#}
-                {% endif %}
-            {% endif %}
-            {% if g.user.is_admin or event.orga('Buchung') == g.user %}
-                <h2>Buchung</h2>
-                {% if event.ausfall > event.anzahlung_total %}
-                    {% if event.ausfall_date is none %}
-                        <p>Wir können erst buchen, wenn die Ausfallgebühr von {{event.ausfall}} gesichert ist. Dazu fehlen noch {{event.ausfall - event.anzahlung_total}}, also {{((event.ausfall - event.anzahlung_total).value / event.anzahlung.value) | round(0, 'ceil') | int}} Anmeldungen.</p>
-                    {% else %}
-                        <p>Bis zum {{event.ausfall_date | dmy(event.timezone)}} müssen wir die Ausfallgebühr von {{event.ausfall}} abdecken. Dazu fehlen noch {{event.ausfall - event.anzahlung_total}}, also {{((event.ausfall - event.anzahlung_total).value / event.anzahlung.value) | round(0, 'ceil') | int}} Anmeldungen.</p>
-                    {% endif %}
-                {% else %}
-                    <p>Die Ausfallgebühr von {{event.ausfall}} ist jetzt durch die Anzahlungen abgedeckt. Das Haus kann also gebucht werden.</p>
-                {% endif %}
-            {% endif %}
-            {% if g.user.is_admin or event.orga('Essen') == g.user %}
-                <h2>Essen</h2>
-                <p>Trage bitte jeweils als Programmpunktbeschreibung ein, was es an dem Abend gibt.</p>
-                <ul>
-                    {% for date in event.nights %}
-                        {% set date_info = event.essen(date) %}
-                        <li>
-                            <a href="{{url_for('event_programmpunkt', event=event.event_id, programmpunkt=date_info.url_part)}}">{{date | dm(event.timezone)}}</a>:
-                            {% if date_info.description == '' %}
-                                noch nicht eingetragen
-                            {% else %}
-                                {{date_info.description}}
-                            {% endif %}
-                            (Orga: {% if date_info.orga is none %}noch nicht eingetragen{% else %}{{date_info.orga}}{% endif %})
-                            — <a href="{{url_for('event_programmpunkt_edit', event=event.event_id, programmpunkt='abendessen{:%Y-%m-%d}'.format(date))}}">bearbeiten</a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-            {% if g.user.is_admin or event.orga('Programm') == g.user %}
-                <h2>Programm</h2>
-                <h3>Programmpunkt erstellen</h3>
-                {{gen_form(programm_form, g.view_node.url)}}
-            {% endif %}
-            {% if g.user.is_admin or event.orga('Schlüssel') == g.user %}
-                <h2>Schlüssel</h2>
-                <p>Coming soon™</p> {#TODO#}
-            {% endif %}
         {% endif %}
     {% else %}
         {% if 'capacity' in event.location.data and event.free() <= 0 %}
@@ -192,6 +147,65 @@
                 <p>Um dich anzumelden, gib bitte {{event.orga('Abrechnung')}} die Anzahlung von {{event.anzahlung}}.</p>
             {% endif %}
             <p>Details zu deiner Anmeldung kannst du eintragen, wenn die Anzahlung angekommen ist. Du wirst dazu auf Discord angepingt.</p> {#TODO reverse signup flow #}
+        {% endif %}
+    {% endif %}
+    {% if g.user.is_admin or (g.user in event.menschen and event.attendee_data(g.user).get('orga', []) | length > 0) %}
+        <h1 id="orga">Orga</h1>
+        {% if g.user.is_admin or event.orga('Abrechnung') == g.user %}
+            <h2>Abrechnung</h2>
+            {% if event.orga('Abrechnung') is none %}
+                <p>Dieses Event hat noch keine Abrechnungsorga.</p>
+            {% elif event.orga('Abrechnung').is_admin %}
+                <p>Dieses Event läuft über das Guthabensystem.</p>
+            {% elif 'konto' in event.attendee_data(event.orga('Abrechnung')) %}
+                <p>Bitte überprüfe regelmäßig dein Konto {{event.attendee_data(g.user)['konto']['iban']}} auf Anzahlungen.</p>
+                {{gen_form(confirm_signup_form, g.view_node.url)}}
+            {% else %}
+                <p>Um die Anmeldungen zu eröffnen, gib bitte {{g.admin}} deine Kontodaten.</p>
+            {% endif %}
+            {% if event.end <= g.now %}
+                <p>Abrechnungsübersicht coming soon™</p> {#TODO#}
+            {% endif %}
+        {% endif %}
+        {% if g.user.is_admin or event.orga('Buchung') == g.user %}
+            <h2>Buchung</h2>
+            {% if event.ausfall > event.anzahlung_total %}
+                {% if event.ausfall_date is none %}
+                    <p>Wir können erst buchen, wenn die Ausfallgebühr von {{event.ausfall}} gesichert ist. Dazu fehlen noch {{event.ausfall - event.anzahlung_total}}, also {{((event.ausfall - event.anzahlung_total).value / event.anzahlung.value) | round(0, 'ceil') | int}} Anmeldungen.</p>
+                {% else %}
+                    <p>Bis zum {{event.ausfall_date | dmy(event.timezone)}} müssen wir die Ausfallgebühr von {{event.ausfall}} abdecken. Dazu fehlen noch {{event.ausfall - event.anzahlung_total}}, also {{((event.ausfall - event.anzahlung_total).value / event.anzahlung.value) | round(0, 'ceil') | int}} Anmeldungen.</p>
+                {% endif %}
+            {% else %}
+                <p>Die Ausfallgebühr von {{event.ausfall}} ist jetzt durch die Anzahlungen abgedeckt. Das Haus kann also gebucht werden.</p>
+            {% endif %}
+        {% endif %}
+        {% if g.user.is_admin or event.orga('Essen') == g.user %}
+            <h2>Essen</h2>
+            <p>Trage bitte jeweils als Programmpunktbeschreibung ein, was es an dem Abend gibt.</p>
+            <ul>
+                {% for date in event.nights %}
+                    {% set date_info = event.essen(date) %}
+                    <li>
+                        <a href="{{url_for('event_programmpunkt', event=event.event_id, programmpunkt=date_info.url_part)}}">{{date | dm(event.timezone)}}</a>:
+                        {% if date_info.description == '' %}
+                            noch nicht eingetragen
+                        {% else %}
+                            {{date_info.description}}
+                        {% endif %}
+                        (Orga: {% if date_info.orga is none %}noch nicht eingetragen{% else %}{{date_info.orga}}{% endif %})
+                        — <a href="{{url_for('event_programmpunkt_edit', event=event.event_id, programmpunkt='abendessen{:%Y-%m-%d}'.format(date))}}">bearbeiten</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% if g.user.is_admin or event.orga('Programm') == g.user %}
+            <h2>Programm</h2>
+            <h3>Programmpunkt erstellen</h3>
+            {{gen_form(programm_form, g.view_node.url)}}
+        {% endif %}
+        {% if g.user.is_admin or event.orga('Schlüssel') == g.user %}
+            <h2>Schlüssel</h2>
+            <p>Coming soon™</p> {#TODO#}
         {% endif %}
     {% endif %}
 {% endblock %}

@@ -3,7 +3,9 @@
 {% block title %}Gast anmelden — {{event.__str__()}}{% endblock %}
 
 {% block page_content %}
-    {% if event.end > g.now or g.user.is_admin %}
+    {% if event.location is not none and event.location.is_online %}
+        <p>Für online events können keine Gäste angemeldet werden.</p>
+    {% elif event.end > g.now or g.user.is_admin %}
         <p>Hier kannst du Gäste für {{event}} anmelden.</p>
         {% if 'capacity' in event.location.data and event.free() <= 0 %}
             <div class="alert alert-warning">

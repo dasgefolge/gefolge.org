@@ -215,7 +215,7 @@ class Programmpunkt:
             return []
 
     def can_edit(self, editor):
-        if editor == gefolge_web.login.Mensch.admin():
+        if editor.is_admin:
             return True # always allow the admin to edit since they have write access to the database anyway
         if self.event.orga('Programm') == editor:
             return True # allow the Programm orga to edit past events for archival purposes
@@ -224,13 +224,13 @@ class Programmpunkt:
         return self.orga == editor
 
     def can_signup(self, editor, person):
-        if editor == gefolge_web.login.Mensch.admin():
+        if editor.is_admin:
             return True # always allow the admin to edit since they have write access to the database anyway
         if self.event.end < gefolge_web.util.now(self.event.timezone):
             return False # event frozen
         return (
             (editor == person or (person.is_guest and person.via == editor) or editor == self.event.orga('Programm'))
-            and person in self.event.signups
+            and ((self.event.location is not None and self.event.location.is_online) or person in self.event.signups)
             and person not in self.signups
             and len(self.signups) < self.signup_limit
             and not self.closed
@@ -303,7 +303,10 @@ class Programmpunkt:
         class Form(flask_wtf.FlaskForm):
             pass
 
-        people_allowed_to_sign_up = list(filter(lambda person: self.can_signup(editor, person), self.event.signups))
+        people_allowed_to_sign_up = list(filter(
+            lambda person: self.can_signup(editor, person),
+            gefolge_web.login.Mensch if self.event.location is not None and self.event.location.is_online else self.event.signups
+        ))
         if len(people_allowed_to_sign_up) == 0:
             submit_text = None # don't show submit field unless overridden by a subclass in add_form_details
         elif len(people_allowed_to_sign_up) == 1:

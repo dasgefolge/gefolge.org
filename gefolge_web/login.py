@@ -115,7 +115,7 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
     def balance(self):
         import gefolge_web.event.model
 
-        if self == self.__class__.admin():
+        if self == self.__class__.admin(): # not using self.is_admin here since this specifically refers to Fenhl's balance
             return sum((
                 # Anzahlungen für noch nicht abgerechnete events
                 -event.anzahlung_total

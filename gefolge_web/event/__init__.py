@@ -115,6 +115,9 @@ def setup(index, app):
     def event_page(event):
         profile_form = gefolge_web.event.forms.ProfileForm(event, flask.g.user)
         if profile_form.submit_profile_form.data and profile_form.validate():
+            if event.location is not None and event.location.is_online:
+                flask.flash('Für online events gibt es keine Anmeldung.', 'error')
+                return flask.redirect(flask.g.view_node.url)
             if flask.g.user in event.signups:
                 flask.flash('Du bist schon angemeldet.', 'error')
                 return flask.redirect(flask.g.view_node.url)

@@ -43,7 +43,7 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
         )] if self.date.month == 12 and self.date.day == 31 else [])
 
     def can_edit(self, editor):
-        if editor == gefolge_web.login.Mensch.admin():
+        if editor.is_admin:
             return True # always allow the admin to edit since they have write access to the database anyway
         if self.event.orga('Programm') == editor:
             return True # allow the Programm orga to edit past events for archival purposes
@@ -52,7 +52,7 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
         return self.orga == editor or self.event.orga('Essen') == editor
 
     def can_signup(self, editor, person):
-        if editor == gefolge_web.login.Mensch.admin():
+        if editor.is_admin:
             return True # always allow the admin to edit since they have write access to the database anyway
         return False
 

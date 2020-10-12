@@ -140,14 +140,14 @@ class Event(metaclass=EventMeta):
                 html='Endreinigung',
                 start=self.end - datetime.timedelta(hours=2),
                 end=self.end
-            )] if self.location is not None and 'host' not in self.location.data else []
+            )] if self.location is not None and not self.location.is_online and 'host' not in self.location.data else []
         ), itertools.chain.from_iterable(
             programmpunkt.calendar_events
             for programmpunkt in self.programm
         )))
 
     def can_edit(self, editor, profile):
-        if editor == gefolge_web.login.Mensch.admin():
+        if editor.is_admin:
             return True # always allow the admin to edit since they have write access to the database anyway
         editor_data = self.attendee_data(editor)
         if editor_data is None:
@@ -171,7 +171,7 @@ class Event(metaclass=EventMeta):
         if 'capacity' in self.data:
             return self.data['capacity']['{:%Y-%m-%d}'.format(night)].value()
         else:
-            return self.location.data['capacity'].value()
+            return self.location.capacity
 
     @property
     def channel(self):
@@ -324,7 +324,7 @@ class Event(metaclass=EventMeta):
             gefolge_web.event.programm.Programmpunkt(self, name)
             for name in self.data.get('programm', {})
             if name not in {'custom-magic-draft', 'rtww'} # special, already listed below
-        ), ([] if self.start is None else (
+        ), ([] if self.start is None or (self.location is not None and self.location.is_online) else (
             gefolge_web.event.programm.essen.Abendessen(self, date)
             for date in self.nights
         )), (
