@@ -75,14 +75,14 @@ def handle_programm_edit(programmpunkt, programm_form, is_new):
     if hasattr(programm_form, 'orga'):
         old_orga = programmpunkt.orga
         programmpunkt.orga = programm_form.orga.data
-        if is_new and progammpunkt.orga != old_orga:
-            if progammpunkt.orga is None:
-                peter.channel_msg(progammpunkt.event.channel, f'{programmpunkt} auf {programmpunkt.event} sucht jetzt eine Orga')
+        if is_new and programmpunkt.orga != old_orga:
+            if programmpunkt.orga is None:
+                peter.channel_msg(programmpunkt.event.channel, f'{programmpunkt} auf {programmpunkt.event} sucht jetzt eine Orga')
             else:
-                peter.channel_msg(progammpunkt.event.channel, '{} auf {} wird jetzt von {} organisiert'.format(
+                peter.channel_msg(programmpunkt.event.channel, '{} auf {} wird jetzt von {} organisiert'.format(
                     programmpunkt,
                     programmpunkt.event,
-                    progammpunkt.orga if progammpunkt.orga.is_guest else f'<@{progammpunkt.orga.snowflake}>'
+                    programmpunkt.orga if programmpunkt.orga.is_guest else f'<@{programmpunkt.orga.snowflake}>'
                 ))
     programmpunkt.start = programm_form.start.data
     programmpunkt.end = programm_form.end.data
