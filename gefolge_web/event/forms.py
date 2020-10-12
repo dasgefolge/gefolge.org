@@ -173,7 +173,10 @@ def ProgrammForm(event, programmpunkt):
     Form.subtitle = wtforms.StringField('Untertitel', [wtforms.validators.Length(max=40)], default='' if programmpunkt is None else programmpunkt.subtitle)
     Form.subtitle_notice = gefolge_web.forms.FormText('Wird auf dem info-beamer und im Zeitplan angezeigt.')
     if programmpunkt is None or flask.g.user.is_admin or flask.g.user == programmpunkt.event.orga(programmpunkt.orga_role):
-        Form.orga = PersonField(event, 'Orga', optional_label='Orga gesucht', allow_guests=False, default=None if programmpunkt is None else programmpunkt.orga)
+        if programmpunkt.event.location is not None and programmpunkt.event.location.is_online:
+            Form.orga = gefolge_web.forms.MenschField('Orga', optional_label='Orga gesucht', default=None if programmpunkt is None else programmpunkt.orga)
+        else:
+            Form.orga = PersonField(event, 'Orga', optional_label='Orga gesucht', allow_guests=False, default=None if programmpunkt is None else programmpunkt.orga)
     elif flask.g.user == programmpunkt.orga:
         Form.orga_notice = gefolge_web.forms.FormText(
             jinja2.Markup('Bitte wende dich an {}, wenn du die Orga für diesen Programmpunkt abgeben möchtest.'.format(programmpunkt.event.orga(programmpunkt.orga_role).__html__())),
