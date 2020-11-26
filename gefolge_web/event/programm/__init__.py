@@ -383,7 +383,10 @@ class Programmpunkt:
         pass # subclasses may override
 
     def process_form_submission(self, form, editor):
-        people_allowed_to_sign_up = list(filter(lambda person: self.can_signup(editor, person), self.event.signups))
+        people_allowed_to_sign_up = list(filter(
+            lambda person: self.can_signup(editor, person),
+            gefolge_web.login.Mensch if self.event.location is not None and self.event.location.is_online else self.event.signups
+        ))
         if len(people_allowed_to_sign_up) > 0:
             if len(people_allowed_to_sign_up) == 1:
                 person_to_signup = more_itertools.one(people_allowed_to_sign_up)
