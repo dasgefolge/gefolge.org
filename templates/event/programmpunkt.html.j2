@@ -43,31 +43,37 @@
                 <tr>
                     <th rowspan="2">#</th>
                     <th rowspan="2">Name</th>
-                    <th colspan="{{(event.nights | length) * 2 + 2}}">Zeitraum</th>
-                    <th rowspan="2">Details</th>
+                    {% if event.location is none or not event.location.is_online %}
+                        <th colspan="{{(event.nights | length) * 2 + 2}}">Zeitraum</th>
+                        <th rowspan="2">Details</th>
+                    {% endif %}
                 </tr>
                 <tr>
-                    {% for night in event.nights %}
-                        <th style="text-align: center;" colspan="2">{{night | dm}}</th>
-                    {% endfor %}
-                    <th style="text-align: center;" colspan="2">{{event.end.date() | dm}}</th>
+                    {% if event.location is none or not event.location.is_online %}
+                        {% for night in event.nights %}
+                            <th style="text-align: center;" colspan="2">{{night | dm}}</th>
+                        {% endfor %}
+                        <th style="text-align: center;" colspan="2">{{event.end.date() | dm}}</th>
+                    {% endif %}
                 </tr>
             </thead>
             <tfoot>
                 <tr>
                     <th></th>
                     <th></th>
-                    <th></th>
-                    {% for night in event.nights %}
-                        <th style="text-align: center;" colspan="2"><span class="text-success">{{programmpunkt.signups | select('in', event.night_signups(night)) | length}}</span>+
-                        {%- if event.free(night) < 1 or (event.free(night) == 1 and event.night_maybes(night) | length > 1) -%}
-                            <span class="text-info">{{programmpunkt.signups | select('in', event.night_maybes(night)) | length}}</span></th>
-                        {% else -%}
-                            <span class="text-warning">{{programmpunkt.signups | select('in', event.night_maybes(night)) | length}}</span></th>
-                        {% endif %}
-                    {% endfor %}
-                    <th></th>
-                    <th></th>
+                    {% if event.location is none or not event.location.is_online %}
+                        <th></th>
+                        {% for night in event.nights %}
+                            <th style="text-align: center;" colspan="2"><span class="text-success">{{programmpunkt.signups | select('in', event.night_signups(night)) | length}}</span>+
+                            {%- if event.free(night) < 1 or (event.free(night) == 1 and event.night_maybes(night) | length > 1) -%}
+                                <span class="text-info">{{programmpunkt.signups | select('in', event.night_maybes(night)) | length}}</span></th>
+                            {% else -%}
+                                <span class="text-warning">{{programmpunkt.signups | select('in', event.night_maybes(night)) | length}}</span></th>
+                            {% endif %}
+                        {% endfor %}
+                        <th></th>
+                        <th></th>
+                    {% endif %}
                 </tr>
             </tfoot>
             <tbody>
@@ -75,36 +81,38 @@
                     <tr>
                         <td>{{loop.index}}</td>
                         <td>{{person}}</td>
-                        <td></td>
-                        {% for night in event.nights %}
-                            {% set attending_night = event.night_going(person, night) %}
-                            {% if attending_night == 'yes' %}
-                                <td style="text-align: center;" colspan="2" class="success" title="{{night | dm}}–{{night | next_date | dm}}">
-                                    <span class="fa fa-fw fa-check"></span>
-                                </td>
-                            {% elif attending_night == 'maybe' %}
-                                {% if event.free(night) < 1 or (event.free(night) == 1 and event.night_maybes(night) | length > 1) %}
-                                    <td style="text-align: center;" colspan="2" class="info" title="{{night | dm}}–{{night | next_date | dm}}">
-                                        <span class="fa fa-fw fa-clock-o"></span>
+                        {% if event.location is none or not event.location.is_online %}
+                            <td></td>
+                            {% for night in event.nights %}
+                                {% set attending_night = event.night_going(person, night) %}
+                                {% if attending_night == 'yes' %}
+                                    <td style="text-align: center;" colspan="2" class="success" title="{{night | dm}}–{{night | next_date | dm}}">
+                                        <span class="fa fa-fw fa-check"></span>
                                     </td>
-                                {% else %}
-                                    <td style="text-align: center;" colspan="2" class="warning" title="{{night | dm}}–{{night | next_date | dm}}">
-                                        <span class="fa fa-fw fa-question"></span>
+                                {% elif attending_night == 'maybe' %}
+                                    {% if event.free(night) < 1 or (event.free(night) == 1 and event.night_maybes(night) | length > 1) %}
+                                        <td style="text-align: center;" colspan="2" class="info" title="{{night | dm}}–{{night | next_date | dm}}">
+                                            <span class="fa fa-fw fa-clock-o"></span>
+                                        </td>
+                                    {% else %}
+                                        <td style="text-align: center;" colspan="2" class="warning" title="{{night | dm}}–{{night | next_date | dm}}">
+                                            <span class="fa fa-fw fa-question"></span>
+                                        </td>
+                                    {% endif %}
+                                {% elif attending_night == 'no' %}
+                                    <td style="text-align: center;" colspan="2" class="danger" title="{{night | dm}}–{{night | next_date | dm}}">
+                                        <span class="fa fa-fw fa-times"></span>
                                     </td>
                                 {% endif %}
-                            {% elif attending_night == 'no' %}
-                                <td style="text-align: center;" colspan="2" class="danger" title="{{night | dm}}–{{night | next_date | dm}}">
-                                    <span class="fa fa-fw fa-times"></span>
-                                </td>
-                            {% endif %}
-                        {% endfor %}
-                        <td></td>
-                        <td>
-                            <a href="{{url_for('event_profile', event=event.event_id, person=person.snowflake)}}"><span class="fa fa-fw fa-eye"></span></a>
-                            {% if event.can_edit(g.user, person) %}
-                                <a href="{{url_for('event_profile_edit', event=event.event_id, person=person.snowflake)}}"><span class="fa fa-fw fa-edit"></span></a>
-                            {% endif %}
-                        </td>
+                            {% endfor %}
+                            <td></td>
+                            <td>
+                                <a href="{{url_for('event_profile', event=event.event_id, person=person.snowflake)}}"><span class="fa fa-fw fa-eye"></span></a>
+                                {% if event.can_edit(g.user, person) %}
+                                    <a href="{{url_for('event_profile_edit', event=event.event_id, person=person.snowflake)}}"><span class="fa fa-fw fa-edit"></span></a>
+                                {% endif %}
+                            </td>
+                        {% endif %}
                     </tr>
                 {% endfor %}
             </tbody>
