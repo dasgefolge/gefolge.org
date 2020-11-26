@@ -23,7 +23,13 @@
                     <td>{{mensch}}</td>
                     <td>{{mensch.__str__()}}</td>
                     <td>{{mensch.snowflake | melt | dmy_hms}}</td>
-                    <td>{{mensch.profile_data['joined'] | dmy_hms}}</td>
+                    {% if mensch.profile_data['joined'] is none %}
+                        <td class="warning">
+                            <i title="Daten fehlen" class="fa fa-fw fa-question"></i>
+                        </td>
+                    {% else %}
+                        <td>{{mensch.profile_data['joined'] | dmy_hms}}</td>
+                    {% endif %}
                     {% if g.user.is_admin %}
                         <td style="text-align: right;" {% if mensch.balance.value < 0 %}class="danger"{% endif %}>
                             {% if mensch.balance.value != 0 %}
