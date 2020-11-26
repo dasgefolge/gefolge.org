@@ -316,7 +316,10 @@ class Programmpunkt:
                 submit_text = self.strings.signup_other_button.format(more_itertools.one(people_allowed_to_sign_up))
             Form.submit_programmpunkt_form = wtforms.SubmitField(submit_text)
         else:
-            Form.person_to_signup = gefolge_web.event.forms.PersonField(self.event, 'Mensch', person_filter=lambda person: person in people_allowed_to_sign_up, default=editor if editor in people_allowed_to_sign_up else people_allowed_to_sign_up[0])
+            if self.event.location.is_online:
+                Form.person_to_signup = gefolge_web.forms.MenschField(self.event, 'Mensch', person_filter=lambda person: person in people_allowed_to_sign_up, default=editor if editor in people_allowed_to_sign_up else people_allowed_to_sign_up[0])
+            else:
+                Form.person_to_signup = gefolge_web.event.forms.PersonField(self.event, 'Mensch', person_filter=lambda person: person in people_allowed_to_sign_up, default=editor if editor in people_allowed_to_sign_up else people_allowed_to_sign_up[0])
             submit_text = self.strings.signup_other_button.format('Gewählte Person' if self.strings.signup_other_button.startswith('{') else 'gewählte Person')
 
         if 'challonge' in self.data:
