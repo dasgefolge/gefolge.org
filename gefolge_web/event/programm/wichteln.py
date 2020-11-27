@@ -47,7 +47,7 @@ class Wichteln(gefolge_web.event.programm.Programmpunkt):
         if self.event.location is not None and self.event.location.is_online:
             if 'addresses' not in self.data:
                 self.data['addresses'] = {}
-            self.data['addresses'][editor.snowflake] = form.address.data
+            self.data['addresses'][str(editor.snowflake)] = form.address.data
 
     def user_notes(self, user):
         participants = [
@@ -56,11 +56,15 @@ class Wichteln(gefolge_web.event.programm.Programmpunkt):
             if str(person.snowflake) in self.data.get('targets', {}) and (person == user or (person.is_guest and person.via == user))
         ]
         if len(participants) > 0:
-            return jinja2.Markup('\n'.join(
-                '<p>{} ist <span class="spoiler">{}</span>.</p>{}'.format(
-                    'Dein Ziel' if participant == user else 'Das Ziel für {}'.format(participant.__html__()),
-                    self.event.person(self.data['targets'][str(participant.snowflake)].value()).__html__(),
-                    f'<p>Adresse:<br /><span class="spoiler">{self.data["addresses"][self.data["targets"][str(participant.snowflake)].value()].value().replace("\n", "<br />")}<span></p>' if self.data['targets'][str(participant.snowflake)].value() in self.data.get('addresses', {}) else ''
-                )
-                for participant in participants
-            ))
+            participant_notes = []
+            for participant in participants:
+                if participant == user:
+                    prefix = 'Dein Ziel'
+                else:
+                    prefix = f'Das Ziel für {participant.__html__()}'
+                target = self.event.person(self.data['targets'][str(participant.snowflake)].value())
+                participant_notes.append(f'<p>{prefix} ist <span class="spoiler">{target.__html__()}</span>.</p>{}')
+                if str(target.snowflake) in self.data.get('addresses', {}):
+                    address = self.data['addresses'][str(target.snowflake)].value().replace('\n', '<br />')
+                    participant_notes.append(f'\n<p>Adresse:<br /><span class="spoiler">{address}<span></p>')
+            return jinja2.markup('\n'.join(participant_notes))
