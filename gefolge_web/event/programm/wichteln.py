@@ -5,6 +5,7 @@ import wtforms # PyPI: WTForms
 import wtforms.validators # PyPI: WTForms
 
 import gefolge_web.event.programm
+import gefolge_web.forms
 
 class Wichteln(gefolge_web.event.programm.Programmpunkt):
     def __new__(cls, event, programmpunkt='wichteln'):
@@ -19,6 +20,7 @@ class Wichteln(gefolge_web.event.programm.Programmpunkt):
     def add_form_details(self, Form, editor):
         if self.event.location is not None and self.event.location.is_online:
             Form.address = wtforms.TextAreaField('Anschrift', [wtforms.validators.InputRequired()])
+            Form.address_notice = gefolge_web.forms.FormText('Wird der Person angezeigt, die für dich wichtelt.')
             return True
         else:
             return False
@@ -55,9 +57,10 @@ class Wichteln(gefolge_web.event.programm.Programmpunkt):
         ]
         if len(participants) > 0:
             return jinja2.Markup('\n'.join(
-                '<p>{} ist <span class="spoiler">{}</span>.</p>'.format(
+                '<p>{} ist <span class="spoiler">{}</span>.</p>{}'.format(
                     'Dein Ziel' if participant == user else 'Das Ziel für {}'.format(participant.__html__()),
-                    self.event.person(self.data['targets'][str(participant.snowflake)].value()).__html__()
+                    self.event.person(self.data['targets'][str(participant.snowflake)].value()).__html__(),
+                    f'<p>Adresse:<br /><span class="spoiler">{self.data["addresses"][self.data["targets"][str(participant.snowflake)].value()].value().replace("\n", "<br />")}<span></p>' if self.data['targets'][str(participant.snowflake)].value() in self.data.get('addresses', {}) else ''
                 )
                 for participant in participants
             ))
