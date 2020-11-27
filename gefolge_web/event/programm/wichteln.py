@@ -25,6 +25,15 @@ class Wichteln(gefolge_web.event.programm.Programmpunkt):
         else:
             return False
 
+    def can_signup(self, editor, person):
+        return (
+            super().can_signup(editor, person)
+            and (
+                self.event.location is None or not self.event.location.is_online
+                or editor == person # editing others' addresses is not currently possible #TODO fix
+            )
+        )
+
     @property
     def default_strings(self):
         return gefolge_web.event.programm.Strings(
