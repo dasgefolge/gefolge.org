@@ -63,7 +63,7 @@ class Wichteln(gefolge_web.event.programm.Programmpunkt):
                 else:
                     prefix = f'Das Ziel für {participant.__html__()}'
                 target = self.event.person(self.data['targets'][str(participant.snowflake)].value())
-                participant_notes.append(f'<p>{prefix} ist <span class="spoiler">{target.__html__()}</span>.</p>{}')
+                participant_notes.append(f'<p>{prefix} ist <span class="spoiler">{target.__html__()}</span>.</p>')
                 if str(target.snowflake) in self.data.get('addresses', {}):
                     address = self.data['addresses'][str(target.snowflake)].value().replace('\n', '<br />')
                     participant_notes.append(f'\n<p>Adresse:<br /><span class="spoiler">{address}<span></p>')
