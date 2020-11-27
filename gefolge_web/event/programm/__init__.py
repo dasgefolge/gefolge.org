@@ -146,6 +146,10 @@ class Programmpunkt:
             return gefolge_web.event.programm.magic.CustomMagicDraft(event)
         elif programmpunkt == 'rtww' and werewolf_web is not None:
             return werewolf_web.RealtimeWerewolf(event)
+        elif programmpunkt == 'wichteln':
+            import gefolge_web.event.programm.wichteln
+
+            return gefolge_web.event.programm.wichteln.Wichteln(event)
         elif re.fullmatch('abendessen[0-9]+-[0-9]+-[0-9]+', programmpunkt):
             import gefolge_web.event.programm.essen
 
@@ -471,16 +475,4 @@ class Programmpunkt:
 
     def user_notes(self, user):
         """These notes are only shown to the given user. Should be wrapped in spoiler tags if sensitive."""
-        participants = [
-            person
-            for person in self.event.signups
-            if str(person.snowflake) in self.data.get('targets', {}) and (person == user or (person.is_guest and person.via == user))
-        ]
-        if len(participants) > 0:
-            return jinja2.Markup('\n'.join(
-                '<p>{} ist <span class="spoiler">{}</span>.</p>'.format(
-                    'Dein Ziel' if participant == user else 'Das Ziel für {}'.format(participant.__html__()),
-                    self.event.person(self.data['targets'][str(participant.snowflake)].value()).__html__()
-                )
-                for participant in participants
-            ))
+        pass # subclasses may override

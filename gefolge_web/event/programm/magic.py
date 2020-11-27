@@ -21,7 +21,7 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
         super().__init__(event, 'custom-magic-draft')
 
     def __repr__(self):
-        return 'gefolge_web.event.programm.CustomMagicDraft({!r})'.format(self.event)
+        return 'gefolge_web.event.programm.magic.CustomMagicDraft({!r})'.format(self.event)
 
     def add_form_details(self, Form, editor):
         if self.card_set is None:
