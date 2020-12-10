@@ -75,7 +75,7 @@ def handle_programm_edit(programmpunkt, programm_form, is_new):
     if hasattr(programm_form, 'orga'):
         old_orga = programmpunkt.orga
         programmpunkt.orga = programm_form.orga.data
-        if is_new and programmpunkt.orga != old_orga:
+        if programmpunkt.orga != old_orga and not is_new:
             if programmpunkt.orga is None:
                 peter.channel_msg(programmpunkt.event.channel, f'{programmpunkt} auf {programmpunkt.event} sucht jetzt eine Orga')
             else:
