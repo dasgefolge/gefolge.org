@@ -24,6 +24,10 @@ import lazyjson # https://github.com/fenhl/lazyjson
 import peter # https://github.com/dasgefolge/peter-discord
 
 try:
+    import ricochet_robots # extension for Ricochet Robots online, closed-source for IP reasons
+except ImportError:
+    ricochet_robots = None
+try:
     import spacealert.web # extension for the Space Alert brainscan database, closed-source for IP reasons
 except ImportError:
     spacealert = None
@@ -102,6 +106,8 @@ with app.app_context():
     gefolge_web.event.setup(index, app)
     games_index = gefolge_web.games.setup(index)
     gefolge_web.util.setup(app)
+    if ricochet_robots is not None:
+        ricochet_robots.setup(games_index)
     if spacealert is not None:
         spacealert.web.setup(games_index)
     if werewolf_web is not None:
