@@ -177,9 +177,9 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
     @property
     def name(self):
         if self.profile_data.get('nick') is None:
-            return self.profile_data['username']
+            return self.username
         else:
-            return self.profile_data['nick']
+            return self.nickname
 
     @property
     def nickname(self):
@@ -228,6 +228,10 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
     @property
     def userdata_path(self):
         return USERDATA_ROOT / '{}.json'.format(self.snowflake)
+
+    @property
+    def username(self):
+        return self.profile_data['username']
 
 class AnonymousUser(flask_login.AnonymousUserMixin):
     def __html__(self):
