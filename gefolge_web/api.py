@@ -173,3 +173,8 @@ def setup(index):
         if event.start is not None:
             result['start'] = f'{event.start:%Y-%m-%dT%H:%M:%S}'
         return result
+
+    @api_index.child('websocket')
+    def api_websocket():
+        """Ein websocket server für länger dauernde Verbindungen. Dokumentation siehe https://github.com/dasgefolge/gefolge-websocket"""
+        raise NotImplementedError('Websocket should be directed to gefolge-websocket server by nginx')
