@@ -7,6 +7,7 @@ import urllib.parse
 
 import flask # PyPI: Flask
 import flask_dance.contrib.discord # PyPI: Flask-Dance
+import flask_dance.contrib.twitch # PyPI: Flask-Dance
 import flask_login # PyPI: Flask-Login
 import flask_wtf # PyPI: Flask-WTF
 import jinja2 # PyPI: Jinja2
@@ -218,6 +219,14 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
         ]
 
     @property
+    def twitch(self):
+        return self.userdata.get('twitch')
+
+    @twitch.setter
+    def twitch(self, value):
+        self.userdata['twitch'] = value
+
+    @property
     def url_part(self):
         return str(self.snowflake)
 
@@ -250,6 +259,10 @@ class AnonymousUser(flask_login.AnonymousUserMixin):
 
     @property
     def timezone(self):
+        return None
+
+    @property
+    def twitch(self):
         return None
 
 def ProfileForm(mensch):
@@ -316,6 +329,12 @@ def setup(index, app):
         redirect_to='auth_callback'
     ), url_prefix='/login')
 
+    app.register_blueprint(flask_dance.contrib.twitch.make_twitch_blueprint(
+        client_id=app.config['twitch']['clientID'],
+        client_secret=app.config['twitch']['clientSecret'],
+        redirect_to='twitch_auth_callback'
+    ), url_prefix='/login')
+
     login_manager = flask_login.LoginManager()
     login_manager.login_view = 'discord.login'
     login_manager.login_message = None # Because discord.login does not show flashes, any login message would be shown after a successful login. This would be confusing.
@@ -357,6 +376,26 @@ def setup(index, app):
                 return flask.redirect(flask.url_for('index'))
         flask_login.login_user(mensch, remember=True)
         flask.flash(jinja2.Markup('Hallo {}.'.format(mensch.__html__())))
+        next_url = flask.session.get('next')
+        if next_url is None:
+            return flask.redirect(flask.url_for('index'))
+        elif is_safe_url(next_url):
+            return flask.redirect(next_url)
+        else:
+            return flask.abort(400)
+
+    @app.route('/auth/twitch')
+    def twitch_auth_callback():
+        if not flask.g.user.is_active:
+            return flask.make_response(('Bitte melden Sie sich zuerst mit Discord an, bevor Sie sich mit Twitch anmelden.', 403, [])) #TODO template
+        if not flask_dance.contrib.twitch.twitch.authorized:
+            flask.flash('Login fehlgeschlagen.', 'error')
+            return flask.redirect(flask.url_for('index'))
+        response = flask_dance.contrib.twitch.twitch.get('users')
+        if not response.ok:
+            return flask.make_response(('Twitch meldet Fehler {} auf {}: {}'.format(response.status_code, html.escape(response.url), html.escape(response.text)), response.status_code, []))
+        flask.g.user.twitch = response.json()['data'][0]
+        flask.flash('Twitch-Konto erfolgreich verknüpft.')
         next_url = flask.session.get('next')
         if next_url is None:
             return flask.redirect(flask.url_for('index'))
