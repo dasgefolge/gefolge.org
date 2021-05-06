@@ -1,6 +1,4 @@
 import functools
-import html
-import pathlib
 import random
 import string
 import urllib.parse
@@ -363,7 +361,7 @@ def setup(index, app):
             return flask.redirect(flask.url_for('index'))
         response = flask_dance.contrib.discord.discord.get('/api/v6/users/@me')
         if not response.ok:
-            return flask.make_response(('Discord returned error {} at {}: {}'.format(response.status_code, html.escape(response.url), html.escape(response.text)), response.status_code, []))
+            return flask.make_response(('Discord returned error {} at {}: {}'.format(response.status_code, jinja2.escape(response.url), jinja2.escape(response.text)), response.status_code, []))
         mensch = Mensch(response.json()['id'])
         if not mensch.is_active:
             try:
@@ -393,7 +391,7 @@ def setup(index, app):
             return flask.redirect(flask.url_for('index'))
         response = flask_dance.contrib.twitch.twitch.get('users')
         if not response.ok:
-            return flask.make_response(('Twitch meldet Fehler {} auf {}: {}'.format(response.status_code, html.escape(response.url), html.escape(response.text)), response.status_code, []))
+            return flask.make_response(('Twitch meldet Fehler {} auf {}: {}'.format(response.status_code, jinja2.escape(response.url), jinja2.escape(response.text)), response.status_code, []))
         flask.g.user.twitch = response.json()['data'][0]
         flask.flash('Twitch-Konto erfolgreich verknüpft.')
         next_url = flask.session.get('next')
