@@ -17,7 +17,7 @@
     {% endif %}
     <p>Profil für Discord snowflake {{mensch.snowflake}}. (<a href="https://discord.com/users/{{mensch.snowflake}}/">Discord-Profil</a>)</p>
     {% if mensch.twitch is not none %}
-        <p>Twitch: <a href="https://twitch.tv/{{mensch.twitch['login']}}">{{mensch.twitch['login']}}{#TODO display name #}</a>{#TODO Option, die Twitch-Verknüpfung zu löschen #}</p>
+        <p>Twitch: <a href="https://twitch.tv/{{mensch.twitch['login']}}">{{mensch.twitch['display_name']}}</a>{#TODO Option, die Twitch-Verknüpfung zu löschen #}</p>
     {% elif g.user == mensch %}
         <p><a href="{{url_for('twitch.login')}}">Twitch-Konto verknüpfen</a> (dann schreibt Peter im <a href="https://discord.com/channels/355761290809180170/668518137334857728">#twitch</a>, wenn du streamst)</p>
     {% endif %}
