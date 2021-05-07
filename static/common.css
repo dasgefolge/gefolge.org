@@ -13,7 +13,10 @@ blockquote {
 }
 
 /* spoiler tags */
-.spoiler:not(:hover), .spoiler:not(:hover) *, .censor, .censor * {
+.spoiler:not(:hover),
+.spoiler:not(:hover) *,
+.censor,
+.censor * {
     background: #000;
     color: #000;
 }
