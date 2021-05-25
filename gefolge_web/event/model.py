@@ -1,6 +1,5 @@
 import datetime
 import itertools
-import pathlib
 import random
 
 import flask # PyPI: Flask

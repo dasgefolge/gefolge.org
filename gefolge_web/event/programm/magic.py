@@ -1,6 +1,7 @@
+import datetime
 import pathlib
 
-import flask # PyPI: Flask
+import pytz # PyPI: pytz
 import wtforms # PyPI: WTForms
 
 import lazyjson # https://github.com/fenhl/lazyjson
@@ -34,7 +35,7 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
             return False
 
     def assert_exists(self):
-        if self.event.event_id in config().get('skippedEvents', []):
+        if self.start is None or self.start >= pytz.utc.localize(datetime.datetime(2021, 1, 1)) or self.event.event_id in config().get('skippedEvents', []):
             raise ValueError('Es gibt auf {} (noch) keinen Custom Magic Draft.'.format(self.event))
 
     @property
