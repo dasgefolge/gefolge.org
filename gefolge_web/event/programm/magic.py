@@ -57,13 +57,18 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
     def description(self):
         set_code = self.card_set
         if set_code is None:
-            result = 'Wir [draften](https://mtg.gamepedia.com/Booster_draft) ein Custom Magic Set. Um zu bestimmen, welches, kannst du unten abstimmen.'
+            result = 'Wir [draften](https://mtg.fandom.com/wiki/Booster_Draft) ein Custom Magic Set. Um zu bestimmen, welches, kannst du unten abstimmen.'
         else:
-            set_info = gefolge_web.util.cached_json(lazyjson.File(LORE_SEEKER_REPO / 'data' / 'sets' / '{}.json'.format(set_code)))
+            set_info_path = LORE_SEEKER_REPO / 'data' / 'sets' / f'{set_code}.json'
+            if set_info_path.exists():
+                set_info = gefolge_web.util.cached_json(lazyjson.File(set_info_path))
+            else:
+                set_info = lazyjson.PythonFile({})
             set_config = config()['customSets'].get(set_code, {})
-            result = 'Wir [draften](https://mtg.gamepedia.com/Booster_draft) [*{}*](https://loreseeker.fenhl.net/set/{}), ein Custom Magic Set.'.format(set_info['name'], set_code.lower())
-            result += '\r\n\r\n*{}* {}'.format(set_info['name'], set_config.get('blurb', 'hat noch keine Beschreibung :('))
-        return result + '\r\n\r\nWir spielen mit [Proxies](https://mtg.gamepedia.com/Proxy), der Draft ist also kostenlos. Ihr müsst nichts mitbringen. Es gibt 8 Plätze. Es können gerne alle, die Interesse haben, Plätze reservieren, das ist *keine* verbindliche Anmeldung. Ich selbst spiele nur mit, wenn es ohne mich weniger als 8 Spieler wären. Falls wir am Ende weniger als 5 Menschen sind, spielen wir [Sealed](https://mtg.gamepedia.com/Sealed_deck) statt Draft.'
+            set_name = set_info.get('name', set_config.get('name', set_code))
+            result = 'Wir [draften](https://mtg.fandom.com/wiki/Booster_Draft) [*{}*](https://loreseeker.fenhl.net/set/{}), ein Custom Magic Set.'.format(set_name, set_code.lower())
+            result += '\r\n\r\n*{}* {}'.format(set_name, set_config.get('blurb', 'hat noch keine Beschreibung :('))
+        return result + '\r\n\r\nWir spielen mit [Proxies](https://mtg.fandom.com/wiki/Proxy_card), der Draft ist also kostenlos. Ihr müsst nichts mitbringen. Es gibt 8 Plätze. Es können gerne alle, die Interesse haben, Plätze reservieren, das ist *keine* verbindliche Anmeldung. Ich selbst spiele nur mit, wenn es ohne mich weniger als 8 Spieler wären. Falls wir am Ende weniger als 5 Menschen sind, spielen wir [Sealed](https://mtg.fandom.com/wiki/Sealed_Deck) statt Draft.'
 
     @description.setter
     def description(self, value):
@@ -128,8 +133,13 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
             return self.data['ibSubtitle'].value()
         set_code = self.card_set
         if set_code is not None:
-            set_info = gefolge_web.util.cached_json(lazyjson.File(LORE_SEEKER_REPO / 'data' / 'sets' / '{}.json'.format(set_code)))
-            return set_info['name'].value()
+            set_info_path = LORE_SEEKER_REPO / 'data' / 'sets' / f'{set_code}.json'
+            if set_info_path.exists():
+                set_info = gefolge_web.util.cached_json(lazyjson.File(set_info_path))
+            else:
+                set_info = lazyjson.PythonFile({})
+            set_config = config()['customSets'].get(set_code, {})
+            return set_info.get('name', set_config.get('name', set_code))
 
     @subtitle.setter
     def subtitle(self, value):

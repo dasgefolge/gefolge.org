@@ -328,7 +328,9 @@ class Event(metaclass=EventMeta):
             gefolge_web.event.programm.essen.Abendessen(self, date)
             for date in self.nights
         )), (
-            [] if self.event_id in gefolge_web.event.programm.magic.config().get('skippedEvents', []) else [gefolge_web.event.programm.magic.CustomMagicDraft(self)]
+            # Before Lore Seeker was discontinued, Custom Magic Drafts were a regular part of every event.
+            # Now the repo is no longer cloned on the server where gefolge.org runs, so showing them for future events would cause errors.
+            [] if self.start is None or self.start >= pytz.utc.localize(datetime.datetime(2021, 1, 1)) or self.event_id in gefolge_web.event.programm.magic.config().get('skippedEvents', []) else [gefolge_web.event.programm.magic.CustomMagicDraft(self)]
         ), (
             [] if werewolf_web is None or not werewolf_web.Setup(self).data_path.parent.exists() else [werewolf_web.RealtimeWerewolf(self)]
         )))
