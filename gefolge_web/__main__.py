@@ -2,6 +2,8 @@
 
 import sys
 
+from markdown import extensions
+
 sys.path.append('/opt/py')
 
 import os
@@ -65,7 +67,11 @@ with app.app_context():
     # set up Bootstrap
     flask_bootstrap.Bootstrap(app)
     # set up Markdown
-    md = flaskext.markdown.Markdown(app)
+    md = flaskext.markdown.Markdown(app, extensions=['toc'], extension_configs={
+        'toc': {
+            'marker': ''
+        }
+    })
     emoji_ext = pymdownx.emoji.EmojiExtension()
     emoji_ext.setConfig('emoji_generator', pymdownx.emoji.to_alt)
     emoji_ext.setConfig('emoji_index', pymdownx.emoji.twemoji)

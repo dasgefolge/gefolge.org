@@ -22,7 +22,7 @@
         {% endif %}
     </p>
     {% if (event.location is none or not event.location.is_online) and event.orga_unassigned | length > 0 %}
-        <p>Wir suchen noch Orga-Menschen für folgende Aufgaben: {{event.orga_unassigned | natjoin}}</p>
+        <p>Wir suchen noch Orga-Menschen für folgende Aufgaben: {{event.orga_unassigned | natjoin}}. Wenn du etwas davon übernehmen möchtest, melde dich bitte bei {{g.admin}}. <a href="/wiki/sil-faq#orga">Weitere Infos</a></p>
     {% endif %}
     <p>
         {% if event.location is not none and event.location.is_online %}
