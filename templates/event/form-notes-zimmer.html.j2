@@ -1,5 +1,5 @@
 Zimmer
-{{event.rooms | selectattr('reserved') | natjoin}}
+{{event.rooms | selectattr('reserved') | map(attribute='description') | natjoin}}
 {% if event.rooms | selectattr('reserved') | length == 1 %}
     ist
 {% else %}
