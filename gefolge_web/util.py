@@ -207,7 +207,7 @@ class Transaction:
             except ImportError:
                 return jinja2.Markup('<i>Werwölfe</i>-Karte gesponsert: {}'.format(jinja2.escape(self.json_data['role'])))
             else:
-                return jinja2.Markup('<a href="{}"><i>Werwölfe</i>-Karte</a> gesponsert: <span style="color: {};">{}</span>'.format(flask.url_for('werewolf_cards'), werewolf_web.FACTION_COLORS.get(self.json_data['faction'], 'black'), jinja2.escape(self.json_data['role'])))
+                return jinja2.Markup('<a href="{}"><i>Werwölfe</i>-Karte</a> gesponsert: <span style="color: {};">{}</span>'.format(flask.url_for('werewolf_cards'), werewolf_web.FACTION_COLORS.get(self.json_data['faction'], 'inherit'), jinja2.escape(self.json_data['role'])))
         elif self.json_data['type'] == 'transfer':
             import gefolge_web.login
 
