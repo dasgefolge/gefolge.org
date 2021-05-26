@@ -31,7 +31,7 @@
     </ul>
     {% if g.user.is_admin or g.user == mensch %}
         <h1>Guthaben</h1>
-        <p>Mit diesem Guthaben kannst du dich z.B. für <a href="{{url_for('events_index')}}">events</a> anmelden.</p>
+        <p>Mit diesem Guthaben kannst du dich z.B. für <a href="{{url_for('events_index')}}">events</a> anmelden oder <a href="{{url_for('werewolf_cards')}}">Werwölfe-Karten sponsern</a>.</p>
         <p>
             Aktuelles Guthaben: {{mensch.balance}}.
             {% if mensch.balance.value > 0 %}
