@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css" />
 {% endblock %}
 
-{% block body_attribs %}{% if g.user.enable_dejavu %}class="dejavu"{% endif %}{% endblock body_attribs %}
+{% block body_attribs %}{% if g.user.enable_dejavu %} class="dejavu"{% endif %}{% endblock body_attribs %}
 
 {% block content %}
     <div class="container-fluid" {% block container_attrs %}{% endblock %}>
