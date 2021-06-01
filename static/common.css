@@ -11,6 +11,10 @@ body {
     color: #2a6496;
 }
 
+h1 .btn {
+    vertical-align: top;
+}
+
 /* blockquotes with regular-sized text */
 blockquote {
     font-size: 14px;
