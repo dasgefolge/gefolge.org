@@ -12,7 +12,6 @@
     <link rel="icon" type="image/png" href="{{url_for('.static', filename='favicon-256.png')}}" sizes="256x256" />
     {{ super() }}
     {{ pagedown.include_pagedown() }}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css" />
 {% endblock %}
 
 {% block title %}{{g.view_node}} — Das Gefolge{% endblock %}
@@ -22,6 +21,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.1.7/css/fork-awesome.min.css" integrity="sha256-gsmEoJAws/Kd3CjuOQzLie5Q3yshhvmo7YNtBG7aaEY=" crossorigin="anonymous" />
     <link rel="stylesheet" href="{{url_for('.static', filename='common.css')}}" />
     <link rel="stylesheet" href="{{url_for('.static', filename='dark.css')}}" />
+    <link rel="stylesheet" href="{{url_for('.static', filename='dejavu-sans.css')}}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css" />
 {% endblock %}
 
 {% block content %}
