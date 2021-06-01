@@ -139,6 +139,10 @@ class Mensch(flask_login.UserMixin, metaclass=MenschMeta):
         return '{:04}'.format(self.profile_data['discriminator'])
 
     @property
+    def enable_dejavu(self):
+        return self.userdata.get('enableDejavu', True)
+
+    @property
     def event_timezone_override(self):
         return self.userdata.get('eventTimezoneOverride', True)
 
@@ -248,6 +252,10 @@ class AnonymousUser(flask_login.AnonymousUserMixin):
         return 'anonymous'
 
     @property
+    def enable_dejavu(self):
+        return True
+
+    @property
     def event_timezone_override(self):
         return True
 
@@ -269,7 +277,8 @@ def ProfileForm(mensch):
         nickname_notice = gefolge_web.forms.FormText('Dieser Name wird u.A. im Gefolge-Discord, auf dieser website und auf events verwendet. Du kannst ihn auch im Gefolge-Discord über das Servermenü ändern. Wenn du das Feld leer lässt, wird dein Discord username verwendet.')
         timezone = gefolge_web.forms.TimezoneField(featured=['Europe/Berlin', 'Etc/UTC'], default=mensch.timezone)
         timezone_notice = gefolge_web.forms.FormText('„Automatisch“ heißt, dass deine aktuelle Systemzeit verwendet wird, um deine Zeitzone zu erraten. Das kann fehlerhaft sein, wenn es mehrere verschiedene Zeitzonen gibt, die aktuell zu deiner Systemzeit passen aber verschiedene Regeln zur Sommerzeit haben. Wenn du JavaScript deaktivierst, werden alle Uhrzeiten in ihrer ursprünglichen Zeitzone angezeigt und unterpunktet. Du kannst immer mit dem Mauszeiger auf eine Uhrzeit zeigen, um ihre Zeitzone zu sehen.')
-        event_timezone_override = wtforms.BooleanField(jinja2.Markup('Auf Eventseiten immer die vor Ort gültige Zeitzone verwenden'), default=mensch.event_timezone_override)
+        event_timezone_override = wtforms.BooleanField('Auf Eventseiten immer die vor Ort gültige Zeitzone verwenden', default=mensch.event_timezone_override)
+        enable_dejavu = wtforms.BooleanField('DejaVu-Schriftart verwenden (wenn Text vertikal unregelmäßig aussieht, deaktivieren)', default=mensch.enable_dejavu)
         submit_profile_form = wtforms.SubmitField('Speichern')
 
     return Form()
@@ -466,6 +475,7 @@ def setup(index, app):
                 'mensch': mensch.snowflake,
                 'nickname': profile_form.nickname.data,
                 'timezone': None if profile_form.timezone.data is None else str(profile_form.timezone.data),
+                'enableDejavu': profile_form.enable_dejavu.data,
                 'eventTimezoneOverride': profile_form.event_timezone_override.data
             })
             mensch.nickname = profile_form.nickname.data
@@ -474,6 +484,7 @@ def setup(index, app):
                     del mensch.userdata['timezone']
             else:
                 mensch.userdata['timezone'] = str(profile_form.timezone.data)
+            mensch.userdata['enableDejavu'] = profile_form.enable_dejavu.data
             mensch.userdata['eventTimezoneOverride'] = profile_form.event_timezone_override.data
             return flask.redirect(flask.g.view_node.parent.url)
         else:
