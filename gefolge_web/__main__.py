@@ -15,7 +15,7 @@ import flask_bootstrap # PyPI: Flask-Bootstrap
 import flask_pagedown # PyPI: Flask-PageDown
 import flask_sqlalchemy # PyPI: Flask-SQLAlchemy
 import flaskext.markdown # PyPI: Flask-Markdown
-import jinja2 # PyPI: jinja2
+import jinja2 # PyPI: Jinja2
 import pymdownx.emoji # PyPI: pymdown-extensions
 import pymdownx.extra # PyPI: pymdown-extensions
 import pymdownx.tilde # PyPI: pymdown-extensions

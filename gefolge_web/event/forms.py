@@ -4,7 +4,7 @@ import re
 
 import flask # PyPI: Flask
 import flask_wtf # PyPI: Flask-WTF
-import jinja2 # PyPI: jinja2
+import jinja2 # PyPI: Jinja2
 import wtforms # PyPI: WTForms
 import wtforms.validators # PyPI: WTForms
 

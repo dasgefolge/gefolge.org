@@ -279,9 +279,12 @@ class Programmpunkt:
     @property
     def details(self):
         if 'challonge' in self.data:
-            return jinja2.Markup('<p><a href="https://challonge.com/{}">Bracket und Ergebnisse</a></p>'.format(
-                challonge.tournaments.show(self.data['challonge'].value())['url']
-            ))
+            try:
+                return jinja2.Markup('<p><a href="https://challonge.com/{}">Bracket und Ergebnisse</a></p>'.format(
+                    challonge.tournaments.show(self.data['challonge'].value())['url']
+                ))
+            except Exception:
+                return jinja2.Markup('<p>(Fehler: Bracket konnte nicht geladen werden)</p>')
 
     @property
     def end(self):
