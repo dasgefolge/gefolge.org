@@ -218,6 +218,10 @@ class Event(metaclass=EventMeta):
         )
 
     @property
+    def guest_signup_block_reason(self):
+        return self.data.get('guestSignupBlockReason', self.data.get('signupBlockReason'))
+
+    @property
     def guests(self):
         return [
             Guest(self, person['id'])

@@ -100,11 +100,15 @@
                     {% endif %}
                 {% endfor %}
             </ul>
-            {% if g.user.is_admin or (event.end is not none and event.end > g.now) %}
-                <p><a href="{{url_for('event_guest_form', event=event.event_id)}}">Weiteren Gast anmelden</a></p>
+            {% if event.guest_signup_block_reason is not none %}
+                {{event.guest_signup_block_reason | markdown}}
+            {% elif g.user.is_admin or (event.end is not none and event.end > g.now) %}
+                <p><a href="{{(g.view_node / 'guest').url}}">Weiteren Gast anmelden</a></p>
             {% endif %}
+        {% elif event.guest_signup_block_reason is not none %}
+            {{event.guest_signup_block_reason | markdown}}
         {% elif g.user.is_admin or (event.end is not none and event.end > g.now) %}
-            <p><a href="{{url_for('event_guest_form', event=event.event_id)}}">Gast anmelden</a></p>
+            <p><a href="{{(g.view_node / 'guest').url}}">Gast anmelden</a></p>
         {% endif %}
     {% else %}
         {% if 'capacity' in event.location.data and event.free() <= 0 %}
@@ -116,7 +120,7 @@
             </div>
         {% endif %}
         {% if event.signup_block_reason is not none %}
-            <p>{{event.signup_block_reason | markdown}}</p>
+            {{event.signup_block_reason | markdown}}
         {% elif event.end is none %}
             <p>Der Termin für dieses event steht noch nicht fest.</p>
         {% elif event.end < g.now %}

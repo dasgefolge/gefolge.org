@@ -5,7 +5,6 @@ import re
 import urllib.parse
 
 import flask # PyPI: Flask
-import icalendar # PyPI: icalendar
 import jinja2 # PyPI: Jinja2
 import more_itertools # PyPI: more-itertools
 import pytz # PyPI: pytz
@@ -123,6 +122,7 @@ def setup(index, app):
                 return flask.redirect(flask.g.view_node.url)
             if event.signup_block_reason is not None:
                 flask.flash(event.signup_block_reason, 'error')
+                return flask.redirect(flask.g.view_node.url)
             if event.anzahlung is not None and event.anzahlung > gefolge_web.util.Euro():
                 if hasattr(profile_form, 'anzahlung'):
                     anzahlung = profile_form.anzahlung.data
@@ -197,6 +197,9 @@ def setup(index, app):
     def event_guest_form(event):
         signup_guest_form = gefolge_web.event.forms.SignupGuestForm(event)
         if signup_guest_form.submit_signup_guest_form.data and signup_guest_form.validate():
+            if event.guest_signup_block_reason is not None:
+                flask.flash(event.guest_signup_block_reason, 'error')
+                return flask.redirect(flask.g.view_node.url)
             guest_name = signup_guest_form.name.data.strip()
             guest = event.signup_guest(flask.g.user, guest_name)
             if event.anzahlung == gefolge_web.util.Euro() or event.orga('Abrechnung') == gefolge_web.login.Mensch.admin():

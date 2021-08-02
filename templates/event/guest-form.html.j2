@@ -15,7 +15,9 @@
                 {% endif %}
             </div>
         {% endif %}
-        {% if event.orga('Abrechnung') is none %}
+        {% if event.guest_signup_block_reason is not none %}
+            {{event.guest_signup_block_reason | markdown}}
+        {% elif event.orga('Abrechnung') is none %}
             <p>Das Orga-Team ist noch nicht vollständig, wir suchen noch jemanden für die Abrechnung. Wenn du das übernehmen möchtest, melde dich bitte bei {{g.admin}}.</p>
         {% elif event.anzahlung is none %}
             <p>{{event.orga('Abrechnung')}} hat die Höhe der Anzahlung noch nicht eingetragen.</p>
