@@ -60,7 +60,7 @@ class Wichteln(gefolge_web.event.programm.Programmpunkt):
         participants = [
             person
             for person in self.signups
-            if str(person.snowflake) in self.data.get('targets', {}) and (person == user or (person.is_guest and person.via == user))
+            if str(person.snowflake) in self.data.get('targets', {}) and (person == user or self.event.proxy(person) == user)
         ]
         if len(participants) > 0:
             participant_notes = []

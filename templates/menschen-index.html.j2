@@ -11,7 +11,7 @@
                 <th>Discord username</th>
                 <th>Auf Discord seit</th>
                 <th>Im Gefolge Discord server seit</th>
-                {% if g.user.is_admin %}
+                {% if g.user is admin or g.user is treasurer %}
                     <th style="text-align: right;">Guthaben</th>
                 {% endif %}
             </tr>
@@ -30,7 +30,7 @@
                     {% else %}
                         <td>{{mensch.profile_data['joined'] | dmy_hms}}</td>
                     {% endif %}
-                    {% if g.user.is_admin %}
+                    {% if g.user is admin or g.user is treasurer %}
                         <td style="text-align: right;" {% if mensch.balance.value < 0 %}class="danger"{% endif %}>
                             {% if mensch.balance.value != 0 %}
                                 {{mensch.balance}}

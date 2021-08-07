@@ -235,7 +235,7 @@ class Programmpunkt:
         if self.event.end < gefolge_web.util.now(self.event.timezone):
             return False # event frozen
         return (
-            (editor == person or (person.is_guest and person.via == editor) or editor == self.event.orga('Programm'))
+            (editor == person or editor == self.event.proxy(person) or editor == self.event.orga('Programm'))
             and ((self.event.location is not None and self.event.location.is_online) or person in self.event.signups)
             and person not in self.signups
             and len(self.signups) < self.signup_limit
@@ -335,10 +335,7 @@ class Programmpunkt:
                 submit_text = self.strings.signup_other_button.format(more_itertools.one(people_allowed_to_sign_up))
             Form.submit_programmpunkt_form = wtforms.SubmitField(submit_text)
         else:
-            if self.event.location.is_online:
-                Form.person_to_signup = gefolge_web.forms.MenschField('Mensch', person_filter=lambda person: person in people_allowed_to_sign_up, default=editor if editor in people_allowed_to_sign_up else people_allowed_to_sign_up[0])
-            else:
-                Form.person_to_signup = gefolge_web.event.forms.PersonField(self.event, 'Mensch', person_filter=lambda person: person in people_allowed_to_sign_up, default=editor if editor in people_allowed_to_sign_up else people_allowed_to_sign_up[0])
+            Form.person_to_signup = gefolge_web.forms.PersonField('Person', people_allowed_to_sign_up, default=editor if editor in people_allowed_to_sign_up else people_allowed_to_sign_up[0])
             submit_text = self.strings.signup_other_button.format('Gewählte Person' if self.strings.signup_other_button.startswith('{') else 'gewählte Person')
 
         if 'challonge' in self.data:

@@ -94,13 +94,7 @@ def handle_programm_edit(programmpunkt, programm_form, is_new):
         programmpunkt.css_class = programm_form.css_class.data
 
 def setup(index, app):
-    @app.template_test('guest')
-    def is_guest(value):
-        if hasattr(value, 'snowflake'):
-            value = value.snowflake
-        return int(value) < 100
-
-    @index.child('event', 'events', decorators=[gefolge_web.login.member_required])
+    @index.child('event', 'events', decorators=[gefolge_web.login.mensch_required])
     @gefolge_web.util.template('event.index')
     def events_index():
         now = gefolge_web.util.now()
@@ -131,7 +125,7 @@ def setup(index, app):
                     anzahlung = profile_form.anzahlung.data
                 else:
                     anzahlung = event.anzahlung
-                if flask.g.user.balance < anzahlung and not flask.g.user.is_admin:
+                if flask.g.user.balance < anzahlung and not (flask.g.user.is_admin or flask.g.user.is_treasurer):
                     flask.flash('Dein Guthaben reicht nicht aus, um die Anzahlung zu bezahlen.', 'error')
                     return flask.redirect(flask.g.view_node.url)
                 flask.g.user.add_transaction(gefolge_web.util.Transaction.anzahlung(event, -anzahlung))
@@ -159,11 +153,13 @@ def setup(index, app):
         if confirm_signup_form.submit_confirm_signup_form.data and confirm_signup_form.validate():
             snowflake = int(re.fullmatch('anzahlung {} ([0-9]+)'.format(event.event_id), confirm_signup_form.verwendungszweck.data.lower()).group(1))
             if snowflake < 100:
-                guest = gefolge_web.event.model.Guest(event, snowflake)
-                event.confirm_guest_signup(guest, message=True)
+                person = gefolge_web.event.model.EventGuest(event, snowflake)
             else:
-                mensch = gefolge_web.login.Mensch(snowflake)
-                event.signup(mensch)
+                person = gefolge_web.login.DiscordPerson(snowflake)
+            if person.is_guest:
+                event.confirm_guest_signup(person, message=True)
+            else:
+                event.signup(person)
             return flask.redirect(flask.g.view_node.url)
         programm_form = gefolge_web.event.forms.ProgrammForm(event, None)
         if programm_form.submit_programm_form.data and programm_form.validate():
@@ -205,9 +201,9 @@ def setup(index, app):
                 return flask.redirect(flask.g.view_node.url)
             guest_name = signup_guest_form.name.data.strip()
             guest = event.signup_guest(flask.g.user, guest_name)
-            if event.anzahlung == gefolge_web.util.Euro() or event.orga('Abrechnung') == gefolge_web.login.Mensch.admin():
+            if event.anzahlung == gefolge_web.util.Euro() or event.orga('Abrechnung').is_treasurer:
                 if event.anzahlung > gefolge_web.util.Euro():
-                    if flask.g.user.balance < event.anzahlung and not flask.g.user.is_admin:
+                    if flask.g.user.balance < event.anzahlung and not (flask.g.user.is_admin or flask.g.user.is_treasurer):
                         flask.flash('Dein Guthaben reicht nicht aus, um die Anzahlung zu bezahlen.', 'error')
                         return flask.redirect(flask.g.view_node.url)
                     flask.g.user.add_transaction(gefolge_web.util.Transaction.anzahlung(event, guest=guest))

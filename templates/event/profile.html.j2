@@ -9,7 +9,7 @@
     </h1>
     {% if person in event.signups %}
         {% if person is guest %}
-            <p>{{person}} ist Gast und wurde von {{person.via}} angemeldet.</p>
+            <p>{{person}} ist Gast und wurde von {{event.proxy(person)}} angemeldet.</p>
         {% endif %}
         {% if event.attendee_data(person).get('orga', []) | length > 0 %}
             <p>{{person}} ist im Orga-Team und organisiert {{event.attendee_data(person)['orga'] | natjoin}}.</p>
@@ -131,7 +131,7 @@
                 <div class="alert alert-danger">Unbekannte {{travel}}art: {{travel_data['type']}}</div>
             {% endif %}
         {% endfor %}
-        {% if person == g.user or (person.is_guest and person.via == g.user) or event.can_edit(g.user, person) %}
+        {% if person == g.user or event.proxy(person) == g.user or event.can_edit(g.user, person) %}
             <h2>Essen</h2>
             {% if event.attendee_data(person).get('selbstversorger', False) %}
                 <p>Selbstversorger</p>
@@ -181,7 +181,7 @@
             <h2>Abrechnung</h2>
             {#
             {% if person.is_guest %}
-                <p>Siehe <a href="{{url_for('event_profile', event=event.event_id, person=person.via.snowflake)}}">Eventprofil</a> für {{person.via}}.</p>
+                <p>Siehe <a href="{{url_for('event_profile', event=event.event_id, person=event.proxy(person).snowflake)}}">Eventprofil</a> für {{event.proxy(person)}}.</p>
             {% else %}
                 <p>Die folgenden Angaben sind vorläufig und können sich noch ändern.</p>
                 {% set transaction = event.transaction(person) %}

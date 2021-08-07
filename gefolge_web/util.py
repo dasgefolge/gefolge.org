@@ -229,12 +229,14 @@ class Transaction:
 
     @property
     def details(self):
+        import gefolge_web.event.model
         import gefolge_web.login
 
         if self.json_data['type'] == 'eventAbrechnung':
             if 'details' in self.json_data:
+                event = gefolge_web.event.model.Event(self.json_data['event'])
                 return jinja2.Markup(', Details:<br /><ul>\n{}\n</ul>'.format('\n'.join(
-                    '<li>{}{}: {}</li>'.format(detail['label'], ' {}'.format(gefolge_web.login.Mensch(detail['snowflake']).__html__()) if 'snowflake' in detail else '', {
+                    '<li>{}{}: {}</li>'.format(detail['label'], ' {}'.format(event.person(detail['snowflake']).__html__()) if 'snowflake' in detail else '', {
                         'flat': lambda detail: ('{} ({})'.format(Euro(detail['amount']), jinja2.escape(detail['note'])) if 'note' in detail else '{}'.format(Euro(detail['amount']))),
                         'even': lambda detail: '{} ({} / {} Menschen)'.format(Euro(detail['amount']), Euro(detail['total']), detail['people']),
                         'weighted': lambda detail: '{} ({} * {} / {} Übernachtungen)'.format(Euro(detail['amount']), Euro(detail['total']), detail['nightsAttended'], detail['nightsTotal'])
@@ -407,6 +409,18 @@ def setup(app):
             '<p>{}</p>'.format(p.replace('\n', '<br />\n'))
             for p in PARAGRAPH_RE.split(jinja2.escape(value))
         ))
+
+    @app.template_test()
+    def admin(person):
+        return person.is_admin
+
+    @app.template_test()
+    def guest(person):
+        return person.is_guest
+
+    @app.template_test()
+    def treasurer(person):
+        return person.is_treasurer
 
     @app.before_request
     def current_time():

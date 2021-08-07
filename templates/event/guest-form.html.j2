@@ -5,13 +5,13 @@
 {% block page_content %}
     {% if event.location is not none and event.location.is_online %}
         <p>Für online events können keine Gäste angemeldet werden.</p>
-    {% elif event.end > g.now or g.user.is_admin %}
+    {% elif event.end > g.now or g.user is admin %}
         <p>Hier kannst du Gäste für {{event}} anmelden.</p>
         {% if 'capacity' in event.location.data and event.free() <= 0 %}
             <div class="alert alert-warning">
                 <strong>Achtung:</strong> Das Haus ist zumindest zeitweise schon voll. Du kannst den Gast trotzdem anmelden. Er kommt dann auf die Warteliste. Wenn jemand absagt, rückt der erste Mensch auf der Warteliste nach. {#TODO check for free nights, adjust message accordingly #}
                 {% if event.anzahlung is none or event.anzahlung.value > 0 %}
-                    Falls kein Platz frei wird, {% if event.orga('Abrechnung') == g.admin %}bekommst du{% else %}bekommt der Gast{% endif %} die Anzahlung natürlich zurück.
+                    Falls kein Platz frei wird, {% if event.orga('Abrechnung') is treasurer %}bekommst du{% else %}bekommt der Gast{% endif %} die Anzahlung natürlich zurück.
                 {% endif %}
             </div>
         {% endif %}
@@ -25,7 +25,7 @@
             <p>Beachte vorher bitte Folgendes:</p>
             <ul>
                 {% if event.anzahlung.value > 0 %}
-                    {% if event.orga('Abrechnung') == g.admin %}
+                    {% if event.orga('Abrechnung') is treasurer %}
                         <li>Die Anmeldung ist mit einer Anzahlung von {{event.anzahlung}} verbunden, die von deinem Guthaben abgezogen wird.</li>
                     {% else %}
                         <li>Die Anmeldung gilt erst mit Überweisung der Anzahlung, die auf der nächsten Seite angezeigt wird.</li>
@@ -43,7 +43,7 @@
                     <li>Du bist dafür verantwortlich, dass der Gast die <a href="{{event.location.hausordnung}}">Hausordnung</a> einhält.</li>
                 {% endif %}
             </ul>
-            {% if event.anzahlung.value > 0 and event.orga('Abrechnung') == g.admin and not g.user.is_admin and g.user.balance < event.anzahlung %}
+            {% if event.anzahlung.value > 0 and event.orga('Abrechnung') is treasurer and g.user is not admin and g.user is not treasurer and g.user.balance < event.anzahlung %}
                 <p>Dein aktuelles Guthaben ist {{g.user.balance}}, es fehlen also noch {{event.anzahlung - g.user.balance}} für die Anzahlung. Auf <a href="{{g.user.profile_url}}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.</p>
             {% else %}
                 {{gen_form(signup_guest_form, url_for('event_guest_form', event=event.event_id))}}

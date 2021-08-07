@@ -7,31 +7,23 @@ import icalendar # PyPI: icalendar
 import gefolge_web.event.model
 import gefolge_web.event.programm
 import gefolge_web.login
+import gefolge_web.person
 import gefolge_web.util
 
 DISCORD_VOICE_STATE_PATH = gefolge_web.util.BASE_PATH / 'discord' / 'voice-state.json'
 
-def key_or_member_required(f):
+def mensch_required(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
-        if flask_login.current_user.is_active:
-            flask.g.user = flask_login.current_user
-        elif gefolge_web.login.Mensch.by_api_key() is not None:
-            flask.g.user = gefolge_web.login.Mensch.by_api_key()
-        else:
-            flask.g.user = gefolge_web.login.AnonymousUser()
-        if flask.g.user is not None and flask.g.user.is_active:
+        flask.g.user = gefolge_web.person.Person.by_api_key() or flask_login.current_user or gefolge_web.login.AnonymousUser()
+        if flask.g.user.is_mensch:
             return f(*args, **kwargs)
-        return flask.Response(
-            'Sie haben keinen Zugriff auf diesen Inhalt, weil Sie nicht im Gefolge Discord server sind oder den API key noch nicht eingegeben haben.',
-            401,
-            {'WWW-Authenticate': 'Basic realm="gefolge.org API key required"'}
-        ) #TODO template
+        return gefolge_web.util.render_template('api-401'), 401, {'WWW-Authenticate': 'Basic realm="gefolge.org API key required"'}
 
     return wrapper
 
 def setup(index):
-    @index.child('api', 'API', decorators=[key_or_member_required])
+    @index.child('api', 'API', decorators=[mensch_required]) #TODO review endpoints that should be available to guests
     @gefolge_web.util.template('api-docs')
     def api_index():
         return {}
@@ -126,7 +118,7 @@ def setup(index):
                 },
                 'orga': attendee_data.get('orga', [])
             }
-            if person == flask.g.user or (person.is_guest and person.via == flask.g.user) or event.can_edit(flask.g.user, person):
+            if person == flask.g.user or event.proxy(person) == flask.g.user or event.can_edit(flask.g.user, person):
                 result['alkohol'] = attendee_data.get('alkohol', True)
                 result['selbstversorger'] = attendee_data.get('selbstversorger', False)
             if (person == flask.g.user or person == event.orga('Abrechnung')):
@@ -136,7 +128,7 @@ def setup(index):
                     result['konto'] = person.userdata['konto'].value()
             if person.is_guest:
                 result['name'] = str(person)
-                result['via'] = person.via.snowflake
+                result['via'] = event.proxy(person).snowflake
             if flask.g.user == person or flask.g.user == event.orga('Abrechnung'):
                 for night in event.nights:
                     result['nights'][f'{night:%Y-%m-%d}']['log'] = event.night_log(person, night)

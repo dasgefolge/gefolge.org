@@ -1,0 +1,12 @@
+<div class="col-12 col-md-3" style="text-align: right;">
+    {% if g.user.is_authenticated %}
+        Angemeldet als {{g.user}}
+        <br />
+        {% if g.user.is_active %}
+            <a href="{{url_for('profile_edit', mensch=g.user.snowflake)}}">Einstellungen</a> •
+        {% endif %}
+        <a href="{{url_for('logout')}}">Abmelden</a>
+    {% else %}
+        <a href="{{url_for('discord.login')}}">Anmelden</a>
+    {% endif %}
+</div>

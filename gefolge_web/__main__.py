@@ -104,7 +104,7 @@ with app.app_context():
     flask_wiki.child(
         index,
         db=db,
-        decorators=[gefolge_web.login.member_required],
+        decorators=[gefolge_web.login.mensch_required],
         md=md,
         save_hook=wiki_save_hook,
         user_class=gefolge_web.login.Mensch,

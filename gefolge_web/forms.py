@@ -1,6 +1,7 @@
 import datetime
 import decimal
 
+import more_itertools # PyPI: more-itertools
 import pytz # PyPI: pytz
 import wtforms # PyPI: WTForms
 import wtforms.ext.dateutil.fields # PyPI: WTForms
@@ -82,21 +83,35 @@ class HorizontalButtonGroupField(wtforms.RadioField):
         super().__init__(label, validators, choices=super_choices, **kwargs)
         self.type = 'HorizontalButtonGroupField'
 
-class MenschField(wtforms.SelectField):
-    """A form field that validates to a Mensch. Displayed as a combobox."""
+class OtherInputRequired: # validator
+    def __init__(self, fieldname, message=None):
+        self.fieldname = fieldname
+        self.message = message
+
+    def __call__(self, form, field):
+        try:
+            other = form[self.fieldname]
+        except KeyError:
+            raise wtforms.validators.ValidationError(
+                field.gettext(f"Invalid field name '{self.fieldname}'.")
+            )
+        if not other.raw_data or not other.raw_data[0]:
+            if self.message is None:
+                message = field.gettext(f'Another field {self.fieldname} is required.')
+            else:
+                message = self.message
+
+            raise wtforms.validators.ValidationError(message)
+
+class PersonField(wtforms.SelectField):
+    """A form field that validates to a gefolge_web.person.Person. Displayed as a combobox."""
 
     #TODO actually display as a combobox (text field with dropdown menu)
 
-    def __init__(self, label, validators=[], *, optional_label=None, person_filter=lambda person: True, **kwargs):
+    def __init__(self, label, choices, validators=[], *, optional_label=None, **kwargs):
         self.optional_label = optional_label
-        self.person_filter = person_filter
+        self.people = list(choices)
         super().__init__(label, validators, choices=([] if self.optional_label is None else [(0, optional_label)]) + [(person.snowflake, person.long_name) for person in self.people], **kwargs)
-
-    @property
-    def people(self):
-        import gefolge_web.login
-
-        return list(filter(self.person_filter, gefolge_web.login.Mensch))
 
     def iter_choices(self):
         if self.optional_label is not None:
@@ -131,29 +146,7 @@ class MenschField(wtforms.SelectField):
             raise ValueError('Not a valid choice')
 
     def value_constructor(self, snowflake):
-        import gefolge_web.login
-
-        return gefolge_web.login.Mensch(snowflake)
-
-class OtherInputRequired: # validator
-    def __init__(self, fieldname, message=None):
-        self.fieldname = fieldname
-        self.message = message
-
-    def __call__(self, form, field):
-        try:
-            other = form[self.fieldname]
-        except KeyError:
-            raise wtforms.validators.ValidationError(
-                field.gettext(f"Invalid field name '{self.fieldname}'.")
-            )
-        if not other.raw_data or not other.raw_data[0]:
-            if self.message is None:
-                message = field.gettext(f'Another field {self.fieldname} is required.')
-            else:
-                message = self.message
-
-            raise wtforms.validators.ValidationError(message)
+        return more_itertools.one(person for person in self.people if person.snowflake == snowflake)
 
 class RadioFieldWithSubfields(wtforms.RadioField): # subfield in the sense that there can be additional fields grouped with each option, not in the sense used by WTForms
     def __init__(self, label, validators=None, choices=None, *, _form=None, **kwargs):

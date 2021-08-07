@@ -4,7 +4,7 @@
 
 {% block page_content %}
     <h1>Möchtest du den Programmpunkt „{{programmpunkt}}“ auf {{event}} wirklich löschen?</h1>
-    {% if g.user.is_admin or g.user == event.orga('Programm') %}
+    {% if g.user is admin or g.user == event.orga('Programm') %}
         <p>
             <form class="form-horizontal pull-right" method="POST" role="form" action="{{g.view_node.url}}">
                 {{programm_delete_form.hidden_tag()}}

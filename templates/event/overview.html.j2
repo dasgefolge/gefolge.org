@@ -102,12 +102,12 @@
             </ul>
             {% if event.guest_signup_block_reason is not none %}
                 {{event.guest_signup_block_reason | markdown}}
-            {% elif g.user.is_admin or (event.end is not none and event.end > g.now) %}
+            {% elif g.user is admin or (event.end is not none and event.end > g.now) %}
                 <p><a href="{{(g.view_node / 'guest').url}}">Weiteren Gast anmelden</a></p>
             {% endif %}
         {% elif event.guest_signup_block_reason is not none %}
             {{event.guest_signup_block_reason | markdown}}
-        {% elif g.user.is_admin or (event.end is not none and event.end > g.now) %}
+        {% elif g.user is admin or (event.end is not none and event.end > g.now) %}
             <p><a href="{{(g.view_node / 'guest').url}}">Gast anmelden</a></p>
         {% endif %}
     {% else %}
@@ -131,9 +131,9 @@
             <p>{{event.orga('Abrechnung')}} hat die Höhe der Anzahlung noch nicht eingetragen.</p>
         {% elif event.anzahlung.value == 0 %}
             {{gen_form(profile_form, g.view_node.url)}}
-        {% elif event.orga('Abrechnung') == g.admin %}
+        {% elif event.orga('Abrechnung') is treasurer %}
             <p>Die Anmeldung ist mit einer Anzahlung von {{event.anzahlung}} verbunden, die von deinem Guthaben abgezogen wird.</p>
-            {% if g.user.is_admin or g.user.balance >= event.anzahlung %}
+            {% if g.user is admin or g.user is treasurer or g.user.balance >= event.anzahlung %}
                 {{gen_form(profile_form, g.view_node.url)}}
             {% else %}
                 <p>Dein aktuelles Guthaben ist {{g.user.balance}}, es fehlen also noch {{event.anzahlung - g.user.balance}} für die Anzahlung. Auf <a href="{{g.user.profile_url}}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.</p>
@@ -153,13 +153,13 @@
             <p>Details zu deiner Anmeldung kannst du eintragen, wenn die Anzahlung angekommen ist. Du wirst dazu auf Discord angepingt.</p> {#TODO reverse signup flow #}
         {% endif %}
     {% endif %}
-    {% if g.user.is_admin or (g.user in event.menschen and event.attendee_data(g.user).get('orga', []) | length > 0) %}
+    {% if g.user is admin or (g.user in event.menschen and event.attendee_data(g.user).get('orga', []) | length > 0) %}
         <h1 id="orga">Orga</h1>
-        {% if g.user.is_admin or event.orga('Abrechnung') == g.user %}
+        {% if g.user is admin or event.orga('Abrechnung') == g.user %}
             <h2>Abrechnung</h2>
             {% if event.orga('Abrechnung') is none %}
                 <p>Dieses Event hat noch keine Abrechnungsorga.</p>
-            {% elif event.orga('Abrechnung').is_admin %}
+            {% elif event.orga('Abrechnung') is treasurer %}
                 <p>Dieses Event läuft über das Guthabensystem.</p>
             {% elif 'konto' in event.attendee_data(event.orga('Abrechnung')) %}
                 <p>Bitte überprüfe regelmäßig dein Konto {{event.attendee_data(g.user)['konto']['iban']}} auf Anzahlungen.</p>
@@ -171,7 +171,7 @@
                 <p>Abrechnungsübersicht coming soon™</p> {#TODO#}
             {% endif %}
         {% endif %}
-        {% if g.user.is_admin or event.orga('Buchung') == g.user %}
+        {% if g.user is admin or event.orga('Buchung') == g.user %}
             <h2>Buchung</h2>
             {% if event.ausfall > event.anzahlung_total %}
                 {% if event.ausfall_date is none %}
@@ -183,7 +183,7 @@
                 <p>Die Ausfallgebühr von {{event.ausfall}} ist jetzt durch die Anzahlungen abgedeckt. Das Haus kann also gebucht werden.</p>
             {% endif %}
         {% endif %}
-        {% if g.user.is_admin or event.orga('Essen') == g.user %}
+        {% if g.user is admin or event.orga('Essen') == g.user %}
             <h2>Essen</h2>
             <p>Trage bitte jeweils als Programmpunktbeschreibung ein, was es an dem Abend gibt.</p>
             <ul>
@@ -202,12 +202,12 @@
                 {% endfor %}
             </ul>
         {% endif %}
-        {% if g.user.is_admin or event.orga('Programm') == g.user %}
+        {% if g.user is admin or event.orga('Programm') == g.user %}
             <h2>Programm</h2>
             <h3>Programmpunkt erstellen</h3>
             {{gen_form(programm_form, g.view_node.url)}}
         {% endif %}
-        {% if g.user.is_admin or event.orga('Schlüssel') == g.user %}
+        {% if g.user is admin or event.orga('Schlüssel') == g.user %}
             <h2>Schlüssel</h2>
             <p>Coming soon™</p> {#TODO#}
         {% endif %}

@@ -14,42 +14,23 @@ import gefolge_web.forms
 import gefolge_web.login
 import gefolge_web.util
 
-class PersonField(gefolge_web.forms.MenschField):
-    """A form field that validates to a Mensch or Guest. Displayed as a combobox."""
-
-    def __init__(self, event, label, validators=[], *, allow_guests=True, person_filter=lambda person: True, **kwargs):
-        self.event = event
-        self.allow_guests = allow_guests
-        super().__init__(label, validators, person_filter=person_filter, **kwargs)
-
-    @property
-    def people(self):
-        if self.allow_guests:
-            result = self.event.signups
-        else:
-            result = self.event.menschen
-        return list(filter(self.person_filter, result))
-
-    def value_constructor(self, snowflake):
-        return self.event.person(snowflake)
-
 def ConfirmSignupForm(event):
     def validate_verwendungszweck(form, field):
         match = re.fullmatch('anzahlung {} ([0-9]+)'.format(event.event_id), field.data.lower())
         if not match:
             raise wtforms.validators.ValidationError('Verwendungszweck ist keine Anzahlung für dieses event.')
         if len(match.group(1)) < 3:
-            guest = gefolge_web.event.model.Guest(event, match.group(1))
+            guest = gefolge_web.event.model.EventGuest(event, match.group(1))
             if guest not in event.guests:
                 raise wtforms.validators.ValidationError('Es ist kein Gast mit dieser Nummer für dieses event eingetragen.')
             if guest in event.signups:
                 raise wtforms.validators.ValidationError('Dieser Gast ist bereits für dieses event angemeldet.')
         else:
-            mensch = gefolge_web.login.Mensch(match.group(1))
-            if not mensch.is_active:
-                raise wtforms.validators.ValidationError('Dieser Mensch ist nicht im Gefolge Discord server.')
-            if mensch in event.menschen:
-                raise wtforms.validators.ValidationError('Dieser Mensch ist bereits für dieses event angemeldet.')
+            person = gefolge_web.login.DiscordPerson(match.group(1))
+            if not person.is_active: # Mensch or DiscordGuest
+                raise wtforms.validators.ValidationError('Diese Person ist nicht im Gefolge Discord server oder noch nicht als Mensch oder Gast verifiziert.')
+            if person in event.signups:
+                raise wtforms.validators.ValidationError('Diese Person ist bereits für dieses event angemeldet.')
 
     class Form(flask_wtf.FlaskForm):
         betrag = gefolge_web.forms.EuroField('Betrag', [
@@ -188,10 +169,7 @@ def ProgrammForm(event, programmpunkt):
     Form.subtitle = wtforms.StringField('Untertitel', [wtforms.validators.Length(max=40)], default='' if programmpunkt is None else programmpunkt.subtitle)
     Form.subtitle_notice = gefolge_web.forms.FormText('Wird auf dem info-beamer und im Zeitplan angezeigt.')
     if programmpunkt is None or flask.g.user.is_admin or flask.g.user == event.orga(programmpunkt.orga_role):
-        if event.location is not None and event.location.is_online:
-            Form.orga = gefolge_web.forms.MenschField('Orga', optional_label='Orga gesucht', default=None if programmpunkt is None else programmpunkt.orga)
-        else:
-            Form.orga = PersonField(event, 'Orga', optional_label='Orga gesucht', allow_guests=False, default=None if programmpunkt is None else programmpunkt.orga)
+        Form.orga = gefolge_web.forms.PersonField('Orga', gefolge_web.login.Mensch if event.location is not None and event.location.is_online else event.signups, optional_label='Orga gesucht', default=None if programmpunkt is None else programmpunkt.orga)
     elif flask.g.user == programmpunkt.orga:
         if event.location is not None and event.location.is_online:
             programm_orga = gefolge_web.login.Mensch.admin()
@@ -233,6 +211,6 @@ def SignupGuestForm(event):
 
     class Form(flask_wtf.FlaskForm):
         name = wtforms.StringField('Name', [wtforms.validators.DataRequired(), validate_guest_name])
-        submit_signup_guest_form = wtforms.SubmitField('Anmelden' if event.anzahlung == gefolge_web.util.Euro() or event.orga('Abrechnung') == gefolge_web.login.Mensch.admin() else 'Weiter')
+        submit_signup_guest_form = wtforms.SubmitField('Anmelden' if event.anzahlung == gefolge_web.util.Euro() or event.orga('Abrechnung').is_treasurer else 'Weiter')
 
     return Form()

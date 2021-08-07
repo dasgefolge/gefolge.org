@@ -12,49 +12,38 @@ import lazyjson # https://github.com/fenhl/lazyjson
 import peter # https://github.com/dasgefolge/peter-discord
 
 import gefolge_web.login
+import gefolge_web.person
 import gefolge_web.util
 
 EVENTS_ROOT = gefolge_web.util.BASE_PATH / 'event'
 ORGA_ROLES = ['Abrechnung', 'Buchung', 'Essen', 'Programm', 'Schlüssel']
 SILVESTER_CHANNEL = 387264349678338049
 
-class Guest:
+class EventGuest(gefolge_web.person.Guest):
     def __init__(self, event, guest_id):
         self.event = event
-        self.snowflake = int(guest_id) # not actually a snowflake but uses this variable name for compatibility with the Mensch class
+        self.snowflake = int(guest_id) # not actually a snowflake but uses this variable name for compatibility with the DiscordPerson class
         if not any('via' in person and person['id'] == self.snowflake for person in event.data.get('menschen', [])):
             raise ValueError('Es gibt keinen Gast mit dieser ID.')
 
     def __eq__(self, other):
-        return hasattr(other, 'snowflake') and self.snowflake == other.snowflake
+        return isinstance(other, EventGuest) and self.event == other.event and self.snowflake == other.snowflake
 
     def __hash__(self):
-        return hash(self.snowflake)
+        return hash((self.event, self.snowflake))
 
     def __html__(self):
         return jinja2.escape(str(self))
 
     def __repr__(self):
-        return 'gefolge_web.event.model.Guest({!r}, {!r})'.format(self.event, self.snowflake)
+        return f'gefolge_web.event.model.EventGuest({self.event!r}, {self.snowflake!r})'
 
     def __str__(self):
         return self.event.attendee_data(self)['name'].value()
 
     @property
-    def is_guest(self):
-        return True
-
-    @property
-    def long_name(self):
-        return str(self)
-
-    @property
     def url_part(self):
         return str(self.snowflake)
-
-    @property
-    def via(self):
-        return gefolge_web.login.Mensch(self.event.attendee_data(self)['via'].value())
 
 class EventMeta(type):
     def __iter__(self):
@@ -161,7 +150,7 @@ class Event(metaclass=EventMeta):
         if editor == profile:
             # Menschen dürfen ihr eigenes Profil bearbeiten
             return True
-        if profile.is_guest and profile.via == editor:
+        if self.proxy(profile) == editor:
             # Gastprofile dürfen von ihren proxies bearbeitet werden
             return True
         return False
@@ -178,14 +167,14 @@ class Event(metaclass=EventMeta):
 
     def confirm_guest_signup(self, guest, *, message=None):
         if message is None:
-            message = not self.orga('Abrechnung').is_admin
+            message = not self.orga('Abrechnung').is_treasurer
         gefolge_web.util.log('eventConfirmSignup', {
             'event': self.event_id,
             'person': guest.snowflake
         })
         self.attendee_data(guest)['signup'] = '{:%Y-%m-%dT%H:%M:%S}'.format(gefolge_web.util.now(self.timezone)) #TODO Datum der Überweisung verwenden
         if message:
-            peter.channel_msg(self.channel, '<@{}>: {} ist jetzt für {} angemeldet. Fülle bitte bei Gelegenheit noch das Profil auf <https://gefolge.org/event/{}/mensch/{}/edit> aus. Außerdem kannst du {} auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(guest.via.snowflake, guest, self, self.event_id, guest.snowflake, guest, self.event_id))
+            peter.channel_msg(self.channel, '<@{}>: {} ist jetzt für {} angemeldet. Fülle bitte bei Gelegenheit noch das Profil auf <https://gefolge.org/event/{}/mensch/{}/edit> aus. Außerdem kannst du {} auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(self.proxy(guest).snowflake, guest, self, self.event_id, guest.snowflake, guest, self.event_id))
 
     @property
     def data(self):
@@ -224,7 +213,7 @@ class Event(metaclass=EventMeta):
     @property
     def guests(self):
         return [
-            Guest(self, person['id'])
+            EventGuest(self, person['id'])
             for person in self.data.get('menschen', [])
             if 'via' in person
         ]
@@ -305,13 +294,10 @@ class Event(metaclass=EventMeta):
             snowflake = snowflake.snowflake
         if snowflake is None:
             return None
-        if int(snowflake) < 100:
-            result = Guest(self, snowflake)
+        elif int(snowflake) < 100:
+            return EventGuest(self, snowflake)
         else:
-            result = gefolge_web.login.Mensch(snowflake)
-            if not result.is_active:
-                raise ValueError('Dieser Discord account existiert nicht oder ist nicht im Gefolge.')
-        return result
+            return gefolge_web.login.DiscordPerson(snowflake)
 
     @property
     def programm(self):
@@ -338,6 +324,11 @@ class Event(metaclass=EventMeta):
             [] if werewolf_web is None or not werewolf_web.Setup(self).data_path.parent.exists() else [werewolf_web.RealtimeWerewolf(self)]
         )))
 
+    def proxy(self, guest):
+        """The person who invited this guest to this event. Also called “via”. `None` if `guest` is not a guest."""
+        if guest.is_guest:
+            return gefolge_web.login.Mensch(self.attendee_data(guest)['via'].value())
+
     @property
     def rooms(self):
         if self.location is None:
@@ -361,7 +352,7 @@ class Event(metaclass=EventMeta):
         self.data['menschen'].append(person_data)
         if 'role' in self.data:
             peter.add_role(mensch, self.data['role'].value())
-        if self.orga('Abrechnung') == gefolge_web.login.Mensch.admin():
+        if self.orga('Abrechnung').is_treasurer:
             peter.channel_msg(self.channel, '<@{}>: du bist jetzt für {} angemeldet. Du kannst dich auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(mensch.snowflake, self, self.event_id))
         else:
             peter.channel_msg(self.channel, '<@{}>: du bist jetzt für {} angemeldet. Fülle bitte bei Gelegenheit noch dein Profil auf <https://gefolge.org/event/{}/me/edit> aus. Außerdem kannst du dich auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(mensch.snowflake, self, self.event_id, self.event_id))
@@ -386,9 +377,9 @@ class Event(metaclass=EventMeta):
             'name': guest_name,
             'via': mensch.snowflake
         })
-        if self.anzahlung == gefolge_web.util.Euro() or self.orga('Abrechnung') == gefolge_web.login.Mensch.admin():
+        if self.anzahlung == gefolge_web.util.Euro() or self.orga('Abrechnung').is_treasurer:
             peter.channel_msg(self.channel, '<@{}> hat {} für {} angemeldet'.format(mensch.snowflake, guest_name, self))
-        return Guest(self, guest_id)
+        return EventGuest(self, guest_id)
 
     @property
     def signups(self):

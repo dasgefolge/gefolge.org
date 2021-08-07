@@ -8,8 +8,14 @@
 
 {% block page_content %}
     <div><img style="max-width: 100%; max-height: 500px;" src="{{url_for('.static', filename='gefolge.png')}}" /></div>
-    {% if g.user.is_active %}
-        <p>Du bist als {{g.user}} angemeldet. <a href="{{url_for('logout')}}">Abmelden</a></p>
+    {% if g.user.is_authenticated %}
+        <p>
+            Du bist als {{g.user}} angemeldet.
+            {% if g.user.is_active %}
+                <a href="{{url_for('profile_edit', mensch=g.user.snowflake)}}">Einstellungen</a> •
+            {% endif %}
+            <a href="{{url_for('logout')}}">Abmelden</a>
+        </p>
         <nav>
             {% for node in g.view_node.children | sort %}
                 {% if not loop.first %} • {% endif %}
@@ -17,7 +23,7 @@
             {% endfor %}
         </nav>
     {% else %}
-        <p>Das <b>Gefolge</b> ist eine lose Gruppe von Menschen, die sich größtenteils über die <a href="https://www.mensa.de/mensa-vor-ort/kids-juniors/kids-juniors-feriencamp/#el-ead31510">Mensa Juniors Camps</a> zwischen ca. 2008 und 2012 kennen.</p>
+        <p>Das <b>Gefolge</b> ist eine lose Gruppe von Menschen, die sich größtenteils über die <a href="https://www.mensa.de/camps/juniors-camps/">Mensa Juniors Camps</a> zwischen ca. 2008 und 2012 kennen.</p>
         <p>Wir haben einen <a href="https://discord.com/">Discord</a> server (Einladung für Gefolgemenschen auf Anfrage).</p>
         <p>Wenn du schon auf dem Discord server bist, kannst du dich <a href="{{url_for('discord.login')}}">hier mit Discord anmelden</a>, um Zugriff auf die internen Bereiche dieser website zu bekommen, z.B. unser wiki und die Anmeldung für Silvester.</p>
     {% endif %}

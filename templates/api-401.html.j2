@@ -1,0 +1,27 @@
+{% extends "base.html.j2" %}
+
+{% block title %}Fehler — Das Gefolge{% endblock %}
+
+{% block nav %}
+    <div class="row">
+        <div class="col-12 col-md-9">
+            <nav>
+                <span><a href="{{url_for('index')}}"><img src="{{url_for('.static', filename='gefolge.png')}}" style="height: 32px;" /></a></span>
+                <span>Fehler</span>
+            </nav>
+        </div>
+        {% include 'login-status.html.j2' %}
+    </div>
+{% endblock %}
+
+{% block page_content %}
+    <h1>Fehler 401: Unauthorized</h1>
+    {% if g.user.is_authenticated %}
+        <p>Du bist zwar mit Discord angemeldet, hast aber keinen Zugriff auf diesen Inhalt, weil du nicht im Gefolge Discord server bist oder nicht als Gefolgemensch verifiziert bist.</p>
+    {% else %}
+        <p>Du hast keinen Zugriff auf diesen Inhalt, weil du nicht angemeldet bist.</p>
+        <p>Wenn du schon auf unserem Discord server bist, kannst du dich <a href="{{url_for('discord.login')}}">hier mit Discord anmelden</a>.</p>
+    {% endif %}
+    <p>Um dich mit einem API key anzumelden, lade diese Seite neu. Es sollte dann ein Anmeldungsformular erscheinen. Verwende <code>api</code> als Benutzername und deinen API key als Passwort.</p>
+    <nav><a href="/">Zurück zur Hauptseite von gefolge.org</a></nav>
+{% endblock %}
