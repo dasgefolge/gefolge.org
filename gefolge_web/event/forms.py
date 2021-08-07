@@ -52,7 +52,10 @@ def ConfirmSignupForm(event):
                 raise wtforms.validators.ValidationError('Dieser Mensch ist bereits für dieses event angemeldet.')
 
     class Form(flask_wtf.FlaskForm):
-        betrag = gefolge_web.forms.EuroField('Betrag', [wtforms.validators.InputRequired(), gefolge_web.forms.EuroRange(min=event.anzahlung, max=event.anzahlung)])
+        betrag = gefolge_web.forms.EuroField('Betrag', [
+            wtforms.validators.InputRequired(),
+            gefolge_web.forms.EuroRange(min=event.anzahlung, max=event.anzahlung, message='Dieser Betrag entspricht nicht der von dir vorgegebenen Anzahlung.'),
+        ])
         verwendungszweck = wtforms.StringField('Verwendungszweck', [validate_verwendungszweck])
         submit_confirm_signup_form = wtforms.SubmitField('Anzahlung bestätigen')
 
