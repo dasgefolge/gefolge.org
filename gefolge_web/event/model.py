@@ -360,7 +360,7 @@ class Event(metaclass=EventMeta):
             person_data['anzahlung'] = anzahlung.value
         self.data['menschen'].append(person_data)
         if 'role' in self.data:
-            peter.add_role(mensch, self.data['role'])
+            peter.add_role(mensch, self.data['role'].value())
         if self.orga('Abrechnung') == gefolge_web.login.Mensch.admin():
             peter.channel_msg(self.channel, '<@{}>: du bist jetzt für {} angemeldet. Du kannst dich auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(mensch.snowflake, self, self.event_id))
         else:
