@@ -127,15 +127,29 @@ def ProfileForm(event, person):
     else:
         Form.section_programm_intro = gefolge_web.forms.FormText(jinja2.Markup('Nachdem du dich angemeldet hast, kannst du dich auf der <a href="{}">Programmseite</a> für Programmpunkte als interessiert eintragen.'.format(flask.url_for('event_programm', event=event.event_id))))
 
-    header_generated = False
-    if person not in event.signups and person == flask.g.user and event.anzahlung is not None and event.ausfall > event.anzahlung_total + event.anzahlung:
-        if not header_generated:
+    if gefolge_web.util.now(event.timezone) < event.end and event.data.get('covidTestRequired'):
+        Form.section_covid = gefolge_web.forms.FormSection('COVID-19')
+        Form.covid_status = wtforms.RadioField(
+            'Status',
+            [wtforms.validators.InputRequired()],
+            choices=[
+                ('geimpftGenesen', 'Ich gelte zum Zeitpunkt meiner Anreise als gegen COVID-19 immunisiert (geimpft und/oder genesen) und bringe einen entsprechenden (evtl. digitalen) Nachweis mit.'),
+                ('test', 'Ich bin nicht gegen COVID-19 immunisiert. Mir ist bekannt, dass ich bei meiner Ankunft ein tagesaktuelles negatives Testergebnis vorzeigen muss.')
+            ],
+            default=person_data.get('covidStatus')
+        )
+        if person not in event.signups:
+            Form.covid_status_notice = gefolge_web.forms.FormText('Falls sich dein Status später ändert (z.B. weil du an COVID-19 erkrankst oder einen Impftermin absagen musst), kannst du diese Angabe in deinem Eventprofil jederzeit anpassen.')
+
+    def header_anmeldung():
+        if not hasattr(Form, 'section_signup'):
             Form.section_signup = gefolge_web.forms.FormSection('Anmeldung')
-            header_generated = True
+    if person not in event.signups and person == flask.g.user and event.anzahlung is not None and event.ausfall > event.anzahlung_total + event.anzahlung:
+        header_anmeldung()
         if event.ausfall_date is None:
-            Form.section_money_intro = gefolge_web.forms.FormText('Wir können erst buchen, wenn die Ausfallgebühr von {} gesichert ist. Dazu fehlen noch {}, also {} Anmeldungen. Damit wir früher buchen können, kannst du freiwillig eine höhere Anzahlung bezahlen. Du bekommst den zusätzlichen Betrag wieder gutgeschrieben, wenn sich genug weitere Menschen angemeldet haben, dass ihre Anzahlungen ihn decken. Er wird nur behalten, um die Ausfallgebühr zu bezahlen, falls das event komplett ausfällt.'.format(event.ausfall, event.ausfall - event.anzahlung_total, math.ceil((event.ausfall - event.anzahlung_total).value / event.anzahlung.value)))
+            Form.anzahlung_notice = gefolge_web.forms.FormText('Wir können erst buchen, wenn die Ausfallgebühr von {} gesichert ist. Dazu fehlen noch {}, also {} Anmeldungen. Damit wir früher buchen können, kannst du freiwillig eine höhere Anzahlung bezahlen. Du bekommst den zusätzlichen Betrag wieder gutgeschrieben, wenn sich genug weitere Menschen angemeldet haben, dass ihre Anzahlungen ihn decken. Er wird nur behalten, um die Ausfallgebühr zu bezahlen, falls das event komplett ausfällt.'.format(event.ausfall, event.ausfall - event.anzahlung_total, math.ceil((event.ausfall - event.anzahlung_total).value / event.anzahlung.value)))
         else:
-            Form.section_money_intro = gefolge_web.forms.FormText('Bis zum {:%d.%m.%Y} müssen wir die Ausfallgebühr von {} abdecken. Dazu fehlen noch {}, also {} Anmeldungen. Um sicher zu stellen, dass wir nicht stornieren müssen, kannst du freiwillig eine höhere Anzahlung bezahlen. Du bekommst den zusätzlichen Betrag wieder gutgeschrieben, wenn sich genug weitere Menschen angemeldet haben, dass ihre Anzahlungen ihn decken.'.format(event.ausfall_date, event.ausfall, event.ausfall - event.anzahlung_total, math.ceil((event.ausfall - event.anzahlung_total).value / event.anzahlung.value)))
+            Form.anzahlung_notice = gefolge_web.forms.FormText('Bis zum {:%d.%m.%Y} müssen wir die Ausfallgebühr von {} abdecken. Dazu fehlen noch {}, also {} Anmeldungen. Um sicher zu stellen, dass wir nicht stornieren müssen, kannst du freiwillig eine höhere Anzahlung bezahlen. Du bekommst den zusätzlichen Betrag wieder gutgeschrieben, wenn sich genug weitere Menschen angemeldet haben, dass ihre Anzahlungen ihn decken.'.format(event.ausfall_date, event.ausfall, event.ausfall - event.anzahlung_total, math.ceil((event.ausfall - event.anzahlung_total).value / event.anzahlung.value)))
         Form.anzahlung = gefolge_web.forms.EuroField('Anzahlung', [
             wtforms.validators.InputRequired(),
             wtforms.validators.NumberRange(min=event.anzahlung, message='Die reguläre Anzahlung beträgt %(min)s. Mindestens soviel musst du bezahlen, um dich anzumelden.'),
@@ -143,12 +157,10 @@ def ProfileForm(event, person):
             wtforms.validators.NumberRange(max=person.balance, message=jinja2.Markup('Dein aktuelles Guthaben ist {}. Auf <a href="{}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.'.format(flask.g.user.balance, flask.g.user.profile_url)))
         ], default=event.anzahlung)
     if gefolge_web.util.now(event.timezone) < event.end and person == flask.g.user and event.location is not None and event.location.hausordnung is not None and not person_data.get('hausordnung', False): #TODO track last-changed event and hide if current version has already been accepted
-        if not header_generated:
-            Form.section_signup = gefolge_web.forms.FormSection('Anmeldung')
-            header_generated = True
+        header_anmeldung()
         Form.hausordnung = wtforms.BooleanField(jinja2.Markup('Ich habe die <a href="{}">Hausordnung</a> zur Kenntnis genommen.'.format(event.location.hausordnung)), [wtforms.validators.DataRequired()])
 
-    Form.submit_profile_form = wtforms.SubmitField('Anmelden' if header_generated or person not in event.signups else 'Speichern')
+    Form.submit_profile_form = wtforms.SubmitField('Anmelden' if hasattr(Form, 'section_signup') or person not in event.signups else 'Speichern')
     return Form()
 
 def ProgrammForm(event, programmpunkt):

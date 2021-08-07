@@ -54,6 +54,9 @@ def handle_profile_edit(event, person, profile_form):
         person_data['food']['animalProducts'] = profile_form.animal_products.data
         person_data['food']['allergies'] = profile_form.allergies.data
     # Programm
+    # COVID-19
+    if hasattr(profile_form, 'covid_status'):
+        person_data['covidStatus'] = profile_form.covid_status.data
     # Anmeldung
     if hasattr(profile_form, 'hausordnung') and profile_form.hausordnung.data:
         person_data['hausordnung'] = True
