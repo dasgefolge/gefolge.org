@@ -288,9 +288,9 @@ def TransferMoneyForm(mensch):
         recipient = gefolge_web.forms.MenschField('An', person_filter=lambda person: person != mensch)
         amount = gefolge_web.forms.EuroField('Betrag', [
             wtforms.validators.InputRequired(),
-            wtforms.validators.NumberRange(min=gefolge_web.util.Euro('0.01'), message='Nur positive Beträge erlaubt.'),
+            gefolge_web.forms.EuroRange(min=gefolge_web.util.Euro('0.01'), message='Nur positive Beträge erlaubt.'),
         ] + ([] if flask.g.user.is_admin else [
-            wtforms.validators.NumberRange(max=mensch.balance, message=jinja2.Markup('Du kannst maximal dein aktuelles Guthaben übertragen.'))
+            gefolge_web.forms.EuroRange(max=mensch.balance, message=jinja2.Markup('Du kannst maximal dein aktuelles Guthaben übertragen.'))
         ]))
         comment = wtforms.TextAreaField('Kommentar (optional)')
         submit_transfer_money_form = wtforms.SubmitField('Übertragen')
@@ -301,9 +301,9 @@ def WurstminebergTransferMoneyForm(mensch):
     class Form(flask_wtf.FlaskForm):
         amount = gefolge_web.forms.EuroField('Betrag', [
             wtforms.validators.InputRequired(),
-            wtforms.validators.NumberRange(min=gefolge_web.util.Euro('0.01'), message='Nur positive Beträge erlaubt.'),
+            gefolge_web.forms.EuroRange(min=gefolge_web.util.Euro('0.01'), message='Nur positive Beträge erlaubt.'),
         ] + ([] if flask.g.user.is_admin else [
-            wtforms.validators.NumberRange(max=mensch.balance, message=jinja2.Markup('Du kannst maximal dein aktuelles Guthaben übertragen.'))
+            gefolge_web.forms.EuroRange(max=mensch.balance, message=jinja2.Markup('Du kannst maximal dein aktuelles Guthaben übertragen.'))
         ]))
         submit_wurstmineberg_transfer_money_form = wtforms.SubmitField('Übertragen')
 

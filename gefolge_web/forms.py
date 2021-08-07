@@ -43,6 +43,17 @@ class EuroField(AnnotatedStringField):
                 self.data = None
                 raise ValueError('Ungültiger Eurobetrag') from e
 
+class EuroRange: # validator
+    def __init__(self, *, min=None, max=None, message):
+        self.min = min
+        self.max = max
+        self.message = message
+
+    def __call__(self, form, field):
+        data = field.data
+        if data is None or (self.min is not None and data < self.min) or (self.max is not None and data > self.max):
+            raise wtforms.validators.ValidationError(self.message.format(min=self.min, max=self.max))
+
 class FormSection(wtforms.Field):
     def __init__(self, title, level=2, **kwargs):
         self.level = level
@@ -125,7 +136,7 @@ class MenschField(wtforms.SelectField):
 
         return gefolge_web.login.Mensch(snowflake)
 
-class OtherInputRequired:
+class OtherInputRequired: # validator
     def __init__(self, fieldname, message=None):
         self.fieldname = fieldname
         self.message = message

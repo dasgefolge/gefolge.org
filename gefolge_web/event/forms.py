@@ -52,7 +52,7 @@ def ConfirmSignupForm(event):
                 raise wtforms.validators.ValidationError('Dieser Mensch ist bereits für dieses event angemeldet.')
 
     class Form(flask_wtf.FlaskForm):
-        betrag = gefolge_web.forms.EuroField('Betrag', [wtforms.validators.InputRequired(), wtforms.validators.NumberRange(min=event.anzahlung, max=event.anzahlung)])
+        betrag = gefolge_web.forms.EuroField('Betrag', [wtforms.validators.InputRequired(), gefolge_web.forms.EuroRange(min=event.anzahlung, max=event.anzahlung)])
         verwendungszweck = wtforms.StringField('Verwendungszweck', [validate_verwendungszweck])
         submit_confirm_signup_form = wtforms.SubmitField('Anzahlung bestätigen')
 
@@ -152,9 +152,9 @@ def ProfileForm(event, person):
             Form.anzahlung_notice = gefolge_web.forms.FormText('Bis zum {:%d.%m.%Y} müssen wir die Ausfallgebühr von {} abdecken. Dazu fehlen noch {}, also {} Anmeldungen. Um sicher zu stellen, dass wir nicht stornieren müssen, kannst du freiwillig eine höhere Anzahlung bezahlen. Du bekommst den zusätzlichen Betrag wieder gutgeschrieben, wenn sich genug weitere Menschen angemeldet haben, dass ihre Anzahlungen ihn decken.'.format(event.ausfall_date, event.ausfall, event.ausfall - event.anzahlung_total, math.ceil((event.ausfall - event.anzahlung_total).value / event.anzahlung.value)))
         Form.anzahlung = gefolge_web.forms.EuroField('Anzahlung', [
             wtforms.validators.InputRequired(),
-            wtforms.validators.NumberRange(min=event.anzahlung, message='Die reguläre Anzahlung beträgt %(min)s. Mindestens soviel musst du bezahlen, um dich anzumelden.'),
-            wtforms.validators.NumberRange(max=event.ausfall - event.anzahlung_total, message='Wir benötigen nur noch %(max)s, um die Ausfallgebühr abzudecken.'),
-            wtforms.validators.NumberRange(max=person.balance, message=jinja2.Markup('Dein aktuelles Guthaben ist {}. Auf <a href="{}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.'.format(flask.g.user.balance, flask.g.user.profile_url)))
+            gefolge_web.forms.EuroRange(min=event.anzahlung, message='Die reguläre Anzahlung beträgt {min}. Mindestens soviel musst du bezahlen, um dich anzumelden.'),
+            gefolge_web.forms.EuroRange(max=event.ausfall - event.anzahlung_total, message='Wir benötigen nur noch {max}, um die Ausfallgebühr abzudecken.'),
+            gefolge_web.forms.EuroRange(max=person.balance, message=jinja2.Markup(f'Dein aktuelles Guthaben ist {flask.g.user.balance}. Auf <a href="{flask.g.user.profile_url}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.'))
         ], default=event.anzahlung)
     if gefolge_web.util.now(event.timezone) < event.end and person == flask.g.user and event.location is not None and event.location.hausordnung is not None and not person_data.get('hausordnung', False): #TODO track last-changed event and hide if current version has already been accepted
         header_anmeldung()
