@@ -99,7 +99,18 @@
                     <label class="btn hbgf-{{field.id}}-{{subfield.data}} {% if subfield.checked %}active{% endif %}">
                         <input type="radio" id="{{subfield.id}}" name="{{subfield.name}}" value="{{subfield.data}}" {% if subfield.checked %}checked="checked"{% endif %}>{{subfield.label.text}}</input>
                     </label>
-               {% endfor %}
+                {% endfor %}
+            </div>
+        {% elif field.type == 'RadioField' %}
+            <label for="input_description" class="col-sm-2 control-label">{{field.label}}</label>
+            <div class="col-sm-10">
+                {% for subfield in field %}
+                    <div class="radio">
+                        <label>
+                            {{subfield()}} {{subfield.label}}
+                        </label>
+                    </div>
+                {% endfor %}
             </div>
         {% elif field.type == 'SubmitField' %}
             <div class="col-sm-offset-2 col-sm-10">
