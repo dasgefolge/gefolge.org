@@ -360,11 +360,11 @@ class Event(metaclass=EventMeta):
             person_data['anzahlung'] = anzahlung.value
         self.data['menschen'].append(person_data)
         if 'role' in self.data:
-            peter.add_role(mensch, self.data['role'], check=False)
+            peter.add_role(mensch, self.data['role'])
         if self.orga('Abrechnung') == gefolge_web.login.Mensch.admin():
-            peter.channel_msg(self.channel, '<@{}>: du bist jetzt für {} angemeldet. Du kannst dich auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(mensch.snowflake, self, self.event_id), check=False)
+            peter.channel_msg(self.channel, '<@{}>: du bist jetzt für {} angemeldet. Du kannst dich auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(mensch.snowflake, self, self.event_id))
         else:
-            peter.channel_msg(self.channel, '<@{}>: du bist jetzt für {} angemeldet. Fülle bitte bei Gelegenheit noch dein Profil auf <https://gefolge.org/event/{}/me/edit> aus. Außerdem kannst du dich auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(mensch.snowflake, self, self.event_id, self.event_id), check=False)
+            peter.channel_msg(self.channel, '<@{}>: du bist jetzt für {} angemeldet. Fülle bitte bei Gelegenheit noch dein Profil auf <https://gefolge.org/event/{}/me/edit> aus. Außerdem kannst du dich auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(mensch.snowflake, self, self.event_id, self.event_id))
 
     @property
     def signup_block_reason(self):
