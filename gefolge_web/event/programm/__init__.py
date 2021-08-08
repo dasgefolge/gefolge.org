@@ -10,7 +10,9 @@ import pytz # PyPI: pytz
 import wtforms # PyPI: WTForms
 
 import class_key # https://github.com/fenhl/python-class-key
+import peter # https://github.com/dasgefolge/peter-discord
 
+import gefolge_web.forms
 import gefolge_web.login
 import gefolge_web.util
 
@@ -285,6 +287,16 @@ class Programmpunkt:
                 ))
             except Exception:
                 return jinja2.Markup('<p>(Fehler: Bracket konnte nicht geladen werden)</p>')
+        elif 'smashgg' in self.data:
+            return jinja2.Markup('<p><a href="https://smash.gg/{}">Bracket und Ergebnisse</a></p>'.format(
+                gefolge_web.util.smashgg_api("""
+                    query($id: ID!) {
+                        event(id: $id) {
+                            slug
+                        }
+                    }
+                """, id=self.data['smashgg'].value())['event']['slug']
+            ))
 
     @property
     def end(self):
@@ -330,7 +342,10 @@ class Programmpunkt:
             submit_text = self.strings.signup_other_button.format('Gewählte Person' if self.strings.signup_other_button.startswith('{') else 'gewählte Person')
 
         if 'challonge' in self.data:
-            Form.challonge_username = wtforms.TextField(jinja2.Markup('<a href="https://challonge.com/">Challonge</a> username'), [wtforms.validators.Regexp('^[0-9A-Za-z_]*$')], description={'placeholder': 'optional'})
+            Form.challonge_username = wtforms.TextField(jinja2.Markup('<a href="https://challonge.com/">Challonge</a> username'), [wtforms.validators.Optional(), wtforms.validators.Regexp('^[0-9A-Za-z_]*$')], description={'placeholder': 'optional'})
+        if 'smashgg' in self.data:
+            Form.smashgg_slug = gefolge_web.forms.AnnotatedStringField(jinja2.Markup('<a href="https://smash.gg/">smash.gg</a>-Profil'), [wtforms.validators.Regexp('^[0-9a-f]{8}$')], prefix='https://smash.gg/user/', description={'placeholder': 'optional'})
+            Form.smashgg_slug_notice = gefolge_web.forms.FormText('Die hier gefragte Benutzernummer kannst du auch kopieren, indem du auf deiner smash.gg-Profilseite auf sie klickst.')
 
         if self.add_form_details(Form, editor) and submit_text is None:
             submit_text = self.strings.edit_signup_button
@@ -411,6 +426,17 @@ class Programmpunkt:
                 except challonge.api.ChallongeException as e:
                     flask.flash(jinja2.Markup('Bei der Anmeldung auf Challonge ist ein Fehler aufgetreten. Bitte versuche es nochmal. Falls du Hilfe brauchst, wende dich bitte an {}. Fehlermeldung: {}'.format(gefolge_web.login.Mensch.admin().__html__(), jinja2.escape(e))), 'error')
                     return flask.redirect(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.url_part))
+            if 'smashgg' in self.data:
+                if form.smashgg_slug.data:
+                    #TODO validate that the user exists
+                    if 'smashggSlugs' not in self.data:
+                        self.data['smashggSlugs'] = {}
+                    self.data['smashggSlugs'][str(person_to_signup.snowflake)] = form.smashgg_slug.data
+                    if self.orga is not None:
+                        peter.msg(self.orga, '<@{}> ({}) hat sich für {} auf {} angemeldet. (smash.gg-Profil: {})'.format(person_to_signup.snowflake, person_to_signup, self, self.event, form.smashgg_slug.data)) #TODO fix recipient if guest, fix formatting for EventGuests (dm_mention)
+                else:
+                    if self.orga is not None:
+                        peter.msg(self.orga, '<@{}> ({}) hat sich für {} auf {} angemeldet. (kein smash.gg-Profil)'.format(person_to_signup.snowflake, person_to_signup, self, self.event)) #TODO fix recipient if guest, fix formatting for EventGuests (dm_mention)
             self.signup(person_to_signup)
 
         self.process_form_details(form, editor)

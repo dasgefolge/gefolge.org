@@ -15,6 +15,8 @@ import flask_bootstrap # PyPI: Flask-Bootstrap
 import flask_pagedown # PyPI: Flask-PageDown
 import flask_sqlalchemy # PyPI: Flask-SQLAlchemy
 import flaskext.markdown # PyPI: Flask-Markdown
+import gql # PyPI: --pre gql[all]
+import gql.transport.aiohttp # PyPI: --pre gql[all]
 import jinja2 # PyPI: Jinja2
 import pymdownx.emoji # PyPI: pymdown-extensions
 import pymdownx.extra # PyPI: pymdown-extensions
@@ -61,9 +63,11 @@ with app.app_context():
         app.config.update(gefolge_web.util.cached_json(lazyjson.File(gefolge_web.util.CONFIG_PATH)).value())
     # set up database
     db = flask_sqlalchemy.SQLAlchemy(app)
-    # set up Challonge API client
+    # set up API clients
     if 'challonge' in app.config:
         challonge.set_credentials(app.config['challonge']['username'], app.config['challonge']['apiKey'])
+    if 'smashggToken' in app.config:
+        gefolge_web.util.CACHE['smashggClient'] = gql.Client(transport=gql.transport.aiohttp.AIOHTTPTransport(url='https://api.smash.gg/gql/alpha', headers={'Authorization': f'Bearer {app.config["smashggToken"]}'}), fetch_schema_from_transport=True)
     # set up Bootstrap
     flask_bootstrap.Bootstrap(app)
     # set up Markdown

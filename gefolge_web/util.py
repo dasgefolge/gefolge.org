@@ -11,6 +11,7 @@ import traceback
 
 import dateutil.parser # PyPI: python-dateutil
 import flask # PyPI: Flask
+import gql # PyPI: --pre gql[all]
 import jinja2 # PyPI: Jinja2
 import more_itertools # PyPI: more-itertools
 import pytz # PyPI: pytz
@@ -33,6 +34,8 @@ User: {user}
 URL: {url}
 
 {tb}"""
+
+CACHE = {}
 
 @class_key.class_key()
 class Euro:
@@ -421,6 +424,10 @@ def setup(app):
             flask.g.reboot_timestamp = None
             flask.g.reboot_upgrade = None
             flask.g.reboot_end_time = None
+
+def smashgg_api(query, **params):
+    query = gql.gql(query)
+    return CACHE['smashggClient'].execute(query, variable_values=params)
 
 def template(template_name=None):
     def decorator(f):
