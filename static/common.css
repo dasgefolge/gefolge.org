@@ -1,5 +1,6 @@
 body.dejavu {
     font-family: 'DejaVu Sans', sans-serif;
+    text-underline-offset: 0.1em;
 }
 
 .muted,
@@ -56,6 +57,19 @@ span.spoiler {
 }
 
 /* event Programm table */
+.uncolored-links a,
+a.uncolored-links {
+    text-decoration: underline;
+    color: inherit;
+}
+
+.uncolored-links a:focus,
+a.uncolored-links:focus,
+.uncolored-links a:hover,
+a.uncolored-links:hover {
+    text-decoration: none;
+}
+
 .table > tbody > tr > td.programm-meta {
     background-color: #e6b8af;
 }
