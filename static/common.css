@@ -16,6 +16,11 @@ h1 .btn {
     vertical-align: top;
 }
 
+/* fix duplicate dotted underlines */
+abbr[title] {
+    border-bottom: none;
+}
+
 /* blockquotes with regular-sized text */
 blockquote {
     font-size: 14px;
