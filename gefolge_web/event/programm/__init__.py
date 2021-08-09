@@ -344,7 +344,7 @@ class Programmpunkt:
         if 'challonge' in self.data:
             Form.challonge_username = wtforms.TextField(jinja2.Markup('<a href="https://challonge.com/">Challonge</a> username'), [wtforms.validators.Optional(), wtforms.validators.Regexp('^[0-9A-Za-z_]*$')], description={'placeholder': 'optional'})
         if 'smashgg' in self.data:
-            Form.smashgg_slug = gefolge_web.forms.AnnotatedStringField(jinja2.Markup('<a href="https://smash.gg/">smash.gg</a>-Profil'), [wtforms.validators.Regexp('^[0-9a-f]{8}$')], prefix='https://smash.gg/user/', description={'placeholder': 'optional'})
+            Form.smashgg_slug = gefolge_web.forms.AnnotatedStringField(jinja2.Markup('<a href="https://smash.gg/">smash.gg</a>-Profil'), [wtforms.validators.Optional(), wtforms.validators.Regexp('^[0-9a-f]{8}$')], prefix='https://smash.gg/user/', description={'placeholder': 'optional'})
             Form.smashgg_slug_notice = gefolge_web.forms.FormText('Die hier gefragte Benutzernummer kannst du auch kopieren, indem du auf deiner smash.gg-Profilseite auf sie klickst.')
 
         if self.add_form_details(Form, editor) and submit_text is None:
