@@ -71,7 +71,7 @@ def handle_programm_edit(programmpunkt, programm_form, is_new):
         'end': (None if programm_form.end.data is None else '{:%Y-%m-%dT%H:%M:%S}'.format(programm_form.end.data)),
         'description': programm_form.description.data if hasattr(programm_form, 'description') else None
     })
-    if hasattr(programm_form, 'display_name'):
+    if programmpunkt.name_editable and hasattr(programm_form, 'display_name'):
         programmpunkt.name = programm_form.display_name.data
     programmpunkt.subtitle = programm_form.subtitle.data
     if hasattr(programm_form, 'orga'):
@@ -88,7 +88,7 @@ def handle_programm_edit(programmpunkt, programm_form, is_new):
                 ))
     programmpunkt.start = programm_form.start.data
     programmpunkt.end = programm_form.end.data
-    if hasattr(programm_form, 'description'):
+    if programmpunkt.description_editable and hasattr(programm_form, 'description'):
         programmpunkt.description = programm_form.description.data
     if hasattr(programm_form, 'css_class'):
         programmpunkt.css_class = programm_form.css_class.data
