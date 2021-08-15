@@ -1,5 +1,3 @@
-import pathlib
-
 import jinja2 # PyPI: Jinja2
 import wtforms # PyPI: WTForms
 import wtforms.validators # PyPI: WTForms

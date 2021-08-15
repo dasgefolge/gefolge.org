@@ -1,5 +1,4 @@
 import functools
-import pathlib
 
 import flask # PyPI: Flask
 import flask_login # PyPI: Flask-Login

@@ -2,12 +2,9 @@
 
 import sys
 
-from markdown import extensions
-
 sys.path.append('/opt/py')
 
 import os
-import pathlib
 
 import challonge # PyPI: pychal
 import flask # PyPI: Flask

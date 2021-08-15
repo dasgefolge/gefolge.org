@@ -1,9 +1,7 @@
 import datetime
 import re
 
-import flask # PyPI: Flask
 import jinja2 # PyPI: Jinja2
-import pytz # PyPI: pytz
 
 import gefolge_web.event.programm
 import gefolge_web.login
