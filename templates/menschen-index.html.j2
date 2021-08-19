@@ -19,8 +19,8 @@
         </thead>
         <tbody>
             {% for profile in g.view_node.children %}
-                {% if profile is mensch %}
-                    {% set mensch = profile.var %}
+                {% set mensch = profile.var %}
+                {% if mensch is mensch %}
                     <tr>
                         <td>{{mensch}}</td>
                         <td>{{mensch.__str__()}}</td>
@@ -56,8 +56,8 @@
         </thead>
         <tbody>
             {% for profile in g.view_node.children %}
-                {% if profile is guest %}
-                    {% set guest = profile.var %}
+                {% set guest = profile.var %}
+                {% if guest is guest %}
                     <tr>
                         <td>{{guest}}</td>
                         <td>{{guest.__str__()}}</td>
