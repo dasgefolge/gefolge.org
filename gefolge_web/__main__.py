@@ -6,7 +6,7 @@ sys.path.append('/opt/py')
 
 import os
 
-import challonge # PyPI: pychal
+import challonge # PyPI: pychallonge
 import flask # PyPI: Flask
 import flask_bootstrap # PyPI: Flask-Bootstrap
 import flask_pagedown # PyPI: Flask-PageDown

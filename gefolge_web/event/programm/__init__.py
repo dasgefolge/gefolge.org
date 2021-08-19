@@ -1,6 +1,6 @@
 import re
 
-import challonge # PyPI: pychal
+import challonge # PyPI: pychallonge
 import flask # PyPI: Flask
 import flask_wtf # PyPI: Flask-WTF
 import icalendar # PyPI: icalendar
