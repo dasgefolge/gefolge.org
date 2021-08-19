@@ -52,14 +52,18 @@ class DiscordPersonMeta(type):
             for profile_path in sorted(PROFILES_ROOT.iterdir(), key=lambda path: int(path.stem))
         )
 
+def profile_data_for_snowflake(snowflake):
+    return gefolge_web.util.cached_json(lazyjson.File(PROFILES_ROOT / f'{snowflake}.json')).value()
+
 class DiscordPerson(flask_login.UserMixin, User, metaclass=DiscordPersonMeta):
     def __new__(cls, snowflake):
-        self = super().__new__(cls)
-        if MENSCH in self.profile_data.get('roles', []):
+        roles = profile_data_for_snowflake(snowflake).get('roles', [])
+        if MENSCH in roles:
             return Mensch(snowflake)
-        elif GAST in self.profile_data.get('roles', []):
+        elif GAST in roles:
             return DiscordGuest(snowflake)
-        return self
+        else:
+            return super().__new__(cls)
 
     def __init__(self, snowflake):
         self.snowflake = int(snowflake)
@@ -156,7 +160,7 @@ class DiscordPerson(flask_login.UserMixin, User, metaclass=DiscordPersonMeta):
 
     @property
     def profile_data(self):
-        return gefolge_web.util.cached_json(lazyjson.File(PROFILES_ROOT / f'{self.snowflake}.json')).value()
+        return profile_data_for_snowflake(self.snowflake)
 
     @property
     def url_part(self):
