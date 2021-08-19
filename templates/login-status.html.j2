@@ -3,7 +3,7 @@
         Angemeldet als {{g.user}}
         <br />
         {% if g.user.is_active %}
-            <a href="{{url_for('profile_edit', mensch=g.user.snowflake)}}">Einstellungen</a> •
+            <a href="{{url_for('profile_edit', person=g.user.snowflake)}}">Einstellungen</a> •
         {% endif %}
         <a href="{{url_for('logout')}}">Abmelden</a>
     {% else %}

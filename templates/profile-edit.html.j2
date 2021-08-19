@@ -16,7 +16,7 @@
         <h2>{{person.username}}<span class="muted">#{{person.discrim}}</span></h1>
     {% endif %}
     {% if g.user is admin or g.user == person %}
-        {{gen_form(profile_form, url_for('profile_edit', mensch=person.snowflake))}}
+        {{gen_form(profile_form, url_for('profile_edit', person=person.snowflake))}}
     {% else %}
         <p>Du bist nicht berechtigt, dieses Profil zu bearbeiten.</p>
     {% endif %}
