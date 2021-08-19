@@ -419,6 +419,10 @@ def setup(app):
         return person.is_guest
 
     @app.template_test()
+    def mensch(person):
+        return person.is_mensch
+
+    @app.template_test()
     def treasurer(person):
         return person.is_treasurer
 
