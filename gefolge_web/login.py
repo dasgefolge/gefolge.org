@@ -266,6 +266,9 @@ class DiscordGuest(DiscordPerson, gefolge_web.person.Guest):
         return GAST in self.profile_data.get('roles')
 
 class AnonymousUser(flask_login.AnonymousUserMixin, User):
+    def __init__(self):
+        pass
+
     def __html__(self):
         return jinja2.Markup('<i>anonym</i>')
 
