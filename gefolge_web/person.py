@@ -1,4 +1,3 @@
-from gefolge_web.login import DiscordPerson
 import flask # PyPI: Flask
 
 class Person:
