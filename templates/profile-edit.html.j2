@@ -1,22 +1,22 @@
 {% extends "base.html.j2" %}
 
-{% block title %}{{mensch.__str__()}} bearbeiten — Das Gefolge{% endblock %}
+{% block title %}{{person.__str__()}} bearbeiten — Das Gefolge{% endblock %}
 
 {% block page_content %}
-    {% if mensch.nickname is none %}
+    {% if person.nickname is none %}
         <h1>
-            {{mensch.username}}<span class="muted">#{{mensch.discrim}}</span>
-            <a href="{{mensch.profile_url}}" class="btn btn-danger">Abbrechen</a>
+            {{person.username}}<span class="muted">#{{person.discrim}}</span>
+            <a href="{{person.profile_url}}" class="btn btn-danger">Abbrechen</a>
         </h1>
     {% else %}
         <h1>
-            {{mensch.nickname}}
-            <a href="{{mensch.profile_url}}" class="btn btn-danger">Abbrechen</a>
+            {{person.nickname}}
+            <a href="{{person.profile_url}}" class="btn btn-danger">Abbrechen</a>
         </h1>
-        <h2>{{mensch.username}}<span class="muted">#{{mensch.discrim}}</span></h1>
+        <h2>{{person.username}}<span class="muted">#{{person.discrim}}</span></h1>
     {% endif %}
-    {% if g.user is admin or g.user == mensch %}
-        {{gen_form(profile_form, url_for('profile_edit', mensch=mensch.snowflake))}}
+    {% if g.user is admin or g.user == person %}
+        {{gen_form(profile_form, url_for('profile_edit', mensch=person.snowflake))}}
     {% else %}
         <p>Du bist nicht berechtigt, dieses Profil zu bearbeiten.</p>
     {% endif %}

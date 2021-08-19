@@ -100,7 +100,16 @@ def wiki_save_hook(namespace, title, text, author, summary):
 with app.app_context():
     # set up submodules
     gefolge_web.api.setup(index)
+    gefolge_web.event.setup(index, app)
+    games_index = gefolge_web.games.setup(index)
+    if ricochet_robots is not None:
+        ricochet_robots.setup(games_index)
+    if spacealert is not None:
+        spacealert.web.setup(games_index)
+    if werewolf_web is not None:
+        werewolf_web.setup(games_index)
     gefolge_web.login.setup(index, app)
+    gefolge_web.util.setup(app)
     flask_wiki.child(
         index,
         db=db,
@@ -110,12 +119,3 @@ with app.app_context():
         user_class=gefolge_web.login.Mensch,
         wiki_name='GefolgeWiki'
     )
-    gefolge_web.event.setup(index, app)
-    games_index = gefolge_web.games.setup(index)
-    gefolge_web.util.setup(app)
-    if ricochet_robots is not None:
-        ricochet_robots.setup(games_index)
-    if spacealert is not None:
-        spacealert.web.setup(games_index)
-    if werewolf_web is not None:
-        werewolf_web.setup(games_index)

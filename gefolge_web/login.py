@@ -426,33 +426,33 @@ def setup(index, app):
         flask_login.logout_user()
         return flask.redirect(flask.url_for('index'))
 
-    @index.child('mensch', 'Menschen', decorators=[mensch_required])
+    @index.child('mensch', 'Menschen und Gäste', decorators=[mensch_required])
     @gefolge_web.util.template('menschen-index')
     def menschen():
         pass
 
-    @menschen.children(Mensch, methods=['GET', 'POST']) #TODO make sure the Mensch class behaves correctly, both as iterator and as constructor
+    @menschen.children(DiscordPerson, methods=['GET', 'POST'])
     @gefolge_web.util.template()
-    def profile(mensch):
+    def profile(person):
         import gefolge_web.event.model
 
-        if not mensch.is_mensch:
-            return gefolge_web.util.render_template('profile-404', mensch=mensch), 404 #TODO profile pages for Discord guests?
-        if flask.g.user.is_admin or flask.g.user.is_treasurer or flask.g.user == mensch:
-            transfer_money_form = TransferMoneyForm(mensch)
+        if not person.is_active:
+            return gefolge_web.util.render_template('profile-404', mensch=person), 404
+        if person.is_mensch and (flask.g.user.is_admin or flask.g.user.is_treasurer or flask.g.user == person):
+            transfer_money_form = TransferMoneyForm(person)
             if transfer_money_form.submit_transfer_money_form.data and transfer_money_form.validate():
                 recipient = transfer_money_form.recipient.data
-                mensch.add_transaction(gefolge_web.util.Transaction.transfer(recipient, -transfer_money_form.amount.data, transfer_money_form.comment.data))
-                recipient.add_transaction(gefolge_web.util.Transaction.transfer(mensch, transfer_money_form.amount.data, transfer_money_form.comment.data))
-                if flask.g.user != mensch:
-                    peter.msg(mensch, '<@{}> ({}) hat {} von deinem Guthaben an <@{}> ({}) übertragen. {}: <https://gefolge.org/me>'.format(flask.g.user.snowflake, flask.g.user, transfer_money_form.amount.data, recipient.snowflake, recipient, 'Kommentar und weitere Infos' if transfer_money_form.comment.data else 'Weitere Infos'))
+                person.add_transaction(gefolge_web.util.Transaction.transfer(recipient, -transfer_money_form.amount.data, transfer_money_form.comment.data))
+                recipient.add_transaction(gefolge_web.util.Transaction.transfer(person, transfer_money_form.amount.data, transfer_money_form.comment.data))
+                if flask.g.user != person:
+                    peter.msg(person, '<@{}> ({}) hat {} von deinem Guthaben an <@{}> ({}) übertragen. {}: <https://gefolge.org/me>'.format(flask.g.user.snowflake, flask.g.user, transfer_money_form.amount.data, recipient.snowflake, recipient, 'Kommentar und weitere Infos' if transfer_money_form.comment.data else 'Weitere Infos'))
                 if flask.g.user != recipient:
-                    peter.msg(recipient, '<@{}> ({}) hat {} an dich übertragen. {}: <https://gefolge.org/me>'.format(mensch.snowflake, mensch, transfer_money_form.amount.data, 'Kommentar und weitere Infos' if transfer_money_form.comment.data else 'Weitere Infos'))
+                    peter.msg(recipient, '<@{}> ({}) hat {} an dich übertragen. {}: <https://gefolge.org/me>'.format(person.snowflake, person, transfer_money_form.amount.data, 'Kommentar und weitere Infos' if transfer_money_form.comment.data else 'Weitere Infos'))
                 return flask.redirect(flask.g.view_node.url)
-            wurstmineberg_transfer_money_form = WurstminebergTransferMoneyForm(mensch)
+            wurstmineberg_transfer_money_form = WurstminebergTransferMoneyForm(person)
             if wurstmineberg_transfer_money_form.submit_wurstmineberg_transfer_money_form.data and wurstmineberg_transfer_money_form.validate():
                 transaction = gefolge_web.util.Transaction.wurstmineberg(wurstmineberg_transfer_money_form.amount.data)
-                mensch.add_transaction(transaction)
+                person.add_transaction(transaction)
                 gefolge_web.util.cached_json(lazyjson.File('/opt/wurstmineberg/money.json'))['transactions'].append({
                     'amount': wurstmineberg_transfer_money_form.amount.data.value,
                     'currency': 'EUR',
@@ -463,8 +463,8 @@ def setup(index, app):
             transfer_money_form = None
             wurstmineberg_transfer_money_form = None
         return {
-            'events': [event for event in gefolge_web.event.model.Event if mensch in event.signups],
-            'mensch': mensch,
+            'events': [event for event in gefolge_web.event.model.Event if person in event.signups],
+            'person': person,
             'transfer_money_form': transfer_money_form,
             'wurstmineberg_transfer_money_form': wurstmineberg_transfer_money_form
         }
@@ -475,41 +475,41 @@ def setup(index, app):
 
     @profile.child('edit', 'bearbeiten', methods=['GET', 'POST'])
     @gefolge_web.util.template('profile-edit')
-    def profile_edit(mensch):
-        if flask.g.user != mensch and not flask.g.user.is_admin:
+    def profile_edit(person):
+        if flask.g.user != person and not flask.g.user.is_admin:
             flask.flash('Du bist nicht berechtigt, dieses Profil zu bearbeiten.', 'error')
             return flask.redirect(flask.g.view_node.parent.url)
-        profile_form = ProfileForm(mensch)
+        profile_form = ProfileForm(person)
         if profile_form.submit_profile_form.data and profile_form.validate():
             gefolge_web.util.log('profileEdit', {
-                'mensch': mensch.snowflake,
+                'mensch': person.snowflake,
                 'nickname': profile_form.nickname.data,
                 'timezone': None if profile_form.timezone.data is None else str(profile_form.timezone.data),
                 'enableDejavu': profile_form.enable_dejavu.data,
                 'eventTimezoneOverride': profile_form.event_timezone_override.data
             })
-            mensch.nickname = profile_form.nickname.data
+            person.nickname = profile_form.nickname.data
             if profile_form.timezone.data is None:
-                if 'timezone' in mensch.userdata:
-                    del mensch.userdata['timezone']
+                if 'timezone' in person.userdata:
+                    del person.userdata['timezone']
             else:
-                mensch.userdata['timezone'] = str(profile_form.timezone.data)
-            mensch.userdata['enableDejavu'] = profile_form.enable_dejavu.data
-            mensch.userdata['eventTimezoneOverride'] = profile_form.event_timezone_override.data
+                person.userdata['timezone'] = str(profile_form.timezone.data)
+            person.userdata['enableDejavu'] = profile_form.enable_dejavu.data
+            person.userdata['eventTimezoneOverride'] = profile_form.event_timezone_override.data
             return flask.redirect(flask.g.view_node.parent.url)
         else:
             return {
-                'mensch': mensch,
+                'person': person,
                 'profile_form': profile_form
             }
 
     @profile.child('reset-key')
-    def reset_api_key(mensch):
-        if flask.g.user.is_admin or flask.g.user == mensch:
-            del mensch.api_key
+    def reset_api_key(person):
+        if flask.g.user.is_admin or flask.g.user == person:
+            del person.api_key
             return flask.redirect(flask.url_for('api_index'))
         else:
-            flask.flash(jinja2.Markup('Du bist nicht berechtigt, den API key für {} neu zu generieren.'.format(mensch.__html__())), 'error')
+            flask.flash(jinja2.Markup('Du bist nicht berechtigt, den API key für {} neu zu generieren.'.format(person.__html__())), 'error')
             return flask.redirect(flask.url_for('api_index'))
 
     @index.redirect('me', decorators=[mensch_required]) #TODO profile pages for Discord guests?

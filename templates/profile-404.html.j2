@@ -1,13 +1,13 @@
 {% extends "base.html.j2" %}
 
-{% block title %}Mensch nicht gefunden — Das Gefolge{% endblock %}
+{% block title %}Person nicht gefunden — Das Gefolge{% endblock %}
 
 {% block page_content %}
-    <h1>Mensch nicht gefunden</h1>
+    <h1>Person nicht gefunden</h1>
     {% if mensch is defined %}
         <p>Der Discord account mit snowflake {{mensch.snowflake}} existiert nicht oder ist nicht im Gefolge.</p>
     {% else %}
         <p>„{{snowflake}}“ ist keine gültige Discord snowflake.</p>
     {% endif %}
-    <p><a href="{{url_for('menschen')}}">Liste aller Gefolgemenschen</a></p>
+    <p><a href="{{url_for('menschen')}}">Liste aller Gefolgemenschen und Gäste in unserem Discord-Server</a></p>
 {% endblock %}

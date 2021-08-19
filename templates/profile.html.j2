@@ -1,42 +1,44 @@
 {% extends "base.html.j2" %}
 
-{% block title %}{{mensch.__str__()}} — Das Gefolge{% endblock %}
+{% block title %}{{person.__str__()}} — Das Gefolge{% endblock %}
 
 {% block page_content %}
-    {% if mensch.nickname is none %}
+    {% if person.nickname is none %}
         <h1>
-            {{mensch.profile_data['username']}}<span class="muted">#{{mensch.discrim}}</span>
-            {% if g.user is admin or g.user == mensch %}<a href="{{url_for('profile_edit', mensch=mensch.snowflake)}}" class="btn btn-primary">Bearbeiten</a>{% endif %}
+            {{person.profile_data['username']}}<span class="muted">#{{person.discrim}}</span>
+            {% if g.user is admin or g.user == person %}<a href="{{url_for('profile_edit', mensch=person.snowflake)}}" class="btn btn-primary">Bearbeiten</a>{% endif %}
         </h1>
     {% else %}
         <h1>
-            {{mensch.nickname}}
-            {% if g.user is admin or g.user == mensch %}<a href="{{url_for('profile_edit', mensch=mensch.snowflake)}}" class="btn btn-primary">Bearbeiten</a>{% endif %}
+            {{person.nickname}}
+            {% if g.user is admin or g.user == person %}<a href="{{url_for('profile_edit', mensch=person.snowflake)}}" class="btn btn-primary">Bearbeiten</a>{% endif %}
         </h1>
-        <h2>{{mensch.profile_data['username']}}<span class="muted">#{{mensch.discrim}}</span></h1>
+        <h2>{{person.profile_data['username']}}<span class="muted">#{{person.discrim}}</span></h1>
     {% endif %}
-    <p>Profil für Discord snowflake {{mensch.snowflake}}. (<a href="https://discord.com/users/{{mensch.snowflake}}/">Discord-Profil</a>)</p>
-    {% if mensch.twitch is not none %}
-        <p>Twitch: <a href="https://twitch.tv/{{mensch.twitch['login']}}">{{mensch.twitch['display_name']}}</a>{#TODO Option, die Twitch-Verknüpfung zu löschen #}</p>
-    {% elif g.user == mensch %}
-        <p><a href="{{url_for('twitch.login')}}">Twitch-Konto verknüpfen</a> (dann schreibt Peter im <a href="https://discord.com/channels/355761290809180170/668518137334857728">#twitch</a>, wenn du streamst)</p>
+    <p>{% if person is mensch %}Gefolge-Mensch{% else %}Gast{% endif %}, Discord snowflake {{person.snowflake}}. (<a href="https://discord.com/users/{{person.snowflake}}/">Discord-Profil</a>)</p>
+    {% if person is mensch %}
+        {% if person.twitch is not none %}
+            <p>Twitch: <a href="https://twitch.tv/{{person.twitch['login']}}">{{person.twitch['display_name']}}</a>{#TODO Option, die Twitch-Verknüpfung zu löschen #}</p>
+        {% elif g.user == person %}
+            <p><a href="{{url_for('twitch.login')}}">Twitch-Konto verknüpfen</a> (dann schreibt Peter im <a href="https://discord.com/channels/355761290809180170/668518137334857728">#twitch</a>, wenn du streamst)</p>
+        {% endif %}
     {% endif %}
     <h1>Events</h1>
     <ul>
         {% for event in events | reverse %}
-            <li>{{event}} (<a href="{{url_for('event_profile', event=event.event_id, person=mensch.snowflake)}}">Profil</a>)</li>
+            <li>{{event}} (<a href="{{url_for('event_profile', event=event.event_id, person=person.snowflake)}}">Profil</a>)</li>
         {% else %}
-            {{mensch}} ist für keine <a href="{{url_for('events_index')}}">events</a> angemeldet.
+            {{person}} ist für keine <a href="{{url_for('events_index')}}">events</a> angemeldet.
         {% endfor %}
     </ul>
-    {% if g.user is admin or g.user is treasurer or g.user == mensch %}
+    {% if person is mensch and (g.user is admin or g.user is treasurer or g.user == person) %}
         <h1>Guthaben</h1>
         <p>Mit diesem Guthaben kannst du dich z.B. für <a href="{{url_for('events_index')}}">events</a> anmelden oder <a href="{{url_for('werewolf_cards')}}">Werwölfe-Karten sponsern</a>.</p>
         <p>
-            Aktuelles Guthaben: {{mensch.balance}}.
-            {% if mensch.balance.value > 0 %}
+            Aktuelles Guthaben: {{person.balance}}.
+            {% if person.balance.value > 0 %}
                 Wenn du dein Guthaben ausgezahlt haben möchtest, kontaktiere bitte {{g.treasurer}}.
-            {% elif mensch.balance.value < 0 and mensch is not treasurer %}
+            {% elif person.balance.value < 0 and person is not treasurer %}
                 Zahle die Schulden bitte möglichst bald zurück.
             {% endif %}
         </p>
@@ -51,7 +53,7 @@
                         Name: {{g.treasurer.userdata['konto']['name']}}<br />
                         IBAN: {{g.treasurer.userdata['konto']['iban']}}<br />
                         BIC: {{g.treasurer.userdata['konto']['bic']}}<br />
-                        Verwendungszweck: gefolge.org {{mensch.snowflake}}
+                        Verwendungszweck: gefolge.org {{person.snowflake}}
                     </p>
                     <p>Falls deine Überweisung wegen wiederholtem Verwendungszweck abgelehnt wird, kannst du noch irgendwas dahinter schreiben (bitte mit Leerzeichen getrennt).</p>
                 </div>
@@ -60,22 +62,22 @@
                 <div class="col-md-{{(12 / num_cols) | int}}">
                     <h3>PayPal</h3>
                     <p><a href="https://www.paypal.me/{{g.treasurer.userdata['payPal']}}">paypal.me/{{g.treasurer.userdata['payPal']}}</a></p>
-                    <p>Bitte schreibe „gefolge.org {{mensch.snowflake}}“ in die Mitteilung.</p>
+                    <p>Bitte schreibe „gefolge.org {{person.snowflake}}“ in die Mitteilung.</p>
                 </div>
             {% endif %}
         </div>
         <h2>Übertragen</h2>
         <p>Du kannst Geld von deinem Guthaben an andere Gefolgemenschen übertragen.</p>
-        {% if g.user is admin or g.user is treasurer or mensch.balance.value > 0 %}
+        {% if g.user is admin or g.user is treasurer or person.balance.value > 0 %}
             <p>Wenn du Geld an jemand übertragen hast, kann nur diese Person es dir zurück geben. Achte also bitte genau darauf, dass du den richtigen Empfänger wählst!</p>
             {{gen_form(transfer_money_form, g.view_node.url)}}
         {% else %}
             <p>Du hast aber im Moment kein Guthaben.</p>
         {% endif %}
-        {% if mensch.is_wurstmineberg_member %}
+        {% if person.is_wurstmineberg_member %}
             <h2>Wurstmineberg</h2>
             <p>Wenn du möchtest, kannst du Geld von deinem Guthaben für die Finanzierung des server verwenden, auf dem Wurstmineberg läuft. Details siehe <a href="https://wurstmineberg.de/about#finance">Wurstmineberg website</a>.</p>
-            {% if g.user is admin or g.user is treasurer or mensch.balance.value > 0 %}
+            {% if g.user is admin or g.user is treasurer or person.balance.value > 0 %}
                 {{gen_form(wurstmineberg_transfer_money_form, g.view_node.url)}}
             {% else %}
                 <p>Du hast aber im Moment kein Guthaben.</p>
@@ -83,7 +85,7 @@
         {% endif %}
         <h2>Transaktionen</h2>
         <ul>
-            {% for transaction in mensch.transactions | reverse %}
+            {% for transaction in person.transactions | reverse %}
                 <li>{{transaction.time | dmy_hms}}: {{transaction}}, {{transaction.amount}}{{transaction.details}}</li>
             {% endfor %}
         </ul>

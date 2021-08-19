@@ -1,8 +1,9 @@
 {% extends "base.html.j2" %}
 
-{% block title %}Menschen — Das Gefolge{% endblock %}
+{% block title %}Menschen und Gäste — Das Gefolge{% endblock %}
 
 {% block page_content %}
+    <p><a href="#guests">zu den Gästen</a></p>
     <h1>Menschen</h1>
     <table class="table table-responsive">
         <thead>
@@ -18,26 +19,58 @@
         </thead>
         <tbody>
             {% for profile in g.view_node.children %}
-                {% set mensch = profile.var %}
-                <tr>
-                    <td>{{mensch}}</td>
-                    <td>{{mensch.__str__()}}</td>
-                    <td>{{mensch.snowflake | melt | dmy_hms}}</td>
-                    {% if mensch.profile_data['joined'] is none %}
-                        <td class="warning">
-                            <i title="Daten fehlen" class="fa fa-fw fa-question"></i>
-                        </td>
-                    {% else %}
-                        <td>{{mensch.profile_data['joined'] | dmy_hms}}</td>
-                    {% endif %}
-                    {% if g.user is admin or g.user is treasurer %}
-                        <td style="text-align: right;" {% if mensch.balance.value < 0 %}class="danger"{% endif %}>
-                            {% if mensch.balance.value != 0 %}
-                                {{mensch.balance}}
-                            {% endif %}
-                        </td>
-                    {% endif %}
-                </tr>
+                {% if profile is mensch %}
+                    {% set mensch = profile.var %}
+                    <tr>
+                        <td>{{mensch}}</td>
+                        <td>{{mensch.__str__()}}</td>
+                        <td>{{mensch.snowflake | melt | dmy_hms}}</td>
+                        {% if mensch.profile_data['joined'] is none %}
+                            <td class="warning">
+                                <i title="Daten fehlen" class="fa fa-fw fa-question"></i>
+                            </td>
+                        {% else %}
+                            <td>{{mensch.profile_data['joined'] | dmy_hms}}</td>
+                        {% endif %}
+                        {% if g.user is admin or g.user is treasurer %}
+                            <td style="text-align: right;" {% if mensch.balance.value < 0 %}class="danger"{% endif %}>
+                                {% if mensch.balance.value != 0 %}
+                                    {{mensch.balance}}
+                                {% endif %}
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+    <h1 id="guests">Gäste</h1>
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>Gast</th>
+                <th>Discord username</th>
+                <th>Auf Discord seit</th>
+                <th>Im Gefolge Discord server seit</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for profile in g.view_node.children %}
+                {% if profile is guest %}
+                    {% set guest = profile.var %}
+                    <tr>
+                        <td>{{guest}}</td>
+                        <td>{{guest.__str__()}}</td>
+                        <td>{{guest.snowflake | melt | dmy_hms}}</td>
+                        {% if guest.profile_data['joined'] is none %}
+                            <td class="warning">
+                                <i title="Daten fehlen" class="fa fa-fw fa-question"></i>
+                            </td>
+                        {% else %}
+                            <td>{{guest.profile_data['joined'] | dmy_hms}}</td>
+                        {% endif %}
+                    </tr>
+                {% endif %}
             {% endfor %}
         </tbody>
     </table>
