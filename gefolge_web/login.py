@@ -170,7 +170,7 @@ class DiscordPerson(flask_login.UserMixin, User, metaclass=DiscordPersonMeta):
     def username(self):
         return self.profile_data['username']
 
-class MenschMeta(type):
+class MenschMeta(DiscordPersonMeta):
     def __iter__(self):
         # iterating over the Mensch class yields everyone with the role
         return (
