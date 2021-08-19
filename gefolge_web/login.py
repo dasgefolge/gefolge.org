@@ -163,6 +163,10 @@ class DiscordPerson(flask_login.UserMixin, User, metaclass=DiscordPersonMeta):
         return profile_data_for_snowflake(self.snowflake)
 
     @property
+    def profile_url(self):
+        return flask.url_for('profile', person=str(self.snowflake))
+
+    @property
     def url_part(self):
         return str(self.snowflake)
 
@@ -234,10 +238,6 @@ class Mensch(DiscordPerson, metaclass=MenschMeta):
     @property
     def is_active(self):
         return MENSCH in self.profile_data.get('roles')
-
-    @property
-    def profile_url(self): #TODO profile pages for guests?
-        return flask.url_for('profile', mensch=str(self.snowflake))
 
     @property
     def transactions(self):
