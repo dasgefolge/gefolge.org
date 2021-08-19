@@ -75,7 +75,7 @@ class DiscordPerson(flask_login.UserMixin, User, metaclass=DiscordPersonMeta):
         return hash(self.snowflake)
 
     def __html__(self):
-        return jinja2.Markup(f'<span title="{self}">@{jinja2.escape(self.name)}</span>')
+        return jinja2.Markup(f'<a title="{self}" href="{self.profile_url}">@{jinja2.escape(self.name)}</a>')
 
     def __repr__(self):
         return f'gefolge_web.login.DiscordPerson({self.snowflake!r})'
@@ -200,9 +200,6 @@ class Mensch(DiscordPerson, metaclass=MenschMeta):
         snowflake = gefolge_web.util.cached_json(lazyjson.File(gefolge_web.util.CONFIG_PATH))['web'].get('treasurer')
         if snowflake is not None:
             return cls(snowflake)
-
-    def __html__(self):
-        return jinja2.Markup(f'<a title="{self}" href="{self.profile_url}">@{jinja2.escape(self.name)}</a>')
 
     def __repr__(self):
         return f'gefolge_web.login.Mensch({self.snowflake!r})'
