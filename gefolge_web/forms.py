@@ -132,8 +132,8 @@ class PersonField(wtforms.SelectField):
                     self.data = None
                 else:
                     self.data = self.value_constructor(valuelist[0])
-            except (TypeError, ValueError):
-                raise ValueError('Invalid choice: could not coerce')
+            except (TypeError, ValueError) as e:
+                raise ValueError(f'Invalid choice: {e}')
 
     def pre_validate(self, form):
         if self.optional_label is not None:
@@ -146,7 +146,7 @@ class PersonField(wtforms.SelectField):
             raise ValueError('Not a valid choice')
 
     def value_constructor(self, snowflake):
-        return more_itertools.one(person for person in self.people if person.snowflake == snowflake)
+        return more_itertools.one(person for person in self.people if person.snowflake == int(snowflake))
 
 class RadioFieldWithSubfields(wtforms.RadioField): # subfield in the sense that there can be additional fields grouped with each option, not in the sense used by WTForms
     def __init__(self, label, validators=None, choices=None, *, _form=None, **kwargs):
@@ -192,8 +192,8 @@ class TimezoneField(wtforms.SelectField):
                     self.data = None
                 else:
                     self.data = self.value_constructor(valuelist[0])
-            except (TypeError, ValueError):
-                raise ValueError('Invalid choice: could not coerce')
+            except (TypeError, ValueError) as e:
+                raise ValueError(f'Invalid choice: {e}')
 
     def pre_validate(self, form):
         if self.include_auto:
