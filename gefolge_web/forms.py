@@ -108,10 +108,16 @@ class PersonField(wtforms.SelectField):
 
     #TODO actually display as a combobox (text field with dropdown menu)
 
-    def __init__(self, label, choices, validators=[], *, optional_label=None, **kwargs):
+    def __init__(self, label, choices, validators=[], *, default=None, optional_label=None, **kwargs):
         self.optional_label = optional_label
         self.people = list(choices)
-        super().__init__(label, validators, choices=([] if self.optional_label is None else [(0, optional_label)]) + [(person.snowflake, person.long_name) for person in self.people], **kwargs)
+        super().__init__(
+            label,
+            validators,
+            choices=([] if self.optional_label is None else [(0, optional_label)]) + [(person.snowflake, person.long_name) for person in self.people],
+            default=None if default is None else default.snowflake,
+            **kwargs
+        )
 
     def iter_choices(self):
         if self.optional_label is not None:
