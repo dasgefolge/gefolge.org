@@ -144,7 +144,7 @@ def setup(index, app):
                         amount = min(anzahlung_extra, iter_anzahlung - event.anzahlung)
                     else:
                         amount = min(anzahlung_extra, iter_anzahlung % event.anzahlung)
-                    event.attendee_data(iter_mensch)['anzahlung'] -= amount.value
+                    event.attendee_data(iter_mensch)['anzahlung'] = event.attendee_data(iter_mensch)['anzahlung'].value() - amount.value
                     iter_mensch.add_transaction(gefolge_web.util.Transaction.anzahlung_return(event, iter_anzahlung - amount - event.anzahlung, amount))
             event.signup(flask.g.user, anzahlung)
             handle_profile_edit(event, flask.g.user, profile_form)
