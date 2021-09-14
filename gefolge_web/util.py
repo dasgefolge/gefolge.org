@@ -132,7 +132,7 @@ class Transaction:
             'type': 'eventAnzahlungReturn',
             'amount': amount.value,
             'extraRemaining': remaining.value,
-            'time': '{:%Y-%m-%d H:%M:%S}'.format(now(pytz.utc)),
+            'time': '{:%Y-%m-%dT%H:%M:%SZ}'.format(now(pytz.utc)),
             'event': event.event_id
         })
 
