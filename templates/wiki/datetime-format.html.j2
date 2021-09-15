@@ -1,0 +1,5 @@
+{%- if g.user.timezone is none -%}
+    <span class="dt-format" data-timestamp="{{utc_timestamp.isoformat()}}" data-format="{{format}}"><abbr title="{{local_timestamp.tzinfo}}">{{local_timestamp.strftime(format)}}</abbr></span>
+{%- else -%}
+    <span title="{{g.user.timezone}}">{{local_timestamp.astimezone(g.user.timezone).strftime(format)}}</span>
+{%- endif -%}
