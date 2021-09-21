@@ -90,7 +90,7 @@ class DiscordPerson(flask_login.UserMixin, User, metaclass=DiscordPersonMeta):
     def by_tag(cls, username, discrim):
         # used in flask_wiki
         for person in cls:
-            if username == person.username and discrim == person.discrim:
+            if username == person.username and f'{discrim:>04}' == person.discrim:
                 return person
 
     def api_key_inner(self, *, create, exclude=None):
