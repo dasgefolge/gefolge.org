@@ -238,8 +238,8 @@ class Transaction:
                 return jinja2.Markup(', Details:<br /><ul>\n{}\n</ul>'.format('\n'.join(
                     '<li>{}{}: {}</li>'.format(detail['label'], ' {}'.format(event.person(detail['snowflake']).__html__()) if 'snowflake' in detail else '', {
                         'flat': lambda detail: ('{} ({})'.format(Euro(detail['amount']), jinja2.escape(detail['note'])) if 'note' in detail else '{}'.format(Euro(detail['amount']))),
-                        'even': lambda detail: '{} ({} / {} Menschen)'.format(Euro(detail['amount']), Euro(detail['total']), detail['people']),
-                        'weighted': lambda detail: '{} ({} * {} / {} Übernachtungen)'.format(Euro(detail['amount']), Euro(detail['total']), detail['nightsAttended'], detail['nightsTotal'])
+                        'even': lambda detail: '{} ({} / {} Menschen)'.format(Euro(detail['amount']), Euro(detail['total']), format_number(detail['people'])),
+                        'weighted': lambda detail: '{} ({} × {} / {} Übernachtungen)'.format(Euro(detail['amount']), Euro(detail['total']), format_number(detail['nightsAttended']), format_number(detail['nightsTotal']))
                     }[detail['type']](detail))
                     for detail in self.json_data['details']
                 )))
@@ -266,6 +266,11 @@ def date_range(start, end):
     while date < end:
         yield date
         date += datetime.timedelta(days=1)
+
+def format_number(n):
+    if n == int(n):
+        n = int(n) # remove trailing '.0'
+    return str(n).replace('-', '−').replace('.', ',')
 
 def jlog_append(line, log_path):
     with log_path.open('a') as log_f:
