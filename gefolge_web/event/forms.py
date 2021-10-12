@@ -113,17 +113,21 @@ def ProfileForm(event, person):
 
     if gefolge_web.util.now(event.timezone) < event.end and event.data.get('covidTestRequired'):
         Form.section_covid = gefolge_web.forms.FormSection('COVID-19')
-        Form.covid_status = wtforms.RadioField(
-            'Status',
-            [wtforms.validators.InputRequired()],
-            choices=[
-                ('geimpftGenesen', 'Ich gelte zum Zeitpunkt meiner Anreise als gegen COVID-19 immunisiert (geimpft und/oder genesen) und bringe einen entsprechenden (evtl. digitalen) Nachweis mit.'),
-                ('test', 'Ich bin nicht gegen COVID-19 immunisiert. Mir ist bekannt, dass ich bei meiner Ankunft ein tagesaktuelles negatives Testergebnis vorzeigen muss.')
-            ],
-            default=person_data.get('covidStatus')
-        )
-        if person not in event.signups:
-            Form.covid_status_notice = gefolge_web.forms.FormText('Falls sich dein Status später ändert (z.B. weil du an COVID-19 erkrankst oder einen Impftermin absagen musst), kannst du diese Angabe in deinem Eventprofil jederzeit anpassen.')
+        if event.data['covidTestRequired'].value() == 'geimpftGenesen':
+            if person not in event.signups:
+                Form.covid_immune = wtforms.BooleanField('Ich gelte zum Zeitpunkt meiner Anreise als gegen COVID-19 immunisiert (geimpft und/oder genesen) und bringe einen entsprechenden Nachweis (Digitales COVID-Zertifikat der EU) mit.', [wtforms.validators.DataRequired()])
+        else:
+            Form.covid_status = wtforms.RadioField(
+                'Status',
+                [wtforms.validators.InputRequired()],
+                choices=[
+                    ('geimpftGenesen', 'Ich gelte zum Zeitpunkt meiner Anreise als gegen COVID-19 immunisiert (geimpft und/oder genesen) und bringe einen entsprechenden Nachweis (Digitales COVID-Zertifikat der EU) mit.'),
+                    ('test', 'Ich bin nicht gegen COVID-19 immunisiert. Mir ist bekannt, dass ich bei meiner Ankunft ein tagesaktuelles negatives Testergebnis vorzeigen muss.')
+                ],
+                default=person_data.get('covidStatus')
+            )
+            if person not in event.signups:
+                Form.covid_status_notice = gefolge_web.forms.FormText('Falls sich dein Status später ändert (z.B. weil du an COVID-19 erkrankst oder einen Impftermin absagen musst), kannst du diese Angabe in deinem Eventprofil jederzeit anpassen.')
 
     def header_anmeldung():
         if not hasattr(Form, 'section_signup'):
@@ -140,7 +144,7 @@ def ProfileForm(event, person):
             gefolge_web.forms.EuroRange(max=event.ausfall - event.anzahlung_total, message='Wir benötigen nur noch {max}, um die Ausfallgebühr abzudecken.'),
             gefolge_web.forms.EuroRange(max=person.balance, message=jinja2.Markup(f'Dein aktuelles Guthaben ist {flask.g.user.balance}. Auf <a href="{flask.g.user.profile_url}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.'))
         ], default=event.anzahlung)
-    if gefolge_web.util.now(event.timezone) < event.end and person == flask.g.user and event.location is not None and event.location.hausordnung is not None and not person_data.get('hausordnung', False): #TODO track last-changed event and hide if current version has already been accepted
+    if gefolge_web.util.now(event.timezone) < event.end and person == flask.g.user and event.location is not None and event.location.hausordnung is not None and not person_data.get('hausordnung', False): #TODO track last-changed event and hide if current version has already been accepted. Also show last-changed date
         header_anmeldung()
         Form.hausordnung = wtforms.BooleanField(jinja2.Markup('Ich habe die <a href="{}">Hausordnung</a> zur Kenntnis genommen.'.format(event.location.hausordnung)), [wtforms.validators.DataRequired()])
 
