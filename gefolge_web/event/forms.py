@@ -111,7 +111,7 @@ def ProfileForm(event, person):
     else:
         Form.section_programm_intro = gefolge_web.forms.FormText(jinja2.Markup('Nachdem du dich angemeldet hast, kannst du dich auf der <a href="{}">Programmseite</a> für Programmpunkte als interessiert eintragen.'.format(flask.url_for('event_programm', event=event.event_id))))
 
-    if gefolge_web.util.now(event.timezone) < event.end and event.data.get('covidTestRequired'):
+    if gefolge_web.util.now(event.timezone) < event.end and event.data.get('covidTestRequired') and (event.data['covidTestRequired'].value() != 'geimpftGenesen' or person not in event.signups):
         Form.section_covid = gefolge_web.forms.FormSection('COVID-19')
         if event.data['covidTestRequired'].value() == 'geimpftGenesen':
             if person not in event.signups:
