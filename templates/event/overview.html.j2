@@ -86,29 +86,38 @@
     <h1 id="signup">Anmeldung</h1>
     {% if event.location is not none and event.location.is_online %}
         <p>Es gibt keine Anmeldung für das event insgesamt. Du kannst dich einfach für <a href="{{(g.view_node / 'programm').url}}">Programmpunkte</a> als interessiert eintragen.</p>
-    {% elif g.user in event.menschen %}
-        <p>Du hast dich am {{event.attendee_data(g.user)['signup'] | dmy(event.timezone)}} angemeldet.</p>
+    {% elif g.user in event.signups %}
+        <p>
+            {% if g.user.is_guest %}
+                {{event.proxy(g.user)}} hat
+            {% else %}
+                Du hast
+            {% endif %}
+            dich am {{event.attendee_data(g.user)['signup'] | dmy(event.timezone)}} angemeldet.
+        </p>
         <p>Du kannst <a href="{{(g.view_node / 'mensch' / g.user).url}}">deine Anmeldungsdaten</a> jederzeit <a href="{{(g.view_node / 'mensch' / g.user / 'edit').url}}">bearbeiten</a>. Einige Teile der Eventanmeldung sind noch in Arbeit (z.B. Bettwäsche-Börse). Wenn etwas Neues fertig ist, wirst du auf Discord angepingt.</p> {#TODO#}
-        {% if event.guests | selectattr("via", "equalto", g.user) | length > 0 %}
-            <h2>Gäste</h2>
-            <ul>
-                {% for guest in event.guests | selectattr("via", "equalto", g.user) %}
-                    {% if guest in event.signups %}
-                        <li><a href="{{(g.view_node / 'mensch' / guest).url}}">{{guest}}</a>: Anmeldung bestätigt</li>
-                    {% else %}
-                        <li>{{guest}}: noch nicht angemeldet</li> {#TODO link to event/guest-confirm.html.j2 #}
-                    {% endif %}
-                {% endfor %}
-            </ul>
-            {% if event.guest_signup_block_reason is not none %}
+        {% if g.user in event.menschen %}
+            {% if event.guests | selectattr("via", "equalto", g.user) | length > 0 %}
+                <h2>Gäste</h2>
+                <ul>
+                    {% for guest in event.guests | selectattr("via", "equalto", g.user) %}
+                        {% if guest in event.signups %}
+                            <li><a href="{{(g.view_node / 'mensch' / guest).url}}">{{guest}}</a>: Anmeldung bestätigt</li>
+                        {% else %}
+                            <li>{{guest}}: noch nicht angemeldet</li> {#TODO link to event/guest-confirm.html.j2 #}
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+                {% if event.guest_signup_block_reason is not none %}
+                    {{event.guest_signup_block_reason | markdown}}
+                {% elif g.user is admin or (event.end is not none and event.end > g.now) %}
+                    <p><a href="{{(g.view_node / 'guest').url}}">Weiteren Gast anmelden</a></p>
+                {% endif %}
+            {% elif event.guest_signup_block_reason is not none %}
                 {{event.guest_signup_block_reason | markdown}}
             {% elif g.user is admin or (event.end is not none and event.end > g.now) %}
-                <p><a href="{{(g.view_node / 'guest').url}}">Weiteren Gast anmelden</a></p>
+                <p><a href="{{(g.view_node / 'guest').url}}">Gast anmelden</a></p>
             {% endif %}
-        {% elif event.guest_signup_block_reason is not none %}
-            {{event.guest_signup_block_reason | markdown}}
-        {% elif g.user is admin or (event.end is not none and event.end > g.now) %}
-            <p><a href="{{(g.view_node / 'guest').url}}">Gast anmelden</a></p>
         {% endif %}
     {% else %}
         {% if 'capacity' in event.location.data and event.free() <= 0 %}

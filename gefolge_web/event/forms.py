@@ -206,11 +206,19 @@ class ProgrammDeleteForm(flask_wtf.FlaskForm):
 def SignupGuestForm(event):
     def validate_guest_name(form, field):
         name = field.data.strip()
-        if any(str(guest) == name for guest in event.guests):
-            raise wtforms.validators.ValidationError('Ein Gast mit diesem Namen ist bereits angemeldet.')
+        if form.person.data is None:
+            if len(name) == 0:
+                raise wtforms.validators.ValidationError('Bitte entweder hier einen Namen angeben oder oben einen Discord-Account auswählen.')
+            if any(str(guest) == name for guest in event.guests):
+                raise wtforms.validators.ValidationError('Ein Gast mit diesem Namen ist bereits angemeldet.')
+        else:
+            if len(name) > 0:
+                raise wtforms.validators.ValidationError('Dieses Feld ist dazu da, Leute ohne Discord-Account anzumelden. Für Discord-Gäste sollte es leer gelassen werden. Seinen Anzeigenamen kann ein Discord-Gast selbst ändern, entweder in Discord im Servermenü oder in den Einstellungen auf gefolge.org.')
 
     class Form(flask_wtf.FlaskForm):
-        name = wtforms.StringField('Name', [wtforms.validators.DataRequired(), validate_guest_name])
+        #TODO use radio group with fields (like in Travel section of ProfileForm)
+        person = gefolge_web.forms.PersonField('Discord-Account', (guest for guest in gefolge_web.login.DiscordGuest if guest not in event.guests), optional_label='(nicht im Gefolge-Discord)')
+        name = wtforms.StringField('Name', [validate_guest_name])
         submit_signup_guest_form = wtforms.SubmitField('Anmelden' if event.anzahlung == gefolge_web.util.Euro() or event.orga('Abrechnung').is_treasurer else 'Weiter')
 
     return Form()

@@ -1,6 +1,7 @@
 import datetime
 import itertools
 import math
+import random
 import re
 import urllib.parse
 
@@ -200,7 +201,28 @@ def setup(index, app):
                 flask.flash(event.guest_signup_block_reason, 'error')
                 return flask.redirect(flask.g.view_node.url)
             guest_name = signup_guest_form.name.data.strip()
-            guest = event.signup_guest(flask.g.user, guest_name)
+            if len(guest_name) > 0:
+                # EventGuest
+                if any(str(guest) == guest_name for guest in event.guests):
+                    raise ValueError('Duplicate guest name: {!r}'.format(guest_name))
+                available_ids = [i for i in range(1, 100) if not any(guest.snowflake == i for guest in event.guests)]
+                guest_id = random.choice(available_ids)
+            else:
+                # DiscordGuest
+                guest = signup_guest_form.person.data
+                guest_id = guest.snowflake
+            signup_data = {
+                'id': guest_id,
+                'via': flask.g.user.snowflake
+            }
+            if len(guest_name) > 0:
+                signup_data['name'] = guest_name
+            gefolge_web.util.log('eventSignupGuest', {'event': event.event_id, **signup_data})
+            event.data['menschen'].append(signup_data)
+            if event.anzahlung == gefolge_web.util.Euro() or event.orga('Abrechnung').is_treasurer:
+                peter.channel_msg(event.channel, f'<@{flask.g.user.snowflake}> hat {guest_name or f"<@{guest.snowflake}>"} für {event} angemeldet')
+            if len(guest_name) > 0:
+                guest = gefolge_web.event.model.EventGuest(event, guest_id)
             if event.anzahlung == gefolge_web.util.Euro() or event.orga('Abrechnung').is_treasurer:
                 if event.anzahlung > gefolge_web.util.Euro():
                     if flask.g.user.balance < event.anzahlung and not (flask.g.user.is_admin or flask.g.user.is_treasurer):

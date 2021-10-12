@@ -6,7 +6,7 @@
     {% if event.location is not none and event.location.is_online %}
         <p>Für online events können keine Gäste angemeldet werden.</p>
     {% elif event.end > g.now or g.user is admin %}
-        <p>Hier kannst du Gäste für {{event}} anmelden.</p>
+        <p>Hier kannst du Gäste für {{event}} anmelden. Das können entweder Leute auf unserem Discord-Server mit der Rolle „Gast“ sein, die ihre Anmeldung auch selbst verwalten können, oder andere Leute, deren Anmeldung nur du verwaltest.</p>
         {% if 'capacity' in event.location.data and event.free() <= 0 %}
             <div class="alert alert-warning">
                 <strong>Achtung:</strong> Das Haus ist zumindest zeitweise schon voll. Du kannst den Gast trotzdem anmelden. Er kommt dann auf die Warteliste. Wenn jemand absagt, rückt der erste Mensch auf der Warteliste nach. {#TODO check for free nights, adjust message accordingly #}
