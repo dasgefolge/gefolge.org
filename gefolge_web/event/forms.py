@@ -169,7 +169,7 @@ def ProgrammForm(event, programmpunkt):
     Form.subtitle = wtforms.StringField('Untertitel', [wtforms.validators.Length(max=40)], default='' if programmpunkt is None else programmpunkt.subtitle)
     Form.subtitle_notice = gefolge_web.forms.FormText('Wird auf dem info-beamer und im Zeitplan angezeigt.')
     if programmpunkt is None or flask.g.user.is_admin or flask.g.user == event.orga(programmpunkt.orga_role):
-        Form.orga = gefolge_web.forms.PersonField('Orga', gefolge_web.login.Mensch if event.location is not None and event.location.is_online else event.signups, optional_label='Orga gesucht', default=None if programmpunkt is None else programmpunkt.orga)
+        Form.orga = gefolge_web.forms.PersonField('Orga', gefolge_web.login.Mensch if event.location is not None and event.location.is_online else filter(lambda person: person.is_mensch, event.signups), optional_label='Orga gesucht', default=None if programmpunkt is None else programmpunkt.orga)
     elif flask.g.user == programmpunkt.orga:
         if event.location is not None and event.location.is_online:
             programm_orga = gefolge_web.login.Mensch.admin()

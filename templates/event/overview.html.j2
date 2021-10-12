@@ -119,6 +119,8 @@
                 <p><a href="{{(g.view_node / 'guest').url}}">Gast anmelden</a></p>
             {% endif %}
         {% endif %}
+    {% elif g.user.is_guest %}
+        <p>Als Gast kannst du dich nicht selbst anmelden.</p>
     {% else %}
         {% if 'capacity' in event.location.data and event.free() <= 0 %}
             <div class="alert alert-warning">

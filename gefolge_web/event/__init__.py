@@ -1,4 +1,5 @@
 import datetime
+import functools
 import itertools
 import math
 import random
@@ -6,6 +7,7 @@ import re
 import urllib.parse
 
 import flask # PyPI: Flask
+import flask_login # PyPI: Flask-Login
 import jinja2 # PyPI: Jinja2
 import more_itertools # PyPI: more-itertools
 import pytz # PyPI: pytz
@@ -94,8 +96,18 @@ def handle_programm_edit(programmpunkt, programm_form, is_new):
     if hasattr(programm_form, 'css_class'):
         programmpunkt.css_class = programm_form.css_class.data
 
+def mensch_or_signup_required(f):
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        if not flask.g.user.is_mensch and flask.g.user not in flask.g.view_node.kwargs['event'].signups:
+            return flask.make_response(('Sie haben keinen Zugriff auf diesen Inhalt, weil Sie nicht für dieses event angemeldet sind und nicht im Gefolge Discord server sind oder nicht als Gefolgemensch verifiziert sind.', 403, [])) #TODO template
+        return f(*args, **kwargs)
+
+    return flask_login.login_required(wrapper)
+
 def setup(index, app):
-    @index.child('event', 'events', decorators=[gefolge_web.login.mensch_required])
+    @index.child('event', 'events')
+    @gefolge_web.login.mensch_required # children use mensch_or_signup_required
     @gefolge_web.util.template('event.index')
     def events_index():
         now = gefolge_web.util.now()
@@ -107,7 +119,7 @@ def setup(index, app):
             'past_events': sorted(past_events, reverse=True)
         }
 
-    @events_index.children(gefolge_web.event.model.Event, methods=['GET', 'POST'])
+    @events_index.children(gefolge_web.event.model.Event, methods=['GET', 'POST'], decorators=[mensch_or_signup_required])
     @gefolge_web.util.template('event.overview')
     def event_page(event):
         profile_form = gefolge_web.event.forms.ProfileForm(event, flask.g.user)

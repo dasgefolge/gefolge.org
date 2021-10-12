@@ -24,7 +24,7 @@
 {% block page_content %}
     <p>Die <strong>gefolge.org API</strong> ist ein Teil der website, der für Nutzung mit apps, die kein web browser sind, gedacht ist. Mit deinem API key kannst du die API auch ohne Anmeldung über Discord verwenden. Falls du nach Anmeldedaten gefragt wirst, verwende <code>api</code> als Benutzername und deinen API key als Passwort.</p>
     <p>Dein API key: <code class="spoiler">{{g.user.api_key}}</code></p>
-    <p>Falls dein API key in falsche Hände gerät, kannst du jederzeit einen <a class="btn btn-primary" href="{{url_for('reset_api_key', mensch=g.user.snowflake)}}">neuen API key generieren</a>. Du musst dich dann überall, wo du dich mit dem alten API key angemeldet hast, mit dem neuen anmelden.</p>
+    <p>Falls dein API key in falsche Hände gerät, kannst du jederzeit einen <a class="btn btn-primary" href="{{url_for('reset_api_key', person=g.user.snowflake)}}">neuen API key generieren</a>. Du musst dich dann überall, wo du dich mit dem alten API key angemeldet hast, mit dem neuen anmelden.</p>
     <h1>Endpoints</h1>
     <ul>
         {% for node in g.view_node.children recursive %}
