@@ -46,6 +46,7 @@ def ProfileForm(event, person):
     class Form(flask_wtf.FlaskForm):
         pass
 
+    editor_data = event.attendee_data(flask.g.user)
     person_data = event.attendee_data(person)
     if person_data is None:
         person_data = {'id': person.snowflake}
@@ -86,6 +87,8 @@ def ProfileForm(event, person):
             (str(room), room.description)
             for room in event.rooms
             if person in room.people
+            or flask.g.user.is_admin
+            or editor_data is not None and len(editor_data.get('orga', [])) > 0
             or room.free > 0 and not room.reserved
         ], default='' if event.rooms.get(person) is None else str(event.rooms.get(person)))
 
