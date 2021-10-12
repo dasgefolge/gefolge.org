@@ -99,7 +99,7 @@ def handle_programm_edit(programmpunkt, programm_form, is_new):
 def mensch_or_signup_required(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
-        if not flask.g.user.is_mensch and flask.g.user not in flask.g.view_node.kwargs['event'].signups:
+        if not flask.g.user.is_mensch and flask.g.user not in gefolge_web.event.model.Event(kwargs['event']).signups:
             return flask.make_response(('Sie haben keinen Zugriff auf diesen Inhalt, weil Sie nicht für dieses event angemeldet sind und nicht im Gefolge Discord server sind oder nicht als Gefolgemensch verifiziert sind.', 403, [])) #TODO template
         return f(*args, **kwargs)
 

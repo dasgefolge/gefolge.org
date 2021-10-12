@@ -161,7 +161,7 @@
             {% endif %}
         {% endif %}
         <h2>Programm</h2>
-        <p>{{person}} ist an folgenden Programmpunkten interessiert:</p>
+        <p>{{person}} ist an folgenden <a href="{{url_for('event_programm', event=event.event_id)}}">Programmpunkten</a> interessiert:</p>
         <ul>
             {% for programmpunkt in event.programm %}
                 {% if programmpunkt.listed and person in programmpunkt.signups %}

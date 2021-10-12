@@ -251,7 +251,16 @@ class Mensch(DiscordPerson, metaclass=MenschMeta):
     def twitch(self, value):
         self.userdata['twitch'] = value
 
-class DiscordGuest(DiscordPerson, gefolge_web.person.Guest):
+class DiscordGuestMeta(DiscordPersonMeta):
+    def __iter__(self):
+        # iterating over the DiscordGuest class yields all Discord guests
+        return (
+            person
+            for person in DiscordPerson
+            if person.is_guest
+        )
+
+class DiscordGuest(DiscordPerson, gefolge_web.person.Guest, metaclass=DiscordGuestMeta):
     def __new__(cls, snowflake):
         return object.__new__(cls)
 
