@@ -31,6 +31,7 @@ def setup(index):
     @api_index.child('calendar')
     @gefolge_web.util.template('api-dir')
     def api_calendars_index():
+        """In Mozilla Thunderbird und Apple Calendar muss folgende Adresse verwendet werden, um einen dieser Kalender zu abonnieren: `https://api:abc123@gefolge.org/api/calendar/path/to/endpoint.ics`, wobei `abc123` durch deinen API key und `path/to/endpoint.ics` durch den unten angegebenen Pfad ersetzt werden sollte."""
         return {}
 
     @api_calendars_index.child('signups.ics')
@@ -76,7 +77,7 @@ def setup(index):
     @api_event.child('calendar')
     @gefolge_web.util.template('api-dir')
     def event_calendars(event):
-        """In Mozilla Thunderbird und Apple Calendar muss folgende Adresse verwendet werden, um einen dieser Kalender zu abonnieren: `https://api:abc123@gefolge.org/api/calendar/path/to/endpoint.ics`, wobei `abc123` durch deinen API key und `path/to/endpoint.ics` durch den unten angegebenen Pfad ersetzt werden sollte."""
+        """Für die Verwendung in Kalenderprogrammen siehe Dokumentation unter /calendar"""
         return {}
 
     @event_calendars.child('all.ics')

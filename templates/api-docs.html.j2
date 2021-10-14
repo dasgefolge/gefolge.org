@@ -11,7 +11,7 @@
             <li>
                 {{child_node}}
                 {% if child_node.view.__doc__ is not none %}
-                    — {{child_node.view.__doc__}}
+                    — {{(child_node.view.__doc__ | markdown)[3:-4]}} {#HACK to avoid paragraph break between endpoint name and docs #}
                 {% endif %}
                 {{view_func_node_map(child_node)}}
             </li>
