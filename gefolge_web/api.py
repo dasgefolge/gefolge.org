@@ -76,6 +76,7 @@ def setup(index):
     @api_event.child('calendar')
     @gefolge_web.util.template('api-dir')
     def event_calendars(event):
+        """In Mozilla Thunderbird und Apple Calendar muss folgende Adresse verwendet werden, um einen dieser Kalender zu abonnieren: `https://api:abc123@gefolge.org/api/calendar/path/to/endpoint.ics`, wobei `abc123` durch deinen API key und `path/to/endpoint.ics` durch den unten angegebenen Pfad ersetzt werden sollte."""
         return {}
 
     @event_calendars.child('all.ics')
@@ -91,7 +92,7 @@ def setup(index):
 
     @api_event.child('overview.json')
     def api_event_overview(event):
-        """Infos zu diesem event im auf https://gefolge.org/wiki/event-json/meta dokumentierten Format."""
+        """Infos zu diesem event im auf <https://gefolge.org/wiki/event-json/meta> dokumentierten Format."""
 
         def cal_event_json(calendar_event):
             result = {
@@ -167,5 +168,5 @@ def setup(index):
 
     @api_index.child('websocket')
     def api_websocket():
-        """Ein websocket server für länger dauernde Verbindungen. Dokumentation siehe https://github.com/dasgefolge/gefolge-websocket"""
+        """Ein WebSocket server für länger dauernde Verbindungen. Dokumentation siehe <https://github.com/dasgefolge/gefolge-websocket>"""
         raise NotImplementedError('Websocket should be directed to gefolge-websocket server by nginx')
