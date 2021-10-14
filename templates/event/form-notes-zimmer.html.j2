@@ -4,5 +4,12 @@
 {% else %}
     sind
 {% endif %}
-reserviert für Menschen, die früh schlafen gehen wollen oder besonders viel Ruhe brauchen. Falls das auf dich zutrifft, melde dich bitte im
-<a href="https://discord.com/channels/355761290809180170/387264349678338049">#silvester</a>. {#TODO use channel from event data #}
+reserviert für Menschen, die früh schlafen gehen wollen oder besonders viel Ruhe brauchen. Falls das auf
+{% if person == g.user %}
+    dich
+{% else %}
+    {{person}}
+{% endif %}
+zutrifft, sag bitte im
+<a href="https://discord.com/channels/355761290809180170/387264349678338049">#silvester</a> {#TODO use channel from event data #}
+bescheid.

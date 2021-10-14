@@ -307,7 +307,13 @@ def setup(index, app):
                 return '' # this cell is already filled
             if timestamp < event.start or timestamp >= event.end:
                 return jinja2.Markup('<td style="background-color: #666666;"></td>')
-            events_starting_now = [calendar_event for calendar_event in calendar if calendar_event.start >= timestamp and calendar_event.start < timestamp + datetime.timedelta(hours=1)]
+            events_starting_now = [
+                calendar_event
+                for calendar_event in calendar
+                if calendar_event.start >= timestamp
+                and calendar_event.start < timestamp + datetime.timedelta(hours=1)
+                and calendar_event.end < calendar_event.start + datetime.timedelta(hours=24)
+            ]
             if len(events_starting_now) == 0:
                 return jinja2.Markup('<td></td>') # nothing planned yet
             elif len(events_starting_now) == 1:
