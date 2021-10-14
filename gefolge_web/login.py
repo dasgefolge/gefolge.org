@@ -120,10 +120,6 @@ class DiscordPerson(flask_login.UserMixin, User, metaclass=DiscordPersonMeta):
         return str(self.snowflake)
 
     @property
-    def is_active(self):
-        return False # wer weder als Mensch noch als Gast verifiziert wurde, wird wie anonym behandelt
-
-    @property
     def is_wurstmineberg_member(self):
         try:
             response = requests.get('https://wurstmineberg.de/api/v3/people.json')
