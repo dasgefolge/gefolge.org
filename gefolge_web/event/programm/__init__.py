@@ -288,15 +288,26 @@ class Programmpunkt:
             except Exception:
                 return jinja2.Markup('<p>(Fehler: Bracket konnte nicht geladen werden)</p>')
         elif 'smashgg' in self.data:
-            return jinja2.Markup('<p><a href="https://smash.gg/{}">Bracket und Ergebnisse</a></p>'.format(
-                gefolge_web.util.smashgg_api("""
-                    query($id: ID!) {
-                        event(id: $id) {
-                            slug
+            api_data = gefolge_web.util.smashgg_api("""
+                query($id: ID!) {
+                    event(id: $id) {
+                        slug
+                        phases {
+                            id
+                        }
+                        phaseGroups {
+                            id
                         }
                     }
-                """, id=self.data['smashgg'].value())['event']['slug']
-            ))
+                }
+            """, id=self.data['smashgg'].value())
+            if len(api_data['event']['phases']) == 1 and len(api_data['event']['phaseGroups']) == 1:
+                # link directly to the bracket
+                url = f'https://smash.gg/{api_data["event"]["slug"]}/brackets/{api_data["event"]["phases"][0]["id"]}/{api_data["event"]["phaseGroups"][0]["id"]}'
+            else:
+                # multiple phases or uninitialized bracket, link to event overview
+                url = f'https://smash.gg/{api_data["event"]["slug"]}/overview'
+            return jinja2.Markup(f'<p><a href="{url}">Bracket und Ergebnisse</a></p>')
 
     @property
     def end(self):
