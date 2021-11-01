@@ -109,17 +109,18 @@ def ProfileForm(event, person):
         Form.allergies = wtforms.TextAreaField('Allergien, Unverträglichkeiten', default=person_data.get('food', {}).get('allergies', ''))
 
     Form.section_programm = gefolge_web.forms.FormSection('Programm')
-    if person in event.signups:
-        Form.section_programm_intro = gefolge_web.forms.FormText(jinja2.Markup('Auf der <a href="{}">Programmseite</a> kannst du {} für Programmpunkte als interessiert eintragen.'.format(flask.url_for('event_programm', event=event.event_id), 'dich' if person == flask.g.user else person.__html__()))) #TODO add support for deleting programm signups, then adjust this text
-    else:
+    if new_signup:
         Form.section_programm_intro = gefolge_web.forms.FormText(jinja2.Markup('Nachdem du dich angemeldet hast, kannst du dich auf der <a href="{}">Programmseite</a> für Programmpunkte als interessiert eintragen.'.format(flask.url_for('event_programm', event=event.event_id))))
+    else:
+        Form.section_programm_intro = gefolge_web.forms.FormText(jinja2.Markup('Auf der <a href="{}">Programmseite</a> kannst du {} für Programmpunkte als interessiert eintragen.'.format(flask.url_for('event_programm', event=event.event_id), 'dich' if person == flask.g.user else person.__html__()))) #TODO add support for deleting programm signups, then adjust this text
 
-    if gefolge_web.util.now(event.timezone) < event.end and event.data.get('covidTestRequired') and (event.data['covidTestRequired'].value() != 'geimpftGenesen' or person not in event.signups):
-        Form.section_covid = gefolge_web.forms.FormSection('COVID-19')
+    if gefolge_web.util.now(event.timezone) < event.end and event.data.get('covidTestRequired'):
         if event.data['covidTestRequired'].value() == 'geimpftGenesen':
-            if person not in event.signups:
+            if person_data.get('covidStatus') != 'geimpftGenesen':
+                Form.section_covid = gefolge_web.forms.FormSection('COVID-19')
                 Form.covid_immune = wtforms.BooleanField('Ich gelte zum Zeitpunkt meiner Anreise als gegen COVID-19 immunisiert (geimpft und/oder genesen) und bringe einen entsprechenden Nachweis (Digitales COVID-Zertifikat der EU) mit.', [wtforms.validators.DataRequired()])
         else:
+            Form.section_covid = gefolge_web.forms.FormSection('COVID-19')
             Form.covid_status = wtforms.RadioField(
                 'Status',
                 [wtforms.validators.InputRequired()],
@@ -129,13 +130,13 @@ def ProfileForm(event, person):
                 ],
                 default=person_data.get('covidStatus')
             )
-            if person not in event.signups:
+            if new_signup:
                 Form.covid_status_notice = gefolge_web.forms.FormText('Falls sich dein Status später ändert (z.B. weil du an COVID-19 erkrankst oder einen Impftermin absagen musst), kannst du diese Angabe in deinem Eventprofil jederzeit anpassen.')
 
     def header_anmeldung():
         if not hasattr(Form, 'section_signup'):
             Form.section_signup = gefolge_web.forms.FormSection('Anmeldung')
-    if person not in event.signups and person == flask.g.user and event.anzahlung is not None and event.ausfall > event.anzahlung_total + event.anzahlung:
+    if new_signup and person == flask.g.user and event.anzahlung is not None and event.ausfall > event.anzahlung_total + event.anzahlung:
         header_anmeldung()
         if event.ausfall_date is None:
             Form.anzahlung_notice = gefolge_web.forms.FormText('Wir können erst buchen, wenn die Ausfallgebühr von {} gesichert ist. Dazu fehlen noch {}, also {} Anmeldungen. Damit wir früher buchen können, kannst du freiwillig eine höhere Anzahlung bezahlen. Du bekommst den zusätzlichen Betrag wieder gutgeschrieben, wenn sich genug weitere Menschen angemeldet haben, dass ihre Anzahlungen ihn decken. Er wird nur behalten, um die Ausfallgebühr zu bezahlen, falls das event komplett ausfällt.'.format(event.ausfall, event.ausfall - event.anzahlung_total, math.ceil((event.ausfall - event.anzahlung_total).value / event.anzahlung.value)))
@@ -151,7 +152,7 @@ def ProfileForm(event, person):
         header_anmeldung()
         Form.hausordnung = wtforms.BooleanField(jinja2.Markup('Ich habe die <a href="{}">Hausordnung</a> zur Kenntnis genommen.'.format(event.location.hausordnung)), [wtforms.validators.DataRequired()])
 
-    Form.submit_profile_form = wtforms.SubmitField('Anmelden' if hasattr(Form, 'section_signup') or person not in event.signups else 'Speichern')
+    Form.submit_profile_form = wtforms.SubmitField('Anmelden' if hasattr(Form, 'section_signup') or new_signup else 'Speichern')
     return Form()
 
 def ProgrammForm(event, programmpunkt):
