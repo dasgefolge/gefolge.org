@@ -15,7 +15,7 @@
         <tbody>
             {% for revision in g.wiki.history(namespace, title) | reverse %}
                 <tr>
-                    <td>{{revision.timestamp | dt_format}}</td> {#TODO link to revision page#}
+                    <td><a href="{{(g.view_node / revision.id).url}}">{{revision.timestamp | dt_format}}</a></td>
                     <td>{% if revision.author is none %}unbekannt{% else %}{{revision.author}}{% endif %}</td>
                     <td>{% if revision.summary is not none %}{{revision.summary}}{% endif %}</td>
                 </tr>

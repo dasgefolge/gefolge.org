@@ -1,10 +1,10 @@
 {% extends 'base.html.j2' %}
 
-{% block title %}Artikel nicht gefunden — {{wiki_name}}{% endblock %}
+{% block title %}{% if revision is none %}Artikel{% else %}Version{% endif %} nicht gefunden — {{wiki_name}}{% endblock %}
 
 {% block page_content %}
-    <h1>Artikel nicht gefunden</h1>
-    <p>Es wurde kein Artikel mit Name „{{title}}“ im wiki namespace „{{namespace}}“ gefunden.</p>
+    <h1>{% if revision is none %}Artikel{% else %}Version{% endif %} nicht gefunden</h1>
+    <p>Es wurde kein Artikel mit Name „{{title}}“ im wiki namespace „{{namespace}}“ gefunden{% if revision is not none %}, oder die Version {{revision}} existiert nicht{% endif %}.</p>
     <p>
         <a href="{{url_for('wiki_article_edit', title=title, namespace=namespace)}}">Diesen Artikel erstellen</a>
         • <a href="{{url_for('wiki_index')}}">{{wiki_name}}-Hauptseite</a>
