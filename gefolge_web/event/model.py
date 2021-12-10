@@ -156,7 +156,10 @@ class Event(metaclass=EventMeta):
 
     def capacity(self, night):
         if 'capacity' in self.data:
-            return self.data['capacity']['{:%Y-%m-%d}'.format(night)].value()
+            if isinstance(self.data['capacity'].value(), dict):
+                return self.data['capacity']['{:%Y-%m-%d}'.format(night)].value()
+            else:
+                return self.data['capacity'].value()
         else:
             return self.location.capacity
 
