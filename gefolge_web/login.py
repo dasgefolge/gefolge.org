@@ -58,9 +58,9 @@ def profile_data_for_snowflake(snowflake):
 class DiscordPerson(flask_login.UserMixin, User, metaclass=DiscordPersonMeta):
     def __new__(cls, snowflake):
         roles = profile_data_for_snowflake(snowflake).get('roles', [])
-        if MENSCH in roles:
+        if str(MENSCH) in roles:
             return Mensch(snowflake)
-        elif GAST in roles:
+        elif str(GAST) in roles:
             return DiscordGuest(snowflake)
         else:
             return super().__new__(cls)
@@ -230,7 +230,7 @@ class Mensch(DiscordPerson, metaclass=MenschMeta):
 
     @property
     def is_active(self):
-        return MENSCH in self.profile_data.get('roles')
+        return str(MENSCH) in self.profile_data.get('roles')
 
     @property
     def transactions(self):
@@ -265,7 +265,7 @@ class DiscordGuest(DiscordPerson, gefolge_web.person.Guest, metaclass=DiscordGue
 
     @property
     def is_active(self):
-        return GAST in self.profile_data.get('roles')
+        return str(GAST) in self.profile_data.get('roles')
 
 class AnonymousUser(flask_login.AnonymousUserMixin, User):
     def __init__(self):
