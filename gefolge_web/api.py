@@ -3,6 +3,7 @@ import functools
 import flask # PyPI: Flask
 import flask_login # PyPI: Flask-Login
 import icalendar # PyPI: icalendar
+import simplejson # PyPI: simplejson
 
 import gefolge_web.event.model
 import gefolge_web.event.programm
@@ -21,6 +22,19 @@ def mensch_required(f):
         return gefolge_web.util.render_template('api-401'), 401, {'WWW-Authenticate': 'Basic realm="gefolge.org API key required"'}
 
     return wrapper
+
+def json_child(node, name, *args, **kwargs):
+    def decorator(f):
+        @node.child(name + '.json', *args, **kwargs)
+        @functools.wraps(f)
+        def wrapper(*args, **kwargs):
+            result = simplejson.dumps(f(*args, **kwargs), use_decimal=True, sort_keys=True, indent=4)
+            return flask.Response(result, mimetype='application/json')
+
+        wrapper.raw = f
+        return wrapper
+
+    return decorator
 
 def setup(index):
     @index.child('api', 'API', decorators=[mensch_required]) #TODO review endpoints that should be available to guests
@@ -54,7 +68,7 @@ def setup(index):
     def api_discord_index():
         return {}
 
-    @api_discord_index.child('voice-state.json')
+    @json_child(api_discord_index, 'voice-state.json')
     def discord_voice_state():
         """Infos, wer gerade in welchen voice channels ist."""
         with DISCORD_VOICE_STATE_PATH.open() as f:
@@ -91,7 +105,7 @@ def setup(index):
             cal.add_component(calendar_event.to_ical())
         return flask.Response(cal.to_ical(), mimetype='text/calendar')
 
-    @api_event.child('overview.json')
+    @json_child(api_event, 'overview.json')
     def api_event_overview(event):
         """Infos zu diesem event im auf <https://gefolge.org/wiki/event-json/meta> dokumentierten Format."""
 

@@ -274,7 +274,7 @@ def format_number(n):
 
 def jlog_append(line, log_path):
     with log_path.open('a') as log_f:
-        simplejson.dump(line, log_f, sort_keys=True)
+        simplejson.dump(line, log_f, use_decimal=True, sort_keys=True)
         print(file=log_f)
 
 def log(event_type, event):
