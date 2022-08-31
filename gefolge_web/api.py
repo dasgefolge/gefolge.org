@@ -68,7 +68,7 @@ def setup(index):
     def api_discord_index():
         return {}
 
-    @json_child(api_discord_index, 'voice-state.json')
+    @json_child(api_discord_index, 'voice-state')
     def discord_voice_state():
         """Infos, wer gerade in welchen voice channels ist."""
         with DISCORD_VOICE_STATE_PATH.open() as f:
@@ -105,7 +105,7 @@ def setup(index):
             cal.add_component(calendar_event.to_ical())
         return flask.Response(cal.to_ical(), mimetype='text/calendar')
 
-    @json_child(api_event, 'overview.json')
+    @json_child(api_event, 'overview')
     def api_event_overview(event):
         """Infos zu diesem event im auf <https://gefolge.org/wiki/event-json/meta> dokumentierten Format."""
 
