@@ -68,7 +68,7 @@ def setup(index):
     def api_discord_index():
         return {}
 
-    @json_child(api_discord_index, 'voice-state')
+    @api_discord_index.child('voice-state.json')
     def discord_voice_state():
         """Infos, wer gerade in welchen voice channels ist."""
         with DISCORD_VOICE_STATE_PATH.open() as f:
