@@ -10,7 +10,7 @@ if [[ x"$(hostname -f)" == x'mercredi.fenhl.net' ]]; then
     # deploy gefolge-websocket
     cd /opt/git/github.com/dasgefolge/gefolge-websocket/master
     git --git-dir=/opt/git/github.com/dasgefolge/gefolge-websocket/master/.git pull
-    cargo build --release
+    cargo build --release --features=ctrlflow
     sudo systemctl restart gefolge-websocket
     # deploy flask-view-tree
     cd /opt/git/github.com/fenhl/flask-view-tree/master
