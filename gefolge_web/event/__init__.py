@@ -26,24 +26,30 @@ def handle_profile_edit(event, person, profile_form):
         'event': event.event_id,
         'person': person.snowflake,
         'nights': {
-            '{:%Y-%m-%d}'.format(night): getattr(profile_form, 'night{}'.format(i)).data
+            f'{night:%Y-%m-%d}': getattr(profile_form, f'night{i}').data
             for i, night in enumerate(event.nights)
         },
         'food': {
             'animalProducts': profile_form.animal_products.data,
-            'allergies': profile_form.allergies.data
-        }
+            'allergies': profile_form.allergies.data,
+        },
     })
     # Zeitraum
     if 'nights' not in person_data:
         person_data['nights'] = {}
     for i, night in enumerate(event.nights):
         # don't change lastUpdated if the status for this night stays the same
-        if '{:%Y-%m-%d}'.format(night) not in person_data.get('nights', {}) or getattr(profile_form, 'night{}'.format(i)).data != event.night_going(person_data, night):
-            person_data['nights']['{:%Y-%m-%d}'.format(night)] = {
-                'going': getattr(profile_form, 'night{}'.format(i)).data,
-                'lastUpdated': '{:%Y-%m-%dT%H:%M:%SZ}'.format(gefolge_web.util.now(pytz.utc))
+        if f'{night:%Y-%m-%d}' not in person_data.get('nights', {}) or getattr(profile_form, f'night{i}').data != event.night_going(person_data, night):
+            person_data['nights'][f'{night:%Y-%m-%d}'] = {
+                'going': getattr(profile_form, f'night{i}').data,
+                'lastUpdated': f'{gefolge_web.util.now(pytz.utc):%Y-%m-%dT%H:%M:%SZ}',
             }
+        if 'log' not in person_data['nights'][f'{night:%Y-%m-%d}']:
+            person_data['nights'][f'{night:%Y-%m-%d}']['log'] = []
+        person_data['nights'][f'{night:%Y-%m-%d}']['log'] = sorted([*person_data['nights'][f'{night:%Y-%m-%d}']['log'].value(), {
+            'time': f'{gefolge_web.util.now(pytz.utc):%Y-%m-%dT%H:%M:%SZ}',
+            'going': getattr(profile_form, f'night{i}').data,
+        }], key=lambda entry: entry['time'])
     # Zimmer
     if hasattr(profile_form, 'room'):
         if profile_form.room.data:
