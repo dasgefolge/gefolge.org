@@ -63,8 +63,8 @@ with app.app_context():
     # set up API clients
     if 'challonge' in app.config:
         challonge.set_credentials(app.config['challonge']['username'], app.config['challonge']['apiKey'])
-    if 'smashggToken' in app.config:
-        gefolge_web.util.CACHE['smashggClient'] = gql.Client(transport=gql.transport.aiohttp.AIOHTTPTransport(url='https://api.smash.gg/gql/alpha', headers={'Authorization': f'Bearer {app.config["smashggToken"]}'}), fetch_schema_from_transport=True)
+    if 'startggToken' in app.config:
+        gefolge_web.util.CACHE['startggClient'] = gql.Client(transport=gql.transport.aiohttp.AIOHTTPTransport(url='https://api.start.gg/gql/alpha', headers={'Authorization': f'Bearer {app.config["startggToken"]}'}), fetch_schema_from_transport=True)
     # set up Bootstrap
     flask_bootstrap.Bootstrap(app)
     # set up Markdown

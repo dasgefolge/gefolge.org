@@ -447,9 +447,9 @@ def setup(app):
             flask.g.reboot_upgrade = None
             flask.g.reboot_end_time = None
 
-def smashgg_api(query, **params):
+def startgg_api(query, **params):
     query = gql.gql(query)
-    return CACHE['smashggClient'].execute(query, variable_values=params)
+    return CACHE['startggClient'].execute(query, variable_values=params)
 
 def template(template_name=None):
     def decorator(f):
