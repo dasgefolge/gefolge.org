@@ -13,6 +13,7 @@ use {
 };
 
 #[pyclass]
+#[derive(Debug, PartialEq, Eq, Hash)]
 enum Table {
     Events,
     Locations,
