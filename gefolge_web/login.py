@@ -60,7 +60,7 @@ def profile_data_for_snowflake(snowflake):
 
 class DiscordPerson(flask_login.UserMixin, User, metaclass=DiscordPersonMeta):
     def __new__(cls, snowflake):
-        roles = profile_data_for_snowflake(snowflake).get('roles', [])
+        roles = profile_data_for_snowflake(int(snowflake)).get('roles', [])
         if str(MENSCH) in roles:
             return Mensch(snowflake)
         elif str(GAST) in roles:
