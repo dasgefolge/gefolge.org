@@ -17,9 +17,12 @@ import wtforms.validators # PyPI: WTForms
 import lazyjson # https://github.com/fenhl/lazyjson
 import peter # https://github.com/dasgefolge/peter-discord
 
+import gefolge_web.db
 import gefolge_web.forms
 import gefolge_web.person
 import gefolge_web.util
+
+import rs.db
 
 GAST = 784929665478557737 # role ID
 MENSCH = 386753710434287626 # role ID
@@ -53,7 +56,7 @@ class DiscordPersonMeta(type):
         )
 
 def profile_data_for_snowflake(snowflake):
-    return gefolge_web.util.cached_json(lazyjson.File(PROFILES_ROOT / f'{snowflake}.json')).value()
+    return gefolge_web.util.cached_json(gefolge_web.db.PgFile(rs.db.Table.Profiles, snowflake)).value()
 
 class DiscordPerson(flask_login.UserMixin, User, metaclass=DiscordPersonMeta):
     def __new__(cls, snowflake):
@@ -168,7 +171,7 @@ class DiscordPerson(flask_login.UserMixin, User, metaclass=DiscordPersonMeta):
 
     @property
     def userdata(self):
-        return gefolge_web.util.cached_json(lazyjson.File(USERDATA_ROOT / '{}.json'.format(self.snowflake), init={}))
+        return gefolge_web.util.cached_json(gefolge_web.db.PgFile(rs.db.Table.UserData, self.snowflake, init={}))
 
     @property
     def username(self):

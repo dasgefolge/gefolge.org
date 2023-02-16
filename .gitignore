@@ -1,3 +1,5 @@
-__pycache__/
 /static/ricochet-robots-mac-intel.dmg
 /static/ricochet-robots-win64.exe
+/target
+
+__pycache__/
