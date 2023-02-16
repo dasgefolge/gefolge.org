@@ -1,4 +1,11 @@
 use {
+    std::{
+        collections::hash_map::DefaultHasher,
+        hash::{
+            Hash as _,
+            Hasher as _,
+        },
+    },
     pyo3::{
         exceptions::*,
         prelude::*,
@@ -19,6 +26,15 @@ enum Table {
     Locations,
     Profiles,
     UserData,
+}
+
+#[pymethods]
+impl Table {
+    fn __hash__(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        self.hash(&mut hasher);
+        hasher.finish()
+    }
 }
 
 fn json_to_py(py: Python<'_>, json: Json) -> PyResult<Py<PyAny>> {
