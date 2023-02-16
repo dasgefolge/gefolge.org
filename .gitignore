@@ -1,3 +1,4 @@
+/.cargo/config.toml
 /static/ricochet-robots-mac-intel.dmg
 /static/ricochet-robots-win64.exe
 /target
