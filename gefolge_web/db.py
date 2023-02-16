@@ -1,4 +1,5 @@
 import psycopg # PyPI: psycopg[binary]
+import psycopg.types.json # PyPI: psycopg[binary]
 import simplejson # PyPI: simplejson
 
 import lazyjson # https://github.com/fenhl/lazyjson
@@ -19,13 +20,13 @@ class PgFile(lazyjson.BaseFile):
             with CONN.cursor() as cur:
                 #TODO wrap u64 to i64
                 if table == rs.db.Table.Events:
-                    cur.execute("INSERT INTO json_events (id, value) VALUES (%s, %s) ON CONFLICT (id) DO NOTHING", (self.id, init))
+                    cur.execute("INSERT INTO json_events (id, value) VALUES (%s, %s) ON CONFLICT (id) DO NOTHING", (self.id, psycopg.types.json.Jsonb(init)))
                 if table == rs.db.Table.Locations:
-                    cur.execute("INSERT INTO json_locations (id, value) VALUES (%s, %s) ON CONFLICT (id) DO NOTHING", (self.id, init))
+                    cur.execute("INSERT INTO json_locations (id, value) VALUES (%s, %s) ON CONFLICT (id) DO NOTHING", (self.id, psycopg.types.json.Jsonb(init)))
                 if table == rs.db.Table.Profiles:
-                    cur.execute("INSERT INTO json_profiles (id, value) VALUES (%s, %s) ON CONFLICT (id) DO NOTHING", (self.id, init))
+                    cur.execute("INSERT INTO json_profiles (id, value) VALUES (%s, %s) ON CONFLICT (id) DO NOTHING", (self.id, psycopg.types.json.Jsonb(init)))
                 if table == rs.db.Table.UserData:
-                    cur.execute("INSERT INTO json_user_data (id, value) VALUES (%s, %s) ON CONFLICT (id) DO NOTHING", (self.id, init))
+                    cur.execute("INSERT INTO json_user_data (id, value) VALUES (%s, %s) ON CONFLICT (id) DO NOTHING", (self.id, psycopg.types.json.Jsonb(init)))
                 CONN.commit()
 
     def __eq__(self, other):
@@ -43,13 +44,13 @@ class PgFile(lazyjson.BaseFile):
         with CONN.cursor() as cur:
             #TODO wrap u64 to i64
             if self.table == rs.db.Table.Events:
-                cur.execute("INSERT INTO json_events (id, value) VALUES (%s, %s)", (self.id, new_value))
+                cur.execute("INSERT INTO json_events (id, value) VALUES (%s, %s)", (self.id, psycopg.types.json.Jsonb(new_value)))
             if self.table == rs.db.Table.Locations:
-                cur.execute("INSERT INTO json_locations (id, value) VALUES (%s, %s)", (self.id, new_value))
+                cur.execute("INSERT INTO json_locations (id, value) VALUES (%s, %s)", (self.id, psycopg.types.json.Jsonb(new_value)))
             if self.table == rs.db.Table.Profiles:
-                cur.execute("INSERT INTO json_profiles (id, value) VALUES (%s, %s)", (self.id, new_value))
+                cur.execute("INSERT INTO json_profiles (id, value) VALUES (%s, %s)", (self.id, psycopg.types.json.Jsonb(new_value)))
             if self.table == rs.db.Table.UserData:
-                cur.execute("INSERT INTO json_user_data (id, value) VALUES (%s, %s)", (self.id, new_value))
+                cur.execute("INSERT INTO json_user_data (id, value) VALUES (%s, %s)", (self.id, psycopg.types.json.Jsonb(new_value)))
             CONN.commit()
 
     def value(self):
