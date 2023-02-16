@@ -21,12 +21,14 @@ class PgFile(lazyjson.BaseFile):
                 #TODO wrap u64 to i64
                 if table == rs.db.Table.Events:
                     cur.execute("INSERT INTO json_events (id, value) VALUES (%s, %s) ON CONFLICT (id) DO NOTHING", (self.id, psycopg.types.json.Jsonb(init)))
-                if table == rs.db.Table.Locations:
+                elif table == rs.db.Table.Locations:
                     cur.execute("INSERT INTO json_locations (id, value) VALUES (%s, %s) ON CONFLICT (id) DO NOTHING", (self.id, psycopg.types.json.Jsonb(init)))
-                if table == rs.db.Table.Profiles:
+                elif table == rs.db.Table.Profiles:
                     cur.execute("INSERT INTO json_profiles (id, value) VALUES (%s, %s) ON CONFLICT (id) DO NOTHING", (self.id, psycopg.types.json.Jsonb(init)))
-                if table == rs.db.Table.UserData:
+                elif table == rs.db.Table.UserData:
                     cur.execute("INSERT INTO json_user_data (id, value) VALUES (%s, %s) ON CONFLICT (id) DO NOTHING", (self.id, psycopg.types.json.Jsonb(init)))
+                else:
+                    raise ValueError('Unknown table')
                 CONN.commit()
 
     def __eq__(self, other):
@@ -45,12 +47,14 @@ class PgFile(lazyjson.BaseFile):
             #TODO wrap u64 to i64
             if self.table == rs.db.Table.Events:
                 cur.execute("INSERT INTO json_events (id, value) VALUES (%s, %s)", (self.id, psycopg.types.json.Jsonb(new_value)))
-            if self.table == rs.db.Table.Locations:
+            elif self.table == rs.db.Table.Locations:
                 cur.execute("INSERT INTO json_locations (id, value) VALUES (%s, %s)", (self.id, psycopg.types.json.Jsonb(new_value)))
-            if self.table == rs.db.Table.Profiles:
+            elif self.table == rs.db.Table.Profiles:
                 cur.execute("INSERT INTO json_profiles (id, value) VALUES (%s, %s)", (self.id, psycopg.types.json.Jsonb(new_value)))
-            if self.table == rs.db.Table.UserData:
+            elif self.table == rs.db.Table.UserData:
                 cur.execute("INSERT INTO json_user_data (id, value) VALUES (%s, %s)", (self.id, psycopg.types.json.Jsonb(new_value)))
+            else:
+                raise ValueError('Unknown table')
             CONN.commit()
 
     def value(self):
@@ -60,12 +64,14 @@ class PgFile(lazyjson.BaseFile):
             #TODO wrap u64 to i64
             if self.table == rs.db.Table.Events:
                 cur.execute("SELECT value FROM json_events WHERE id = %s", (self.id,))
-            if self.table == rs.db.Table.Locations:
+            elif self.table == rs.db.Table.Locations:
                 cur.execute("SELECT value FROM json_locations WHERE id = %s", (self.id,))
-            if self.table == rs.db.Table.Profiles:
+            elif self.table == rs.db.Table.Profiles:
                 cur.execute("SELECT value FROM json_profiles WHERE id = %s", (self.id,))
-            if self.table == rs.db.Table.UserData:
+            elif self.table == rs.db.Table.UserData:
                 cur.execute("SELECT value FROM json_user_data WHERE id = %s", (self.id,))
+            else:
+                raise ValueError('Unknown table')
             value, = cur.fetchone()
             CONN.commit()
         return value
