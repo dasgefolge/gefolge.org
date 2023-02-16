@@ -7,14 +7,12 @@ import jinja2 # PyPI: Jinja2
 import pytz # PyPI: pytz
 
 import class_key # https://github.com/fenhl/python-class-key
+import lazyjson # https://github.com/fenhl/lazyjson
 import peter # https://github.com/dasgefolge/peter-discord
 
-import gefolge_web.db
 import gefolge_web.login
 import gefolge_web.person
 import gefolge_web.util
-
-import rs.db
 
 EVENTS_ROOT = gefolge_web.util.BASE_PATH / 'event'
 ORGA_ROLES = ['Abrechnung', 'Buchung', 'Essen', 'Programm', 'Schlüssel']
@@ -188,7 +186,7 @@ class Event(metaclass=EventMeta):
 
     @property
     def data(self):
-        return gefolge_web.util.cached_json(gefolge_web.db.PgFile(rs.db.Table.Events, self.event_id))
+        return gefolge_web.util.cached_json(lazyjson.File(EVENTS_ROOT / '{}.json'.format(self.event_id)))
 
     @property
     def end(self):

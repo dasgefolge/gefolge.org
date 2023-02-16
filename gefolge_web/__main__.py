@@ -3,7 +3,6 @@
 import sys
 
 sys.path.append('/opt/py')
-sys.path.append('/opt/git/github.com/dasgefolge/gefolge.org/master/assets/deps')
 
 import os
 

@@ -4,12 +4,11 @@ import jinja2 # PyPI: Jinja2
 import more_itertools # PyPI: more-itertools
 import pytz # PyPI: pytz
 
-import gefolge_web.db
+import lazyjson # https://github.com/fenhl/lazyjson
+
 import gefolge_web.event.model
 import gefolge_web.login
 import gefolge_web.util
-
-import rs.db
 
 LOCATIONS_ROOT = gefolge_web.util.BASE_PATH / 'loc'
 
@@ -53,7 +52,7 @@ class Location:
 
     @property
     def data(self):
-        return gefolge_web.util.cached_json(gefolge_web.db.PgFile(rs.db.Table.Locations, self.loc_id))
+        return gefolge_web.util.cached_json(lazyjson.File(LOCATIONS_ROOT / '{}.json'.format(self.loc_id)))
 
     @property
     def hausordnung(self):

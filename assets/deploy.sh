@@ -24,8 +24,7 @@ if [[ x"$(hostname -f)" == x'mercredi.fenhl.net' ]]; then
     # deploy gefolge.org
     cd /opt/git/github.com/dasgefolge/gefolge.org/master
     git --git-dir=/opt/git/github.com/dasgefolge/gefolge.org/master/.git pull
-    cargo build --release
-    # reload nginx (since nginx config is tracked by git) and uWSGI
+    # restart nginx (since nginx config is tracked by git) and uWSGI
     sudo systemctl daemon-reload
     sudo systemctl reload nginx
     sudo systemctl reload uwsgi
