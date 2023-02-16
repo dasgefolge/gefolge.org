@@ -46,13 +46,13 @@ class PgFile(lazyjson.BaseFile):
         with CONN.cursor() as cur:
             #TODO wrap u64 to i64
             if self.table == rs.db.Table.Events:
-                cur.execute("INSERT INTO json_events (id, value) VALUES (%s, %s)", (self.id, psycopg.types.json.Jsonb(new_value)))
+                cur.execute("INSERT INTO json_events (id, value) VALUES (%s, %s) ON CONFLICT (id) DO UPDATE SET value = EXCLUDED.value", (self.id, psycopg.types.json.Jsonb(new_value)))
             elif self.table == rs.db.Table.Locations:
-                cur.execute("INSERT INTO json_locations (id, value) VALUES (%s, %s)", (self.id, psycopg.types.json.Jsonb(new_value)))
+                cur.execute("INSERT INTO json_locations (id, value) VALUES (%s, %s) ON CONFLICT (id) DO UPDATE SET value = EXCLUDED.value", (self.id, psycopg.types.json.Jsonb(new_value)))
             elif self.table == rs.db.Table.Profiles:
-                cur.execute("INSERT INTO json_profiles (id, value) VALUES (%s, %s)", (self.id, psycopg.types.json.Jsonb(new_value)))
+                cur.execute("INSERT INTO json_profiles (id, value) VALUES (%s, %s) ON CONFLICT (id) DO UPDATE SET value = EXCLUDED.value", (self.id, psycopg.types.json.Jsonb(new_value)))
             elif self.table == rs.db.Table.UserData:
-                cur.execute("INSERT INTO json_user_data (id, value) VALUES (%s, %s)", (self.id, psycopg.types.json.Jsonb(new_value)))
+                cur.execute("INSERT INTO json_user_data (id, value) VALUES (%s, %s) ON CONFLICT (id) DO UPDATE SET value = EXCLUDED.value", (self.id, psycopg.types.json.Jsonb(new_value)))
             else:
                 raise ValueError('Unknown table')
             CONN.commit()

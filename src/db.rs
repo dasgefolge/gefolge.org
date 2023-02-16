@@ -75,10 +75,10 @@ fn json_to_py(py: Python<'_>, json: Json) -> PyResult<Py<PyAny>> {
 #[pyfunction] fn set_json(py: Python<'_>, table: &Table, id: &PyAny, value: &str) -> PyResult<()> {
     let value = serde_json::from_str::<Json>(value).map_err(|e| PyValueError::new_err(e.to_string()))?;
     TOKIO_RUNTIME.get(py).block_on(match table {
-        Table::Events => sqlx::query_scalar!("INSERT INTO json_events (id, value) VALUES ($1, $2)", id.extract::<&str>()?, value).execute(DB_POOL.get(py)),
-        Table::Locations => sqlx::query_scalar!("INSERT INTO json_locations (id, value) VALUES ($1, $2)", id.extract::<&str>()?, value).execute(DB_POOL.get(py)),
-        Table::Profiles => sqlx::query_scalar!("INSERT INTO json_profiles (id, value) VALUES ($1, $2)", id.extract::<u64>()? as i64, value).execute(DB_POOL.get(py)),
-        Table::UserData => sqlx::query_scalar!("INSERT INTO json_user_data (id, value) VALUES ($1, $2)", id.extract::<u64>()? as i64, value).execute(DB_POOL.get(py)),
+        Table::Events => sqlx::query_scalar!("INSERT INTO json_events (id, value) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET value = EXCLUDED.value", id.extract::<&str>()?, value).execute(DB_POOL.get(py)),
+        Table::Locations => sqlx::query_scalar!("INSERT INTO json_locations (id, value) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET value = EXCLUDED.value", id.extract::<&str>()?, value).execute(DB_POOL.get(py)),
+        Table::Profiles => sqlx::query_scalar!("INSERT INTO json_profiles (id, value) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET value = EXCLUDED.value", id.extract::<u64>()? as i64, value).execute(DB_POOL.get(py)),
+        Table::UserData => sqlx::query_scalar!("INSERT INTO json_user_data (id, value) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET value = EXCLUDED.value", id.extract::<u64>()? as i64, value).execute(DB_POOL.get(py)),
     }).to_py()?;
     Ok(())
 }
