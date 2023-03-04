@@ -24,14 +24,17 @@ ThrowOnNativeFailure
 ssh gefolge.org env -C /opt/git/github.com/dasgefolge/gefolge.org/master git pull
 ThrowOnNativeFailure
 
+ssh gefolge.org sudo systemctl stop gefolge-web
+ThrowOnNativeFailure
+
 scp .\target\wsl\release\gefolge-web gefolge.org:bin/gefolge-web
 ThrowOnNativeFailure
 
 scp .\target\wsl\release\gefolge-web-back gefolge.org:bin/gefolge-web-back
 ThrowOnNativeFailure
 
-ssh gefolge.org gefolge-web-deploy
+ssh gefolge.org sudo systemctl start gefolge-web
 ThrowOnNativeFailure
 
-ssh gefolge.org sudo systemctl restart gefolge-web
+ssh gefolge.org gefolge-web-deploy
 ThrowOnNativeFailure
