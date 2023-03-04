@@ -2,7 +2,10 @@
 #![forbid(unsafe_code)]
 
 use {
-    std::io::stdout,
+    std::{
+        io::stdout,
+        str::FromStr as _,
+    },
     serde_json::Value as Json,
     serenity::model::prelude::*,
     sqlx::{
@@ -18,10 +21,12 @@ enum StringDbSubcommand {
     },
     Set {
         id: String,
+        #[clap(value_parser = Json::from_str)]
         value: Json,
     },
     SetIfNotExists {
         id: String,
+        #[clap(value_parser = Json::from_str)]
         value: Json,
     },
 }
@@ -33,10 +38,12 @@ enum UserIdDbSubcommand {
     },
     Set {
         id: UserId,
+        #[clap(value_parser = Json::from_str)]
         value: Json,
     },
     SetIfNotExists {
         id: UserId,
+        #[clap(value_parser = Json::from_str)]
         value: Json,
     },
 }
