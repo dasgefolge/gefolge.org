@@ -6,7 +6,7 @@ Wants=network-online.target
 
 [Service]
 Restart=always
-ExecStart=/home/fenhl/bin/midos-house
+ExecStart=/home/fenhl/bin/gefolge-web
 User=fenhl
 Group=www-data
 WorkingDirectory=/opt/git/github.com/dasgefolge/gefolge.org/master
