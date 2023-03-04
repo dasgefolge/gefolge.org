@@ -1,0 +1,14 @@
+upstream _gefolge_inner {
+    server unix:/run/uwsgi/app/gefolge_inner/socket;
+}
+
+server {
+    listen 127.0.0.1:18822 default_server;
+    listen [::1]:18822 default_server;
+
+    location / {
+        add_header Access-Control-Allow-Origin *;
+        include uwsgi_params;
+        uwsgi_pass _gefolge_inner;
+    }
+}
