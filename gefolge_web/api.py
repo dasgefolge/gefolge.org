@@ -1,7 +1,6 @@
 import functools
 
 import flask # PyPI: Flask
-import flask_login # PyPI: Flask-Login
 import icalendar # PyPI: icalendar
 import simplejson # PyPI: simplejson
 
@@ -12,16 +11,6 @@ import gefolge_web.person
 import gefolge_web.util
 
 DISCORD_VOICE_STATE_PATH = gefolge_web.util.BASE_PATH / 'discord' / 'voice-state.json'
-
-def mensch_required(f):
-    @functools.wraps(f)
-    def wrapper(*args, **kwargs):
-        flask.g.user = gefolge_web.person.Person.by_api_key() or flask_login.current_user or gefolge_web.login.AnonymousUser()
-        if flask.g.user.is_mensch:
-            return f(*args, **kwargs)
-        return gefolge_web.util.render_template('api-401'), 401, {'WWW-Authenticate': 'Basic realm="gefolge.org API key required"'}
-
-    return wrapper
 
 def json_child(node, name, *args, **kwargs):
     def decorator(f):
@@ -37,7 +26,7 @@ def json_child(node, name, *args, **kwargs):
     return decorator
 
 def setup(index):
-    @index.child('api', 'API', decorators=[mensch_required]) #TODO review endpoints that should be available to guests
+    @index.child('api', 'API', decorators=[gefolge_web.login.mensch_required]) #TODO review endpoints that should be available to guests
     @gefolge_web.util.template('api-docs')
     def api_index():
         return {}

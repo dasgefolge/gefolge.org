@@ -1,14 +1,13 @@
-[package]
-name = "gefolge_web"
+[workspace]
+members = ["crate/*"]
+default-members = ["crate/front"]
+resolver = "2"
+
+[workspace.package]
 version = "2.0.0"
+authors = ["Fenhl <fenhl@fenhl.net>"]
 edition = "2021"
 
-[lib]
-name = "rs"
-crate-type = ["cdylib"]
-
-[dependencies]
-pyo3 = { version = "0.18.1", features = ["auto-initialize", "extension-module"] }
-serde_json = "1.0.93"
-sqlx = { version = "0.6.2", default-features = false, features = ["json", "macros", "postgres", "runtime-tokio-rustls"] }
-tokio = { version = "1.25.0", features = ["rt-multi-thread"] }
+[profile.release]
+lto = true
+strip = true

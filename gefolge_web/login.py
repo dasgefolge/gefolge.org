@@ -6,7 +6,6 @@ import urllib.parse
 import flask # PyPI: Flask
 import flask_dance.contrib.discord # PyPI: Flask-Dance
 import flask_dance.contrib.twitch # PyPI: Flask-Dance
-import flask_login # PyPI: Flask-Login
 import flask_wtf # PyPI: Flask-WTF
 import jinja2 # PyPI: Jinja2
 import pytz # PyPI: pytz
@@ -17,6 +16,7 @@ import wtforms.validators # PyPI: WTForms
 import lazyjson # https://github.com/fenhl/lazyjson
 import peter # https://github.com/dasgefolge/peter-discord
 
+import gefolge_web.db
 import gefolge_web.forms
 import gefolge_web.person
 import gefolge_web.util
@@ -53,9 +53,9 @@ class DiscordPersonMeta(type):
         )
 
 def profile_data_for_snowflake(snowflake):
-    return gefolge_web.util.cached_json(lazyjson.File(PROFILES_ROOT / f'{snowflake}.json')).value()
+    return gefolge_web.util.cached_json(gefolge_web.db.PgFile('profiles', snowflake)).value()
 
-class DiscordPerson(flask_login.UserMixin, User, metaclass=DiscordPersonMeta):
+class DiscordPerson(User, metaclass=DiscordPersonMeta):
     def __new__(cls, snowflake):
         roles = profile_data_for_snowflake(snowflake).get('roles', [])
         if str(MENSCH) in roles:
@@ -116,8 +116,9 @@ class DiscordPerson(flask_login.UserMixin, User, metaclass=DiscordPersonMeta):
         """Returns the Discord discriminator (also called Discord Tag) as a string with leading zeroes."""
         return '{:04}'.format(self.profile_data['discriminator'])
 
-    def get_id(self): # required by flask_login
-        return str(self.snowflake)
+    @property
+    def is_authenticated(self):
+        return True
 
     @property
     def is_wurstmineberg_member(self):
@@ -168,7 +169,7 @@ class DiscordPerson(flask_login.UserMixin, User, metaclass=DiscordPersonMeta):
 
     @property
     def userdata(self):
-        return gefolge_web.util.cached_json(lazyjson.File(USERDATA_ROOT / '{}.json'.format(self.snowflake), init={}))
+        return gefolge_web.util.cached_json(gefolge_web.db.PgFile('user-data', self.snowflake, init={}))
 
     @property
     def username(self):
@@ -267,7 +268,7 @@ class DiscordGuest(DiscordPerson, gefolge_web.person.Guest, metaclass=DiscordGue
     def is_active(self):
         return str(GAST) in self.profile_data.get('roles')
 
-class AnonymousUser(flask_login.AnonymousUserMixin, User):
+class AnonymousUser(User):
     def __init__(self):
         pass
 
@@ -323,11 +324,13 @@ def is_safe_url(target):
 def mensch_required(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
+        if not flask.g.user.is_authenticated:
+            return flask.redirect('/login/discord') #TODO redirect_to parameter
         if not flask.g.user.is_mensch:
             return flask.make_response(('Sie haben keinen Zugriff auf diesen Inhalt, weil Sie nicht im Gefolge Discord server sind oder nicht als Gefolgemensch verifiziert sind.', 403, [])) #TODO template
         return f(*args, **kwargs)
 
-    return flask_login.login_required(wrapper)
+    return wrapper
 
 def setup(index, app):
     if 'clientID' not in app.config.get('peter', {}) or 'clientSecret' not in app.config.get('peter', {}):
@@ -335,46 +338,30 @@ def setup(index, app):
     app.config['SECRET_KEY'] = app.config['peter']['clientSecret']
     app.config['USE_SESSION_FOR_NEXT'] = True
 
-    app.register_blueprint(flask_dance.contrib.discord.make_discord_blueprint(
-        client_id=app.config['peter']['clientID'],
-        client_secret=app.config['peter']['clientSecret'],
-        scope='identify',
-        redirect_to='auth_callback'
-    ), url_prefix='/login')
-
     app.register_blueprint(flask_dance.contrib.twitch.make_twitch_blueprint(
         client_id=app.config['twitch']['clientID'],
         client_secret=app.config['twitch']['clientSecret'],
         redirect_to='twitch_auth_callback'
     ), url_prefix='/login')
 
-    login_manager = flask_login.LoginManager()
-    login_manager.login_view = 'discord.login'
-    login_manager.login_message = None # Because discord.login does not show flashes, any login message would be shown after a successful login. This would be confusing.
-    login_manager.anonymous_user = AnonymousUser
-
-    @login_manager.user_loader
-    def load_user(user_id):
-        try:
-            return DiscordPerson(user_id) # instantiates Mensch, DiscordGuest, or DiscordPerson depending on user data
-        except ValueError:
-            return None
-
-    login_manager.init_app(app)
-
     @app.before_request
     def global_users():
         flask.g.admin = Mensch.admin()
         flask.g.treasurer = Mensch.treasurer()
-        if flask_login.current_user.is_admin and 'viewAs' in app.config['web']:
+        flask.g.user = gefolge_web.person.Person.by_api_key()
+        if flask.g.user is None:
+            if 'x-gefolge-authorized-discord-id' in flask.request.headers:
+                flask.g.user = DiscordPerson(flask.request.headers['x-gefolge-authorized-discord-id'])
+            else:
+                flask.g.user = gefolge_web.login.AnonymousUser()
+        if flask.g.user.is_admin and 'viewAs' in app.config['web']:
             flask.g.view_as = True
             flask.g.user = DiscordPerson(app.config['web']['viewAs'])
         else:
             flask.g.view_as = False
-            flask.g.user = flask_login.current_user
 
-    @app.route('/auth')
     def auth_callback():
+        #TODO similar error handling in Rust
         if not flask_dance.contrib.discord.discord.authorized:
             flask.flash('Discord-Login fehlgeschlagen.', 'error')
             return flask.redirect(flask.url_for('index'))
@@ -391,7 +378,6 @@ def setup(index, app):
             else:
                 flask.flash('Dein Account wurde noch nicht freigeschaltet. Stelle dich doch bitte einmal kurz im #general vor und warte, bis ein admin dich bestätigt.', 'error')
                 return flask.redirect(flask.url_for('index'))
-        flask_login.login_user(person, remember=True)
         flask.flash(jinja2.Markup('Hallo {}.'.format(person.__html__())))
         next_url = flask.session.get('next')
         if next_url is None:
@@ -422,11 +408,6 @@ def setup(index, app):
             return flask.redirect(next_url)
         else:
             return flask.abort(400)
-
-    @app.route('/logout')
-    def logout():
-        flask_login.logout_user()
-        return flask.redirect(flask.url_for('index'))
 
     @index.child('mensch', 'Menschen und Gäste', decorators=[mensch_required])
     @gefolge_web.util.template('menschen-index')

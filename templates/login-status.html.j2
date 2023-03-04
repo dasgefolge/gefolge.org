@@ -5,8 +5,8 @@
         {% if g.user.is_active %}
             <a href="{{url_for('profile_edit', person=g.user.snowflake)}}">Einstellungen</a> •
         {% endif %}
-        <a href="{{url_for('logout')}}">Abmelden</a>
+        <a href="/logout">Abmelden</a>
     {% else %}
-        <a href="{{url_for('discord.login')}}">Anmelden</a>
+        <a href="/login/discord">Anmelden</a>
     {% endif %}
 </div>

@@ -35,6 +35,10 @@ class Person:
         return False # wer weder als Mensch noch als Gast verifiziert wurde, wird wie anonym behandelt
 
     @property
+    def is_authenticated(self):
+        return False
+
+    @property
     def is_admin(self):
         import gefolge_web.login
 

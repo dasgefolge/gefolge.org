@@ -7,7 +7,6 @@ import re
 import urllib.parse
 
 import flask # PyPI: Flask
-import flask_login # PyPI: Flask-Login
 import jinja2 # PyPI: Jinja2
 import more_itertools # PyPI: more-itertools
 import pytz # PyPI: pytz
@@ -107,11 +106,13 @@ def handle_programm_edit(programmpunkt, programm_form, is_new):
 def mensch_or_signup_required(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
+        if not flask.g.user.is_authenticated:
+            return flask.redirect('/login/discord') #TODO redirect_to parameter
         if not flask.g.user.is_mensch and flask.g.user not in gefolge_web.event.model.Event(kwargs['event']).signups:
             return flask.make_response(('Sie haben keinen Zugriff auf diesen Inhalt, weil Sie nicht für dieses event angemeldet sind und nicht im Gefolge Discord server sind oder nicht als Gefolgemensch verifiziert sind.', 403, [])) #TODO template
         return f(*args, **kwargs)
 
-    return flask_login.login_required(wrapper)
+    return wrapper
 
 def setup(index, app):
     @index.child('event', 'events')

@@ -29,5 +29,9 @@ if [[ x"$(hostname -f)" == x'mercredi.fenhl.net' ]]; then
     sudo systemctl reload nginx
     sudo systemctl reload uwsgi
 else
-    ssh mercredi.fenhl.net gefolge-web-deploy
+    git push
+    cargo build --release --target=x86_64-unknown-linux-musl --package=gefolge-web --package=gefolge-web-back
+    scp target/x86_64-unknown-linux-musl/release/gefolge-web gefolge.org:bin/gefolge-web
+    scp target/x86_64-unknown-linux-musl/release/gefolge-web-back gefolge.org:bin/gefolge-web-back
+    ssh gefolge.org gefolge-web-deploy
 fi

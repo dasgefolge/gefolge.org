@@ -1,0 +1,16 @@
+[Unit]
+Description=Web server for gefolge.org
+Documentation=https://github.com/dasgefolge/gefolge.org
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Restart=always
+ExecStart=/home/fenhl/bin/midos-house
+User=fenhl
+Group=www-data
+WorkingDirectory=/opt/git/github.com/dasgefolge/gefolge.org/master
+Environment="RUST_BACKTRACE=1"
+
+[Install]
+WantedBy=multi-user.target

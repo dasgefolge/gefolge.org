@@ -1,0 +1,21 @@
+[package]
+name = "gefolge-web"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+publish = false
+
+[dependencies]
+base64 = "0.21.0"
+futures = "0.3.26"
+reqwest = { version = "0.11.14", default-features = false, features = ["rustls-tls", "trust-dns"] }
+rocket = "0.5.0-rc.2"
+rocket-util = { git = "https://github.com/fenhl/rocket-util", branch = "main", version = "0.2.7", features = ["reqwest"] }
+rocket_oauth2 = "0.5.0-rc.1"
+serde = { version = "1.0.152", features = ["derive"] }
+serde_json = "1.0.93"
+serenity = { version = "0.11.5", default-features = false, features = ["model", "rustls_backend"] }
+thiserror = "1.0.38"
+url = "2.3.1"
+wheel = { git = "https://github.com/fenhl/wheel", branch = "main", version = "0.8.3", features = ["rocket-beta", "reqwest", "serde", "serde_json"] }
+xdg = "2.4.1"

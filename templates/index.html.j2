@@ -14,7 +14,7 @@
             {% if g.user.is_active %}
                 <a href="{{url_for('profile_edit', person=g.user.snowflake)}}">Einstellungen</a> •
             {% endif %}
-            <a href="{{url_for('logout')}}">Abmelden</a>
+            <a href="/logout">Abmelden</a>
         </p>
         <nav>
             {% for node in g.view_node.children | sort %}
@@ -25,7 +25,7 @@
     {% else %}
         <p>Das <b>Gefolge</b> ist eine lose Gruppe von Menschen, die sich größtenteils über die <a href="https://www.mensa.de/camps/juniors-camps/">Mensa Juniors Camps</a> zwischen ca. 2008 und 2012 kennen.</p>
         <p>Wir haben einen <a href="https://discord.com/">Discord</a> server (Einladung für Gefolgemenschen auf Anfrage).</p>
-        <p>Wenn du schon auf dem Discord server bist, kannst du dich <a href="{{url_for('discord.login')}}">hier mit Discord anmelden</a>, um Zugriff auf die internen Bereiche dieser website zu bekommen, z.B. unser wiki und die Anmeldung für Silvester.</p>
+        <p>Wenn du schon auf dem Discord server bist, kannst du dich <a href="/login/discord">hier mit Discord anmelden</a>, um Zugriff auf die internen Bereiche dieser website zu bekommen, z.B. unser wiki und die Anmeldung für Silvester.</p>
     {% endif %}
     <hr/>
     <footer>
