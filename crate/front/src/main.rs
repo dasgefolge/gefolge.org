@@ -11,6 +11,7 @@ use {
         Rocket,
         State,
         config::SecretKey,
+        fs::FileServer,
         http::{
             Status,
             uri::{
@@ -148,6 +149,7 @@ async fn main() -> Result<(), Error> {
         auth::discord_login,
         auth::logout,
     ])
+    .mount("/static", FileServer::new("assets/static", rocket::fs::Options::None))
     .attach(OAuth2::<auth::Discord>::custom(rocket_oauth2::HyperRustlsAdapter::default(), OAuthConfig::new(
         rocket_oauth2::StaticProvider { //TODO use built-in constant once https://github.com/jebrosen/rocket_oauth2/pull/42 is released
             auth_uri: "https://discord.com/oauth2/authorize".into(),
