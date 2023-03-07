@@ -18,4 +18,9 @@ serenity = { version = "0.11.5", default-features = false, features = ["model", 
 thiserror = "1.0.38"
 url = "2.3.1"
 wheel = { git = "https://github.com/fenhl/wheel", branch = "main", version = "0.8.3", features = ["rocket-beta", "reqwest", "serde", "serde_json"] }
+
+[target."cfg(unix)".dependencies]
 xdg = "2.4.1"
+
+[target."cfg(windows)".dependencies]
+tokio = { version = "1.26.0", features = ["process"] }
