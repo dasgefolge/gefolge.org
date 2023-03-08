@@ -181,7 +181,7 @@ async fn page(db_pool: &PgPool, me: Option<DiscordUser>, uri: &Origin<'_>, kind:
                                     br;
                                     @if is_mensch_or_guest {
                                         a(href = format!("/mensch/{}/edit", me.id)) : "Einstellungen";
-                                        : " •";
+                                        : " • ";
                                     }
                                     a(href = uri!(auth::logout).to_string()) : "Abmelden";
                                 } else {

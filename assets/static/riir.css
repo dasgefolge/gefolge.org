@@ -44,6 +44,7 @@ nav h1 {
 
 h1 {
     font-family: "DejaVu Sans", sans-serif;
+    margin-bottom: -0.25em;
 }
 
 body > div,
