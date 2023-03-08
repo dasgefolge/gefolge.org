@@ -1,6 +1,7 @@
 import functools
 import random
 import string
+import subprocess
 import urllib.parse
 
 import flask # PyPI: Flask
@@ -23,8 +24,6 @@ import gefolge_web.util
 
 GAST = 784929665478557737 # role ID
 MENSCH = 386753710434287626 # role ID
-PROFILES_ROOT = gefolge_web.util.BASE_PATH / 'profiles'
-USERDATA_ROOT = gefolge_web.util.BASE_PATH / 'userdata'
 
 class User(gefolge_web.person.Person):
     @property
@@ -48,8 +47,8 @@ class DiscordPersonMeta(type):
     def __iter__(self):
         # iterating over the DiscordPerson class yields everyone in the guild
         return (
-            DiscordPerson(profile_path.stem)
-            for profile_path in sorted(PROFILES_ROOT.iterdir(), key=lambda path: int(path.stem))
+            DiscordPerson(snowflake)
+            for snowflake in subprocess.run(['/home/fenhl/bin/gefolge-web-back', 'profiles', 'list'], stdout=subprocess.PIPE, encoding='utf-8', check=True).stdout.splitlines()
         )
 
 def profile_data_for_snowflake(snowflake):

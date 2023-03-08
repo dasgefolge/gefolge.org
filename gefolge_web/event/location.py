@@ -9,8 +9,6 @@ import gefolge_web.event.model
 import gefolge_web.login
 import gefolge_web.util
 
-LOCATIONS_ROOT = gefolge_web.util.BASE_PATH / 'loc'
-
 class Location:
     def __new__(cls, loc_id):
         if loc_id == 'online':

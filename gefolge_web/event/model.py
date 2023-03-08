@@ -1,5 +1,6 @@
 import datetime
 import itertools
+import subprocess
 
 import flask # PyPI: Flask
 import icalendar # PyPI: icalendar
@@ -14,7 +15,6 @@ import gefolge_web.login
 import gefolge_web.person
 import gefolge_web.util
 
-EVENTS_ROOT = gefolge_web.util.BASE_PATH / 'event'
 ORGA_ROLES = ['Abrechnung', 'Buchung', 'Essen', 'Programm', 'Schlüssel']
 SILVESTER_CHANNEL = 387264349678338049
 
@@ -48,8 +48,8 @@ class EventMeta(type):
     def __iter__(self):
         # iterating over the Event class yields all events
         return iter(sorted(
-            Event(event_path.stem)
-            for event_path in EVENTS_ROOT.iterdir()
+            Event(event_id)
+            for event_id in subprocess.run(['/home/fenhl/bin/gefolge-web-back', 'events', 'list'], stdout=subprocess.PIPE, encoding='utf-8', check=True).stdout.splitlines()
         ))
 
 @class_key.class_key()

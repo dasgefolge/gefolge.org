@@ -661,6 +661,7 @@ name = "gefolge-web-back"
 version = "2.0.0"
 dependencies = [
  "clap",
+ "futures",
  "serde_json",
  "serenity",
  "sqlx",
