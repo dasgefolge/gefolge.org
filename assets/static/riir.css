@@ -33,7 +33,6 @@ nav > a {
 
 nav h1 {
     font-size: 32px;
-    margin: auto 0;
     line-height: 1;
 }
 
@@ -44,6 +43,7 @@ nav h1 {
 
 h1 {
     font-family: "DejaVu Sans", sans-serif;
+    margin-top: 0;
     margin-bottom: -0.25em;
 }
 
