@@ -100,7 +100,8 @@ footer {
         color: white;
     }
 
-    img.logo {
+    img.logo,
+    .splash > img {
         filter: invert(1);
     }
 }
