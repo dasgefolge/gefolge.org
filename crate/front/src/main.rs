@@ -27,7 +27,10 @@ use {
             FromRequest,
             Request,
         },
-        response::content::RawHtml,
+        response::content::{
+            RawHtml,
+            RawText,
+        },
         uri,
     },
     rocket_oauth2::{
@@ -38,6 +41,7 @@ use {
         Doctype,
         Origin,
         Response,
+        ToHtml,
         html,
     },
     serde::Deserialize,
@@ -47,7 +51,9 @@ use {
         postgres::PgConnectOptions,
         types::Json,
     },
+    tokio::process::Command,
     url::Url,
+    wheel::traits::AsyncCommandOutputExt as _,
     crate::{
         auth::DiscordUser,
         config::Config,
@@ -98,13 +104,20 @@ async fn html_mention(db_pool: &PgPool, user_id: UserId) -> sqlx::Result<RawHtml
     })
 }
 
+#[derive(Default)]
+enum PageKind {
+    Splash,
+    Index,
+    #[default]
+    Other,
+}
+
 #[derive(Debug, thiserror::Error, rocket_util::Error)]
 enum PageError {
     #[error(transparent)] Sql(#[from] sqlx::Error),
 }
 
-#[rocket::get("/")]
-async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>) -> Result<RawHtml<String>, PageError> {
+async fn page(db_pool: &PgPool, me: Option<DiscordUser>, uri: &Origin<'_>, kind: PageKind, title: &str, content: impl ToHtml) -> Result<RawHtml<String>, PageError> {
     let footer = html! {
         footer {
             p {
@@ -129,7 +142,7 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>) -> Result<RawHt
         html {
             head {
                 meta(charset = "utf-8");
-                title : "Das Gefolge";
+                title : title;
                 meta(name = "viewport", content = "width=device-width, initial-scale=1, shrink-to-fit=no");
                 meta(name = "description", content = "Das Gefolge");
                 meta(name = "author", content = "Fenhl & contributors");
@@ -145,79 +158,94 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>) -> Result<RawHt
                 link(rel = "stylesheet", href = static_url!("dejavu-sans.css"));
                 link(rel = "stylesheet", href = "https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap");
             }
-            @if let Some(DiscordUser { id: me }) = me {
+            @if let PageKind::Splash = kind {
+                body(class = "splash") {
+                    img(src = static_url!("gefolge.png"));
+                    main : content;
+                    : footer;
+                }
+            } else {
                 body {
                     div {
-                        @let profile = Profile::from_user_id(db_pool, me).await?;
-                        @let is_mensch_or_guest = profile.as_ref().map_or(false, Profile::is_mensch_or_guest);
-                        nav(class = "index") {
+                        nav(class? = matches!(kind, PageKind::Index).then_some("index")) {
                             a(class = "nav") {
                                 img(class = "logo", src = static_url!("gefolge.png"));
                                 h1 : "Das Gefolge";
                             }
                             div(id = "login") {
-                                : "Angemeldet als ";
-                                : html_mention(db_pool, me).await?;
-                                br;
-                                @if is_mensch_or_guest {
-                                    a(href = format!("/mensch/{me}/edit")) : "Einstellungen";
-                                    : " •";
+                                @if let Some(me) = me {
+                                    @let profile = Profile::from_user_id(db_pool, me.id).await?;
+                                    @let is_mensch_or_guest = profile.as_ref().map_or(false, Profile::is_mensch_or_guest);
+                                    : "Angemeldet als ";
+                                    : html_mention(db_pool, me.id).await?;
+                                    br;
+                                    @if is_mensch_or_guest {
+                                        a(href = format!("/mensch/{}/edit", me.id)) : "Einstellungen";
+                                        : " •";
+                                    }
+                                    a(href = uri!(auth::logout).to_string()) : "Abmelden";
+                                } else {
+                                    a(href = uri!(auth::discord_login(Some(uri))).to_string()) : "Mit Discord anmelden";
                                 }
-                                a(href = uri!(auth::logout(_)).to_string()) : "Abmelden";
                             }
                         }
-                        main {
-                            @if is_mensch_or_guest {
-                                //TODO list of ongoing and upcoming events
-                                p {
-                                    a(href = "/api") : "API";
-                                    : " • ";
-                                    a(href = "/event") : "events";
-                                    : " • ";
-                                    a(href = "/games") : "Spiele";
-                                    : " • ";
-                                    a(href = "/mensch") : "Menschen und Gäste";
-                                    : " • ";
-                                    a(href = "/wiki") : "wiki";
-                                }
-                            } else if profile.is_some() {
-                                p : "Dein Account wurde noch nicht freigeschaltet. Stelle dich doch bitte einmal kurz im ";
-                                : "#general"; //TODO link
-                                : " vor und warte, bis ein admin dich bestätigt.";
-                            } else {
-                                p : "Du hast dich erfolgreich mit Discord angemeldet, bist aber nicht im Gefolge Discord server.";
-                            }
-                        }
-                    }
-                    : footer;
-                }
-            } else {
-                body(class = "splash") {
-                    img(src = static_url!("gefolge.png"));
-                    main {
-                        p {
-                            : "Das ";
-                            strong : "Gefolge";
-                            : " ist eine lose Gruppe von Menschen, die sich größtenteils über die ";
-                            a(href = "https://mensa.de/kiju/camps") : "Mensa Juniors Camps";
-                            : " zwischen ca. 2008 und 2012 kennen.";
-                        }
-                        p {
-                            : "Wir haben einen ";
-                            a(href = "https://discord.com/") : "Discord";
-                            : " server (Einladung für Gefolgemenschen auf Anfrage).";
-                        }
-                        p {
-                            : "Wenn du schon auf dem Discord server bist, kannst du dich ";
-                            a(href = uri!(auth::discord_login(Some(uri!(index)))).to_string()) : "hier mit Discord anmelden";
-                            : ", um Zugriff auf die internen Bereiche dieser website zu bekommen, z.B. unser wiki und die Anmeldung für Silvester.";
-                        }
+                        main : content;
                     }
                     : footer;
                 }
             }
         }
     })
+}
+
+#[rocket::get("/")]
+async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>) -> Result<RawHtml<String>, PageError> {
+    if let Some(DiscordUser { id }) = me {
+        page(db_pool, me, &uri, PageKind::Index, "Das Gefolge", html! {
+            @let profile = Profile::from_user_id(db_pool, id).await?;
+            @let is_mensch_or_guest = profile.as_ref().map_or(false, Profile::is_mensch_or_guest);
+            @if is_mensch_or_guest {
+                //TODO list of ongoing and upcoming events
+                p {
+                    a(href = "/api") : "API";
+                    : " • ";
+                    a(href = "/event") : "events";
+                    : " • ";
+                    a(href = "/games") : "Spiele";
+                    : " • ";
+                    a(href = "/mensch") : "Menschen und Gäste";
+                    : " • ";
+                    a(href = "/wiki") : "wiki";
+                }
+            } else if profile.is_some() {
+                p : "Dein Account wurde noch nicht freigeschaltet. Stelle dich doch bitte einmal kurz im ";
+                : "#general"; //TODO link
+                : " vor und warte, bis ein admin dich bestätigt.";
+            } else {
+                p : "Du hast dich erfolgreich mit Discord angemeldet, bist aber nicht im Gefolge Discord server.";
+            }
+        }).await
+    } else {
+        page(db_pool, me, &uri, PageKind::Splash, "Das Gefolge", html! {
+            p {
+                : "Das ";
+                strong : "Gefolge";
+                : " ist eine lose Gruppe von Menschen, die sich größtenteils über die ";
+                a(href = "https://mensa.de/kiju/camps") : "Mensa Juniors Camps";
+                : " zwischen ca. 2008 und 2012 kennen.";
+            }
+            p {
+                : "Wir haben einen ";
+                a(href = "https://discord.com/") : "Discord";
+                : " server (Einladung für Gefolgemenschen auf Anfrage).";
+            }
+            p {
+                : "Wenn du schon auf dem Discord server bist, kannst du dich ";
+                a(href = uri!(auth::discord_login(Some(uri!(index)))).to_string()) : "hier mit Discord anmelden";
+                : ", um Zugriff auf die internen Bereiche dieser website zu bekommen, z.B. unser wiki und die Anmeldung für Silvester.";
+            }
+        }).await
+    }
 }
 
 struct ProxyHttpClient(reqwest::Client);
@@ -282,6 +310,63 @@ async fn flask_proxy_post(proxy_http_client: &State<ProxyHttpClient>, me: Option
     Ok(Response(proxy_http_client.0.post(url).headers(proxy_headers(headers, me)?).body(data).send().await?))
 }
 
+#[rocket::get("/robots.txt")]
+async fn robots_txt() -> RawText<&'static str> {
+    RawText("User-agent: *\nDisallow: /static/\n")
+}
+
+#[rocket::catch(400)]
+async fn bad_request(request: &Request<'_>) -> Result<RawHtml<String>, PageError> {
+    let db_pool = request.guard::<&State<PgPool>>().await.expect("missing database pool");
+    let me = request.guard::<DiscordUser>().await.succeeded();
+    let uri = request.guard::<Origin<'_>>().await.succeeded().unwrap_or_else(|| Origin(uri!(index)));
+    page(db_pool, me, &uri, PageKind::default(), "Bad Request — Das Gefolge", html! {
+        h1 : "Fehler 400: Bad Request";
+        p : "Anmeldung fehlgeschlagen. Falls du Hilfe brauchst, kannst du auf Discord im #dev nachfragen.";
+        p {
+            a(href = uri!(index).to_string()) : "Zurück zur Hauptseite von gefolge.org";
+        }
+    }).await
+}
+
+#[rocket::catch(404)]
+async fn not_found(request: &Request<'_>) -> Result<RawHtml<String>, PageError> {
+    let db_pool = request.guard::<&State<PgPool>>().await.expect("missing database pool");
+    let me = request.guard::<DiscordUser>().await.succeeded();
+    let uri = request.guard::<Origin<'_>>().await.succeeded().unwrap_or_else(|| Origin(uri!(index)));
+    page(db_pool, me, &uri, PageKind::default(), "Not Found — Das Gefolge", html! {
+        h1 : "Fehler 404: Not Found";
+        p : "Diese Seite existiert nicht.";
+        p {
+            a(href = uri!(index).to_string()) : "Zurück zur Hauptseite von gefolge.org";
+        }
+    }).await
+}
+
+#[rocket::catch(500)]
+async fn internal_server_error(request: &Request<'_>) -> Result<RawHtml<String>, PageError> {
+    let db_pool = request.guard::<&State<PgPool>>().await.expect("missing database pool");
+    let me = request.guard::<DiscordUser>().await.succeeded();
+    let uri = request.guard::<Origin<'_>>().await.succeeded().unwrap_or_else(|| Origin(uri!(index)));
+    let is_reported = Command::new("sudo").arg("-u").arg("fenhl").arg("/opt/night/bin/nightd").arg("report").arg("/net/gefolge/error").check("nightd").await.is_ok(); //TODO include error details in report
+    page(db_pool, me, &uri, PageKind::default(), "Internal Server Error — Das Gefolge", html! {
+        h1 : "Fehler 500: Internal Server Error";
+        p {
+            : "Beim Laden dieser Seite ist ein Fehler aufgetreten. ";
+            @if is_reported {
+                : "Fenhl wurde informiert.";
+            } else {
+                : "Bitte melde diesen Fehler im ";
+                a(href = "https://discord.com/channels/355761290809180170/397832322432499712") : "#dev";
+                : ".";
+            }
+        }
+        p {
+            a(href = uri!(index).to_string()) : "Zurück zur Hauptseite von gefolge.org";
+        }
+    }).await
+}
+
 #[derive(Debug, thiserror::Error)]
 enum MainError {
     #[error(transparent)] Base64(#[from] base64::DecodeError),
@@ -316,11 +401,17 @@ async fn main() -> Result<(), MainError> {
         index,
         flask_proxy_get,
         flask_proxy_post,
+        robots_txt,
         auth::discord_callback,
         auth::discord_login,
         auth::logout,
     ])
     .mount("/static", FileServer::new("assets/static", rocket::fs::Options::None))
+    .register("/", rocket::catchers![
+        bad_request,
+        not_found,
+        internal_server_error,
+    ])
     .attach(OAuth2::<auth::Discord>::custom(rocket_oauth2::HyperRustlsAdapter::default(), OAuthConfig::new(
         rocket_oauth2::StaticProvider { //TODO use built-in constant once https://github.com/jebrosen/rocket_oauth2/pull/42 is released
             auth_uri: "https://discord.com/oauth2/authorize".into(),

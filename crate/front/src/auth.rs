@@ -136,9 +136,9 @@ pub(crate) async fn discord_callback(http_client: &State<reqwest::Client>, token
     Ok(Redirect::to(redirect_uri))
 }
 
-#[rocket::get("/logout?<redirect_to>")]
-pub(crate) fn logout(cookies: &CookieJar<'_>, redirect_to: Option<Origin<'_>>) -> Redirect {
+#[rocket::get("/logout")]
+pub(crate) fn logout(cookies: &CookieJar<'_>) -> Redirect {
     cookies.remove_private(Cookie::named("discord_token"));
     cookies.remove_private(Cookie::named("discord_refresh_token"));
-    Redirect::to(redirect_to.map_or_else(|| uri!(crate::index), |uri| uri.0.into_owned()))
+    Redirect::to(uri!(crate::index))
 }
