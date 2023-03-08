@@ -2,7 +2,10 @@
 #![forbid(unsafe_code)]
 
 use {
-    std::time::Duration,
+    std::{
+        collections::BTreeSet,
+        time::Duration,
+    },
     base64::engine::{
         Engine as _,
         general_purpose::STANDARD as BASE64,
@@ -24,6 +27,7 @@ use {
             FromRequest,
             Request,
         },
+        response::content::RawHtml,
         uri,
     },
     rocket_oauth2::{
@@ -31,8 +35,17 @@ use {
         OAuthConfig,
     },
     rocket_util::{
+        Doctype,
         Origin,
         Response,
+        html,
+    },
+    serde::Deserialize,
+    serenity::model::prelude::*,
+    sqlx::{
+        PgPool,
+        postgres::PgConnectOptions,
+        types::Json,
     },
     url::Url,
     crate::{
@@ -41,8 +54,171 @@ use {
     },
 };
 
+include!(concat!(env!("OUT_DIR"), "/static_files.rs"));
+
 mod auth;
 mod config;
+
+const MENSCH: RoleId = RoleId(386753710434287626);
+const GUEST: RoleId = RoleId(784929665478557737);
+
+#[derive(Deserialize)]
+struct Profile {
+    discriminator: u16,
+    nick: Option<String>,
+    roles: BTreeSet<RoleId>,
+    username: String,
+}
+
+impl Profile {
+    async fn from_user_id(db_pool: &PgPool, user_id: UserId) -> sqlx::Result<Option<Self>> {
+        Ok(sqlx::query_scalar!(r#"SELECT value AS "value: Json<Profile>" FROM json_profiles WHERE id = $1"#, i64::from(user_id)).fetch_optional(db_pool).await?.map(|Json(profile)| profile))
+    }
+
+    fn is_mensch_or_guest(&self) -> bool {
+        self.roles.contains(&MENSCH) || self.roles.contains(&GUEST)
+    }
+}
+
+async fn html_mention(db_pool: &PgPool, user_id: UserId) -> sqlx::Result<RawHtml<String>> {
+    Ok(if let Some(profile) = Profile::from_user_id(db_pool, user_id).await? {
+        html! {
+            a(title = format!("{}#{}", profile.username, profile.discriminator), href = format!("/mensch/{user_id}")) {
+                : "@";
+                : profile.nick.unwrap_or(profile.username);
+            }
+        }
+    } else {
+        //TODO use data from Discord API directly or fetch global Discord username & discrim using serenity
+        html! {
+            : "<@";
+            : user_id.to_string();
+            : ">";
+        }
+    })
+}
+
+#[derive(Debug, thiserror::Error, rocket_util::Error)]
+enum PageError {
+    #[error(transparent)] Sql(#[from] sqlx::Error),
+}
+
+#[rocket::get("/")]
+async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>) -> Result<RawHtml<String>, PageError> {
+    let footer = html! {
+        footer {
+            p {
+                : "hosted by ";
+                a(href = "https://fenhl.net/") : "Fenhl"; //TODO link to Fenhl's profile if user can view it
+                : " • ";
+                a(href = "https://fenhl.net/disc") : "disclaimer";
+                : " • ";
+                a(href = "https://github.com/dasgefolge/gefolge.org") : "source code";
+            }
+            p {
+                : "Bild ";
+                a(href = "https://creativecommons.org/licenses/by-sa/2.5/deed.en") : "CC-BY-SA 2.5";
+                : " Ronald Preuss, aus Wikimedia Commons (";
+                a(href = "https://commons.wikimedia.org/wiki/File:Ritter_gefolge.jpg") : "Link";
+                : ")";
+            }
+        }
+    };
+    Ok(html! {
+        : Doctype;
+        html {
+            head {
+                meta(charset = "utf-8");
+                title : "Das Gefolge";
+                meta(name = "viewport", content = "width=device-width, initial-scale=1, shrink-to-fit=no");
+                meta(name = "description", content = "Das Gefolge");
+                meta(name = "author", content = "Fenhl & contributors");
+                link(rel = "preconnect", href = "https://fonts.googleapis.com");
+                link(rel = "preconnect", href = "https://fonts.gstatic.com", crossorigin);
+                //TODO at which size should the entire logo be displayed?
+                link(rel = "icon", sizes = "16x16", type = "image/png", href = static_url!("favicon-16.png"));
+                link(rel = "icon", sizes = "32x32", type = "image/png", href = static_url!("favicon-32.png"));
+                link(rel = "icon", sizes = "64x64", type = "image/png", href = static_url!("favicon-64.png"));
+                link(rel = "icon", sizes = "128x128", type = "image/png", href = static_url!("favicon-128.png"));
+                link(rel = "icon", sizes = "256x256", type = "image/png", href = static_url!("favicon-256.png"));
+                link(rel = "stylesheet", href = static_url!("riir.css"));
+                link(rel = "stylesheet", href = static_url!("dejavu-sans.css"));
+                link(rel = "stylesheet", href = "https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap");
+            }
+            @if let Some(DiscordUser { id: me }) = me {
+                body {
+                    div {
+                        @let profile = Profile::from_user_id(db_pool, me).await?;
+                        @let is_mensch_or_guest = profile.as_ref().map_or(false, Profile::is_mensch_or_guest);
+                        nav(class = "index") {
+                            a(class = "nav") {
+                                img(class = "logo", src = static_url!("gefolge.png"));
+                                h1 : "Das Gefolge";
+                            }
+                            div(id = "login") {
+                                : "Angemeldet als ";
+                                : html_mention(db_pool, me).await?;
+                                br;
+                                @if is_mensch_or_guest {
+                                    a(href = format!("/mensch/{me}/edit")) : "Einstellungen";
+                                    : " •";
+                                }
+                                a(href = uri!(auth::logout(_)).to_string()) : "Abmelden";
+                            }
+                        }
+                        main {
+                            @if is_mensch_or_guest {
+                                //TODO list of ongoing and upcoming events
+                                p {
+                                    a(href = "/api") : "API";
+                                    : " • ";
+                                    a(href = "/event") : "events";
+                                    : " • ";
+                                    a(href = "/games") : "Spiele";
+                                    : " • ";
+                                    a(href = "/mensch") : "Menschen und Gäste";
+                                    : " • ";
+                                    a(href = "/wiki") : "wiki";
+                                }
+                            } else if profile.is_some() {
+                                p : "Dein Account wurde noch nicht freigeschaltet. Stelle dich doch bitte einmal kurz im ";
+                                : "#general"; //TODO link
+                                : " vor und warte, bis ein admin dich bestätigt.";
+                            } else {
+                                p : "Du hast dich erfolgreich mit Discord angemeldet, bist aber nicht im Gefolge Discord server.";
+                            }
+                        }
+                    }
+                    : footer;
+                }
+            } else {
+                body(class = "splash") {
+                    img(src = static_url!("gefolge.png"));
+                    main {
+                        p {
+                            : "Das ";
+                            strong : "Gefolge";
+                            : " ist eine lose Gruppe von Menschen, die sich größtenteils über die ";
+                            a(href = "https://mensa.de/kiju/camps") : "Mensa Juniors Camps";
+                            : " zwischen ca. 2008 und 2012 kennen.";
+                        }
+                        p {
+                            : "Wir haben einen ";
+                            a(href = "https://discord.com/") : "Discord";
+                            : " server (Einladung für Gefolgemenschen auf Anfrage).";
+                        }
+                        p {
+                            : "Wenn du schon auf dem Discord server bist, kannst du dich ";
+                            a(href = uri!(auth::discord_login(Some(uri!(index)))).to_string()) : "hier mit Discord anmelden";
+                            : ", um Zugriff auf die internen Bereiche dieser website zu bekommen, z.B. unser wiki und die Anmeldung für Silvester.";
+                        }
+                    }
+                    : footer;
+                }
+            }
+        }
+    })
+}
 
 struct ProxyHttpClient(reqwest::Client);
 
@@ -90,38 +266,33 @@ fn proxy_headers(headers: Headers, discord_user: Option<DiscordUser>) -> Result<
     Ok(headers)
 }
 
-#[rocket::get("/")]
-async fn index(proxy_http_client: &State<ProxyHttpClient>, discord_user: Option<DiscordUser>, headers: Headers) -> Result<Response<reqwest::Response>, FlaskProxyError> {
-    let url = Url::parse("http://127.0.0.1:18822/")?;
-    Ok(Response(proxy_http_client.0.get(url).headers(proxy_headers(headers, discord_user)?).send().await?))
-}
-
 #[rocket::get("/<path..>")]
-async fn flask_proxy_get(proxy_http_client: &State<ProxyHttpClient>, discord_user: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>) -> Result<Response<reqwest::Response>, FlaskProxyError> {
+async fn flask_proxy_get(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>) -> Result<Response<reqwest::Response>, FlaskProxyError> {
     let mut url = Url::parse("http://127.0.0.1:18822/")?;
     url.path_segments_mut().expect("proxy URL is cannot-be-a-base").extend(path);
     url.set_query(origin.0.query().map(|query| query.as_str()));
-    Ok(Response(proxy_http_client.0.get(url).headers(proxy_headers(headers, discord_user)?).send().await?))
+    Ok(Response(proxy_http_client.0.get(url).headers(proxy_headers(headers, me)?).send().await?))
 }
 
 #[rocket::post("/<path..>", data = "<data>")]
-async fn flask_proxy_post(proxy_http_client: &State<ProxyHttpClient>, discord_user: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>, data: Vec<u8>) -> Result<Response<reqwest::Response>, FlaskProxyError> {
+async fn flask_proxy_post(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>, data: Vec<u8>) -> Result<Response<reqwest::Response>, FlaskProxyError> {
     let mut url = Url::parse("http://127.0.0.1:18822/")?;
     url.path_segments_mut().expect("proxy URL is cannot-be-a-base").extend(path);
     url.set_query(origin.0.query().map(|query| query.as_str()));
-    Ok(Response(proxy_http_client.0.post(url).headers(proxy_headers(headers, discord_user)?).body(data).send().await?))
+    Ok(Response(proxy_http_client.0.post(url).headers(proxy_headers(headers, me)?).body(data).send().await?))
 }
 
 #[derive(Debug, thiserror::Error)]
-enum Error {
+enum MainError {
     #[error(transparent)] Base64(#[from] base64::DecodeError),
     #[error(transparent)] Config(#[from] config::Error),
     #[error(transparent)] Reqwest(#[from] reqwest::Error),
     #[error(transparent)] Rocket(#[from] rocket::Error),
+    #[error(transparent)] Sql(#[from] sqlx::Error),
 }
 
 #[wheel::main(rocket, debug)]
-async fn main() -> Result<(), Error> {
+async fn main() -> Result<(), MainError> {
     let config = Config::load().await?;
     let http_client = reqwest::Client::builder()
         .user_agent(concat!("GefolgeWeb/", env!("CARGO_PKG_VERSION")))
@@ -159,6 +330,7 @@ async fn main() -> Result<(), Error> {
         config.discord.client_secret.to_string(),
         Some(uri!("https://gefolge.org", auth::discord_callback).to_string()),
     )))
+    .manage(PgPool::connect_with(PgConnectOptions::default().username("fenhl").database("gefolge").application_name("gefolge-web")).await?)
     .manage(http_client)
     .manage(ProxyHttpClient(proxy_http_client))
     .launch().await?;

@@ -1,0 +1,100 @@
+body {
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-family: "Noto Sans", sans-serif;
+}
+
+.splash {
+    height: 100vh;
+    text-align: center;
+}
+
+nav {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+}
+
+.logo {
+    width: 64px;
+    object-fit: contain;
+}
+
+.splash > img {
+    flex-grow: 1;
+    min-height: 0;
+    max-height: 500px;
+    object-fit: scale-down;
+}
+
+nav h1 {
+    font-size: 32px;
+    margin: auto 0;
+    line-height: 1;
+}
+
+h1 {
+    font-family: "DejaVu Sans", sans-serif;
+}
+
+body > div,
+.splash > main,
+footer {
+    margin: 8px;
+}
+
+body > div {
+    flex-grow: 0;
+}
+
+.splash > main {
+    flex-grow: 1;
+}
+
+a {
+    color: inherit;
+}
+
+a:hover {
+    text-decoration: none;
+}
+
+footer {
+    color: gray;
+}
+
+@media (min-width: 448px) {
+    nav.index .logo {
+        width: 128px;
+    }
+
+    nav.index h1 {
+        font-size: 64px;
+    }
+}
+
+@media (min-width: 768px) {
+    nav h1 {
+        font-size: 64px;
+    }
+}
+
+@media (min-width: 1152px) {
+    nav.index h1 {
+        font-size: 128px;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: black;
+        color: white;
+    }
+
+    img[src="/static/gefolge.png"] {
+        filter: invert(1);
+    }
+}

@@ -69,7 +69,7 @@ enum Error {
 
 #[wheel::main]
 async fn main(args: Args) -> Result<(), Error> {
-    let db_pool = PgPool::connect_with(PgConnectOptions::default().username("fenhl").database("gefolge").application_name("gefolge-web")).await?;
+    let db_pool = PgPool::connect_with(PgConnectOptions::default().username("fenhl").database("gefolge").application_name("gefolge-web-back")).await?;
     match args {
         Args::Events(StringDbSubcommand::Get { id }) => serde_json::to_writer(stdout(), &sqlx::query_scalar!("SELECT value FROM json_events WHERE id = $1", id).fetch_one(&db_pool).await?)?,
         Args::Events(StringDbSubcommand::Set { id, value }) => { sqlx::query!("INSERT INTO json_events (id, value) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET value = EXCLUDED.value", id, value).execute(&db_pool).await?; }
