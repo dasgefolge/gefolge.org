@@ -280,6 +280,8 @@ enum FlaskProxyError {
     #[error(transparent)] InvalidHeaderValue(#[from] reqwest::header::InvalidHeaderValue),
     #[error(transparent)] Reqwest(#[from] reqwest::Error),
     #[error(transparent)] Url(#[from] url::ParseError),
+    #[error("internal server error in proxied Flask application, see /var/log/uwsgi/app/gefolge_inner.log for details")]
+    InternalServerError,
 }
 
 fn proxy_headers(headers: Headers, discord_user: Option<DiscordUser>) -> Result<reqwest::header::HeaderMap, FlaskProxyError> {
@@ -299,7 +301,9 @@ async fn flask_proxy_get(proxy_http_client: &State<ProxyHttpClient>, me: Option<
     let mut url = Url::parse("http://127.0.0.1:18822/")?;
     url.path_segments_mut().expect("proxy URL is cannot-be-a-base").extend(path);
     url.set_query(origin.0.query().map(|query| query.as_str()));
-    Ok(Response(proxy_http_client.0.get(url).headers(proxy_headers(headers, me)?).send().await?))
+    let response = proxy_http_client.0.get(url).headers(proxy_headers(headers, me)?).send().await?;
+    if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR { return Err(FlaskProxyError::InternalServerError) }
+    Ok(Response(response))
 }
 
 #[rocket::post("/<path..>", data = "<data>")]
@@ -307,7 +311,9 @@ async fn flask_proxy_post(proxy_http_client: &State<ProxyHttpClient>, me: Option
     let mut url = Url::parse("http://127.0.0.1:18822/")?;
     url.path_segments_mut().expect("proxy URL is cannot-be-a-base").extend(path);
     url.set_query(origin.0.query().map(|query| query.as_str()));
-    Ok(Response(proxy_http_client.0.post(url).headers(proxy_headers(headers, me)?).body(data).send().await?))
+    let response = proxy_http_client.0.post(url).headers(proxy_headers(headers, me)?).body(data).send().await?;
+    if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR { return Err(FlaskProxyError::InternalServerError) }
+    Ok(Response(response))
 }
 
 #[rocket::get("/robots.txt")]
