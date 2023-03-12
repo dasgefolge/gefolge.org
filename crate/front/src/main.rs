@@ -389,7 +389,7 @@ async fn main() -> Result<(), MainError> {
     let proxy_http_client = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
         .user_agent(concat!("GefolgeWeb/", env!("CARGO_PKG_VERSION")))
-        .timeout(Duration::from_secs(30))
+        .timeout(Duration::from_secs(90))
         .build()?;
     let Rocket { .. } = rocket::custom(rocket::Config {
         secret_key: SecretKey::from(&BASE64.decode(&config.secret_key)?),
