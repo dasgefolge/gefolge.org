@@ -16,13 +16,6 @@
 
 {% block page_content %}
     <h1>Fehler 500: Internal Server Error</h1>
-    <p>
-        Beim Laden dieser Seite ist ein Fehler aufgetreten.
-        {% if reported %}
-            {{g.admin}} wurde informiert.
-        {% else %}
-            Bitte melde diesen Fehler im <a href="https://discord.com/channels/355761290809180170/397832322432499712">#dev</a>.
-        {% endif %}
-    </p>
+    <p>Beim Laden dieser Seite ist ein Fehler aufgetreten. Bitte melde diesen Fehler im <a href="https://discord.com/channels/355761290809180170/397832322432499712">#dev</a>.</p>
     <nav><a href="/">Zurück zur Hauptseite von gefolge.org</a></nav>
 {% endblock %}

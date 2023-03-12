@@ -284,26 +284,6 @@ def log(event_type, event):
     event['type'] = event_type
     jlog_append(event, EDIT_LOG)
 
-def notify_crash():
-    try:
-        user = str(flask.g.user)
-    except Exception:
-        user = None
-    try:
-        url = str(flask.g.view_node.url)
-    except Exception:
-        url = None
-    exc_text = CRASH_NOTICE.format(user=user, url=url, tb=traceback.format_exc())
-    try:
-        # notify local nightd (fails if night provider data isn't on this server)
-        with pathlib.Path('/opt/night/provider/net/gefolge/error.txt').open('w') as f:
-            f.write(exc_text)
-    except Exception:
-        try:
-            peter.channel_msg(DEV_CHANNEL_ID, exc_text)
-        except Exception:
-            subprocess.run(['mail', '-s', 'gefolge.org internal server error', 'fenhl@fenhl.net'], input=exc_text.encode('utf-8'), check=True)
-
 def now(tz=pytz.timezone('Europe/Berlin')):
     return pytz.utc.localize(datetime.datetime.utcnow()).astimezone(tz)
 
@@ -329,18 +309,8 @@ def render_template(template_name=None, **kwargs):
     return jinja2.Markup(flask.render_template(template_path, **kwargs))
 
 def setup(app):
-    for error_code in {403, 404}:
+    for error_code in {403, 404, 500}:
         app.register_error_handler(error_code, lambda e: (render_template('error.{}'.format(error_code)), error_code))
-
-    @app.errorhandler(500)
-    def internal_server_error(e):
-        try:
-            notify_crash()
-        except Exception:
-            reported = False
-        else:
-            reported = True
-        return render_template('error.500', reported=reported), 500
 
     @app.template_filter()
     def dt_format(value, format='%d.%m.%Y %H:%M:%S', event_timezone=None):
