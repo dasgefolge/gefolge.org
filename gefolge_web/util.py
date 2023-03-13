@@ -309,8 +309,20 @@ def render_template(template_name=None, **kwargs):
     return jinja2.Markup(flask.render_template(template_path, **kwargs))
 
 def setup(app):
-    for error_code in {403, 404, 500}:
+    for error_code in {403, 404}:
         app.register_error_handler(error_code, lambda e: (render_template('error.{}'.format(error_code)), error_code))
+
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        try:
+            user = str(flask.g.user)
+        except Exception as e:
+            user = f'({e})'
+        try:
+            url = str(flask.g.view_node.url)
+        except Exception as e:
+            url = f'({e})'
+        return flask.Response(CRASH_NOTICE.format(user=user, url=url, tb=traceback.format_exc()),mimetype='text/plain'), 500
 
     @app.template_filter()
     def dt_format(value, format='%d.%m.%Y %H:%M:%S', event_timezone=None):
