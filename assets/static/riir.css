@@ -34,6 +34,7 @@ nav > a {
 nav h1 {
     font-size: 32px;
     line-height: 1;
+    margin-top: 0;
 }
 
 #login {
@@ -41,9 +42,13 @@ nav h1 {
     text-align: end;
 }
 
-h1 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-family: "DejaVu Sans", sans-serif;
-    margin-top: 0;
     margin-bottom: -0.25em;
 }
 
