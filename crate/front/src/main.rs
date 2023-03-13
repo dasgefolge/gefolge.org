@@ -4,12 +4,22 @@
 use {
     std::{
         collections::BTreeSet,
+        fmt,
         time::Duration,
     },
     base64::engine::{
         Engine as _,
         general_purpose::STANDARD as BASE64,
     },
+    chrono::{
+        LocalResult,
+        prelude::*,
+    },
+    chrono_tz::{
+        Europe,
+        Tz,
+    },
+    itertools::Itertools as _,
     rocket::{
         Rocket,
         State,
@@ -48,6 +58,8 @@ use {
     serenity::model::prelude::*,
     sqlx::{
         PgPool,
+        Postgres,
+        Transaction,
         postgres::PgConnectOptions,
         types::Json,
     },
@@ -67,6 +79,60 @@ mod config;
 
 const MENSCH: RoleId = RoleId(386753710434287626);
 const GUEST: RoleId = RoleId(784929665478557737);
+
+#[derive(Debug, Deserialize)]
+struct Event {
+    end: Option<NaiveDateTime>,
+    location: Option<String>,
+    name: Option<String>,
+    start: Option<NaiveDateTime>,
+    timezone: Option<Tz>,
+}
+
+impl Event {
+    fn to_html(&self, id: &str) -> RawHtml<String> {
+        html! {
+            a(href = format!("/event/{id}")) : self.name.as_deref().unwrap_or(id);
+        }
+    }
+
+    async fn start(&self, transaction: &mut Transaction<'_, Postgres>) -> sqlx::Result<Option<LocalResult<DateTime<Tz>>>> {
+        let Some(start) = self.start else { return Ok(None) };
+        let tz = if let Some(tz) = self.timezone {
+            tz
+        } else if let Some(ref location) = self.location {
+            if location == "online" {
+                Europe::Berlin //TODO mark as not local
+            } else {
+                sqlx::query_scalar!(r#"SELECT value AS "value: Json<Location>" FROM json_locations WHERE id = $1"#, location).fetch_one(transaction).await?.0.timezone
+            }
+        } else {
+            return Ok(Some(LocalResult::None))
+        };
+        Ok(Some(start.and_local_timezone(tz)))
+    }
+
+    async fn end(&self, transaction: &mut Transaction<'_, Postgres>) -> sqlx::Result<Option<LocalResult<DateTime<Tz>>>> {
+        let Some(end) = self.end else { return Ok(None) };
+        let tz = if let Some(tz) = self.timezone {
+            tz
+        } else if let Some(ref location) = self.location {
+            if location == "online" {
+                Europe::Berlin //TODO mark as not local
+            } else {
+                sqlx::query_scalar!(r#"SELECT value AS "value: Json<Location>" FROM json_locations WHERE id = $1"#, location).fetch_one(transaction).await?.0.timezone
+            }
+        } else {
+            return Ok(Some(LocalResult::None))
+        };
+        Ok(Some(end.and_local_timezone(tz)))
+    }
+}
+
+#[derive(Deserialize)]
+struct Location {
+    timezone: Tz,
+}
 
 #[derive(Deserialize)]
 struct Profile {
@@ -90,7 +156,6 @@ async fn html_mention(db_pool: &PgPool, user_id: UserId) -> sqlx::Result<RawHtml
     Ok(if let Some(profile) = Profile::from_user_id(db_pool, user_id).await? {
         html! {
             a(title = format!("{}#{}", profile.username, profile.discriminator), href = format!("/mensch/{user_id}")) {
-                : "@";
                 : profile.nick.unwrap_or(profile.username);
             }
         }
@@ -157,6 +222,7 @@ async fn page(db_pool: &PgPool, me: Option<DiscordUser>, uri: &Origin<'_>, kind:
                 link(rel = "stylesheet", href = static_url!("riir.css"));
                 link(rel = "stylesheet", href = static_url!("dejavu-sans.css"));
                 link(rel = "stylesheet", href = "https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap");
+                script(defer, src = static_url!("common.js"));
             }
             @if let PageKind::Splash = kind {
                 body(class = "splash") {
@@ -198,14 +264,91 @@ async fn page(db_pool: &PgPool, me: Option<DiscordUser>, uri: &Origin<'_>, kind:
     })
 }
 
+pub(crate) fn format_date_range<Z: TimeZone>(start: DateTime<Z>, end: DateTime<Z>) -> RawHtml<String>
+where Z::Offset: fmt::Display { //TODO respect user preferences including event timezone override toggle
+    html! {
+        span(class = "daterange", data_start = start.timestamp_millis(), data_end = end.timestamp_millis()) {
+            @if start.year() != end.year() {
+                : start.format("%d.%m.%Y").to_string();
+                : "–";
+                : end.format("%d.%m.%Y").to_string();
+            } else if start.month() != end.month() {
+                : start.format("%d.%m.").to_string();
+                : "–";
+                : end.format("%d.%m.%Y").to_string();
+            } else if start.day() != end.day() {
+                : start.format("%d.").to_string();
+                : "–";
+                : end.format("%d.%m.%Y").to_string();
+            } else {
+                : start.format("%d.%m.%Y").to_string();
+            }
+        }
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+enum TimeFromLocalError<T> {
+    #[error("invalid timestamp")]
+    None,
+    #[error("ambiguous timestamp")]
+    Ambiguous([T; 2]),
+}
+
+trait LocalResultExt {
+    type Ok;
+
+    fn single_ok(self) -> Result<Self::Ok, TimeFromLocalError<Self::Ok>>;
+}
+
+impl<T> LocalResultExt for LocalResult<T> {
+    type Ok = T;
+
+    fn single_ok(self) -> Result<T, TimeFromLocalError<T>> {
+        match self {
+            LocalResult::None => Err(TimeFromLocalError::None),
+            LocalResult::Single(value) => Ok(value),
+            LocalResult::Ambiguous(value1, value2) => Err(TimeFromLocalError::Ambiguous([value1, value2])),
+        }
+    }
+}
+
+#[derive(Debug, thiserror::Error, rocket_util::Error)]
+enum IndexError {
+    #[error(transparent)] Page(#[from] PageError),
+    #[error(transparent)] Sql(#[from] sqlx::Error),
+    #[error(transparent)] TimeFromLocal(#[from] TimeFromLocalError<DateTime<Tz>>),
+}
+
 #[rocket::get("/")]
-async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>) -> Result<RawHtml<String>, PageError> {
-    if let Some(DiscordUser { id }) = me {
-        page(db_pool, me, &uri, PageKind::Index, "Das Gefolge", html! {
+async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>) -> Result<RawHtml<String>, IndexError> {
+    Ok(if let Some(DiscordUser { id }) = me {
+        let now = Utc::now();
+        let mut transaction = db_pool.begin().await?;
+        let mut upcoming_events = Vec::default();
+        for row in sqlx::query!(r#"SELECT id, value AS "value: Json<Event>" FROM json_events"#).fetch_all(&mut transaction).await? {
+            let is_upcoming = if let Some(end) = row.value.0.end(&mut transaction).await? {
+                end.single_ok()? > now
+            } else {
+                true
+            };
+            if is_upcoming {
+                upcoming_events.push((row.id, row.value.0));
+            }
+        }
+        let mut ongoing_events = Vec::default();
+        for (id, event) in upcoming_events.drain(..).collect_vec() {
+            let is_ongoing = if let Some(start) = event.start(&mut transaction).await? {
+                start.single_ok()? <= now
+            } else {
+                true
+            };
+            if is_ongoing { &mut ongoing_events } else { &mut upcoming_events }.push((id, event));
+        }
+        let content = html! {
             @let profile = Profile::from_user_id(db_pool, id).await?;
             @let is_mensch_or_guest = profile.as_ref().map_or(false, Profile::is_mensch_or_guest);
             @if is_mensch_or_guest {
-                //TODO list of ongoing and upcoming events
                 p {
                     a(href = "/api") : "API";
                     : " • ";
@@ -217,6 +360,37 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                     : " • ";
                     a(href = "/wiki") : "wiki";
                 }
+                h1 : "Events";
+                @if !ongoing_events.is_empty() {
+                    h2 : "laufende Events";
+                    ul {
+                        @for (id, event) in ongoing_events {
+                            li {
+                                : event.to_html(&id);
+                                @if let (Some(start), Some(end)) = (event.start(&mut transaction).await?, event.end(&mut transaction).await?) {
+                                    : " (";
+                                    : format_date_range(start.single_ok()?, end.single_ok()?);
+                                    : ")";
+                                }
+                            }
+                        }
+                    }
+                }
+                @if !upcoming_events.is_empty() {
+                    h2 : "zukünftige Events";
+                    ul {
+                        @for (id, event) in upcoming_events {
+                            li {
+                                : event.to_html(&id);
+                                @if let (Some(start), Some(end)) = (event.start(&mut transaction).await?, event.end(&mut transaction).await?) {
+                                    : " (";
+                                    : format_date_range(start.single_ok()?, end.single_ok()?);
+                                    : ")";
+                                }
+                            }
+                        }
+                    }
+                }
             } else if profile.is_some() {
                 p : "Dein Account wurde noch nicht freigeschaltet. Stelle dich doch bitte einmal kurz im ";
                 : "#general"; //TODO link
@@ -224,7 +398,9 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
             } else {
                 p : "Du hast dich erfolgreich mit Discord angemeldet, bist aber nicht im Gefolge Discord server.";
             }
-        }).await
+        };
+        transaction.commit().await?; //TODO move transaction into `page`?
+        page(db_pool, me, &uri, PageKind::Index, "Das Gefolge", content).await?
     } else {
         page(db_pool, me, &uri, PageKind::Splash, "Das Gefolge", html! {
             p {
@@ -244,8 +420,8 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                 a(href = uri!(auth::discord_login(Some(uri!(index)))).to_string()) : "hier mit Discord anmelden";
                 : ", um Zugriff auf die internen Bereiche dieser website zu bekommen, z.B. unser wiki und die Anmeldung für Silvester.";
             }
-        }).await
-    }
+        }).await?
+    })
 }
 
 struct ProxyHttpClient(reqwest::Client);

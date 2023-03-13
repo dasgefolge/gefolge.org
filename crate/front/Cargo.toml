@@ -7,7 +7,10 @@ publish = false
 
 [dependencies]
 base64 = "0.21.0"
+chrono = { version = "0.4.24", features = ["serde"] }
+chrono-tz = { version = "0.8.1", features = ["serde"] }
 futures = "0.3.26"
+itertools = "0.10.5"
 reqwest = { version = "0.11.14", default-features = false, features = ["rustls-tls", "trust-dns"] }
 rocket = "0.5.0-rc.2"
 rocket-util = { git = "https://github.com/fenhl/rocket-util", branch = "main", version = "0.2.7", features = ["reqwest"] }
