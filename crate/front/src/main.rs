@@ -391,6 +391,9 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                         }
                     }
                 }
+                p {
+                    a(href = "/event") : "vergangene Events";
+                }
             } else if profile.is_some() {
                 p : "Dein Account wurde noch nicht freigeschaltet. Stelle dich doch bitte einmal kurz im ";
                 : "#general"; //TODO link

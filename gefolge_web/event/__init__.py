@@ -32,6 +32,7 @@ def handle_profile_edit(event, person, profile_form):
             'animalProducts': profile_form.animal_products.data,
             'allergies': profile_form.allergies.data,
         },
+        'alkohol': profile_form.alkohol.data,
     })
     # Zeitraum
     if 'nights' not in person_data:
@@ -61,6 +62,8 @@ def handle_profile_edit(event, person, profile_form):
             person_data['food'] = {}
         person_data['food']['animalProducts'] = profile_form.animal_products.data
         person_data['food']['allergies'] = profile_form.allergies.data
+    if hasattr(profile_form, 'alkohol'):
+        person_data['alkohol'] = profile_form.alkohol.data
     # Programm
     # COVID-19
     if hasattr(profile_form, 'covid_immune'):

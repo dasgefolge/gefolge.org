@@ -107,6 +107,9 @@ def ProfileForm(event, person):
             default=person_data.get('food', {}).get('animalProducts', 'yes')
         )
         Form.allergies = wtforms.TextAreaField('Allergien, Unverträglichkeiten', default=person_data.get('food', {}).get('allergies', ''))
+    if gefolge_web.util.now(event.timezone) < event.end:
+        Form.alkohol = wtforms.BooleanField('Ich beteilige mich am kommunistischen™ Alkohol.', default=person_data.get('alkohol', True))
+        Form.alkohol_notice = gefolge_web.forms.FormText('Kann nachträglich korrigiert werden. Die Bowle beim Silvesterbuffet zählt hier nicht.')
 
     Form.section_programm = gefolge_web.forms.FormSection('Programm')
     if new_signup:
