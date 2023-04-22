@@ -24,6 +24,10 @@ use {
         Rocket,
         State,
         config::SecretKey,
+        data::{
+            Limits,
+            ToByteUnit as _,
+        },
         fs::FileServer,
         http::{
             Status,
@@ -584,6 +588,8 @@ async fn main() -> Result<(), MainError> {
         secret_key: SecretKey::from(&BASE64.decode(&config.secret_key)?),
         log_level: rocket::config::LogLevel::Critical,
         port: 24817,
+        limits: Limits::default()
+            .limit("bytes", 2.mebibytes()), // for proxied wiki edits
         ..rocket::Config::default()
     })
     .mount("/", rocket::routes![
