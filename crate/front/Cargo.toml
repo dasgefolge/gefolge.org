@@ -22,7 +22,7 @@ sqlx = { version = "0.6.2", features = ["json", "macros", "postgres", "runtime-t
 thiserror = "1.0.38"
 tokio = { version = "1.26.0", features = ["process"] }
 url = "2.3.1"
-wheel = { git = "https://github.com/fenhl/wheel", branch = "main", version = "0.8.3", features = ["rocket-beta", "reqwest", "serde", "serde_json"] }
+wheel = { git = "https://github.com/fenhl/wheel", branch = "main", features = ["rocket-beta", "reqwest", "serde", "serde_json"] }
 
 [target."cfg(unix)".dependencies]
 xdg = "2.4.1"
@@ -32,7 +32,7 @@ tokio = { version = "1.26.0", features = ["process"] }
 
 [build-dependencies]
 futures = "0.3.26"
-git2 = "0.16.1"
+git2 = "0.17"
 thiserror = "1.0.38"
 tokio = "1.26.0"
-wheel = { git = "https://github.com/fenhl/wheel", branch = "main", version = "0.8.3" }
+wheel = { git = "https://github.com/fenhl/wheel", branch = "main" }
