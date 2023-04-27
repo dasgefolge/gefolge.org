@@ -32,4 +32,11 @@ class PgFile(lazyjson.BaseFile):
     def value(self):
         #TODO debug “expecting ParseComplete but received ReadyForQuery” error when using sqlx from flask
         #return rs.db.get_json(self.table, self.id)
-        return simplejson.loads(subprocess.run(['/home/fenhl/bin/gefolge-web-back', self.table, 'get', str(self.id)], stdout=subprocess.PIPE, encoding='utf-8', check=True).stdout, use_decimal=True)
+        try:
+            return simplejson.loads(subprocess.run(['/home/fenhl/bin/gefolge-web-back', self.table, 'get', str(self.id)], stdout=subprocess.PIPE, encoding='utf-8', check=True).stdout, use_decimal=True)
+        except subprocess.CalledProcessError as e:
+            if e.returncode == 2:
+                #HACK: using FileNotFoundError for compatibility with the previous backend
+                raise FileNotFoundError(f'No row with ID {self.id!r} in table {self.table!r}') from e
+            else:
+                raise
