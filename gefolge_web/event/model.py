@@ -23,7 +23,7 @@ class EventGuest(gefolge_web.person.Guest):
         self.event = event
         self.snowflake = int(guest_id) # not actually a snowflake but uses this variable name for compatibility with the DiscordPerson class
         if not any('via' in person and person['id'] == self.snowflake for person in event.data.get('menschen', [])):
-            raise ValueError('Es gibt keinen Gast mit dieser ID.')
+            raise ValueError(f'Es gibt keinen Gast mit ID {self.snowflake!r} im event {self.event!r}.')
 
     def __eq__(self, other):
         return isinstance(other, EventGuest) and self.event == other.event and self.snowflake == other.snowflake
