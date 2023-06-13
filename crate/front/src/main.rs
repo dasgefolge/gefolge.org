@@ -4,7 +4,6 @@
 use {
     std::{
         collections::BTreeSet,
-        fmt,
         time::Duration,
     },
     base64::engine::{
@@ -73,6 +72,11 @@ use {
     crate::{
         auth::DiscordUser,
         config::Config,
+        util::{
+            LocalResultExt as _,
+            StatusOrError,
+            format_date_range,
+        },
     },
 };
 
@@ -80,6 +84,7 @@ include!(concat!(env!("OUT_DIR"), "/static_files.rs"));
 
 mod auth;
 mod config;
+mod util;
 
 const MENSCH: RoleId = RoleId(386753710434287626);
 const GUEST: RoleId = RoleId(784929665478557737);
@@ -268,60 +273,11 @@ async fn page(db_pool: &PgPool, me: Option<DiscordUser>, uri: &Origin<'_>, kind:
     })
 }
 
-pub(crate) fn format_date_range<Z: TimeZone>(start: DateTime<Z>, end: DateTime<Z>) -> RawHtml<String>
-where Z::Offset: fmt::Display { //TODO respect user preferences including event timezone override toggle
-    html! {
-        span(class = "daterange", data_start = start.timestamp_millis(), data_end = end.timestamp_millis()) {
-            @if start.year() != end.year() {
-                : start.format("%d.%m.%Y").to_string();
-                : "–";
-                : end.format("%d.%m.%Y").to_string();
-            } else if start.month() != end.month() {
-                : start.format("%d.%m.").to_string();
-                : "–";
-                : end.format("%d.%m.%Y").to_string();
-            } else if start.day() != end.day() {
-                : start.format("%d.").to_string();
-                : "–";
-                : end.format("%d.%m.%Y").to_string();
-            } else {
-                : start.format("%d.%m.%Y").to_string();
-            }
-        }
-    }
-}
-
-#[derive(Debug, thiserror::Error)]
-enum TimeFromLocalError<T> {
-    #[error("invalid timestamp")]
-    None,
-    #[error("ambiguous timestamp")]
-    Ambiguous([T; 2]),
-}
-
-trait LocalResultExt {
-    type Ok;
-
-    fn single_ok(self) -> Result<Self::Ok, TimeFromLocalError<Self::Ok>>;
-}
-
-impl<T> LocalResultExt for LocalResult<T> {
-    type Ok = T;
-
-    fn single_ok(self) -> Result<T, TimeFromLocalError<T>> {
-        match self {
-            LocalResult::None => Err(TimeFromLocalError::None),
-            LocalResult::Single(value) => Ok(value),
-            LocalResult::Ambiguous(value1, value2) => Err(TimeFromLocalError::Ambiguous([value1, value2])),
-        }
-    }
-}
-
 #[derive(Debug, thiserror::Error, rocket_util::Error)]
 enum IndexError {
     #[error(transparent)] Page(#[from] PageError),
     #[error(transparent)] Sql(#[from] sqlx::Error),
-    #[error(transparent)] TimeFromLocal(#[from] TimeFromLocalError<DateTime<Tz>>),
+    #[error(transparent)] TimeFromLocal(#[from] util::TimeFromLocalError<DateTime<Tz>>),
 }
 
 #[rocket::get("/")]
@@ -467,6 +423,12 @@ enum FlaskProxyError {
     InternalServerError(String),
 }
 
+impl<E: Into<FlaskProxyError>> From<E> for StatusOrError<FlaskProxyError> {
+    fn from(e: E) -> Self {
+        Self::Err(e.into())
+    }
+}
+
 fn proxy_headers(headers: Headers, discord_user: Option<DiscordUser>) -> Result<reqwest::header::HeaderMap, FlaskProxyError> {
     let mut headers = headers.0;
     headers.insert(reqwest::header::HOST, reqwest::header::HeaderValue::from_static("gefolge.org"));
@@ -480,25 +442,33 @@ fn proxy_headers(headers: Headers, discord_user: Option<DiscordUser>) -> Result<
 }
 
 #[rocket::get("/<path..>")]
-async fn flask_proxy_get(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>) -> Result<Response<reqwest::Response>, FlaskProxyError> {
+async fn flask_proxy_get(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>) -> Result<Response<reqwest::Response>, StatusOrError<FlaskProxyError>> {
+    if path.get(0).map_or(true, |prefix| !matches!(prefix, "api" | "event" | "games" | "me" | "mensch" | "wiki")) {
+        // only forward the directories that are actually served by the proxy to prevent internal server errors on malformed requests from spambots
+        return Err(StatusOrError::Status(Status::NotFound))
+    }
     let mut url = Url::parse("http://127.0.0.1:18822/")?;
     url.path_segments_mut().expect("proxy URL is cannot-be-a-base").extend(path);
     url.set_query(origin.0.query().map(|query| query.as_str()));
     let response = proxy_http_client.0.get(url).headers(proxy_headers(headers, me)?).send().await?;
     if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR {
-        return Err(FlaskProxyError::InternalServerError(response.text().await?))
+        return Err(FlaskProxyError::InternalServerError(response.text().await?).into())
     }
     Ok(Response(response))
 }
 
 #[rocket::post("/<path..>", data = "<data>")]
-async fn flask_proxy_post(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>, data: Vec<u8>) -> Result<Response<reqwest::Response>, FlaskProxyError> {
+async fn flask_proxy_post(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>, data: Vec<u8>) -> Result<Response<reqwest::Response>, StatusOrError<FlaskProxyError>> {
+    if path.get(0).map_or(true, |prefix| !matches!(prefix, "api" | "event" | "games" | "me" | "mensch" | "wiki")) {
+        // only forward the directories that are actually served by the proxy to prevent internal server errors on malformed requests from spambots
+        return Err(StatusOrError::Status(Status::NotFound))
+    }
     let mut url = Url::parse("http://127.0.0.1:18822/")?;
     url.path_segments_mut().expect("proxy URL is cannot-be-a-base").extend(path);
     url.set_query(origin.0.query().map(|query| query.as_str()));
     let response = proxy_http_client.0.post(url).headers(proxy_headers(headers, me)?).body(data).send().await?;
     if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR {
-        return Err(FlaskProxyError::InternalServerError(response.text().await?))
+        return Err(FlaskProxyError::InternalServerError(response.text().await?).into())
     }
     Ok(Response(response))
 }
