@@ -4,6 +4,7 @@
 use {
     std::{
         collections::BTreeSet,
+        fmt,
         time::Duration,
     },
     base64::engine::{
@@ -143,17 +144,29 @@ struct Location {
     timezone: Tz,
 }
 
-#[derive(Deserialize)]
-struct Profile {
-    discriminator: u16,
+struct Discriminator(i16);
+
+impl fmt::Display for Discriminator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:04}", self.0)
+    }
+}
+
+struct User {
+    discriminator: Option<Discriminator>,
     nick: Option<String>,
     roles: BTreeSet<RoleId>,
     username: String,
 }
 
-impl Profile {
-    async fn from_user_id(db_pool: &PgPool, user_id: UserId) -> sqlx::Result<Option<Self>> {
-        Ok(sqlx::query_scalar!(r#"SELECT value AS "value: Json<Profile>" FROM json_profiles WHERE id = $1"#, i64::from(user_id)).fetch_optional(db_pool).await?.map(|Json(profile)| profile))
+impl User {
+    async fn from_id(db_pool: &PgPool, user_id: UserId) -> sqlx::Result<Option<Self>> {
+        Ok(sqlx::query!(r#"SELECT discriminator, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users WHERE snowflake = $1"#, i64::from(user_id)).fetch_optional(db_pool).await?.map(|row| User {
+            discriminator: row.discriminator.map(Discriminator),
+            nick: row.nick,
+            roles: row.roles.0,
+            username: row.username,
+        }))
     }
 
     fn is_mensch_or_guest(&self) -> bool {
@@ -162,10 +175,15 @@ impl Profile {
 }
 
 async fn html_mention(db_pool: &PgPool, user_id: UserId) -> sqlx::Result<RawHtml<String>> {
-    Ok(if let Some(profile) = Profile::from_user_id(db_pool, user_id).await? {
+    Ok(if let Some(user) = User::from_id(db_pool, user_id).await? {
+        let username = if let Some(discriminator) = user.discriminator {
+            format!("{}#{discriminator}", user.username)
+        } else {
+            format!("@{}", user.username)
+        };
         html! {
-            a(title = format!("{}#{}", profile.username, profile.discriminator), href = format!("/mensch/{user_id}")) {
-                : profile.nick.unwrap_or(profile.username);
+            a(title = username, href = format!("/mensch/{user_id}")) {
+                : user.nick.unwrap_or(user.username);
             }
         }
     } else {
@@ -249,8 +267,8 @@ async fn page(db_pool: &PgPool, me: Option<DiscordUser>, uri: &Origin<'_>, kind:
                             }
                             div(id = "login") {
                                 @if let Some(me) = me {
-                                    @let profile = Profile::from_user_id(db_pool, me.id).await?;
-                                    @let is_mensch_or_guest = profile.as_ref().map_or(false, Profile::is_mensch_or_guest);
+                                    @let user = User::from_id(db_pool, me.id).await?;
+                                    @let is_mensch_or_guest = user.as_ref().map_or(false, User::is_mensch_or_guest);
                                     : "Angemeldet als ";
                                     : html_mention(db_pool, me.id).await?;
                                     br;
@@ -306,8 +324,8 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
             if is_ongoing { &mut ongoing_events } else { &mut upcoming_events }.push((id, event));
         }
         let content = html! {
-            @let profile = Profile::from_user_id(db_pool, id).await?;
-            @let is_mensch_or_guest = profile.as_ref().map_or(false, Profile::is_mensch_or_guest);
+            @let user = User::from_id(db_pool, id).await?;
+            @let is_mensch_or_guest = user.as_ref().map_or(false, User::is_mensch_or_guest);
             @if is_mensch_or_guest {
                 p {
                     a(href = "/api") : "API";
@@ -354,7 +372,7 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                 p {
                     a(href = "/event") : "vergangene Events";
                 }
-            } else if profile.is_some() {
+            } else if user.is_some() {
                 p : "Dein Account wurde noch nicht freigeschaltet. Stelle dich doch bitte einmal kurz im ";
                 : "#general"; //TODO link
                 : " vor und warte, bis ein admin dich bestätigt.";

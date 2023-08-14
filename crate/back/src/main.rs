@@ -3,11 +3,16 @@
 
 use {
     std::{
+        collections::BTreeSet,
+        fmt,
         io::stdout,
         str::FromStr as _,
     },
+    chrono::prelude::*,
     futures::stream::TryStreamExt as _,
+    serde::Serialize,
     serde_json::Value as Json,
+    serde_plain::derive_serialize_from_display,
     serenity::model::prelude::*,
     sqlx::{
         PgPool,
@@ -51,6 +56,26 @@ enum UserIdDbSubcommand {
     },
 }
 
+struct Discriminator(i16);
+
+impl fmt::Display for Discriminator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:04}", self.0)
+    }
+}
+
+derive_serialize_from_display!(Discriminator);
+
+#[derive(Serialize)]
+struct Profile {
+    discriminator: Option<Discriminator>,
+    joined: Option<DateTime<Utc>>,
+    nick: Option<String>,
+    roles: BTreeSet<RoleId>,
+    snowflake: UserId,
+    username: String,
+}
+
 #[derive(clap::Parser)]
 #[clap(version)]
 enum Args {
@@ -68,9 +93,11 @@ enum Args {
 enum Error {
     #[error(transparent)] Json(#[from] serde_json::Error),
     #[error(transparent)] Sql(#[from] sqlx::Error),
+    #[error("a JSON argument did not match the expected format")]
+    JsonFormat,
 }
 
-#[wheel::main]
+#[wheel::main(debug)]
 async fn main(args: Args) -> Result<i32, Error> {
     let db_pool = PgPool::connect_with(PgConnectOptions::default().username("fenhl").database("gefolge").application_name("gefolge-web-back")).await?;
     match args {
@@ -101,18 +128,60 @@ async fn main(args: Args) -> Result<i32, Error> {
         Args::Locations(StringDbSubcommand::Set { id, value }) => { sqlx::query!("INSERT INTO json_locations (id, value) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET value = EXCLUDED.value", id, value).execute(&db_pool).await?; }
         Args::Locations(StringDbSubcommand::SetIfNotExists { id, value }) => { sqlx::query!("INSERT INTO json_locations (id, value) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING", id, value).execute(&db_pool).await?; }
         Args::Profiles(UserIdDbSubcommand::List) => {
-            let mut profiles = sqlx::query_scalar!("SELECT id FROM json_profiles").fetch(&db_pool);
+            let mut profiles = sqlx::query_scalar!("SELECT snowflake FROM users").fetch(&db_pool);
             while let Some(id) = profiles.try_next().await? {
                 println!("{}", id as u64);
             }
         }
-        Args::Profiles(UserIdDbSubcommand::Get { id }) => if let Some(value) = sqlx::query_scalar!("SELECT value FROM json_profiles WHERE id = $1", id.0 as i64).fetch_optional(&db_pool).await? {
-            serde_json::to_writer(stdout(), &value)?;
+        Args::Profiles(UserIdDbSubcommand::Get { id }) => if let Some(row) = sqlx::query!(r#"SELECT discriminator, joined, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users WHERE snowflake = $1"#, id.0 as i64).fetch_optional(&db_pool).await? {
+            serde_json::to_writer(stdout(), &Profile {
+                discriminator: row.discriminator.map(Discriminator),
+                joined: row.joined,
+                nick: row.nick,
+                roles: row.roles.0,
+                snowflake: id,
+                username: row.username,
+            })?;
         } else {
             return Ok(2)
         },
-        Args::Profiles(UserIdDbSubcommand::Set { id, value }) => { sqlx::query!("INSERT INTO json_profiles (id, value) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET value = EXCLUDED.value", id.0 as i64, value).execute(&db_pool).await?; }
-        Args::Profiles(UserIdDbSubcommand::SetIfNotExists { id, value }) => { sqlx::query!("INSERT INTO json_profiles (id, value) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING", id.0 as i64, value).execute(&db_pool).await?; }
+        Args::Profiles(UserIdDbSubcommand::Set { id, value }) => {
+            let Json::Object(mut value) = value else { return Err(Error::JsonFormat) };
+            sqlx::query!("
+                INSERT INTO users
+                (snowflake, discriminator, joined, nick, roles, username)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                ON CONFLICT (snowflake) DO UPDATE SET
+                discriminator = EXCLUDED.discriminator,
+                joined = EXCLUDED.joined,
+                nick = EXCLUDED.nick,
+                roles = EXCLUDED.roles,
+                username = EXCLUDED.username
+            ",
+                id.0 as i64,
+                value.remove("discriminator").and_then(|discrim| serde_json::from_value::<Option<i16>>(discrim).transpose()).transpose()?,
+                value.remove("joined").and_then(|joined| serde_json::from_value::<Option<DateTime<Utc>>>(joined).transpose()).transpose()?,
+                value.remove("nick").and_then(|nick| serde_json::from_value::<Option<String>>(nick).transpose()).transpose()?,
+                value.remove("roles").unwrap_or_default(),
+                serde_json::from_value::<String>(value.remove("username").ok_or(Error::JsonFormat)?)?,
+            ).execute(&db_pool).await?;
+        }
+        Args::Profiles(UserIdDbSubcommand::SetIfNotExists { id, value }) => {
+            let Json::Object(mut value) = value else { return Err(Error::JsonFormat) };
+            sqlx::query!("
+                INSERT INTO users
+                (snowflake, discriminator, joined, nick, roles, username)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                ON CONFLICT (snowflake) DO NOTHING
+            ",
+                id.0 as i64,
+                value.remove("discriminator").and_then(|discrim| serde_json::from_value::<Option<i16>>(discrim).transpose()).transpose()?,
+                value.remove("joined").and_then(|joined| serde_json::from_value::<Option<DateTime<Utc>>>(joined).transpose()).transpose()?,
+                value.remove("nick").and_then(|nick| serde_json::from_value::<Option<String>>(nick).transpose()).transpose()?,
+                value.remove("roles").unwrap_or_default(),
+                serde_json::from_value::<String>(value.remove("username").ok_or(Error::JsonFormat)?)?,
+            ).execute(&db_pool).await?;
+        }
         Args::UserData(UserIdDbSubcommand::List) => {
             let mut user_data = sqlx::query_scalar!("SELECT id FROM json_user_data").fetch(&db_pool);
             while let Some(id) = user_data.try_next().await? {
