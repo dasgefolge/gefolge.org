@@ -81,7 +81,10 @@ class DiscordPerson(User, metaclass=DiscordPersonMeta):
 
     def __str__(self):
         try:
-            return f'{self.username}#{self.discrim}'
+            if self.discrim is None:
+                return f'@{self.username}'
+            else:
+                return f'{self.username}#{self.discrim}'
         except FileNotFoundError:
             return str(self.snowflake)
 
@@ -89,7 +92,7 @@ class DiscordPerson(User, metaclass=DiscordPersonMeta):
     def by_tag(cls, username, discrim):
         # used in flask_wiki
         for person in cls:
-            if username == person.username and f'{discrim:>04}' == person.discrim:
+            if username == person.username and (person.discrim is None and (discrim is None or discrim == 0) or f'{discrim:>04}' == person.discrim):
                 return person
 
     def api_key_inner(self, *, create, exclude=None):
@@ -113,7 +116,8 @@ class DiscordPerson(User, metaclass=DiscordPersonMeta):
     @property
     def discrim(self):
         """Returns the Discord discriminator (also called Discord Tag) as a string with leading zeroes."""
-        return '{:04}'.format(self.profile_data['discriminator'])
+        if self.profile_data['discriminator'] is not None:
+            return '{:04}'.format(self.profile_data['discriminator'])
 
     @property
     def is_authenticated(self):

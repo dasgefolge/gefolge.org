@@ -3,7 +3,13 @@
 {% block title %}{{person.__str__()}} bearbeiten — Das Gefolge{% endblock %}
 
 {% block page_content %}
-    {% if person.nickname is none %}
+    {% if person.discrim is none %}
+        <h1>
+            {% if person.nickname is none %}{{person.username}}{% else %}{{person.nickname}}{% endif %}
+            <a href="{{person.profile_url}}" class="btn btn-danger">Abbrechen</a>
+        </h1>
+        <h2><span class="muted">@{{person.username}}</span></h2>
+    {% elif person.nickname is none %}
         <h1>
             {{person.username}}<span class="muted">#{{person.discrim}}</span>
             <a href="{{person.profile_url}}" class="btn btn-danger">Abbrechen</a>
@@ -13,7 +19,7 @@
             {{person.nickname}}
             <a href="{{person.profile_url}}" class="btn btn-danger">Abbrechen</a>
         </h1>
-        <h2>{{person.username}}<span class="muted">#{{person.discrim}}</span></h1>
+        <h2>{{person.username}}<span class="muted">#{{person.discrim}}</span></h2>
     {% endif %}
     {% if g.user is admin or g.user == person %}
         {{gen_form(profile_form, url_for('profile_edit', person=person.snowflake))}}

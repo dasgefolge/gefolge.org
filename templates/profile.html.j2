@@ -3,9 +3,15 @@
 {% block title %}{{person.__str__()}} — Das Gefolge{% endblock %}
 
 {% block page_content %}
-    {% if person.nickname is none %}
+    {% if person.discrim is none %}
         <h1>
-            {{person.profile_data['username']}}<span class="muted">#{{person.discrim}}</span>
+            {% if person.nickname is none %}{{person.username}}{% else %}{{person.nickname}}{% endif %}
+            {% if g.user is admin or g.user == person %}<a href="{{(g.view_node / 'edit').url}}" class="btn btn-primary">Bearbeiten</a>{% endif %}
+        </h1>
+        <h2><span class="muted">@{{person.username}}</span></h2>
+    {% elif person.nickname is none %}
+        <h1>
+            {{person.username}}<span class="muted">#{{person.discrim}}</span>
             {% if g.user is admin or g.user == person %}<a href="{{(g.view_node / 'edit').url}}" class="btn btn-primary">Bearbeiten</a>{% endif %}
         </h1>
     {% else %}
@@ -13,7 +19,7 @@
             {{person.nickname}}
             {% if g.user is admin or g.user == person %}<a href="{{(g.view_node / 'edit').url}}" class="btn btn-primary">Bearbeiten</a>{% endif %}
         </h1>
-        <h2>{{person.profile_data['username']}}<span class="muted">#{{person.discrim}}</span></h1>
+        <h2>{{person.username}}<span class="muted">#{{person.discrim}}</span></h2>
     {% endif %}
     <p>{% if person is mensch %}Gefolge-Mensch{% else %}Gast{% endif %}, Discord snowflake {{person.snowflake}}. (<a href="https://discord.com/users/{{person.snowflake}}/">Discord-Profil</a>)</p>
     {% if person is mensch %}
