@@ -115,9 +115,8 @@ class DiscordPerson(User, metaclass=DiscordPersonMeta):
 
     @property
     def discrim(self):
-        """Returns the Discord discriminator (also called Discord Tag) as a string with leading zeroes."""
-        if self.profile_data['discriminator'] is not None:
-            return '{:04}'.format(self.profile_data['discriminator'])
+        """Returns the Discord discriminator, if any, as a string with leading zeroes."""
+        return self.profile_data['discriminator']
 
     @property
     def is_authenticated(self):
