@@ -100,16 +100,16 @@ impl<'r> FromRequest<'r> for DiscordUser {
                     match req.guard::<OAuth2<Discord>>().await {
                         Outcome::Success(oauth) => Outcome::Success(guard_try!(handle_discord_token_response(http_client, cookies, &guard_try!(oauth.refresh(token.value()).await)).await)),
                         Outcome::Failure((status, ())) => Outcome::Failure((status, UserFromRequestError::Cookie)),
-                        Outcome::Forward(()) => Outcome::Forward(()),
+                        Outcome::Forward(status) => Outcome::Forward(status),
                     }
                 } else {
                     Outcome::Failure((Status::Unauthorized, UserFromRequestError::Cookie))
                 },
                 Outcome::Failure((status, ())) => Outcome::Failure((status, UserFromRequestError::HttpClient)),
-                Outcome::Forward(()) => Outcome::Forward(()),
+                Outcome::Forward(status) => Outcome::Forward(status),
             },
             Outcome::Failure((_, never)) => match never {},
-            Outcome::Forward(()) => Outcome::Forward(()),
+            Outcome::Forward(status) => Outcome::Forward(status),
         }
     }
 }

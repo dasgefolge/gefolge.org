@@ -3,8 +3,12 @@
 
 use {
     std::{
-        collections::BTreeSet,
+        collections::{
+            BTreeSet,
+            HashMap,
+        },
         fmt,
+        sync::Arc,
         time::Duration,
     },
     base64::engine::{
@@ -67,7 +71,10 @@ use {
         postgres::PgConnectOptions,
         types::Json,
     },
-    tokio::process::Command,
+    tokio::{
+        process::Command,
+        sync::RwLock,
+    },
     url::Url,
     wheel::traits::AsyncCommandOutputExt as _,
     crate::{
@@ -85,7 +92,9 @@ include!(concat!(env!("OUT_DIR"), "/static_files.rs"));
 
 mod auth;
 mod config;
+mod event;
 mod util;
+mod websocket;
 
 const MENSCH: RoleId = RoleId(386753710434287626);
 const GUEST: RoleId = RoleId(784929665478557737);
@@ -114,7 +123,7 @@ impl Event {
             if location == "online" {
                 Europe::Berlin //TODO mark as not local
             } else {
-                sqlx::query_scalar!(r#"SELECT value AS "value: Json<Location>" FROM json_locations WHERE id = $1"#, location).fetch_one(transaction).await?.0.timezone
+                sqlx::query_scalar!(r#"SELECT value AS "value: Json<Location>" FROM json_locations WHERE id = $1"#, location).fetch_one(&mut **transaction).await?.0.timezone
             }
         } else {
             return Ok(Some(LocalResult::None))
@@ -130,7 +139,7 @@ impl Event {
             if location == "online" {
                 Europe::Berlin //TODO mark as not local
             } else {
-                sqlx::query_scalar!(r#"SELECT value AS "value: Json<Location>" FROM json_locations WHERE id = $1"#, location).fetch_one(transaction).await?.0.timezone
+                sqlx::query_scalar!(r#"SELECT value AS "value: Json<Location>" FROM json_locations WHERE id = $1"#, location).fetch_one(&mut **transaction).await?.0.timezone
             }
         } else {
             return Ok(Some(LocalResult::None))
@@ -144,6 +153,7 @@ struct Location {
     timezone: Tz,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 struct Discriminator(i16);
 
 impl fmt::Display for Discriminator {
@@ -152,7 +162,9 @@ impl fmt::Display for Discriminator {
     }
 }
 
+#[derive(Clone, PartialEq, Eq, Hash)]
 struct User {
+    id: UserId,
     discriminator: Option<Discriminator>,
     nick: Option<String>,
     roles: BTreeSet<RoleId>,
@@ -160,13 +172,28 @@ struct User {
 }
 
 impl User {
-    async fn from_id(db_pool: &PgPool, user_id: UserId) -> sqlx::Result<Option<Self>> {
-        Ok(sqlx::query!(r#"SELECT discriminator, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users WHERE snowflake = $1"#, i64::from(user_id)).fetch_optional(db_pool).await?.map(|row| User {
+    async fn from_id(db_pool: &PgPool, id: UserId) -> sqlx::Result<Option<Self>> {
+        Ok(sqlx::query!(r#"SELECT discriminator, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users WHERE snowflake = $1"#, i64::from(id)).fetch_optional(db_pool).await?.map(|row| User {
+            discriminator: row.discriminator.map(Discriminator),
+            nick: row.nick,
+            roles: row.roles.0,
+            username: row.username,
+            id,
+        }))
+    }
+
+    async fn from_api_key(db_pool: &PgPool, api_key: &str) -> sqlx::Result<Option<Self>> {
+        Ok(sqlx::query!(r#"SELECT snowflake, discriminator, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users, json_user_data WHERE id = snowflake AND value -> 'apiKey' = $1"#, Json(api_key) as _).fetch_optional(db_pool).await?.map(|row| User {
+            id: UserId(row.snowflake as u64),
             discriminator: row.discriminator.map(Discriminator),
             nick: row.nick,
             roles: row.roles.0,
             username: row.username,
         }))
+    }
+
+    fn is_mensch(&self) -> bool {
+        self.roles.contains(&MENSCH)
     }
 
     fn is_mensch_or_guest(&self) -> bool {
@@ -304,7 +331,7 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
         let now = Utc::now();
         let mut transaction = db_pool.begin().await?;
         let mut upcoming_events = Vec::default();
-        for row in sqlx::query!(r#"SELECT id, value AS "value: Json<Event>" FROM json_events"#).fetch_all(&mut transaction).await? {
+        for row in sqlx::query!(r#"SELECT id, value AS "value: Json<Event>" FROM json_events"#).fetch_all(&mut *transaction).await? {
             let is_upcoming = if let Some(end) = row.value.0.end(&mut transaction).await? {
                 end.single_ok()? > now
             } else {
@@ -588,6 +615,7 @@ async fn main() -> Result<(), MainError> {
         auth::discord_callback,
         auth::discord_login,
         auth::logout,
+        websocket::websocket,
     ])
     .mount("/static", FileServer::new("assets/static", rocket::fs::Options::None))
     .register("/", rocket::catchers![
@@ -607,6 +635,7 @@ async fn main() -> Result<(), MainError> {
     .manage(PgPool::connect_with(PgConnectOptions::default().username("fenhl").database("gefolge").application_name("gefolge-web")).await?)
     .manage(http_client)
     .manage(ProxyHttpClient(proxy_http_client))
+    .manage(Arc::<RwLock<HashMap<u64, ricochet_robots_websocket::Lobby<User>>>>::default())
     .launch().await?;
     Ok(())
 }

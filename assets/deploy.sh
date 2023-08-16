@@ -7,11 +7,6 @@ if [[ x"$(hostname -f)" == x'mercredi.fenhl.net' ]]; then
     cd /opt/git/github.com/dasgefolge/peter-discord/master
     git --git-dir=/opt/git/github.com/dasgefolge/peter-discord/master/.git pull
     cargo build --release --package=peter-python
-    # deploy gefolge-websocket
-    cd /opt/git/github.com/dasgefolge/gefolge-websocket/master
-    git --git-dir=/opt/git/github.com/dasgefolge/gefolge-websocket/master/.git pull
-    cargo build --release --features=ctrlflow
-    sudo systemctl restart gefolge-websocket
     # deploy flask-view-tree
     cd /opt/git/github.com/fenhl/flask-view-tree/master
     git --git-dir=/opt/git/github.com/fenhl/flask-view-tree/master/.git pull
