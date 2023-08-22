@@ -100,7 +100,7 @@ const MENSCH: RoleId = RoleId(386753710434287626);
 const GUEST: RoleId = RoleId(784929665478557737);
 
 #[derive(Debug, Deserialize)]
-struct Event {
+struct Event { //TODO merge into crate::event::Event
     end: Option<NaiveDateTime>,
     location: Option<String>,
     name: Option<String>,

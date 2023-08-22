@@ -32,7 +32,7 @@ def handle_profile_edit(event, person, profile_form):
             'animalProducts': profile_form.animal_products.data,
             'allergies': profile_form.allergies.data,
         },
-        'alkohol': profile_form.alkohol.data,
+        'alkohol': getattr(getattr(profile_form, 'alkohol', object()), 'data', None),
     })
     # Zeitraum
     if 'nights' not in person_data:
