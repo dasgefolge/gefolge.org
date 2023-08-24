@@ -202,7 +202,7 @@ class Transaction:
                 event = gefolge_web.event.model.Event(self.json_data['event'])
             except FileNotFoundError:
                 event = jinja2.Markup('abgesagtes event <code>{}</code>'.format(jinja2.escape(self.json_data['event'])))
-            return jinja2.Markup('{}Rückzahlung der erhöhten Anzahlung für {}{}'.format('Teilweise ' if Euro(self.json_data['extraRemaining']) > 0 else '', event.__html__(), ' (noch {})'.format(Euro(self.json_data['extraRemaining'])) if Euro(self.json_data['extraRemaining']) > 0 else ''))
+            return jinja2.Markup('{}Rückzahlung der erhöhten Anzahlung für {}{}'.format('Teilweise ' if Euro(self.json_data['extraRemaining']) > Euro() else '', event.__html__(), ' (noch {})'.format(Euro(self.json_data['extraRemaining'])) if Euro(self.json_data['extraRemaining']) > Euro() else ''))
         elif self.json_data['type'] == 'payPal':
             return jinja2.Markup('PayPal-Überweisung')
         elif self.json_data['type'] == 'sponsorWerewolfCard':
