@@ -332,23 +332,20 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
         let mut transaction = db_pool.begin().await?;
         let mut upcoming_events = Vec::default();
         for row in sqlx::query!(r#"SELECT id, value AS "value: Json<Event>" FROM json_events"#).fetch_all(&mut *transaction).await? {
-            let is_upcoming = if let Some(end) = row.value.0.end(&mut transaction).await? {
-                end.single_ok()? > now
-            } else {
-                true
-            };
-            if is_upcoming {
-                upcoming_events.push((row.id, row.value.0));
+            let start = row.value.0.start(&mut transaction).await?.map(LocalResult::single_ok).transpose()?;
+            let end = row.value.0.end(&mut transaction).await?.map(LocalResult::single_ok).transpose()?;
+            if end.map_or(true, |end| end > now) {
+                upcoming_events.push((row.id, start, end, row.value.0));
             }
         }
+        upcoming_events.sort_unstable_by(|(id1, start1, _, _), (id2, start2, _, _)|
+            start1.is_none().cmp(&start2.is_none()) // nulls last
+                .then_with(|| start1.cmp(start2))
+                .then_with(|| id1.cmp(id2))
+        );
         let mut ongoing_events = Vec::default();
-        for (id, event) in upcoming_events.drain(..).collect_vec() {
-            let is_ongoing = if let Some(start) = event.start(&mut transaction).await? {
-                start.single_ok()? <= now
-            } else {
-                true
-            };
-            if is_ongoing { &mut ongoing_events } else { &mut upcoming_events }.push((id, event));
+        for (id, start, end, event) in upcoming_events.drain(..).collect_vec() {
+            if start.map_or(true, |start| start <= now) { &mut ongoing_events } else { &mut upcoming_events }.push((id, start, end, event));
         }
         let content = html! {
             @let user = User::from_id(db_pool, id).await?;
@@ -369,12 +366,12 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                 @if !ongoing_events.is_empty() {
                     h2 : "laufende Events";
                     ul {
-                        @for (id, event) in ongoing_events {
+                        @for (id, start, end, event) in ongoing_events {
                             li {
                                 : event.to_html(&id);
-                                @if let (Some(start), Some(end)) = (event.start(&mut transaction).await?, event.end(&mut transaction).await?) {
+                                @if let (Some(start), Some(end)) = (start, end) {
                                     : " (";
-                                    : format_date_range(start.single_ok()?, end.single_ok()?);
+                                    : format_date_range(start, end);
                                     : ")";
                                 }
                             }
@@ -384,12 +381,12 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                 @if !upcoming_events.is_empty() {
                     h2 : "zukünftige Events";
                     ul {
-                        @for (id, event) in upcoming_events {
+                        @for (id, start, end, event) in upcoming_events {
                             li {
                                 : event.to_html(&id);
-                                @if let (Some(start), Some(end)) = (event.start(&mut transaction).await?, event.end(&mut transaction).await?) {
+                                @if let (Some(start), Some(end)) = (start, end) {
                                     : " (";
-                                    : format_date_range(start.single_ok()?, end.single_ok()?);
+                                    : format_date_range(start, end);
                                     : ")";
                                 }
                             }
