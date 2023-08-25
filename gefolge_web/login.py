@@ -281,8 +281,13 @@ class AnonymousUser(User):
         return 'anonym'
 
 def ProfileForm(mensch):
+    def no_admin_nick_change(form, field):
+        # Peter does not have permission to change the nickname of the server owner.
+        if mensch.is_admin and field.data != mensch.nickname:
+            raise wtforms.validators.ValidationError('Der Name eines Administrators kann nur in Discord geändert werden.')
+
     class Form(flask_wtf.FlaskForm):
-        nickname = gefolge_web.forms.AnnotatedStringField('Name', [wtforms.validators.Optional(), wtforms.validators.Regexp('^([^@#:]{2,32})$')], prefix='@', description={'placeholder': mensch.username}, default=mensch.nickname)
+        nickname = gefolge_web.forms.AnnotatedStringField('Name', [no_admin_nick_change, wtforms.validators.Optional(), wtforms.validators.Regexp('^([^@#:]{2,32})$')], prefix='@', description={'placeholder': mensch.username}, default=mensch.nickname)
         nickname_notice = gefolge_web.forms.FormText('Dieser Name wird u.A. im Gefolge-Discord, auf dieser website und auf events verwendet. Du kannst ihn auch im Gefolge-Discord über das Servermenü ändern. Wenn du das Feld leer lässt, wird dein Discord username verwendet.')
         timezone = gefolge_web.forms.TimezoneField(featured=['Europe/Berlin', 'Etc/UTC'], default=mensch.timezone)
         timezone_notice = gefolge_web.forms.FormText('„Automatisch“ heißt, dass deine aktuelle Systemzeit verwendet wird, um deine Zeitzone zu erraten. Das kann fehlerhaft sein, wenn es mehrere verschiedene Zeitzonen gibt, die aktuell zu deiner Systemzeit passen aber verschiedene Regeln zur Sommerzeit haben. Wenn du JavaScript deaktivierst, werden alle Uhrzeiten in ihrer ursprünglichen Zeitzone angezeigt und unterpunktet. Du kannst immer mit dem Mauszeiger auf eine Uhrzeit zeigen, um ihre Zeitzone zu sehen.')
@@ -473,7 +478,8 @@ def setup(index, app):
                 'enableDejavu': profile_form.enable_dejavu.data,
                 'eventTimezoneOverride': profile_form.event_timezone_override.data
             })
-            person.nickname = profile_form.nickname.data
+            if not person.is_admin:
+                person.nickname = profile_form.nickname.data
             if profile_form.timezone.data is None:
                 if 'timezone' in person.userdata:
                     del person.userdata['timezone']
