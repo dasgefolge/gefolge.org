@@ -21,7 +21,10 @@ use {
         },
         time::sleep,
     },
-    crate::User,
+    crate::user::{
+        Discriminator,
+        User,
+    },
 };
 
 type WsStream = SplitStream<rocket_ws::stream::DuplexStream>;
@@ -92,7 +95,7 @@ impl ricochet_robots_websocket::PlayerId for User {
     }
 
     fn discrim(&self) -> Result<u16, ricochet_robots_websocket::Error> {
-        Ok(self.discriminator.map(|crate::Discriminator(discrim)| discrim as u16).unwrap_or_default())
+        Ok(self.discriminator.map(|Discriminator(discrim)| discrim as u16).unwrap_or_default())
     }
 
     fn nickname(&self) -> Result<Option<String>, ricochet_robots_websocket::Error> {

@@ -8,19 +8,32 @@ use {
         offset::LocalResult,
         prelude::*,
     },
-    chrono_tz::Tz,
+    chrono_tz::{
+        Europe,
+        Tz,
+    },
+    rocket::response::content::RawHtml,
+    rocket_util::html,
     serde::Deserialize,
     sqlx::{
+        PgExecutor,
         PgPool,
         types::Json,
     },
     tokio::time::sleep,
-    crate::websocket::WsSink,
+    crate::{
+        time::{
+            MaybeAwareDateTime,
+            MaybeLocalDateTime,
+        },
+        websocket::WsSink,
+    },
 };
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum Error {
     #[error(transparent)] Sql(#[from] sqlx::Error),
+    #[error(transparent)] ToMaybeLocal(#[from] crate::time::ToMaybeLocalError),
     #[error("ambiguous timestamp: could refer to {} or {} UTC", .0.with_timezone(&Utc).format("%Y-%m-%d %H:%M:%S"), .1.with_timezone(&Utc).format("%Y-%m-%d %H:%M:%S"))]
     AmbiguousTimestamp(DateTime<Tz>, DateTime<Tz>),
     #[error("invalid timestamp")]
@@ -51,7 +64,7 @@ struct Location {
 }
 
 impl Location {
-    async fn load(db_pool: &PgPool, loc_id: &str) -> sqlx::Result<Option<Self>> {
+    async fn load(db_pool: impl PgExecutor<'_>, loc_id: &str) -> sqlx::Result<Option<Self>> {
         Ok(sqlx::query_scalar!(r#"SELECT value AS "value: Json<Self>" FROM json_locations WHERE id = $1"#, loc_id).fetch_optional(db_pool).await?.map(|Json(value)| value))
     }
 }
@@ -63,24 +76,25 @@ enum LocationInfo {
 }
 
 impl LocationInfo {
-    fn timezone(&self) -> Tz {
+    fn timezone(&self) -> Option<Tz> {
         match self {
-            Self::Unknown | Self::Online => chrono_tz::Europe::Berlin,
-            Self::Known(info) => info.timezone,
+            Self::Unknown | Self::Online => None,
+            Self::Known(info) => Some(info.timezone),
         }
     }
 }
 
 #[derive(Debug, Deserialize)]
-struct Event {
-    end: Option<NaiveDateTime>,
+pub(crate) struct Event {
+    end: Option<MaybeAwareDateTime>,
     location: Option<String>,
-    start: Option<NaiveDateTime>,
+    name: Option<String>,
+    start: Option<MaybeAwareDateTime>,
     timezone: Option<Tz>,
 }
 
 impl Event {
-    async fn location_info(&self, db_pool: &PgPool) -> Result<LocationInfo, Error> {
+    async fn location_info(&self, db_pool: impl PgExecutor<'_>) -> Result<LocationInfo, Error> {
         Ok(match self.location.as_deref() {
             Some("online") => LocationInfo::Online,
             Some(name) => LocationInfo::Known(Location::load(db_pool, name).await?.ok_or(Error::UnknownLocation)?),
@@ -88,28 +102,34 @@ impl Event {
         })
     }
 
-    async fn timezone(&self, db_pool: &PgPool) -> Result<Tz, Error> {
+    async fn timezone(&self, db_pool: impl PgExecutor<'_>) -> Result<Option<Tz>, Error> {
         Ok(if let Some(timezone) = self.timezone {
-            timezone
+            Some(timezone)
         } else {
             self.location_info(db_pool).await?.timezone()
         })
     }
 
-    async fn start(&self, db_pool: &PgPool) -> Result<Option<DateTime<Tz>>, Error> {
-        Ok(if let Some(start_naive) = self.start {
-            Some(self.timezone(db_pool).await?.from_local_datetime(&start_naive).into_result()?)
+    pub(crate) async fn start(&self, db_pool: impl PgExecutor<'_>) -> Result<Option<MaybeLocalDateTime>, Error> {
+        Ok(if let Some(start) = self.start {
+            Some(start.to_maybe_local(self.timezone(db_pool).await?)?)
         } else {
             None
         })
     }
 
-    async fn end(&self, db_pool: &PgPool) -> Result<Option<DateTime<Tz>>, Error> {
-        Ok(if let Some(end_naive) = self.end {
-            Some(self.timezone(db_pool).await?.from_local_datetime(&end_naive).into_result()?)
+    pub(crate) async fn end(&self, db_pool: impl PgExecutor<'_>) -> Result<Option<MaybeLocalDateTime>, Error> {
+        Ok(if let Some(end) = self.end {
+            Some(end.to_maybe_local(self.timezone(db_pool).await?)?)
         } else {
             None
         })
+    }
+
+    pub(crate) fn to_html(&self, id: &str) -> RawHtml<String> {
+        html! {
+            a(href = format!("/event/{id}")) : self.name.as_deref().unwrap_or(id);
+        }
     }
 }
 
@@ -144,7 +164,7 @@ pub(crate) async fn client_session(db_pool: &PgPool, sink: WsSink) -> Result<Nev
         }
         if prev_state.map_or(true, |prev_state| prev_state != current_event) {
             if let Some((ref id, timezone)) = current_event {
-                ServerMessage::CurrentEvent { id: id.clone(), timezone }.write_ws(&mut *sink.lock().await).await?;
+                ServerMessage::CurrentEvent { id: id.clone(), timezone: timezone.unwrap_or(Europe::Berlin) }.write_ws(&mut *sink.lock().await).await?;
             } else {
                 ServerMessage::NoEvent.write_ws(&mut *sink.lock().await).await?;
             }

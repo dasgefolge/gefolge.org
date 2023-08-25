@@ -20,6 +20,7 @@ rocket_oauth2 = { git = "https://github.com/fenhl/rocket_oauth2", branch = "rock
 rocket_ws = { git = "https://github.com/SergioBenitez/Rocket", branch = "master" }
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = "1.0.93"
+serde_plain = "1.0.1"
 serenity = { version = "0.11.5", default-features = false, features = ["model", "rustls_backend"] }
 sqlx = { version = "0.7", features = ["json", "macros", "postgres", "runtime-tokio-rustls"] }
 thiserror = "1.0.38"

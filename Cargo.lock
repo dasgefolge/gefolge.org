@@ -895,6 +895,7 @@ dependencies = [
  "rocket_ws",
  "serde",
  "serde_json",
+ "serde_plain",
  "serenity",
  "sqlx",
  "thiserror",

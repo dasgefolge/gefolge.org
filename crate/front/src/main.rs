@@ -3,11 +3,7 @@
 
 use {
     std::{
-        collections::{
-            BTreeSet,
-            HashMap,
-        },
-        fmt,
+        collections::HashMap,
         sync::Arc,
         time::Duration,
     },
@@ -15,14 +11,7 @@ use {
         Engine as _,
         general_purpose::STANDARD as BASE64,
     },
-    chrono::{
-        LocalResult,
-        prelude::*,
-    },
-    chrono_tz::{
-        Europe,
-        Tz,
-    },
+    chrono::prelude::*,
     itertools::Itertools as _,
     rocket::{
         Rocket,
@@ -62,12 +51,8 @@ use {
         ToHtml,
         html,
     },
-    serde::Deserialize,
-    serenity::model::prelude::*,
     sqlx::{
         PgPool,
-        Postgres,
-        Transaction,
         postgres::PgConnectOptions,
         types::Json,
     },
@@ -80,11 +65,13 @@ use {
     crate::{
         auth::DiscordUser,
         config::Config,
-        util::{
-            LocalResultExt as _,
-            StatusOrError,
-            format_date_range,
+        event::Event,
+        time::format_date_range,
+        user::{
+            User,
+            html_mention,
         },
+        util::StatusOrError,
     },
 };
 
@@ -93,135 +80,10 @@ include!(concat!(env!("OUT_DIR"), "/static_files.rs"));
 mod auth;
 mod config;
 mod event;
+mod time;
+mod user;
 mod util;
 mod websocket;
-
-const MENSCH: RoleId = RoleId(386753710434287626);
-const GUEST: RoleId = RoleId(784929665478557737);
-
-#[derive(Debug, Deserialize)]
-struct Event { //TODO merge into crate::event::Event
-    end: Option<NaiveDateTime>,
-    location: Option<String>,
-    name: Option<String>,
-    start: Option<NaiveDateTime>,
-    timezone: Option<Tz>,
-}
-
-impl Event {
-    fn to_html(&self, id: &str) -> RawHtml<String> {
-        html! {
-            a(href = format!("/event/{id}")) : self.name.as_deref().unwrap_or(id);
-        }
-    }
-
-    async fn start(&self, transaction: &mut Transaction<'_, Postgres>) -> sqlx::Result<Option<LocalResult<DateTime<Tz>>>> {
-        let Some(start) = self.start else { return Ok(None) };
-        let tz = if let Some(tz) = self.timezone {
-            tz
-        } else if let Some(ref location) = self.location {
-            if location == "online" {
-                Europe::Berlin //TODO mark as not local
-            } else {
-                sqlx::query_scalar!(r#"SELECT value AS "value: Json<Location>" FROM json_locations WHERE id = $1"#, location).fetch_one(&mut **transaction).await?.0.timezone
-            }
-        } else {
-            return Ok(Some(LocalResult::None))
-        };
-        Ok(Some(start.and_local_timezone(tz)))
-    }
-
-    async fn end(&self, transaction: &mut Transaction<'_, Postgres>) -> sqlx::Result<Option<LocalResult<DateTime<Tz>>>> {
-        let Some(end) = self.end else { return Ok(None) };
-        let tz = if let Some(tz) = self.timezone {
-            tz
-        } else if let Some(ref location) = self.location {
-            if location == "online" {
-                Europe::Berlin //TODO mark as not local
-            } else {
-                sqlx::query_scalar!(r#"SELECT value AS "value: Json<Location>" FROM json_locations WHERE id = $1"#, location).fetch_one(&mut **transaction).await?.0.timezone
-            }
-        } else {
-            return Ok(Some(LocalResult::None))
-        };
-        Ok(Some(end.and_local_timezone(tz)))
-    }
-}
-
-#[derive(Deserialize)]
-struct Location {
-    timezone: Tz,
-}
-
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
-struct Discriminator(i16);
-
-impl fmt::Display for Discriminator {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:04}", self.0)
-    }
-}
-
-#[derive(Clone, PartialEq, Eq, Hash)]
-struct User {
-    id: UserId,
-    discriminator: Option<Discriminator>,
-    nick: Option<String>,
-    roles: BTreeSet<RoleId>,
-    username: String,
-}
-
-impl User {
-    async fn from_id(db_pool: &PgPool, id: UserId) -> sqlx::Result<Option<Self>> {
-        Ok(sqlx::query!(r#"SELECT discriminator, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users WHERE snowflake = $1"#, i64::from(id)).fetch_optional(db_pool).await?.map(|row| User {
-            discriminator: row.discriminator.map(Discriminator),
-            nick: row.nick,
-            roles: row.roles.0,
-            username: row.username,
-            id,
-        }))
-    }
-
-    async fn from_api_key(db_pool: &PgPool, api_key: &str) -> sqlx::Result<Option<Self>> {
-        Ok(sqlx::query!(r#"SELECT snowflake, discriminator, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users, json_user_data WHERE id = snowflake AND value -> 'apiKey' = $1"#, Json(api_key) as _).fetch_optional(db_pool).await?.map(|row| User {
-            id: UserId(row.snowflake as u64),
-            discriminator: row.discriminator.map(Discriminator),
-            nick: row.nick,
-            roles: row.roles.0,
-            username: row.username,
-        }))
-    }
-
-    fn is_mensch(&self) -> bool {
-        self.roles.contains(&MENSCH)
-    }
-
-    fn is_mensch_or_guest(&self) -> bool {
-        self.roles.contains(&MENSCH) || self.roles.contains(&GUEST)
-    }
-}
-
-async fn html_mention(db_pool: &PgPool, user_id: UserId) -> sqlx::Result<RawHtml<String>> {
-    Ok(if let Some(user) = User::from_id(db_pool, user_id).await? {
-        let username = if let Some(discriminator) = user.discriminator {
-            format!("{}#{discriminator}", user.username)
-        } else {
-            format!("@{}", user.username)
-        };
-        html! {
-            a(title = username, href = format!("/mensch/{user_id}")) {
-                : user.nick.unwrap_or(user.username);
-            }
-        }
-    } else {
-        //TODO use data from Discord API directly or fetch global Discord username & discrim using serenity
-        html! {
-            : "<@";
-            : user_id.to_string();
-            : ">";
-        }
-    })
-}
 
 #[derive(Default)]
 enum PageKind {
@@ -320,9 +182,9 @@ async fn page(db_pool: &PgPool, me: Option<DiscordUser>, uri: &Origin<'_>, kind:
 
 #[derive(Debug, thiserror::Error, rocket_util::Error)]
 enum IndexError {
+    #[error(transparent)] Event(#[from] event::Error),
     #[error(transparent)] Page(#[from] PageError),
     #[error(transparent)] Sql(#[from] sqlx::Error),
-    #[error(transparent)] TimeFromLocal(#[from] util::TimeFromLocalError<DateTime<Tz>>),
 }
 
 #[rocket::get("/")]
@@ -332,8 +194,8 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
         let mut transaction = db_pool.begin().await?;
         let mut upcoming_events = Vec::default();
         for row in sqlx::query!(r#"SELECT id, value AS "value: Json<Event>" FROM json_events"#).fetch_all(&mut *transaction).await? {
-            let start = row.value.0.start(&mut transaction).await?.map(LocalResult::single_ok).transpose()?;
-            let end = row.value.0.end(&mut transaction).await?.map(LocalResult::single_ok).transpose()?;
+            let start = row.value.0.start(&mut *transaction).await?;
+            let end = row.value.0.end(&mut *transaction).await?;
             if end.map_or(true, |end| end > now) {
                 upcoming_events.push((row.id, start, end, row.value.0));
             }
@@ -351,6 +213,7 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
             @let user = User::from_id(db_pool, id).await?;
             @let is_mensch_or_guest = user.as_ref().map_or(false, User::is_mensch_or_guest);
             @if is_mensch_or_guest {
+                @let viewer_data = user.as_ref().expect("just checked (is_mensch_or_guest)").data(db_pool).await?;
                 p {
                     a(href = "/api") : "API";
                     : " • ";
@@ -371,7 +234,7 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                                 : event.to_html(&id);
                                 @if let (Some(start), Some(end)) = (start, end) {
                                     : " (";
-                                    : format_date_range(start, end);
+                                    : format_date_range(&viewer_data, start, end);
                                     : ")";
                                 }
                             }
@@ -386,7 +249,7 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                                 : event.to_html(&id);
                                 @if let (Some(start), Some(end)) = (start, end) {
                                     : " (";
-                                    : format_date_range(start, end);
+                                    : format_date_range(&viewer_data, start, end);
                                     : ")";
                                 }
                             }

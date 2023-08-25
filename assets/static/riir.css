@@ -74,6 +74,11 @@ a:hover {
     text-decoration: none;
 }
 
+.daterange:not([data-timezone]) {
+    text-decoration: underline;
+    text-decoration-style: dotted;
+}
+
 footer {
     color: gray;
 }
