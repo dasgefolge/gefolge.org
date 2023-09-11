@@ -24,7 +24,7 @@ server {
     }
 
     location /static/ {
-        root /opt/git/github.com/dasgefolge/gefolge.org/master/assets;
+        root /opt/git/github.com/dasgefolge/gefolge.org/main/assets;
     }
 
     location /api/websocket {

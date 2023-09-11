@@ -1,5 +1,5 @@
 {% macro gen_field(form, field) %}
-    {#FROM https://github.com/wurstmineberg/wurstmineberg.de/blob/master/wurstmineberg_web/templates/preferences.html #}
+    {#FROM https://github.com/wurstmineberg/wurstmineberg.de/blob/main/wurstmineberg_web/templates/preferences.html.j2 #}
     {% if form.errors and field.short_name in form.errors %}
         <div class="alert alert-danger col-sm-10 col-sm-offset-2" role="alert">
             <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>

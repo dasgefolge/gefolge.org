@@ -12,7 +12,7 @@ import gefolge_web.login
 import gefolge_web.util
 
 FENHL = gefolge_web.login.Mensch(86841168427495424)
-LORE_SEEKER_REPO = pathlib.Path('/opt/git/github.com/fenhl/lore-seeker/master')
+LORE_SEEKER_REPO = pathlib.Path('/opt/git/github.com/fenhl/lore-seeker/main')
 
 class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
     def __new__(cls, event, programmpunkt='custom-magic-draft'):

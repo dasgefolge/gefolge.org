@@ -43,7 +43,7 @@ import gefolge_web.games
 import gefolge_web.login
 import gefolge_web.util
 
-DOCUMENT_ROOT = os.environ.get('FLASK_ROOT_PATH', '/opt/git/github.com/dasgefolge/gefolge.org/master')
+DOCUMENT_ROOT = os.environ.get('FLASK_ROOT_PATH', '/opt/git/github.com/dasgefolge/gefolge.org/main')
 WIKI_CHANNEL_ID = 739623881719021728
 
 app = application = flask.Flask('gefolge_web', root_path=DOCUMENT_ROOT, instance_path=DOCUMENT_ROOT)

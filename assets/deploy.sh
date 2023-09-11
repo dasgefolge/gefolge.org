@@ -4,21 +4,21 @@ set -e
 
 if [[ x"$(hostname -f)" == x'mercredi.fenhl.net' ]]; then
     # deploy peter
-    cd /opt/git/github.com/dasgefolge/peter-discord/master
-    git --git-dir=/opt/git/github.com/dasgefolge/peter-discord/master/.git pull
+    cd /opt/git/github.com/dasgefolge/peter-discord/main
+    git --git-dir=/opt/git/github.com/dasgefolge/peter-discord/main/.git pull
     cargo build --release --package=peter-python
     # deploy flask-view-tree
-    cd /opt/git/github.com/fenhl/flask-view-tree/master
-    git --git-dir=/opt/git/github.com/fenhl/flask-view-tree/master/.git pull
+    cd /opt/git/github.com/fenhl/flask-view-tree/main
+    git --git-dir=/opt/git/github.com/fenhl/flask-view-tree/main/.git pull
     # deploy spacealert
-    cd /opt/git/github.com/dasgefolge/spacealert/master
-    git --git-dir=/opt/git/github.com/dasgefolge/spacealert/master/.git pull
+    cd /opt/git/github.com/dasgefolge/spacealert/main
+    git --git-dir=/opt/git/github.com/dasgefolge/spacealert/main/.git pull
     # deploy werewolf_web
-    cd /opt/git/localhost/werewolf_web/master
-    git --git-dir=/opt/git/localhost/werewolf_web/master/.git pull
+    cd /opt/git/localhost/werewolf_web/main
+    git --git-dir=/opt/git/localhost/werewolf_web/main/.git pull
     # deploy gefolge.org
-    cd /opt/git/github.com/dasgefolge/gefolge.org/master
-    git --git-dir=/opt/git/github.com/dasgefolge/gefolge.org/master/.git pull
+    cd /opt/git/github.com/dasgefolge/gefolge.org/main
+    git --git-dir=/opt/git/github.com/dasgefolge/gefolge.org/main/.git pull
     # restart nginx (since nginx config is tracked by git) and uWSGI
     sudo systemctl daemon-reload
     sudo systemctl reload nginx

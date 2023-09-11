@@ -21,7 +21,7 @@ ThrowOnNativeFailure
 wsl cp /home/fenhl/wslgit/github.com/dasgefolge/gefolge.org/target/x86_64-unknown-linux-musl/release/gefolge-web-back /mnt/c/Users/fenhl/git/github.com/dasgefolge/gefolge.org/stage/target/wsl/release/gefolge-web-back
 ThrowOnNativeFailure
 
-ssh gefolge.org env -C /opt/git/github.com/dasgefolge/gefolge.org/master git pull
+ssh gefolge.org env -C /opt/git/github.com/dasgefolge/gefolge.org/main git pull
 ThrowOnNativeFailure
 
 ssh gefolge.org sudo systemctl stop gefolge-web

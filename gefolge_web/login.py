@@ -290,9 +290,9 @@ def ProfileForm(mensch):
         nickname = gefolge_web.forms.AnnotatedStringField('Name', [no_admin_nick_change, wtforms.validators.Optional(), wtforms.validators.Regexp('^([^@#:]{2,32})$')], prefix='@', description={'placeholder': mensch.username}, default=mensch.nickname)
         nickname_notice = gefolge_web.forms.FormText('Dieser Name wird u.A. im Gefolge-Discord, auf dieser website und auf events verwendet. Du kannst ihn auch im Gefolge-Discord über das Servermenü ändern. Wenn du das Feld leer lässt, wird dein Discord username verwendet.')
         timezone = gefolge_web.forms.TimezoneField(featured=['Europe/Berlin', 'Etc/UTC'], default=mensch.timezone)
-        timezone_notice = gefolge_web.forms.FormText('„Automatisch“ heißt, dass deine aktuelle Systemzeit verwendet wird, um deine Zeitzone zu erraten. Das kann fehlerhaft sein, wenn es mehrere verschiedene Zeitzonen gibt, die aktuell zu deiner Systemzeit passen aber verschiedene Regeln zur Sommerzeit haben. Wenn du JavaScript deaktivierst, werden alle Uhrzeiten in ihrer ursprünglichen Zeitzone angezeigt und unterpunktet. Du kannst immer mit dem Mauszeiger auf eine Uhrzeit zeigen, um ihre Zeitzone zu sehen.')
-        event_timezone_override = wtforms.BooleanField('Auf Eventseiten immer die vor Ort gültige Zeitzone verwenden', default=mensch.event_timezone_override)
-        enable_dejavu = wtforms.BooleanField('DejaVu-Schriftart verwenden (wenn Text vertikal unregelmäßig aussieht, deaktivieren)', default=mensch.enable_dejavu)
+        timezone_notice = gefolge_web.forms.FormText('„Automatisch“ heißt, dass deine aktuelle Systemzeit verwendet wird, um deine Zeitzone zu erraten. Das kann fehlerhaft sein, wenn es mehrere verschiedene Zeitzonen gibt, die aktuell zu deiner Systemzeit passen aber verschiedene Regeln zur Sommerzeit haben. Wenn du JavaScript deaktivierst, werden alle Uhrzeiten in ihrer ursprünglichen Zeitzone angezeigt und unterpunktet. Du kannst immer mit dem Mauszeiger auf eine Uhrzeit zeigen, um ihre Zeitzone zu sehen.') #TODO update description (rewrite uses more accurate browser APIs)
+        event_timezone_override = wtforms.BooleanField('Auf Eventseiten immer die vor Ort gültige Zeitzone verwenden (außer bei online events)', default=mensch.event_timezone_override)
+        enable_dejavu = wtforms.BooleanField('DejaVu-Schriftart verwenden (wenn Text vertikal unregelmäßig aussieht, deaktivieren)', default=mensch.enable_dejavu) #TODO remove (no longer used in riir.css)
         submit_profile_form = wtforms.SubmitField('Speichern')
 
     return Form()

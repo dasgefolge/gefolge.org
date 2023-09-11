@@ -9,7 +9,7 @@ Restart=always
 ExecStart=/home/fenhl/bin/gefolge-web
 User=fenhl
 Group=www-data
-WorkingDirectory=/opt/git/github.com/dasgefolge/gefolge.org/master
+WorkingDirectory=/opt/git/github.com/dasgefolge/gefolge.org/main
 Environment="RUST_BACKTRACE=1"
 
 [Install]
