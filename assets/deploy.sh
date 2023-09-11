@@ -2,7 +2,7 @@
 
 set -e
 
-if [[ x"$(hostname -f)" == x'mercredi.fenhl.net' ]]; then
+if [[ x"$(hostname -f)" == x'vendredi.fenhl.net' ]]; then
     # deploy peter
     cd /opt/git/github.com/dasgefolge/peter-discord/main
     git --git-dir=/opt/git/github.com/dasgefolge/peter-discord/main/.git pull
