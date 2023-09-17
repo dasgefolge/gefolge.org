@@ -189,12 +189,16 @@ class Transaction:
 
             try:
                 event = gefolge_web.event.model.Event(self.json_data['event'])
+                if 'guest' in self.json_data:
+                    return jinja2.Markup('Anzahlung für {} für {}'.format(event.__html__(), jinja2.escape(event.person(self.json_data['guest']))))
+                else:
+                    return jinja2.Markup('Anzahlung für {}'.format(event.__html__()))
             except FileNotFoundError:
                 event = jinja2.Markup('abgesagtes event <code>{}</code>'.format(jinja2.escape(self.json_data['event'])))
-            if 'guest' in self.json_data:
-                return jinja2.Markup('Anzahlung für {} für {}'.format(event.__html__(), jinja2.escape(event.person(self.json_data['guest']))))
-            else:
-                return jinja2.Markup('Anzahlung für {}'.format(event.__html__()))
+                if 'guest' in self.json_data:
+                    return jinja2.Markup('Anzahlung für {} für einen Gast'.format(event.__html__()))
+                else:
+                    return jinja2.Markup('Anzahlung für {}'.format(event.__html__()))
         elif self.json_data['type'] == 'eventAnzahlungReturn':
             import gefolge_web.event.model
 
