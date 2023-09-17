@@ -139,6 +139,7 @@ def setup(index):
                     result['nights'][f'{night:%Y-%m-%d}']['log'] = event.night_log(person, night)
                 result['paid'] = attendee_data.get('paid', {})
                 result['kilometers'] = attendee_data.get('kilometers', {})
+                result['owes'] = attendee_data.get('owes', {})
             return result
 
         def programmpunkt_json(programmpunkt):
