@@ -36,5 +36,5 @@ ThrowOnNativeFailure
 ssh gefolge.org sudo systemctl start gefolge-web
 ThrowOnNativeFailure
 
-ssh gefolge.org gefolge-web-deploy
+ssh gefolge.org /opt/git/github.com/dasgefolge/gefolge.org/main/assets/deploy.sh
 ThrowOnNativeFailure
