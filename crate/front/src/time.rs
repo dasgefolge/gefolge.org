@@ -83,8 +83,8 @@ impl FromStr for MaybeAwareDateTime {
     type Err = MaybeAwareDateTimeParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match Utc.datetime_from_str(s, "%Y-%m-%dT%H:%M:%SZ") {
-            Ok(aware) => Ok(Self::Aware(aware)),
+        match NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%SZ") {
+            Ok(aware) => Ok(Self::Aware(aware.and_utc())),
             Err(e_aware) => match NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%S") {
                 Ok(naive) => Ok(Self::Naive(naive)),
                 Err(e_naive) => Err(Self::Err { e_aware, e_naive }),
