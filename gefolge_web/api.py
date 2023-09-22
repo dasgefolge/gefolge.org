@@ -135,6 +135,8 @@ def setup(index):
                 result['name'] = str(person)
                 result['via'] = event.proxy(person).snowflake
             if flask.g.user == person or flask.g.user == event.orga('Abrechnung'):
+                if 'anzahlung' in attendee_data:
+                    result['anzahlung'] = attendee_data['anzahlung']
                 for night in event.nights:
                     result['nights'][f'{night:%Y-%m-%d}']['log'] = event.night_log(person, night)
                 result['paid'] = attendee_data.get('paid', {})
