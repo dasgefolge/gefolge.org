@@ -26,6 +26,7 @@ use {
     rocket_util::Origin,
     serde::Deserialize,
     serenity::model::prelude::*,
+    sqlx::PgPool,
     wheel::traits::ReqwestResponseExt as _,
 };
 
@@ -44,11 +45,14 @@ pub(crate) enum Discord {}
 pub(crate) enum UserFromRequestError {
     #[error(transparent)] OAuth(#[from] rocket_oauth2::Error),
     #[error(transparent)] Reqwest(#[from] reqwest::Error),
+    #[error(transparent)] Sql(#[from] sqlx::Error),
     #[error(transparent)] Time(#[from] rocket::time::error::ConversionRange),
     #[error(transparent)] TryFromInt(#[from] std::num::TryFromIntError),
     #[error(transparent)] Wheel(#[from] wheel::Error),
     #[error("missing discord_token cookie")]
     Cookie,
+    #[error("missing database connection")]
+    Database,
     #[error("missing HTTP client")]
     HttpClient,
 }
@@ -83,7 +87,7 @@ impl<'r> FromRequest<'r> for DiscordUser {
     type Error = UserFromRequestError;
 
     async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, UserFromRequestError> {
-        match req.guard::<&CookieJar<'_>>().await {
+        let outcome = match req.guard::<&CookieJar<'_>>().await {
             Outcome::Success(cookies) => match req.guard::<&State<reqwest::Client>>().await {
                 Outcome::Success(http_client) => if let Some(token) = cookies.get_private("discord_token") {
                     match http_client.get("https://discord.com/api/v10/users/@me")
@@ -110,6 +114,19 @@ impl<'r> FromRequest<'r> for DiscordUser {
             },
             Outcome::Failure((_, never)) => match never {},
             Outcome::Forward(status) => Outcome::Forward(status),
+        };
+        if let Outcome::Success(found_user) = outcome {
+            match req.guard::<&State<PgPool>>().await {
+                Outcome::Success(pool) => if let Some(id) = guard_try!(sqlx::query_scalar!("SELECT view_as FROM view_as WHERE viewer = $1", i64::from(found_user.id)).fetch_optional(&**pool).await) {
+                    Outcome::Success(DiscordUser { id: UserId::from(id as u64) })
+                } else {
+                    Outcome::Success(found_user)
+                },
+                Outcome::Failure((status, ())) => Outcome::Failure((status, UserFromRequestError::Database)),
+                Outcome::Forward(status) => Outcome::Forward(status),
+            }
+        } else {
+            outcome
         }
     }
 }

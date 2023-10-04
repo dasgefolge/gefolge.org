@@ -361,11 +361,6 @@ def setup(index, app):
                 flask.g.user = DiscordPerson(flask.request.headers['x-gefolge-authorized-discord-id'])
             else:
                 flask.g.user = gefolge_web.login.AnonymousUser()
-        if flask.g.user.is_admin and 'viewAs' in app.config['web']:
-            flask.g.view_as = True
-            flask.g.user = DiscordPerson(app.config['web']['viewAs'])
-        else:
-            flask.g.view_as = False
 
     def auth_callback():
         #TODO similar error handling in Rust

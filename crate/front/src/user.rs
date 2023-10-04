@@ -14,8 +14,8 @@ use {
     },
 };
 
-const MENSCH: RoleId = RoleId(386753710434287626);
-const GUEST: RoleId = RoleId(784929665478557737);
+const MENSCH: RoleId = RoleId::new(386753710434287626);
+const GUEST: RoleId = RoleId::new(784929665478557737);
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) struct Discriminator(pub(crate) i16);
@@ -48,7 +48,7 @@ impl User {
 
     pub(crate) async fn from_api_key(db_pool: &PgPool, api_key: &str) -> sqlx::Result<Option<Self>> {
         Ok(sqlx::query!(r#"SELECT snowflake, discriminator, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users, json_user_data WHERE id = snowflake AND value -> 'apiKey' = $1"#, Json(api_key) as _).fetch_optional(db_pool).await?.map(|row| User {
-            id: UserId(row.snowflake as u64),
+            id: UserId::from(row.snowflake as u64),
             discriminator: row.discriminator.map(Discriminator),
             nick: row.nick,
             roles: row.roles.0,

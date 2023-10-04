@@ -133,7 +133,7 @@ async fn main(args: Args) -> Result<i32, Error> {
                 println!("{}", id as u64);
             }
         }
-        Args::Profiles(UserIdDbSubcommand::Get { id }) => if let Some(row) = sqlx::query!(r#"SELECT discriminator, joined, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users WHERE snowflake = $1"#, id.0 as i64).fetch_optional(&db_pool).await? {
+        Args::Profiles(UserIdDbSubcommand::Get { id }) => if let Some(row) = sqlx::query!(r#"SELECT discriminator, joined, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users WHERE snowflake = $1"#, i64::from(id)).fetch_optional(&db_pool).await? {
             serde_json::to_writer(stdout(), &Profile {
                 discriminator: row.discriminator.map(Discriminator),
                 joined: row.joined,
@@ -158,7 +158,7 @@ async fn main(args: Args) -> Result<i32, Error> {
                 roles = EXCLUDED.roles,
                 username = EXCLUDED.username
             ",
-                id.0 as i64,
+                i64::from(id),
                 value.remove("discriminator").and_then(|discrim| serde_json::from_value::<Option<i16>>(discrim).transpose()).transpose()?,
                 value.remove("joined").and_then(|joined| serde_json::from_value::<Option<DateTime<Utc>>>(joined).transpose()).transpose()?,
                 value.remove("nick").and_then(|nick| serde_json::from_value::<Option<String>>(nick).transpose()).transpose()?,
@@ -174,7 +174,7 @@ async fn main(args: Args) -> Result<i32, Error> {
                 VALUES ($1, $2, $3, $4, $5, $6)
                 ON CONFLICT (snowflake) DO NOTHING
             ",
-                id.0 as i64,
+                i64::from(id),
                 value.remove("discriminator").and_then(|discrim| serde_json::from_value::<Option<i16>>(discrim).transpose()).transpose()?,
                 value.remove("joined").and_then(|joined| serde_json::from_value::<Option<DateTime<Utc>>>(joined).transpose()).transpose()?,
                 value.remove("nick").and_then(|nick| serde_json::from_value::<Option<String>>(nick).transpose()).transpose()?,
@@ -188,13 +188,13 @@ async fn main(args: Args) -> Result<i32, Error> {
                 println!("{}", id as u64);
             }
         }
-        Args::UserData(UserIdDbSubcommand::Get { id }) => if let Some(value) = sqlx::query_scalar!("SELECT value FROM json_user_data WHERE id = $1", id.0 as i64).fetch_optional(&db_pool).await? {
+        Args::UserData(UserIdDbSubcommand::Get { id }) => if let Some(value) = sqlx::query_scalar!("SELECT value FROM json_user_data WHERE id = $1", i64::from(id)).fetch_optional(&db_pool).await? {
             serde_json::to_writer(stdout(), &value)?;
         } else {
             return Ok(2)
         },
-        Args::UserData(UserIdDbSubcommand::Set { id, value }) => { sqlx::query!("INSERT INTO json_user_data (id, value) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET value = EXCLUDED.value", id.0 as i64, value).execute(&db_pool).await?; }
-        Args::UserData(UserIdDbSubcommand::SetIfNotExists { id, value }) => { sqlx::query!("INSERT INTO json_user_data (id, value) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING", id.0 as i64, value).execute(&db_pool).await?; }
+        Args::UserData(UserIdDbSubcommand::Set { id, value }) => { sqlx::query!("INSERT INTO json_user_data (id, value) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET value = EXCLUDED.value", i64::from(id), value).execute(&db_pool).await?; }
+        Args::UserData(UserIdDbSubcommand::SetIfNotExists { id, value }) => { sqlx::query!("INSERT INTO json_user_data (id, value) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING", i64::from(id), value).execute(&db_pool).await?; }
     }
     Ok(0)
 }

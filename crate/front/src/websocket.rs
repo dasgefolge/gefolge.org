@@ -87,7 +87,7 @@ async fn client_session(db_pool: PgPool, rr_lobbies: Arc<RwLock<HashMap<u64, ric
 
 impl ricochet_robots_websocket::PlayerId for User {
     fn id(&self) -> Result<u64, ricochet_robots_websocket::Error> {
-        Ok(self.id.0)
+        Ok(u64::from(self.id))
     }
 
     fn username(&self) -> Result<String, ricochet_robots_websocket::Error> {
