@@ -5,6 +5,7 @@ import sys
 sys.path.append('/opt/py')
 
 import os
+import subprocess
 
 import challonge # PyPI: pychallonge
 import flask # PyPI: Flask
@@ -26,15 +27,21 @@ import peter # https://github.com/dasgefolge/peter-discord
 
 try:
     import ricochet_robots # extension for Ricochet Robots online, closed-source for IP reasons
-except ImportError:
+except ImportError as e:
+    print(f'error importing ricochet_robots: {e}', file=sys.stderr)
+    subprocess.run(['sudo', '-u', 'fenhl', '/opt/night/bin/nightd', 'report', '/net/gefolge/error'], check=True)
     ricochet_robots = None
 try:
     import spacealert.web # extension for the Space Alert brainscan database, closed-source for IP reasons
-except ImportError:
+except ImportError as e:
+    print(f'error importing spacealert.web: {e}', file=sys.stderr)
+    subprocess.run(['sudo', '-u', 'fenhl', '/opt/night/bin/nightd', 'report', '/net/gefolge/error'], check=True)
     spacealert = None
 try:
     import werewolf_web # extension for Werewolf games, closed-source to allow the admin to make relevant changes before a game without giving away information to players
-except ImportError:
+except ImportError as e:
+    print(f'error importing werewolf_web: {e}', file=sys.stderr)
+    subprocess.run(['sudo', '-u', 'fenhl', '/opt/night/bin/nightd', 'report', '/net/gefolge/error'], check=True)
     werewolf_web = None
 
 import gefolge_web.api
