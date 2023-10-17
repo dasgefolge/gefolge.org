@@ -355,12 +355,10 @@ def setup(index, app):
     def global_users():
         flask.g.admin = Mensch.admin()
         flask.g.treasurer = Mensch.treasurer()
-        flask.g.user = gefolge_web.person.Person.by_api_key()
-        if flask.g.user is None:
-            if 'x-gefolge-authorized-discord-id' in flask.request.headers:
-                flask.g.user = DiscordPerson(flask.request.headers['x-gefolge-authorized-discord-id'])
-            else:
-                flask.g.user = gefolge_web.login.AnonymousUser()
+        if 'x-gefolge-authorized-discord-id' in flask.request.headers:
+            flask.g.user = DiscordPerson(flask.request.headers['x-gefolge-authorized-discord-id'])
+        else:
+            flask.g.user = gefolge_web.login.AnonymousUser()
 
     def auth_callback():
         #TODO similar error handling in Rust
