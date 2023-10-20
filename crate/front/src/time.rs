@@ -3,10 +3,7 @@ use {
         cmp::Ordering,
         str::FromStr,
     },
-    chrono::{
-        LocalResult,
-        prelude::*,
-    },
+    chrono::prelude::*,
     chrono_tz::{
         Europe,
         Tz,
@@ -14,34 +11,9 @@ use {
     rocket::response::content::RawHtml,
     rocket_util::html,
     serde_plain::derive_deserialize_from_fromstr,
+    wheel::traits::LocalResultExt as _,
     crate::user,
 };
-
-#[derive(Debug, thiserror::Error)]
-pub(crate) enum TimeFromLocalError<T> {
-    #[error("invalid timestamp")]
-    None,
-    #[error("ambiguous timestamp")]
-    Ambiguous([T; 2]),
-}
-
-trait LocalResultExt {
-    type Ok;
-
-    fn single_ok(self) -> Result<Self::Ok, TimeFromLocalError<Self::Ok>>;
-}
-
-impl<T> LocalResultExt for LocalResult<T> {
-    type Ok = T;
-
-    fn single_ok(self) -> Result<T, TimeFromLocalError<T>> {
-        match self {
-            LocalResult::None => Err(TimeFromLocalError::None),
-            LocalResult::Single(value) => Ok(value),
-            LocalResult::Ambiguous(value1, value2) => Err(TimeFromLocalError::Ambiguous([value1, value2])),
-        }
-    }
-}
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum MaybeAwareDateTime {
@@ -51,7 +23,7 @@ pub(crate) enum MaybeAwareDateTime {
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum ToMaybeLocalError {
-    #[error(transparent)] FromLocal(#[from] TimeFromLocalError<DateTime<Tz>>),
+    #[error(transparent)] FromLocal(#[from] wheel::traits::TimeFromLocalError<DateTime<Tz>>),
     #[error("tried to combine naive datetime {} with nonlocal context", .0.format("%Y-%m-%dT%H:%M:%S"))]
     NaiveNonlocal(NaiveDateTime),
 }
