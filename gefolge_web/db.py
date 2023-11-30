@@ -8,6 +8,7 @@ NO_INIT = object()
 
 class PgFile(lazyjson.BaseFile):
     def __init__(self, table, id, *, init=NO_INIT):
+        super().__init__()
         self.table = table
         self.id = id
         if init is not NO_INIT:
