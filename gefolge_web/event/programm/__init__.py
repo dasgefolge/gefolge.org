@@ -213,7 +213,7 @@ class Programmpunkt:
             return [
                 CalendarEvent(
                     self, uid,
-                    text=part.get('name', text=str(self)),
+                    text=part.get('name', str(self)),
                     html=jinja2.Markup(part['html']) if 'html' in part else self.__html__(),
                     start=gefolge_web.util.parse_iso_datetime(part['start'], tz=self.timezone),
                     end=gefolge_web.util.parse_iso_datetime(part['end'], tz=self.timezone),
