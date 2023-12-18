@@ -209,13 +209,24 @@ class Programmpunkt:
 
     @property
     def calendar_events(self):
-        if self.start is not None and self.end is not None:
+        if 'parts' in self.data:
+            return [
+                CalendarEvent(
+                    self, uid,
+                    text=part.get('name', text=str(self)),
+                    html=jinja2.Markup(part['html']) if 'html' in part else self.__html__(),
+                    start=gefolge_web.util.parse_iso_datetime(part['start'], tz=self.timezone),
+                    end=gefolge_web.util.parse_iso_datetime(part['end'], tz=self.timezone),
+                )
+                for uid, part in self.data['parts'].value().items()
+            ]
+        elif self.start is not None and self.end is not None:
             return [CalendarEvent(
                 self, 'main',
                 text=str(self),
                 html=self.__html__(),
                 start=self.start,
-                end=self.end
+                end=self.end,
             )]
         else:
             return []
