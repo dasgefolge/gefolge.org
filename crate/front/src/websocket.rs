@@ -71,6 +71,7 @@ async fn client_session(db_pool: PgPool, rr_lobbies: Arc<RwLock<HashMap<u64, ric
     let api_key = String::read_ws(&mut stream).await?;
     let mut transaction = db_pool.begin().await?;
     let user = User::from_api_key(&mut transaction, &api_key).await?.ok_or(Error::UnknownApiKey)?;
+    transaction.commit().await?;
     if !user.is_mensch() { return Err(Error::Permissions) } //TODO allow special device API key for CurrentEvent purpose
     let ping_sink = Arc::clone(&sink);
     tokio::spawn(async move {
