@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT discriminator, joined, nick, roles AS \"roles: sqlx::types::Json<BTreeSet<RoleId>>\", username FROM users WHERE snowflake = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "discriminator",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 1,
+        "name": "joined",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 2,
+        "name": "nick",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "roles: sqlx::types::Json<BTreeSet<RoleId>>",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 4,
+        "name": "username",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "ba06fa42c33fe866cfac24aad4a9d10f4ea8b6757ac1ab7a775fda06eda925c5"
+}

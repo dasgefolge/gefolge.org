@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO json_events (id, value) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "4aa5d6d1c95d50ba62c01cf244af09caf52c9d7a044c20c70f8d627f14c14efc"
+}
