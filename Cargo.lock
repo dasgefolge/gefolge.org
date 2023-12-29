@@ -2684,7 +2684,8 @@ dependencies = [
 [[package]]
 name = "serenity"
 version = "0.12.0"
-source = "git+https://github.com/serenity-rs/serenity?branch=next#8fb60db0f3ff2a44893bbe2611be9e9d595577e3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "385647faa24a889929028973650a4f158fb1b4272b2fcf94feb9fcc3c009e813"
 dependencies = [
  "arrayvec",
  "async-trait",
@@ -2698,7 +2699,6 @@ dependencies = [
  "secrecy",
  "serde",
  "serde_json",
- "small-fixed-array",
  "time",
  "tokio",
  "tokio-tungstenite",
@@ -2769,15 +2769,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f92a496fb766b417c996b9c5e57daf2f7ad3b0bebe1ccfca4856390e3d3bb67"
 dependencies = [
  "autocfg",
-]
-
-[[package]]
-name = "small-fixed-array"
-version = "0.1.0"
-source = "git+https://github.com/GnomedDev/small-fixed-array#295791a491435a660a5a51164ab4215b605dd49c"
-dependencies = [
- "serde",
- "tracing",
 ]
 
 [[package]]

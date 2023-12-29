@@ -22,7 +22,7 @@ rocket_ws = { version = "0.1" }
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = "1.0.93"
 serde_plain = "1.0.1"
-serenity = { git = "https://github.com/serenity-rs/serenity", branch = "next", default-features = false, features = ["model", "rustls_backend"] }
+serenity = { default-features = false, features = ["model", "rustls_backend"], version = "0.12" }
 sqlx = { version = "0.7", features = ["json", "macros", "postgres", "runtime-tokio-rustls"] }
 thiserror = "1.0.38"
 tokio = { version = "1.26.0", features = ["process", "sync", "time"] }
