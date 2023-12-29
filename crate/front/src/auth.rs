@@ -38,7 +38,7 @@ macro_rules! guard_try {
     ($res:expr) => {
         match $res {
             Ok(x) => x,
-            Err(e) => return Outcome::Failure((Status::InternalServerError, e.into())),
+            Err(e) => return Outcome::Error((Status::InternalServerError, e.into())),
         }
     };
 }
@@ -100,13 +100,13 @@ impl<'r> FromRequest<'r> for DiscordUser {
                 Outcome::Success(pool) => if let Some(id) = guard_try!(sqlx::query_scalar!("SELECT id FROM json_user_data WHERE value -> 'apiKey' = $1", Json(password) as _).fetch_optional(&**pool).await) {
                     Outcome::Success(DiscordUser { id: UserId::from(id as u64) })
                 } else {
-                    Outcome::Failure((Status::Unauthorized, UserFromRequestError::ApiKey))
+                    Outcome::Error((Status::Unauthorized, UserFromRequestError::ApiKey))
                 },
-                Outcome::Failure((status, ())) => Outcome::Failure((status, UserFromRequestError::Database)),
+                Outcome::Error((status, ())) => Outcome::Error((status, UserFromRequestError::Database)),
                 Outcome::Forward(status) => Outcome::Forward(status),
             },
-            Outcome::Success(_) => Outcome::Failure((Status::Unauthorized, UserFromRequestError::BasicUsername)),
-            Outcome::Failure((status, e)) => Outcome::Failure((status, e.into())),
+            Outcome::Success(_) => Outcome::Error((Status::Unauthorized, UserFromRequestError::BasicUsername)),
+            Outcome::Error((status, e)) => Outcome::Error((status, e.into())),
             Outcome::Forward(_) => match req.guard::<&CookieJar<'_>>().await {
                 Outcome::Success(cookies) => match req.guard::<&State<reqwest::Client>>().await {
                     Outcome::Success(http_client) => if let Some(token) = cookies.get_private("discord_token") {
@@ -118,21 +118,21 @@ impl<'r> FromRequest<'r> for DiscordUser {
                             .await
                         {
                             Ok(response) => Outcome::Success(guard_try!(response.json_with_text_in_error().await)),
-                            Err(e) => Outcome::Failure((Status::BadGateway, e.into())),
+                            Err(e) => Outcome::Error((Status::BadGateway, e.into())),
                         }
                     } else if let Some(token) = cookies.get_private("discord_refresh_token") {
                         match req.guard::<OAuth2<Discord>>().await {
                             Outcome::Success(oauth) => Outcome::Success(guard_try!(handle_discord_token_response(http_client, cookies, &guard_try!(oauth.refresh(token.value()).await)).await)),
-                            Outcome::Failure((status, ())) => Outcome::Failure((status, UserFromRequestError::Cookie)),
+                            Outcome::Error((status, ())) => Outcome::Error((status, UserFromRequestError::Cookie)),
                             Outcome::Forward(status) => Outcome::Forward(status),
                         }
                     } else {
-                        Outcome::Failure((Status::Unauthorized, UserFromRequestError::Cookie))
+                        Outcome::Error((Status::Unauthorized, UserFromRequestError::Cookie))
                     },
-                    Outcome::Failure((status, ())) => Outcome::Failure((status, UserFromRequestError::HttpClient)),
+                    Outcome::Error((status, ())) => Outcome::Error((status, UserFromRequestError::HttpClient)),
                     Outcome::Forward(status) => Outcome::Forward(status),
                 },
-                Outcome::Failure((_, never)) => match never {},
+                Outcome::Error((_, never)) => match never {},
                 Outcome::Forward(status) => Outcome::Forward(status),
             },
         };
@@ -143,7 +143,7 @@ impl<'r> FromRequest<'r> for DiscordUser {
                 } else {
                     Outcome::Success(found_user)
                 },
-                Outcome::Failure((status, ())) => Outcome::Failure((status, UserFromRequestError::Database)),
+                Outcome::Error((status, ())) => Outcome::Error((status, UserFromRequestError::Database)),
                 Outcome::Forward(status) => Outcome::Forward(status),
             }
         } else {

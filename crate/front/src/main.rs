@@ -306,11 +306,11 @@ impl<'r> FromRequest<'r> for Headers {
             reqwest_headers.append(
                 match header.name.as_str().parse::<reqwest::header::HeaderName>() {
                     Ok(name) => name,
-                    Err(e) => return request::Outcome::Failure((Status::InternalServerError, e.into())),
+                    Err(e) => return request::Outcome::Error((Status::InternalServerError, e.into())),
                 },
                 match header.value.parse::<reqwest::header::HeaderValue>() {
                     Ok(value) => value,
-                    Err(e) => return request::Outcome::Failure((Status::InternalServerError, e.into())),
+                    Err(e) => return request::Outcome::Error((Status::InternalServerError, e.into())),
                 },
             );
         }
