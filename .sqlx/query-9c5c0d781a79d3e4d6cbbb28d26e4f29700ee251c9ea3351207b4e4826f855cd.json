@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT view_as FROM view_as WHERE viewer = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "view_as",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "9c5c0d781a79d3e4d6cbbb28d26e4f29700ee251c9ea3351207b4e4826f855cd"
+}
