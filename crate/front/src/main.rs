@@ -119,7 +119,7 @@ async fn page(mut transaction: Transaction<'_, Postgres>, me: Option<DiscordUser
             }
         }
     };
-    Ok(html! {
+    let page = html! {
         : Doctype;
         html {
             head {
@@ -178,7 +178,9 @@ async fn page(mut transaction: Transaction<'_, Postgres>, me: Option<DiscordUser
                 }
             }
         }
-    })
+    };
+    transaction.commit().await?;
+    Ok(page)
 }
 
 #[derive(Debug, thiserror::Error, rocket_util::Error)]
@@ -186,6 +188,9 @@ enum IndexError {
     #[error(transparent)] Event(#[from] gefolge_web_lib::event::Error),
     #[error(transparent)] Page(#[from] PageError),
     #[error(transparent)] Sql(#[from] sqlx::Error),
+    #[error("must be in Gefolge Discord guild to access")]
+    //TODO show Unauthorized error page instead of Internal Server Error
+    NotInDiscordGuild,
 }
 
 
@@ -195,40 +200,37 @@ struct EventOverview {
     end: Option<MaybeLocalDateTime>,
     event: Event,
 }
+
 struct EventsOverview {
-    past_events: Vec<EventOverview>,
-    ongoing_events: Vec<EventOverview>,
-    upcoming_events: Vec<EventOverview>,
+    past: Vec<EventOverview>,
+    ongoing: Vec<EventOverview>,
+    upcoming: Vec<EventOverview>,
 }
 
-async fn load_events(db: &mut Transaction<'_, Postgres>) -> Result<EventsOverview, IndexError> {
+async fn load_events(transaction: &mut Transaction<'_, Postgres>) -> Result<EventsOverview, IndexError> {
     let now = Utc::now();
-    let mut past_events = Vec::default();
-    let mut upcoming_events = Vec::default();
-    for row in sqlx::query!(r#"SELECT id, value AS "value: Json<Event>" FROM json_events"#).fetch_all(&mut **db).await? {
-        let start = row.value.0.start(&mut **db).await?;
-        let end = row.value.0.end(&mut **db).await?;
-        if end.map_or(true, |end| end > now) {
-            upcoming_events.push(EventOverview{id: row.id, start, end, event: row.value.0});
-        } else {
-            past_events.push(EventOverview{id: row.id, start, end, event: row.value.0})
-        }
+    let mut past = Vec::default();
+    let mut upcoming = Vec::default();
+    for row in sqlx::query!(r#"SELECT id, value AS "value: Json<Event>" FROM json_events"#).fetch_all(&mut **transaction).await? {
+        let start = row.value.0.start(&mut **transaction).await?;
+        let end = row.value.0.end(&mut **transaction).await?;
+        if end.map_or(true, |end| end > now) { &mut upcoming } else { &mut past }.push(EventOverview { id: row.id, start, end, event: row.value.0 });
     }
-    upcoming_events.sort_unstable_by(| EventOverview{id: id1, start: start1, ..}, EventOverview{id: id2, start: start2, ..} |
+    upcoming.sort_unstable_by(|EventOverview { id: id1, start: start1, .. }, EventOverview { id: id2, start: start2, ..}|
         start1.is_none().cmp(&start2.is_none()) // nulls last
             .then_with(|| start1.cmp(start2))
             .then_with(|| id1.cmp(id2))
     );
-    let mut ongoing_events = Vec::default();
-    for eo in upcoming_events.drain(..).collect_vec() {
-        if eo.start.map_or(true, |start| start <= now) { &mut ongoing_events } else { &mut upcoming_events }.push(eo);
+    let mut ongoing = Vec::default();
+    for eo in upcoming.drain(..).collect_vec() {
+        if eo.start.map_or(true, |start| start <= now) { &mut ongoing } else { &mut upcoming }.push(eo);
     }
-    past_events.sort_unstable_by(| EventOverview{id: id1, start: start1, ..}, EventOverview{id: id2, start: start2, ..} |
-        start2.is_none().cmp(&start1.is_none()) // nulls last
-            .then_with(|| start2.cmp(start1))
+    past.sort_unstable_by(|EventOverview { id: id1, end: end1, .. }, EventOverview { id: id2, end: end2, .. }|
+        end2.is_none().cmp(&end1.is_none()) // nulls last
+            .then_with(|| end2.cmp(end1))
             .then_with(|| id2.cmp(id1))
     );
-    Ok(EventsOverview{past_events, ongoing_events, upcoming_events})
+    Ok(EventsOverview { past, ongoing, upcoming })
 }
 
 #[rocket::get("/")]
@@ -253,10 +255,10 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                     a(href = "/wiki") : "wiki";
                 }
                 h1 : "Events";
-                @if !events.ongoing_events.is_empty() {
+                @if !events.ongoing.is_empty() {
                     h2 : "laufende Events";
                     ul {
-                        @for EventOverview{id, start, end, event} in events.ongoing_events {
+                        @for EventOverview { id, start, end, event } in events.ongoing {
                             li {
                                 : event.to_html(&id);
                                 @if let (Some(start), Some(end)) = (start, end) {
@@ -268,10 +270,10 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                         }
                     }
                 }
-                @if !events.upcoming_events.is_empty() {
+                @if !events.upcoming.is_empty() {
                     h2 : "zukünftige Events";
                     ul {
-                        @for EventOverview{id, start, end, event} in events.upcoming_events {
+                        @for EventOverview { id, start, end, event } in events.upcoming {
                             li {
                                 : event.to_html(&id);
                                 @if let (Some(start), Some(end)) = (start, end) {
@@ -323,13 +325,13 @@ async fn event_page(db_pool: &State<PgPool>, me: DiscordUser, uri: Origin<'_>) -
     let mut transaction = db_pool.begin().await?;
     let events = load_events(&mut transaction).await?;
     let content = html! {
-        @let user = User::from_id(&mut transaction, me.id).await?;
-        @let viewer_data = user.as_ref().expect("just checked (is_mensch_or_guest)").data(&mut transaction).await?;
+        @let user = User::from_id(&mut transaction, me.id).await?.ok_or(IndexError::NotInDiscordGuild)?;
+        @let viewer_data = user.data(&mut transaction).await?;
         h1 : "Events";
-        @if !events.ongoing_events.is_empty() {
+        @if !events.ongoing.is_empty() {
             h2 : "laufende Events";
             ul {
-                @for EventOverview{id, start, end, event} in events.ongoing_events {
+                @for EventOverview { id, start, end, event } in events.ongoing {
                     li {
                         : event.to_html(&id);
                         @if let (Some(start), Some(end)) = (start, end) {
@@ -341,10 +343,10 @@ async fn event_page(db_pool: &State<PgPool>, me: DiscordUser, uri: Origin<'_>) -
                 }
             }
         }
-        @if !events.upcoming_events.is_empty() {
+        @if !events.upcoming.is_empty() {
             h2 : "zukünftige Events";
             ul {
-                @for EventOverview{id, start, end, event} in events.upcoming_events {
+                @for EventOverview { id, start, end, event } in events.upcoming {
                     li {
                         : event.to_html(&id);
                         @if let (Some(start), Some(end)) = (start, end) {
@@ -356,10 +358,10 @@ async fn event_page(db_pool: &State<PgPool>, me: DiscordUser, uri: Origin<'_>) -
                 }
             }
         }
-        @if !events.past_events.is_empty() {
+        @if !events.past.is_empty() {
             h2 : "vergangene Events";
             ul {
-                @for EventOverview{id, start, end, event} in events.past_events {
+                @for EventOverview { id, start, end, event } in events.past {
                     li {
                         : event.to_html(&id);
                         @if let (Some(start), Some(end)) = (start, end) {
