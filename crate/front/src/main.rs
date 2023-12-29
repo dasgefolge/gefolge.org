@@ -56,11 +56,16 @@ use {
     sqlx::{
         PgPool,
         postgres::PgConnectOptions,
+        postgres::Postgres,
+        Transaction,
         types::Json,
     },
     tokio::sync::RwLock,
     url::Url,
-    gefolge_web_lib::event::Event,
+    gefolge_web_lib::{
+        event::Event,
+        time::MaybeLocalDateTime,
+    },
     crate::{
         auth::DiscordUser,
         config::Config,
@@ -94,7 +99,7 @@ enum PageError {
     #[error(transparent)] Sql(#[from] sqlx::Error),
 }
 
-async fn page(db_pool: &PgPool, me: Option<DiscordUser>, uri: &Origin<'_>, kind: PageKind, title: &str, content: impl ToHtml) -> Result<RawHtml<String>, PageError> {
+async fn page(mut transaction: Transaction<'_, Postgres>, me: Option<DiscordUser>, uri: &Origin<'_>, kind: PageKind, title: &str, content: impl ToHtml) -> Result<RawHtml<String>, PageError> {
     let footer = html! {
         footer {
             p {
@@ -152,10 +157,10 @@ async fn page(db_pool: &PgPool, me: Option<DiscordUser>, uri: &Origin<'_>, kind:
                             }
                             div(id = "login") {
                                 @if let Some(me) = me {
-                                    @let user = User::from_id(db_pool, me.id).await?;
+                                    @let user = User::from_id(&mut transaction, me.id).await?;
                                     @let is_mensch_or_guest = user.as_ref().map_or(false, User::is_mensch_or_guest);
                                     : "Angemeldet als ";
-                                    : html_mention(db_pool, me.id).await?;
+                                    : html_mention(&mut transaction, me.id).await?;
                                     br;
                                     @if is_mensch_or_guest {
                                         a(href = format!("/mensch/{}/edit", me.id)) : "Einstellungen";
@@ -183,33 +188,59 @@ enum IndexError {
     #[error(transparent)] Sql(#[from] sqlx::Error),
 }
 
+
+struct EventOverview {
+    id: String,
+    start: Option<MaybeLocalDateTime>,
+    end: Option<MaybeLocalDateTime>,
+    event: Event,
+}
+struct EventsOverview {
+    past_events: Vec<EventOverview>,
+    ongoing_events: Vec<EventOverview>,
+    upcoming_events: Vec<EventOverview>,
+}
+
+async fn load_events(db: &mut Transaction<'_, Postgres>) -> Result<EventsOverview, IndexError> {
+    let now = Utc::now();
+    let mut past_events = Vec::default();
+    let mut upcoming_events = Vec::default();
+    for row in sqlx::query!(r#"SELECT id, value AS "value: Json<Event>" FROM json_events"#).fetch_all(&mut **db).await? {
+        let start = row.value.0.start(&mut **db).await?;
+        let end = row.value.0.end(&mut **db).await?;
+        if end.map_or(true, |end| end > now) {
+            upcoming_events.push(EventOverview{id: row.id, start, end, event: row.value.0});
+        } else {
+            past_events.push(EventOverview{id: row.id, start, end, event: row.value.0})
+        }
+    }
+    upcoming_events.sort_unstable_by(| EventOverview{id: id1, start: start1, ..}, EventOverview{id: id2, start: start2, ..} |
+        start1.is_none().cmp(&start2.is_none()) // nulls last
+            .then_with(|| start1.cmp(start2))
+            .then_with(|| id1.cmp(id2))
+    );
+    let mut ongoing_events = Vec::default();
+    for eo in upcoming_events.drain(..).collect_vec() {
+        if eo.start.map_or(true, |start| start <= now) { &mut ongoing_events } else { &mut upcoming_events }.push(eo);
+    }
+    past_events.sort_unstable_by(| EventOverview{id: id1, start: start1, ..}, EventOverview{id: id2, start: start2, ..} |
+        start2.is_none().cmp(&start1.is_none()) // nulls last
+            .then_with(|| start2.cmp(start1))
+            .then_with(|| id2.cmp(id1))
+    );
+    Ok(EventsOverview{past_events, ongoing_events, upcoming_events})
+}
+
 #[rocket::get("/")]
 async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>) -> Result<RawHtml<String>, IndexError> {
     Ok(if let Some(DiscordUser { id }) = me {
-        let now = Utc::now();
         let mut transaction = db_pool.begin().await?;
-        let mut upcoming_events = Vec::default();
-        for row in sqlx::query!(r#"SELECT id, value AS "value: Json<Event>" FROM json_events"#).fetch_all(&mut *transaction).await? {
-            let start = row.value.0.start(&mut *transaction).await?;
-            let end = row.value.0.end(&mut *transaction).await?;
-            if end.map_or(true, |end| end > now) {
-                upcoming_events.push((row.id, start, end, row.value.0));
-            }
-        }
-        upcoming_events.sort_unstable_by(|(id1, start1, _, _), (id2, start2, _, _)|
-            start1.is_none().cmp(&start2.is_none()) // nulls last
-                .then_with(|| start1.cmp(start2))
-                .then_with(|| id1.cmp(id2))
-        );
-        let mut ongoing_events = Vec::default();
-        for (id, start, end, event) in upcoming_events.drain(..).collect_vec() {
-            if start.map_or(true, |start| start <= now) { &mut ongoing_events } else { &mut upcoming_events }.push((id, start, end, event));
-        }
+        let events = load_events(&mut transaction).await?;
         let content = html! {
-            @let user = User::from_id(db_pool, id).await?;
+            @let user = User::from_id(&mut transaction, id).await?;
             @let is_mensch_or_guest = user.as_ref().map_or(false, User::is_mensch_or_guest);
             @if is_mensch_or_guest {
-                @let viewer_data = user.as_ref().expect("just checked (is_mensch_or_guest)").data(db_pool).await?;
+                @let viewer_data = user.as_ref().expect("just checked (is_mensch_or_guest)").data(&mut transaction).await?;
                 p {
                     a(href = "/api") : "API";
                     : " • ";
@@ -222,10 +253,10 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                     a(href = "/wiki") : "wiki";
                 }
                 h1 : "Events";
-                @if !ongoing_events.is_empty() {
+                @if !events.ongoing_events.is_empty() {
                     h2 : "laufende Events";
                     ul {
-                        @for (id, start, end, event) in ongoing_events {
+                        @for EventOverview{id, start, end, event} in events.ongoing_events {
                             li {
                                 : event.to_html(&id);
                                 @if let (Some(start), Some(end)) = (start, end) {
@@ -237,10 +268,10 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                         }
                     }
                 }
-                @if !upcoming_events.is_empty() {
+                @if !events.upcoming_events.is_empty() {
                     h2 : "zukünftige Events";
                     ul {
-                        @for (id, start, end, event) in upcoming_events {
+                        @for EventOverview{id, start, end, event} in events.upcoming_events {
                             li {
                                 : event.to_html(&id);
                                 @if let (Some(start), Some(end)) = (start, end) {
@@ -263,10 +294,9 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                 p : "Du hast dich erfolgreich mit Discord angemeldet, bist aber nicht im Gefolge Discord server.";
             }
         };
-        transaction.commit().await?; //TODO move transaction into `page`?
-        page(db_pool, me, &uri, PageKind::Index, "Das Gefolge", content).await?
+        page(transaction, me, &uri, PageKind::Index, "Das Gefolge", content).await?
     } else {
-        page(db_pool, me, &uri, PageKind::Splash, "Das Gefolge", html! {
+        page(db_pool.begin().await?, me, &uri, PageKind::Splash, "Das Gefolge", html! {
             p {
                 : "Das ";
                 strong : "Gefolge";
@@ -286,6 +316,63 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
             }
         }).await?
     })
+}
+
+#[rocket::get("/event")]
+async fn event_page(db_pool: &State<PgPool>, me: DiscordUser, uri: Origin<'_>) -> Result<RawHtml<String>, IndexError> {
+    let mut transaction = db_pool.begin().await?;
+    let events = load_events(&mut transaction).await?;
+    let content = html! {
+        @let user = User::from_id(&mut transaction, me.id).await?;
+        @let viewer_data = user.as_ref().expect("just checked (is_mensch_or_guest)").data(&mut transaction).await?;
+        h1 : "Events";
+        @if !events.ongoing_events.is_empty() {
+            h2 : "laufende Events";
+            ul {
+                @for EventOverview{id, start, end, event} in events.ongoing_events {
+                    li {
+                        : event.to_html(&id);
+                        @if let (Some(start), Some(end)) = (start, end) {
+                            : " (";
+                            : format_date_range(&viewer_data, start, end);
+                            : ")";
+                        }
+                    }
+                }
+            }
+        }
+        @if !events.upcoming_events.is_empty() {
+            h2 : "zukünftige Events";
+            ul {
+                @for EventOverview{id, start, end, event} in events.upcoming_events {
+                    li {
+                        : event.to_html(&id);
+                        @if let (Some(start), Some(end)) = (start, end) {
+                            : " (";
+                            : format_date_range(&viewer_data, start, end);
+                            : ")";
+                        }
+                    }
+                }
+            }
+        }
+        @if !events.past_events.is_empty() {
+            h2 : "vergangene Events";
+            ul {
+                @for EventOverview{id, start, end, event} in events.past_events {
+                    li {
+                        : event.to_html(&id);
+                        @if let (Some(start), Some(end)) = (start, end) {
+                            : " (";
+                            : format_date_range(&viewer_data, start, end);
+                            : ")";
+                        }
+                    }
+                }
+            }
+        }
+    };
+    Ok(page(transaction, Some(me), &uri, PageKind::Other, "Das Gefolge — Events", content).await?)
 }
 
 struct ProxyHttpClient(reqwest::Client);
@@ -424,7 +511,7 @@ async fn bad_request(request: &Request<'_>) -> Result<RawHtml<String>, PageError
     let db_pool = request.guard::<&State<PgPool>>().await.expect("missing database pool");
     let me = request.guard::<DiscordUser>().await.succeeded();
     let uri = request.guard::<Origin<'_>>().await.succeeded().unwrap_or_else(|| Origin(uri!(index)));
-    page(db_pool, me, &uri, PageKind::default(), "Bad Request — Das Gefolge", html! {
+    page(db_pool.begin().await?, me, &uri, PageKind::default(), "Bad Request — Das Gefolge", html! {
         h1 : "Fehler 400: Bad Request";
         p : "Anmeldung fehlgeschlagen. Falls du Hilfe brauchst, kannst du auf Discord im #dev nachfragen.";
         p {
@@ -438,7 +525,7 @@ async fn not_found(request: &Request<'_>) -> Result<RawHtml<String>, PageError> 
     let db_pool = request.guard::<&State<PgPool>>().await.expect("missing database pool");
     let me = request.guard::<DiscordUser>().await.succeeded();
     let uri = request.guard::<Origin<'_>>().await.succeeded().unwrap_or_else(|| Origin(uri!(index)));
-    page(db_pool, me, &uri, PageKind::default(), "Not Found — Das Gefolge", html! {
+    page(db_pool.begin().await?, me, &uri, PageKind::default(), "Not Found — Das Gefolge", html! {
         h1 : "Fehler 404: Not Found";
         p : "Diese Seite existiert nicht.";
         p {
@@ -453,7 +540,7 @@ async fn internal_server_error(request: &Request<'_>) -> Result<RawHtml<String>,
     let me = request.guard::<DiscordUser>().await.succeeded();
     let uri = request.guard::<Origin<'_>>().await.succeeded().unwrap_or_else(|| Origin(uri!(index)));
     let is_reported = wheel::night_report("/net/gefolge/error", Some("internal server error")).await.is_ok();
-    page(db_pool, me, &uri, PageKind::default(), "Internal Server Error — Das Gefolge", html! {
+    page(db_pool.begin().await?, me, &uri, PageKind::default(), "Internal Server Error — Das Gefolge", html! {
         h1 : "Fehler 500: Internal Server Error";
         p {
             : "Beim Laden dieser Seite ist ein Fehler aufgetreten. ";
@@ -477,7 +564,7 @@ async fn fallback_catcher(status: Status, request: &Request<'_>) -> Result<RawHt
     let me = request.guard::<DiscordUser>().await.succeeded();
     let uri = request.guard::<Origin<'_>>().await.succeeded().unwrap_or_else(|| Origin(uri!(index)));
     let is_reported = wheel::night_report("/net/gefolge/error", Some("responding with unexpected HTTP status code")).await.is_ok();
-    page(db_pool, me, &uri, PageKind::default(), &format!("{} — Das Gefolge", status.reason_lossy()), html! {
+    page(db_pool.begin().await?, me, &uri, PageKind::default(), &format!("{} — Das Gefolge", status.reason_lossy()), html! {
         h1 {
             : "Fehler ";
             : status.code;
@@ -534,6 +621,7 @@ async fn main() -> Result<(), MainError> {
     })
     .mount("/", rocket::routes![
         index,
+        event_page,
         flask_proxy_get,
         flask_proxy_get_api,
         flask_proxy_get_api_children,
