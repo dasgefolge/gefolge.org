@@ -491,7 +491,7 @@ async fn main() -> Result<(), MainError> {
         .user_agent(concat!("GefolgeWeb/", env!("CARGO_PKG_VERSION")))
         .timeout(Duration::from_secs(30))
         .use_rustls_tls()
-        .trust_dns(true)
+        .hickory_dns(true)
         .https_only(true)
         .build()?;
     let proxy_http_client = reqwest::Client::builder()

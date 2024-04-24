@@ -6,13 +6,13 @@ edition.workspace = true
 publish = false
 
 [dependencies]
-async-proto = { version = "0.16.10", features = ["chrono-tz", "tokio-tungstenite"] }
-base64 = "0.21.0"
+async-proto = { version = "0.19", features = ["chrono-tz", "tokio-tungstenite"] }
+base64 = "0.22"
 chrono = { version = "0.4.24", features = ["serde", "clock"], default-features = false }
-chrono-tz = { version = "0.8.1", features = ["serde"] }
+chrono-tz = { version = "0.9", features = ["serde"] }
 futures = "0.3.26"
-itertools = "0.11"
-reqwest = { version = "0.11.14", default-features = false, features = ["rustls-tls", "trust-dns"] }
+itertools = "0.12"
+reqwest = { version = "0.12", default-features = false, features = ["charset", "hickory-dns", "http2", "macos-system-configuration", "rustls-tls"] }
 ricochet-robots-websocket = { git = "ssh://git@github.com/dasgefolge/ricochet-robots.git", branch = "main" }
 rocket = { features = ["secrets"], version = "0.5" }
 rocket-basicauth = { git = "https://github.com/fenhl/rocket-basicauth", branch = "master" }
