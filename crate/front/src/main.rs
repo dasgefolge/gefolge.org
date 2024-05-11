@@ -58,12 +58,8 @@ use {
         postgres::PgConnectOptions,
         types::Json,
     },
-    tokio::{
-        process::Command,
-        sync::RwLock,
-    },
+    tokio::sync::RwLock,
     url::Url,
-    wheel::traits::AsyncCommandOutputExt as _,
     crate::{
         auth::DiscordUser,
         config::Config,
@@ -456,9 +452,38 @@ async fn internal_server_error(request: &Request<'_>) -> Result<RawHtml<String>,
     let db_pool = request.guard::<&State<PgPool>>().await.expect("missing database pool");
     let me = request.guard::<DiscordUser>().await.succeeded();
     let uri = request.guard::<Origin<'_>>().await.succeeded().unwrap_or_else(|| Origin(uri!(index)));
-    let is_reported = Command::new("sudo").arg("-u").arg("fenhl").arg("/opt/night/bin/nightd").arg("report").arg("/net/gefolge/error").check("nightd").await.is_ok(); //TODO include error details in report
+    let is_reported = wheel::night_report("/net/gefolge/error", Some("internal server error")).await.is_ok();
     page(db_pool, me, &uri, PageKind::default(), "Internal Server Error — Das Gefolge", html! {
         h1 : "Fehler 500: Internal Server Error";
+        p {
+            : "Beim Laden dieser Seite ist ein Fehler aufgetreten. ";
+            @if is_reported {
+                : "Fenhl wurde informiert.";
+            } else {
+                : "Bitte melde diesen Fehler im ";
+                a(href = "https://discord.com/channels/355761290809180170/397832322432499712") : "#dev";
+                : ".";
+            }
+        }
+        p {
+            a(href = uri!(index).to_string()) : "Zurück zur Hauptseite von gefolge.org";
+        }
+    }).await
+}
+
+#[rocket::catch(default)]
+async fn fallback_catcher(status: Status, request: &Request<'_>) -> Result<RawHtml<String>, PageError> {
+    let db_pool = request.guard::<&State<PgPool>>().await.expect("missing database pool");
+    let me = request.guard::<DiscordUser>().await.succeeded();
+    let uri = request.guard::<Origin<'_>>().await.succeeded().unwrap_or_else(|| Origin(uri!(index)));
+    let is_reported = wheel::night_report("/net/gefolge/error", Some("responding with unexpected HTTP status code")).await.is_ok();
+    page(db_pool, me, &uri, PageKind::default(), &format!("{} — Das Gefolge", status.reason_lossy()), html! {
+        h1 {
+            : "Fehler ";
+            : status.code;
+            : ": ";
+            : status.reason_lossy();
+        }
         p {
             : "Beim Laden dieser Seite ist ein Fehler aufgetreten. ";
             @if is_reported {
@@ -524,6 +549,7 @@ async fn main() -> Result<(), MainError> {
         bad_request,
         not_found,
         internal_server_error,
+        fallback_catcher,
     ])
     .attach(OAuth2::<auth::Discord>::custom(rocket_oauth2::HyperRustlsAdapter::default(), OAuthConfig::new(
         rocket_oauth2::StaticProvider { //TODO use built-in constant once https://github.com/jebrosen/rocket_oauth2/pull/42 is released

@@ -4,10 +4,7 @@ use {
         time::Duration,
     },
     async_proto::Protocol,
-    chrono::{
-        offset::LocalResult,
-        prelude::*,
-    },
+    chrono::prelude::*,
     chrono_tz::{
         Europe,
         Tz,
@@ -34,28 +31,10 @@ use {
 pub(crate) enum Error {
     #[error(transparent)] Sql(#[from] sqlx::Error),
     #[error(transparent)] ToMaybeLocal(#[from] crate::time::ToMaybeLocalError),
-    #[error("ambiguous timestamp: could refer to {} or {} UTC", .0.with_timezone(&Utc).format("%Y-%m-%d %H:%M:%S"), .1.with_timezone(&Utc).format("%Y-%m-%d %H:%M:%S"))]
-    AmbiguousTimestamp(DateTime<Tz>, DateTime<Tz>),
-    #[error("invalid timestamp")]
-    InvalidTimestamp,
     #[error("there are multiple events currently ongoing")]
     MultipleCurrentEvents,
     #[error("unknown location ID in event data")]
     UnknownLocation, //TODO get rid of this variant using a foreign-key constraint
-}
-
-trait IntoResult<T> {
-    fn into_result(self) -> Result<T, Error>;
-}
-
-impl IntoResult<DateTime<Tz>> for LocalResult<DateTime<Tz>> {
-    fn into_result(self) -> Result<DateTime<Tz>, Error> {
-        match self {
-            Self::None => Err(Error::InvalidTimestamp),
-            Self::Single(dt) => Ok(dt),
-            Self::Ambiguous(dt1, dt2) => Err(Error::AmbiguousTimestamp(dt1, dt2)),
-        }
-    }
 }
 
 #[derive(Deserialize)]
