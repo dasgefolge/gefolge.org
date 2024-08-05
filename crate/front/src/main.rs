@@ -384,7 +384,7 @@ async fn flask_proxy_get_api_children(proxy_http_client: &State<ProxyHttpClient>
 
 #[rocket::get("/<path..>")]
 async fn flask_proxy_get(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>) -> Result<FlaskProxyResponse, FlaskProxyError> {
-    if path.get(0).map_or(true, |prefix| !matches!(prefix, "event" | "games" | "me" | "mensch" | "wiki")) {
+    if Segments::<Path>::get(&path, 0).map_or(true, |prefix| !matches!(prefix, "event" | "games" | "me" | "mensch" | "wiki")) {
         // only forward the directories that are actually served by the proxy to prevent internal server errors on malformed requests from spambots
         return Ok(FlaskProxyResponse::Status(Status::NotFound))
     }
@@ -400,7 +400,7 @@ async fn flask_proxy_get(proxy_http_client: &State<ProxyHttpClient>, me: Option<
 
 #[rocket::post("/<path..>", data = "<data>")]
 async fn flask_proxy_post(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>, data: Vec<u8>) -> Result<FlaskProxyResponse, FlaskProxyError> {
-    if path.get(0).map_or(true, |prefix| !matches!(prefix, "event" | "games" | "me" | "mensch" | "wiki")) {
+    if Segments::<Path>::get(&path, 0).map_or(true, |prefix| !matches!(prefix, "event" | "games" | "me" | "mensch" | "wiki")) {
         // only forward the directories that are actually served by the proxy to prevent internal server errors on malformed requests from spambots
         return Ok(FlaskProxyResponse::Status(Status::NotFound))
     }

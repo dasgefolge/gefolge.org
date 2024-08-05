@@ -6,12 +6,12 @@ edition.workspace = true
 publish = false
 
 [dependencies]
-async-proto = { version = "0.19", features = ["chrono-tz", "tokio-tungstenite"] }
+async-proto = { version = "0.22", features = ["chrono-tz", "tokio-tungstenite"] }
 base64 = "0.22"
 chrono = { version = "0.4.24", features = ["serde", "clock"], default-features = false }
 chrono-tz = { version = "0.9", features = ["serde"] }
 futures = "0.3.26"
-itertools = "0.12"
+itertools = "0.13"
 reqwest = { version = "0.12", default-features = false, features = ["charset", "hickory-dns", "http2", "macos-system-configuration", "rustls-tls"] }
 ricochet-robots-websocket = { git = "ssh://git@github.com/dasgefolge/ricochet-robots.git", branch = "main" }
 rocket = { features = ["secrets"], version = "0.5" }
@@ -32,12 +32,9 @@ wheel = { git = "https://github.com/fenhl/wheel", branch = "main", features = ["
 [target."cfg(unix)".dependencies]
 xdg = "2.4.1"
 
-[target."cfg(windows)".dependencies]
-tokio = { version = "1.26.0", features = ["process"] }
-
 [build-dependencies]
 futures = "0.3.26"
-git2 = "0.18"
+git2 = "0.19"
 thiserror = "1.0.38"
 tokio = "1.26.0"
 wheel = { git = "https://github.com/fenhl/wheel", branch = "main" }
