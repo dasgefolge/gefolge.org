@@ -2617,7 +2617,7 @@ dependencies = [
 [[package]]
 name = "ricochet-robots"
 version = "0.1.0"
-source = "git+ssh://git@github.com/dasgefolge/ricochet-robots.git?branch=main#6624045b19176dab946a7fde03f79f65a0745f06"
+source = "git+ssh://git@github.com/dasgefolge/ricochet-robots.git?branch=main#a8b2eb4787d7e034e518233339fba723bef41faf"
 dependencies = [
  "async-proto",
  "collect-mac",
@@ -2628,7 +2628,7 @@ dependencies = [
 [[package]]
 name = "ricochet-robots-websocket"
 version = "0.1.0"
-source = "git+ssh://git@github.com/dasgefolge/ricochet-robots.git?branch=main#6624045b19176dab946a7fde03f79f65a0745f06"
+source = "git+ssh://git@github.com/dasgefolge/ricochet-robots.git?branch=main#a8b2eb4787d7e034e518233339fba723bef41faf"
 dependencies = [
  "async-proto",
  "derivative",
