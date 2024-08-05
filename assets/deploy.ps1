@@ -53,13 +53,13 @@ if (-not $?)
     throw 'Native Failure'
 }
 
-ssh gefolge.org sudo systemctl start gefolge-web
+ssh gefolge.org /opt/git/github.com/dasgefolge/gefolge.org/main/assets/deploy.sh
 if (-not $?)
 {
     throw 'Native Failure'
 }
 
-ssh gefolge.org /opt/git/github.com/dasgefolge/gefolge.org/main/assets/deploy.sh
+ssh gefolge.org sudo systemctl start gefolge-web
 if (-not $?)
 {
     throw 'Native Failure'
