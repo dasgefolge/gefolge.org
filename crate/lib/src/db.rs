@@ -69,6 +69,11 @@ pub enum Transaction {
         #[serde(rename = "transactionID")]
         transaction_id: String,
     },
+    Bar {
+        amount: Euro,
+        #[serde(deserialize_with = "implicit_utc")]
+        time: DateTime<Utc>,
+    },
     EventAnzahlung {
         amount: Euro,
         default: Option<Euro>,
