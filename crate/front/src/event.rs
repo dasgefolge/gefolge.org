@@ -31,8 +31,8 @@ use {
 pub(crate) enum Error {
     #[error(transparent)] Sql(#[from] sqlx::Error),
     #[error(transparent)] ToMaybeLocal(#[from] crate::time::ToMaybeLocalError),
-    #[error("there are multiple events currently ongoing")]
-    MultipleCurrentEvents,
+    #[error("there are multiple events currently ongoing (at least {} and {})", .0[0], .0[1])]
+    MultipleCurrentEvents([String; 2]),
     #[error("unknown location ID in event data")]
     UnknownLocation, //TODO get rid of this variant using a foreign-key constraint
 }
@@ -135,8 +135,8 @@ pub(crate) async fn client_session(db_pool: &PgPool, sink: WsSink) -> Result<Nev
         for row in sqlx::query!(r#"SELECT id, value AS "value: Json<Event>" FROM json_events"#).fetch_all(db_pool).await? {
             if let (Some(start), Some(end)) = (row.value.start(db_pool).await?, row.value.end(db_pool).await?) {
                 if start <= now && now < end {
-                    if current_event.replace((row.id, row.value.timezone(db_pool).await?)).is_some() {
-                        return Err(Error::MultipleCurrentEvents.into())
+                    if let Some((other_id, _)) = current_event.replace((row.id.clone(), row.value.timezone(db_pool).await?)) {
+                        return Err(Error::MultipleCurrentEvents([row.id, other_id]).into())
                     }
                 }
             }
