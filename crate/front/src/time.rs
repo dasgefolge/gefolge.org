@@ -102,7 +102,7 @@ impl<Z: TimeZone> PartialEq<MaybeLocalDateTime> for DateTime<Z> {
 
 impl<Z: TimeZone> PartialOrd<MaybeLocalDateTime> for DateTime<Z> {
     fn partial_cmp(&self, other: &MaybeLocalDateTime) -> Option<Ordering> {
-        other.partial_cmp(&self.with_timezone(&Utc))
+        other.partial_cmp(&self.with_timezone(&Utc)).map(Ordering::reverse)
     }
 }
 
