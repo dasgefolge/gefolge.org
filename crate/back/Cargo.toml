@@ -13,6 +13,6 @@ serde = { version = "1.0.183", features = ["derive"] }
 serde_json = "1.0.93"
 serde_plain = "1.0.1"
 serenity = { default-features = false, features = ["rustls_backend", "model"], version = "0.12" }
-sqlx = { version = "0.7", default-features = false, features = ["chrono", "json", "macros", "postgres", "runtime-tokio-rustls"] }
+sqlx = { version = "0.8", default-features = false, features = ["chrono", "json", "macros", "postgres", "runtime-tokio-rustls"] }
 thiserror = "1.0.38"
 wheel = { git = "https://github.com/fenhl/wheel", branch = "main" }
