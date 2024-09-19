@@ -90,7 +90,7 @@ impl<'de> Deserialize<'de> for Euro {
             }
 
             fn visit_f64<E: Error>(self, v: f64) -> Result<Euro, E> {
-                Ok(Euro { cents: (v * 100.0) as i64 })
+                Ok(Euro { cents: (v * 100.0).round() as i64 })
             }
 
             fn visit_str<E: Error>(self, v: &str) -> Result<Euro, E> {
