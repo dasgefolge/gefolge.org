@@ -1,0 +1,15 @@
+[package]
+name = "gefolge-paypal"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+publish = false
+
+[dependencies]
+chrono = { version = "0.4.24", default-features = false, features = ["serde", "std"] }
+clap = { version = "4.2.5", features = ["derive"] }
+gefolge-web = { package = "gefolge-web-lib", path = "../lib" }
+serenity = { default-features = false, features = ["model", "rustls_backend"], version = "0.12" }
+sqlx = { version = "0.8", default-features = false, features = ["json", "macros", "postgres", "runtime-tokio-rustls"] }
+thiserror = "1.0.40"
+wheel = { git = "https://github.com/fenhl/wheel", branch = "main" }

@@ -10,7 +10,7 @@ function ThrowOnNativeFailure {
 cargo check
 ThrowOnNativeFailure
 
-cargo sqlx prepare --workspace --check -- -p gefolge-web -p gefolge-web-back
+cargo sqlx prepare --workspace --check -- -p gefolge-web -p gefolge-web-back -p gefolge-paypal
 ThrowOnNativeFailure
 
 # copy the tree to the WSL file system to improve compile times
