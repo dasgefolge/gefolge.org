@@ -41,7 +41,7 @@
         <h1>Guthaben</h1>
         <p>Mit diesem Guthaben kannst du dich z.B. für <a href="{{url_for('events_index')}}">events</a> anmelden oder <a href="{{url_for('werewolf_cards')}}">Werwölfe-Karten sponsern</a>.</p>
         <p>
-            Aktuelles Guthaben: {{person.balance._value | pprint}}.
+            Aktuelles Guthaben: {{person.balance}}.
             {% if person.balance.value > 0 %}
                 Wenn du dein Guthaben ausgezahlt haben möchtest, kontaktiere bitte {{g.treasurer}}.
             {% elif person.balance.value < 0 and person is not treasurer %}
