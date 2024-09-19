@@ -39,11 +39,20 @@ CACHE = {}
 @class_key.class_key()
 class Euro:
     def __init__(self, value=0):
+        self.value = value
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, value):
         if isinstance(value, str):
             value = value.rstrip('€').replace('−', '-').replace(',', '.')
-        self.value = decimal.Decimal(value)
-        if self.value.quantize(decimal.Decimal('1.00')) != self.value:
-            raise ValueError('Euro value contains fractional cents: {!r}'.format(self.value))
+        value = decimal.Decimal(value)
+        if value.quantize(decimal.Decimal('1.00')) != value:
+            raise ValueError(f'Euro value contains fractional cents: {value!r}')
+        self._value = value
 
     def __abs__(self):
         return Euro(abs(self.value))
