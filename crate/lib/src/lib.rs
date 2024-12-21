@@ -2,4 +2,6 @@
 #![forbid(unsafe_code)]
 
 pub mod db;
+pub mod event;
 pub mod money;
+pub mod time;

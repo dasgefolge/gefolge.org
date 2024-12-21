@@ -60,10 +60,10 @@ use {
     },
     tokio::sync::RwLock,
     url::Url,
+    gefolge_web_lib::event::Event,
     crate::{
         auth::DiscordUser,
         config::Config,
-        event::Event,
         time::format_date_range,
         user::{
             User,
@@ -178,7 +178,7 @@ async fn page(db_pool: &PgPool, me: Option<DiscordUser>, uri: &Origin<'_>, kind:
 
 #[derive(Debug, thiserror::Error, rocket_util::Error)]
 enum IndexError {
-    #[error(transparent)] Event(#[from] event::Error),
+    #[error(transparent)] Event(#[from] gefolge_web_lib::event::Error),
     #[error(transparent)] Page(#[from] PageError),
     #[error(transparent)] Sql(#[from] sqlx::Error),
 }

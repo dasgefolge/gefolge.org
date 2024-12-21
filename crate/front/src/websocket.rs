@@ -32,7 +32,7 @@ pub(crate) type WsSink = Arc<Mutex<SplitSink<rocket_ws::stream::DuplexStream, ro
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum Error {
-    #[error(transparent)] Event(#[from] crate::event::Error),
+    #[error(transparent)] Event(#[from] gefolge_web_lib::event::Error),
     #[error(transparent)] Read(#[from] async_proto::ReadError),
     #[error(transparent)] RicochetRobots(#[from] ricochet_robots_websocket::Error),
     #[error(transparent)] Sql(#[from] sqlx::Error),

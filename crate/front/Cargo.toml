@@ -11,6 +11,7 @@ base64 = "0.22"
 chrono = { version = "0.4.24", features = ["serde", "clock"], default-features = false }
 chrono-tz = { version = "0.9", features = ["serde"] }
 futures = "0.3.26"
+gefolge-web-lib = { path = "../lib" }
 itertools = "0.13"
 reqwest = { version = "0.12", default-features = false, features = ["charset", "hickory-dns", "http2", "macos-system-configuration", "rustls-tls"] }
 ricochet-robots-websocket = { git = "ssh://git@github.com/dasgefolge/ricochet-robots.git", branch = "main" }
@@ -21,7 +22,6 @@ rocket_oauth2 = { version = "0.5" }
 rocket_ws = { version = "0.1" }
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = "1.0.93"
-serde_plain = "1.0.1"
 serenity = { default-features = false, features = ["model", "rustls_backend"], version = "0.12" }
 sqlx = { version = "0.8", features = ["json", "macros", "postgres", "runtime-tokio-rustls"] }
 thiserror = "1.0.38"
