@@ -59,6 +59,10 @@ pub struct Event {
 }
 
 impl Event {
+    pub async fn load(db_pool: impl PgExecutor<'_>, event_id: &str) -> sqlx::Result<Option<Self>> {
+        Ok(sqlx::query_scalar!(r#"SELECT value AS "value: Json<Self>" FROM json_events WHERE id = $1"#, event_id).fetch_optional(db_pool).await?.map(|Json(value)| value))
+    }
+
     async fn location_info(&self, db_pool: impl PgExecutor<'_>) -> Result<LocationInfo, Error> {
         Ok(match self.location.as_deref() {
             Some("online") => LocationInfo::Online,
