@@ -6,7 +6,7 @@ edition.workspace = true
 publish = false
 
 [dependencies]
-chrono = "0.4.38"
+chrono = { version = "0.4.38", features = ["serde"] }
 chrono-tz = { version = "0.9", features = ["serde"] }
 lazy-regex = "3.2.0"
 rocket = { features = ["secrets"], version = "0.5" }
