@@ -49,7 +49,7 @@ impl LocationInfo {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Event {
     end: Option<MaybeAwareDateTime>,
     location: Option<String>,

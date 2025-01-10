@@ -68,7 +68,7 @@ pub enum MaybeLocalDateTime {
 }
 
 impl MaybeLocalDateTime {
-    fn with_timezone<Z: TimeZone>(&self, tz: &Z) -> DateTime<Z> {
+    pub fn with_timezone<Z: TimeZone>(&self, tz: &Z) -> DateTime<Z> {
         match self {
             Self::Nonlocal(nonlocal) => nonlocal.with_timezone(tz),
             Self::Local(local) => local.with_timezone(tz),
