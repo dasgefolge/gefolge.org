@@ -122,7 +122,14 @@
     {% elif g.user.is_guest %}
         <p>Als Gast kannst du dich nicht selbst anmelden.</p>
     {% else %}
-        {% if 'capacity' in event.location.data and event.free() <= 0 %}
+        {% if event.location is none %}
+            <div class="alert alert-warning">
+                <strong>Achtung:</strong> Das Haus für dieses event steht noch nicht fest. Je nachdem, wie viele Plätze es hat, kommst du auf die Warteliste. Wenn jemand absagt, rückt der erste Mensch auf der Warteliste nach.
+                {% if event.anzahlung is none or event.anzahlung.value > 0 %}
+                    Falls kein Platz für dich frei wird, bekommst du deine Anzahlung natürlich zurück.
+                {% endif %}
+            </div>
+        {% elif 'capacity' in event.location.data and event.free() <= 0 %}
             <div class="alert alert-warning">
                 <strong>Achtung:</strong> Das Haus ist zumindest zeitweise schon voll. Du kannst dich trotzdem anmelden und kommst dann auf die Warteliste. Wenn jemand absagt, rückt der erste Mensch auf der Warteliste nach. {#TODO check for free nights, adjust message accordingly #}
                 {% if event.anzahlung is none or event.anzahlung.value > 0 %}
