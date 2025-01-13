@@ -185,7 +185,7 @@
             {% else %}
                 <p>Um die Anmeldungen zu eröffnen, gib bitte {{g.admin}} deine Kontodaten.</p>
             {% endif %}
-            {% if event.end <= g.now %}
+            {% if event.end is not none and event.end <= g.now %}
                 <p>Abrechnungsübersicht coming soon™</p> {#TODO#}
             {% endif %}
         {% endif %}
