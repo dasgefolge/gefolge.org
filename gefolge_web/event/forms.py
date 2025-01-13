@@ -107,7 +107,7 @@ def ProfileForm(event, person):
             default=person_data.get('food', {}).get('animalProducts', 'yes')
         )
         Form.allergies = wtforms.TextAreaField('Allergien, Unverträglichkeiten', default=person_data.get('food', {}).get('allergies', ''))
-    if gefolge_web.util.now(event.timezone) < event.end:
+    if event.end is None or gefolge_web.util.now(event.timezone) < event.end:
         Form.alkohol = wtforms.BooleanField('Ich beteilige mich am kommunistischen™ Alkohol.', default=person_data.get('alkohol', True))
         Form.alkohol_notice = gefolge_web.forms.FormText('Kann nachträglich korrigiert werden. Die Bowle beim Silvesterbuffet zählt hier nicht.')
 
@@ -117,7 +117,7 @@ def ProfileForm(event, person):
     else:
         Form.section_programm_intro = gefolge_web.forms.FormText(jinja2.Markup('Auf der <a href="{}">Programmseite</a> kannst du {} für Programmpunkte als interessiert eintragen.'.format(flask.url_for('event_programm', event=event.event_id), 'dich' if person == flask.g.user else person.__html__()))) #TODO add support for deleting programm signups, then adjust this text
 
-    if gefolge_web.util.now(event.timezone) < event.end and event.data.get('covidTestRequired'):
+    if (event.end is None or gefolge_web.util.now(event.timezone) < event.end) and event.data.get('covidTestRequired'):
         if event.data['covidTestRequired'].value() == 'geimpftGenesen':
             if person_data.get('covidStatus') != 'geimpftGenesen':
                 Form.section_covid = gefolge_web.forms.FormSection('COVID-19')
@@ -151,7 +151,7 @@ def ProfileForm(event, person):
             gefolge_web.forms.EuroRange(max=event.ausfall - event.anzahlung_total, message='Wir benötigen nur noch {max}, um die Ausfallgebühr abzudecken.'),
             gefolge_web.forms.EuroRange(max=person.balance, message=jinja2.Markup(f'Dein aktuelles Guthaben ist {flask.g.user.balance}. Auf <a href="{flask.g.user.profile_url}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.'))
         ], default=event.anzahlung)
-    if gefolge_web.util.now(event.timezone) < event.end and person == flask.g.user and event.location is not None and event.location.hausordnung is not None and not person_data.get('hausordnung', False): #TODO track last-changed event and hide if current version has already been accepted. Also show last-changed date
+    if (event.end is None or gefolge_web.util.now(event.timezone) < event.end) and person == flask.g.user and event.location is not None and event.location.hausordnung is not None and not person_data.get('hausordnung', False): #TODO track last-changed event and hide if current version has already been accepted. Also show last-changed date
         header_anmeldung()
         Form.hausordnung = wtforms.BooleanField(jinja2.Markup('Ich habe die <a href="{}">Hausordnung</a> zur Kenntnis genommen.'.format(event.location.hausordnung)), [wtforms.validators.DataRequired()])
 
