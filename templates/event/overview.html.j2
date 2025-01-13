@@ -61,7 +61,7 @@
                     {% endif %}
                 {% endfor %}
                 {{block_overview(ns.block_start, event.end.date(), event.capacity(ns.block_start), event.free(ns.block_start, event.end.date()))}}
-            {% elif 'capacity' in event.location.data %}
+            {% elif event.location is not none and 'capacity' in event.location.data %}
                 {% set capacity = event.location.data['capacity'].value() %}
                 {% set naive_free = capacity - (event.signups | length) %}
                 {% set free = event.free() %}
