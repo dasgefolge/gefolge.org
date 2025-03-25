@@ -89,8 +89,9 @@ async fn main() -> Result<(), Error> {
     writeln!(&mut out_f, "macro_rules! static_url {{")?;
     for (path, commit_id) in cache {
         let unix_path = path.to_str().expect("non-UTF-8 static file path").replace('\\', "/");
+        let uri = format!("/static/{unix_path}?v={commit_id}");
         writeln!(&mut out_f, "    ({unix_path:?}) => {{")?;
-        writeln!(&mut out_f, "        concat!(\"/static/\", {unix_path:?}, \"?v={commit_id:?}\")")?; //TODO build rocket_util::Origin values?
+        writeln!(&mut out_f, "        ::rocket_util::Origin(::rocket::uri!({uri:?}))")?;
         writeln!(&mut out_f, "    }};")?;
     }
     writeln!(&mut out_f, "}}")?;
