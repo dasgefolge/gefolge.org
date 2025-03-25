@@ -509,7 +509,7 @@ enum MainError {
     #[error(transparent)] Sql(#[from] sqlx::Error),
 }
 
-#[wheel::main(rocket, debug)]
+#[wheel::main(rocket)]
 async fn main() -> Result<(), MainError> {
     let config = Config::load().await?;
     let http_client = reqwest::Client::builder()
@@ -552,10 +552,7 @@ async fn main() -> Result<(), MainError> {
         fallback_catcher,
     ])
     .attach(OAuth2::<auth::Discord>::custom(rocket_oauth2::HyperRustlsAdapter::default(), OAuthConfig::new(
-        rocket_oauth2::StaticProvider { //TODO use built-in constant once https://github.com/jebrosen/rocket_oauth2/pull/42 is released
-            auth_uri: "https://discord.com/oauth2/authorize".into(),
-            token_uri: "https://discord.com/api/oauth2/token".into(),
-        },
+        rocket_oauth2::StaticProvider::Discord,
         config.discord.client_id.to_string(),
         config.discord.client_secret.to_string(),
         Some(uri!("https://gefolge.org", auth::discord_callback).to_string()),

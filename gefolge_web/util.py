@@ -337,7 +337,7 @@ def setup(app):
             url = str(flask.g.view_node.url)
         except Exception as e:
             url = f'({e})'
-        return flask.Response(CRASH_NOTICE.format(user=user, url=url, tb=traceback.format_exc()),mimetype='text/plain'), 500
+        return flask.Response(CRASH_NOTICE.format(user=user, url=url, tb=traceback.format_exc()), mimetype='text/plain'), 500
 
     @app.template_filter()
     def dt_format(value, format='%d.%m.%Y %H:%M:%S', event_timezone=None):
