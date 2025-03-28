@@ -86,7 +86,33 @@ mod time;
 mod user;
 mod websocket;
 
-#[derive(Default)]
+#[allow(unused)] // variants only constructed under conditional compilation
+#[derive(Default, Clone, Copy)]
+enum Environment {
+    #[cfg_attr(any(feature = "production", not(any(feature = "dev", feature = "local", debug_assertions))), default)]
+    Production,
+    #[cfg_attr(any(feature = "dev", all(debug_assertions, not(feature = "production"), not(feature = "local"))), default)]
+    Dev,
+    #[cfg_attr(feature = "local", default)]
+    Local,
+}
+
+fn is_dev() -> bool {
+    match Environment::default() {
+        Environment::Production => false,
+        Environment::Dev => true,
+        Environment::Local => true,
+    }
+}
+
+fn base_uri() -> rocket::http::uri::Absolute<'static> {
+    match Environment::default() {
+        Environment::Production => uri!("https://gefolge.org"),
+        Environment::Dev => uri!("https://dev.gefolge.org"),
+        Environment::Local => uri!("http://localhost:24816"),
+    }
+}
+
 enum PageKind {
     Splash,
     Index,
@@ -589,6 +615,20 @@ async fn fallback_catcher(status: Status, request: &Request<'_>) -> Result<RawHt
     }).await
 }
 
+fn parse_port(arg: &str) -> Result<u16, std::num::ParseIntError> {
+    match arg {
+        "production" => Ok(24817),
+        "dev" => Ok(24816),
+        _ => arg.parse(),
+    }
+}
+
+#[derive(clap::Parser)]
+struct Args {
+    #[clap(long, value_parser = parse_port)]
+    port: Option<u16>,
+}
+
 #[derive(Debug, thiserror::Error)]
 enum MainError {
     #[error(transparent)] Base64(#[from] base64::DecodeError),
@@ -599,7 +639,7 @@ enum MainError {
 }
 
 #[wheel::main(rocket)]
-async fn main() -> Result<(), MainError> {
+async fn main(Args { port }: Args) -> Result<(), MainError> {
     let config = Config::load().await?;
     let http_client = reqwest::Client::builder()
         .user_agent(concat!("GefolgeWeb/", env!("CARGO_PKG_VERSION")))
@@ -616,7 +656,7 @@ async fn main() -> Result<(), MainError> {
     let Rocket { .. } = rocket::custom(rocket::Config {
         secret_key: SecretKey::from(&BASE64.decode(&config.secret_key)?),
         log_level: rocket::config::LogLevel::Critical,
-        port: 24817,
+        port: port.unwrap_or_else(|| if is_dev() { 24816 } else { 24817 }),
         limits: Limits::default()
             .limit("bytes", 2.mebibytes()), // for proxied wiki edits
         ..rocket::Config::default()
@@ -645,7 +685,7 @@ async fn main() -> Result<(), MainError> {
         rocket_oauth2::StaticProvider::Discord,
         config.discord.client_id.to_string(),
         config.discord.client_secret.to_string(),
-        Some(uri!("https://gefolge.org", auth::discord_callback).to_string()),
+        Some(uri!(base_uri(), auth::discord_callback).to_string()),
     )))
     .manage(PgPool::connect_with(PgConnectOptions::default().username("fenhl").database("gefolge").application_name("gefolge-web")).await?)
     .manage(http_client)
