@@ -90,9 +90,8 @@ with app.app_context():
     flask_pagedown.PageDown(app)
 
 @flask_view_tree.index(app)
-@gefolge_web.util.template('index')
 def index():
-    pass
+    raise NotImplementedError('Ported to Rust')
 
 def wiki_save_hook(namespace, title, text, author, summary):
     if namespace == 'wiki':

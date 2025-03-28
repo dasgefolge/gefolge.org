@@ -120,7 +120,7 @@ def mensch_or_signup_required(f):
 def setup(index, app):
     @index.child('event', 'events')
     def events_index():
-        return NotImplementedError('Ported to Rust')
+        raise NotImplementedError('Ported to Rust')
 
     @events_index.children(gefolge_web.event.model.Event, methods=['GET', 'POST'], decorators=[mensch_or_signup_required])
     @gefolge_web.util.template('event.overview')
