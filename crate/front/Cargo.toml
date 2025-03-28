@@ -5,11 +5,18 @@ authors.workspace = true
 edition.workspace = true
 publish = false
 
+[features]
+dev = []
+production = []
+local = []
+
 [dependencies]
 async-proto = { version = "0.23", features = ["chrono-tz", "tokio-tungstenite"] }
 base64 = "0.22"
 chrono = { version = "0.4.24", features = ["serde", "clock"], default-features = false }
 chrono-tz = { version = "0.9", features = ["serde"] }
+clap = { version = "4.5.34", features = ["derive"] }
+derive_more = { version = "2.0.1", features = ["deref", "into"] }
 futures = "0.3.26"
 gefolge-web-lib = { path = "../lib" }
 itertools = "0.13"

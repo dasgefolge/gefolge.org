@@ -34,7 +34,7 @@ use {
     wheel::traits::ReqwestResponseExt as _,
 };
 
-macro_rules! guard_try {
+#[macro_export] macro_rules! guard_try {
     ($res:expr) => {
         match $res {
             Ok(x) => x,
@@ -64,6 +64,10 @@ pub(crate) enum UserFromRequestError {
     Database,
     #[error("missing HTTP client")]
     HttpClient,
+    #[error("must be an approved Gefolge member to access")]
+    MenschRequired,
+    #[error("must be in Gefolge Discord guild to access")]
+    NotInDiscordGuild,
     #[error("failed to get API key from query string")]
     Query(rocket::form::Errors<'static>),
 }
@@ -96,7 +100,7 @@ pub(crate) struct DiscordUser {
 impl<'r> FromRequest<'r> for DiscordUser {
     type Error = UserFromRequestError;
 
-    async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, UserFromRequestError> {
+    async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         let outcome = match req.guard().await {
             Outcome::Success(BasicAuth { username, password }) if username == "api" => match req.guard::<&State<PgPool>>().await {
                 Outcome::Success(pool) => if let Some(id) = guard_try!(sqlx::query_scalar!("SELECT id FROM json_user_data WHERE value -> 'apiKey' = $1", Json(password) as _).fetch_optional(&**pool).await) {

@@ -119,17 +119,8 @@ def mensch_or_signup_required(f):
 
 def setup(index, app):
     @index.child('event', 'events')
-    @gefolge_web.login.mensch_required # children use mensch_or_signup_required
-    @gefolge_web.util.template('event.index')
     def events_index():
-        now = gefolge_web.util.now()
-        future_events, past_events = more_itertools.partition(lambda event: event.end is not None and event.end < now, gefolge_web.event.model.Event)
-        future_events, current_events = more_itertools.partition(lambda event: event.start is not None and event.start < now, future_events)
-        return {
-            'current_events': sorted(current_events),
-            'future_events': sorted(future_events),
-            'past_events': sorted(past_events, reverse=True)
-        }
+        return NotImplementedError('Ported to Rust')
 
     @events_index.children(gefolge_web.event.model.Event, methods=['GET', 'POST'], decorators=[mensch_or_signup_required])
     @gefolge_web.util.template('event.overview')

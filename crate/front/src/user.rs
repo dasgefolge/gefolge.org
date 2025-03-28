@@ -4,13 +4,33 @@ use {
         fmt,
     },
     chrono_tz::Tz,
-    rocket::response::content::RawHtml,
+    derive_more::*,
+    rocket::{
+        State,
+        http::Status,
+        outcome::Outcome,
+        request::{
+            self,
+            FromRequest,
+            Request,
+        },
+        response::content::RawHtml,
+    },
     rocket_util::html,
     serde::Deserialize,
     serenity::model::prelude::*,
     sqlx::{
         PgPool,
+        postgres::Postgres,
+        Transaction,
         types::Json,
+    },
+    crate::{
+        auth::{
+            DiscordUser,
+            UserFromRequestError,
+        },
+        guard_try,
     },
 };
 
@@ -36,8 +56,8 @@ pub(crate) struct User {
 }
 
 impl User {
-    pub(crate) async fn from_id(db_pool: &PgPool, id: UserId) -> sqlx::Result<Option<Self>> {
-        Ok(sqlx::query!(r#"SELECT discriminator, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users WHERE snowflake = $1"#, i64::from(id)).fetch_optional(db_pool).await?.map(|row| User {
+    pub(crate) async fn from_id(transaction: &mut Transaction<'_, Postgres>, id: UserId) -> sqlx::Result<Option<Self>> {
+        Ok(sqlx::query!(r#"SELECT discriminator, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users WHERE snowflake = $1"#, i64::from(id)).fetch_optional(&mut **transaction).await?.map(|row| User {
             discriminator: row.discriminator.map(Discriminator),
             nick: row.nick,
             roles: row.roles.0,
@@ -46,8 +66,8 @@ impl User {
         }))
     }
 
-    pub(crate) async fn from_api_key(db_pool: &PgPool, api_key: &str) -> sqlx::Result<Option<Self>> {
-        Ok(sqlx::query!(r#"SELECT snowflake, discriminator, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users, json_user_data WHERE id = snowflake AND value -> 'apiKey' = $1"#, Json(api_key) as _).fetch_optional(db_pool).await?.map(|row| User {
+    pub(crate) async fn from_api_key(transaction: &mut Transaction<'_, Postgres>, api_key: &str) -> sqlx::Result<Option<Self>> {
+        Ok(sqlx::query!(r#"SELECT snowflake, discriminator, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users, json_user_data WHERE id = snowflake AND value -> 'apiKey' = $1"#, Json(api_key) as _).fetch_optional(&mut **transaction).await?.map(|row| User {
             id: UserId::from(row.snowflake as u64),
             discriminator: row.discriminator.map(Discriminator),
             nick: row.nick,
@@ -64,8 +84,48 @@ impl User {
         self.roles.contains(&MENSCH) || self.roles.contains(&GUEST)
     }
 
-    pub(crate) async fn data(&self, db_pool: &PgPool) -> sqlx::Result<Data> {
-        Ok(sqlx::query_scalar!(r#"SELECT value AS "value: Json<Data>" FROM json_user_data WHERE id = $1"#, i64::from(self.id)).fetch_optional(db_pool).await?.map(|Json(data)| data).unwrap_or_default())
+    pub(crate) async fn data(&self, transaction: &mut Transaction<'_, Postgres>) -> sqlx::Result<Data> {
+        Ok(sqlx::query_scalar!(r#"SELECT value AS "value: Json<Data>" FROM json_user_data WHERE id = $1"#, i64::from(self.id)).fetch_optional(&mut **transaction).await?.map(|Json(data)| data).unwrap_or_default())
+    }
+}
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for User {
+    type Error = UserFromRequestError;
+
+    async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
+        match req.guard().await {
+            Outcome::Success(DiscordUser { id }) => match req.guard::<&State<PgPool>>().await {
+                Outcome::Success(pool) => {
+                    let mut transaction = guard_try!(pool.begin().await);
+                    if let Some(user) = guard_try!(Self::from_id(&mut transaction, id).await) {
+                        Outcome::Success(user)
+                    } else {
+                        Outcome::Error((Status::Unauthorized, UserFromRequestError::NotInDiscordGuild))
+                    }
+                }
+                Outcome::Error((status, ())) => Outcome::Error((status, UserFromRequestError::Database)),
+                Outcome::Forward(status) => Outcome::Forward(status),
+            },
+            Outcome::Error((status, e)) => Outcome::Error((status, e)),
+            Outcome::Forward(status) => Outcome::Forward(status),
+        }
+    }
+}
+
+#[derive(Deref, Into)]
+pub(crate) struct Mensch(User);
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for Mensch {
+    type Error = UserFromRequestError;
+
+    async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, UserFromRequestError> {
+        req.guard::<User>().await.and_then(|user| if user.is_mensch() {
+            Outcome::Success(Self(user))
+        } else {
+            Outcome::Error((Status::Unauthorized, UserFromRequestError::MenschRequired))
+        })
     }
 }
 
@@ -88,8 +148,8 @@ impl Default for Data {
     }
 }
 
-pub(crate) async fn html_mention(db_pool: &PgPool, user_id: UserId) -> sqlx::Result<RawHtml<String>> {
-    Ok(if let Some(user) = User::from_id(db_pool, user_id).await? {
+pub(crate) async fn html_mention(transaction: &mut Transaction<'_, Postgres>, user_id: UserId) -> sqlx::Result<RawHtml<String>> {
+    Ok(if let Some(user) = User::from_id(transaction, user_id).await? {
         let username = if let Some(discriminator) = user.discriminator {
             format!("{}#{discriminator}", user.username)
         } else {
