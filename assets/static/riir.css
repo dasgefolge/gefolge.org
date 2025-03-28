@@ -24,6 +24,10 @@ nav > a {
     object-fit: contain;
 }
 
+nav.breadcrumbs .logo {
+    width: 32px;
+}
+
 .splash > img {
     flex-grow: 1;
     min-height: 0;

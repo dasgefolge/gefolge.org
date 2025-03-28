@@ -114,10 +114,14 @@ fn base_uri() -> rocket::http::uri::Absolute<'static> {
 }
 
 enum PageKind {
+    /// The variant of the index page shown to anonymous visitors
     Splash,
+    /// The variant of the index page shown to signed-in users
     Index,
-    #[default]
-    Other,
+    /// A subpage with breadcrumb navbar
+    Sub(Vec<RawHtml<String>>),
+    /// A subpage without breadcrumb navbar
+    Error,
 }
 
 #[derive(Debug, thiserror::Error, rocket_util::Error)]
@@ -126,6 +130,28 @@ enum PageError {
 }
 
 async fn page(mut transaction: Transaction<'_, Postgres>, me: Option<DiscordUser>, uri: &Origin<'_>, kind: PageKind, title: &str, content: impl ToHtml) -> Result<RawHtml<String>, PageError> {
+    fn breadcrumbs(uri: &Origin<'_>, display: Vec<RawHtml<String>>) -> RawHtml<String> {
+        let mut path_segments = uri.0.path().segments().zip_eq(display).collect_vec();
+        let last = path_segments.pop();
+        let mut prefix = Vec::default();
+        let mut buf = RawHtml(String::default());
+        for (segment, display) in path_segments {
+            prefix.push(segment);
+            " / ".push_html(&mut buf);
+            let mut url = Url::parse("/").unwrap();
+            url.path_segments_mut().unwrap().extend(&prefix);
+            html! {
+                a(href = url.to_string()) : display;
+            }.push_html(&mut buf);
+        }
+        if let Some((segment, display)) = last {
+            prefix.push(segment);
+            " / ".push_html(&mut buf);
+            display.push_html(&mut buf);
+        }
+        buf
+    }
+
     let footer = html! {
         footer {
             p {
@@ -176,10 +202,22 @@ async fn page(mut transaction: Transaction<'_, Postgres>, me: Option<DiscordUser
             } else {
                 body {
                     div {
-                        nav(class? = matches!(kind, PageKind::Index).then_some("index")) {
-                            a(class = "nav") {
-                                img(class = "logo", src = static_url!("gefolge.png"));
-                                h1 : "Das Gefolge";
+                        nav(class? = match kind {
+                            PageKind::Splash => unreachable!(),
+                            PageKind::Index => Some("index"),
+                            PageKind::Sub(_) => Some("breadcrumbs"),
+                            PageKind::Error => None,
+                        }) {
+                            a(class = "nav", href? = matches!(kind, PageKind::Error).then(|| uri!(index))) {
+                                @if let PageKind::Sub(display) = kind {
+                                    a(href = uri!(index)) {
+                                        img(class = "logo", src = static_url!("gefolge.png"));
+                                    }
+                                    : breadcrumbs(uri, display);
+                                } else {
+                                    img(class = "logo", src = static_url!("gefolge.png"));
+                                    h1 : "Das Gefolge";
+                                }
                             }
                             div(id = "login") {
                                 @if let Some(me) = me {
@@ -400,7 +438,11 @@ async fn event_page(db_pool: &State<PgPool>, me: DiscordUser, uri: Origin<'_>) -
             }
         }
     };
-    Ok(page(transaction, Some(me), &uri, PageKind::Other, "Das Gefolge — Events", content).await?)
+    Ok(page(transaction, Some(me), &uri, PageKind::Sub(vec![
+        html! {
+            : "events";
+        },
+    ]), "Das Gefolge — Events", content).await?)
 }
 
 struct ProxyHttpClient(reqwest::Client);
@@ -539,7 +581,7 @@ async fn bad_request(request: &Request<'_>) -> Result<RawHtml<String>, PageError
     let db_pool = request.guard::<&State<PgPool>>().await.expect("missing database pool");
     let me = request.guard::<DiscordUser>().await.succeeded();
     let uri = request.guard::<Origin<'_>>().await.succeeded().unwrap_or_else(|| Origin(uri!(index)));
-    page(db_pool.begin().await?, me, &uri, PageKind::default(), "Bad Request — Das Gefolge", html! {
+    page(db_pool.begin().await?, me, &uri, PageKind::Error, "Bad Request — Das Gefolge", html! {
         h1 : "Fehler 400: Bad Request";
         p : "Anmeldung fehlgeschlagen. Falls du Hilfe brauchst, kannst du auf Discord im #dev nachfragen.";
         p {
@@ -553,7 +595,7 @@ async fn not_found(request: &Request<'_>) -> Result<RawHtml<String>, PageError> 
     let db_pool = request.guard::<&State<PgPool>>().await.expect("missing database pool");
     let me = request.guard::<DiscordUser>().await.succeeded();
     let uri = request.guard::<Origin<'_>>().await.succeeded().unwrap_or_else(|| Origin(uri!(index)));
-    page(db_pool.begin().await?, me, &uri, PageKind::default(), "Not Found — Das Gefolge", html! {
+    page(db_pool.begin().await?, me, &uri, PageKind::Error, "Not Found — Das Gefolge", html! {
         h1 : "Fehler 404: Not Found";
         p : "Diese Seite existiert nicht.";
         p {
@@ -568,7 +610,7 @@ async fn internal_server_error(request: &Request<'_>) -> Result<RawHtml<String>,
     let me = request.guard::<DiscordUser>().await.succeeded();
     let uri = request.guard::<Origin<'_>>().await.succeeded().unwrap_or_else(|| Origin(uri!(index)));
     let is_reported = wheel::night_report("/net/gefolge/error", Some("internal server error")).await.is_ok();
-    page(db_pool.begin().await?, me, &uri, PageKind::default(), "Internal Server Error — Das Gefolge", html! {
+    page(db_pool.begin().await?, me, &uri, PageKind::Error, "Internal Server Error — Das Gefolge", html! {
         h1 : "Fehler 500: Internal Server Error";
         p {
             : "Beim Laden dieser Seite ist ein Fehler aufgetreten. ";
@@ -592,7 +634,7 @@ async fn fallback_catcher(status: Status, request: &Request<'_>) -> Result<RawHt
     let me = request.guard::<DiscordUser>().await.succeeded();
     let uri = request.guard::<Origin<'_>>().await.succeeded().unwrap_or_else(|| Origin(uri!(index)));
     let is_reported = wheel::night_report("/net/gefolge/error", Some("responding with unexpected HTTP status code")).await.is_ok();
-    page(db_pool.begin().await?, me, &uri, PageKind::default(), &format!("{} — Das Gefolge", status.reason_lossy()), html! {
+    page(db_pool.begin().await?, me, &uri, PageKind::Error, &format!("{} — Das Gefolge", status.reason_lossy()), html! {
         h1 {
             : "Fehler ";
             : status.code;
