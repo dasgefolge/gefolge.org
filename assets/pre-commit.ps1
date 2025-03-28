@@ -6,7 +6,7 @@ if (-not $?)
     throw 'Native Failure'
 }
 
-cargo sqlx prepare --workspace --check -- -p gefolge-web -p gefolge-web-back -p gefolge-paypal
+cargo sqlx prepare --workspace --check -- -p gefolge-web -p gefolge-web-lib -p gefolge-web-back -p gefolge-paypal
 if (-not $?)
 {
     throw 'Native Failure'
