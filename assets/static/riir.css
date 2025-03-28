@@ -44,6 +44,7 @@ nav h1 {
 
 #login {
     flex-grow: 1;
+    align-self: start;
     text-align: end;
 }
 
