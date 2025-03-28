@@ -71,6 +71,7 @@ use {
         config::Config,
         time::format_date_range,
         user::{
+            Mensch,
             User,
             html_mention,
         },
@@ -113,6 +114,60 @@ fn base_uri() -> rocket::http::uri::Absolute<'static> {
     }
 }
 
+trait LoginState {
+    async fn login_state(self, transaction: &mut Transaction<'_, Postgres>, uri: &Origin<'_>) -> Result<RawHtml<String>, PageError>;
+}
+
+impl LoginState for DiscordUser {
+    async fn login_state(self, transaction: &mut Transaction<'_, Postgres>, _: &Origin<'_>) -> Result<RawHtml<String>, PageError> {
+        Ok(html! {
+            @let user = User::from_id(&mut *transaction, self.id).await?;
+            @let is_mensch_or_guest = user.as_ref().map_or(false, User::is_mensch_or_guest);
+            : "Angemeldet als ";
+            : html_mention(&mut *transaction, self.id).await?;
+            br;
+            @if is_mensch_or_guest {
+                a(href = format!("/mensch/{}/edit", self.id)) : "Einstellungen";
+                : " • ";
+            }
+            a(href = uri!(auth::logout).to_string()) : "Abmelden";
+        })
+    }
+}
+
+impl LoginState for User {
+    async fn login_state(self, transaction: &mut Transaction<'_, Postgres>, _: &Origin<'_>) -> Result<RawHtml<String>, PageError> {
+        Ok(html! {
+            : "Angemeldet als ";
+            : html_mention(&mut *transaction, self.id).await?;
+            br;
+            @if self.is_mensch_or_guest() {
+                a(href = format!("/mensch/{}/edit", self.id)) : "Einstellungen";
+                : " • ";
+            }
+            a(href = uri!(auth::logout).to_string()) : "Abmelden";
+        })
+    }
+}
+
+impl LoginState for Mensch {
+    async fn login_state(self, transaction: &mut Transaction<'_, Postgres>, uri: &Origin<'_>) -> Result<RawHtml<String>, PageError> {
+        User::from(self).login_state(transaction, uri).await
+    }
+}
+
+impl<T: LoginState> LoginState for Option<T> {
+    async fn login_state(self, transaction: &mut Transaction<'_, Postgres>, uri: &Origin<'_>) -> Result<RawHtml<String>, PageError> {
+        Ok(html! {
+            @if let Some(me) = self {
+                : me.login_state(transaction, uri).await?;
+            } else {
+                a(href = uri!(auth::discord_login(Some(uri))).to_string()) : "Mit Discord anmelden";
+            }
+        })
+    }
+}
+
 enum PageKind {
     /// The variant of the index page shown to anonymous visitors
     Splash,
@@ -129,7 +184,7 @@ enum PageError {
     #[error(transparent)] Sql(#[from] sqlx::Error),
 }
 
-async fn page(mut transaction: Transaction<'_, Postgres>, me: Option<DiscordUser>, uri: &Origin<'_>, kind: PageKind, title: &str, content: impl ToHtml) -> Result<RawHtml<String>, PageError> {
+async fn page(mut transaction: Transaction<'_, Postgres>, me: impl LoginState, uri: &Origin<'_>, kind: PageKind, title: &str, content: impl ToHtml) -> Result<RawHtml<String>, PageError> {
     fn breadcrumbs(uri: &Origin<'_>, display: Vec<RawHtml<String>>) -> RawHtml<String> {
         let mut path_segments = uri.0.path().segments().zip_eq(display).collect_vec();
         let last = path_segments.pop();
@@ -219,22 +274,7 @@ async fn page(mut transaction: Transaction<'_, Postgres>, me: Option<DiscordUser
                                     h1 : "Das Gefolge";
                                 }
                             }
-                            div(id = "login") {
-                                @if let Some(me) = me {
-                                    @let user = User::from_id(&mut transaction, me.id).await?;
-                                    @let is_mensch_or_guest = user.as_ref().map_or(false, User::is_mensch_or_guest);
-                                    : "Angemeldet als ";
-                                    : html_mention(&mut transaction, me.id).await?;
-                                    br;
-                                    @if is_mensch_or_guest {
-                                        a(href = format!("/mensch/{}/edit", me.id)) : "Einstellungen";
-                                        : " • ";
-                                    }
-                                    a(href = uri!(auth::logout).to_string()) : "Abmelden";
-                                } else {
-                                    a(href = uri!(auth::discord_login(Some(uri))).to_string()) : "Mit Discord anmelden";
-                                }
-                            }
+                            div(id = "login") : me.login_state(&mut transaction, uri).await?;
                         }
                         main : content;
                     }
@@ -252,9 +292,6 @@ enum IndexError {
     #[error(transparent)] Event(#[from] gefolge_web_lib::event::Error),
     #[error(transparent)] Page(#[from] PageError),
     #[error(transparent)] Sql(#[from] sqlx::Error),
-    #[error("must be in Gefolge Discord guild to access")]
-    //TODO show Unauthorized error page instead of Internal Server Error
-    NotInDiscordGuild,
 }
 
 
@@ -385,12 +422,11 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
 }
 
 #[rocket::get("/event")]
-async fn event_page(db_pool: &State<PgPool>, me: DiscordUser, uri: Origin<'_>) -> Result<RawHtml<String>, IndexError> {
+async fn event_page(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>) -> Result<RawHtml<String>, IndexError> {
     let mut transaction = db_pool.begin().await?;
     let events = load_events(&mut transaction).await?;
     let content = html! {
-        @let user = User::from_id(&mut transaction, me.id).await?.ok_or(IndexError::NotInDiscordGuild)?;
-        @let viewer_data = user.data(&mut transaction).await?;
+        @let viewer_data = me.data(&mut transaction).await?;
         h1 : "Events";
         @if !events.ongoing.is_empty() {
             h2 : "laufende Events";
@@ -438,7 +474,7 @@ async fn event_page(db_pool: &State<PgPool>, me: DiscordUser, uri: Origin<'_>) -
             }
         }
     };
-    Ok(page(transaction, Some(me), &uri, PageKind::Sub(vec![
+    Ok(page(transaction, me, &uri, PageKind::Sub(vec![
         html! {
             : "events";
         },

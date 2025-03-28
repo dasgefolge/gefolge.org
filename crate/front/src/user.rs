@@ -4,14 +4,33 @@ use {
         fmt,
     },
     chrono_tz::Tz,
-    rocket::response::content::RawHtml,
+    derive_more::*,
+    rocket::{
+        State,
+        http::Status,
+        outcome::Outcome,
+        request::{
+            self,
+            FromRequest,
+            Request,
+        },
+        response::content::RawHtml,
+    },
     rocket_util::html,
     serde::Deserialize,
     serenity::model::prelude::*,
     sqlx::{
+        PgPool,
         postgres::Postgres,
         Transaction,
         types::Json,
+    },
+    crate::{
+        auth::{
+            DiscordUser,
+            UserFromRequestError,
+        },
+        guard_try,
     },
 };
 
@@ -67,6 +86,46 @@ impl User {
 
     pub(crate) async fn data(&self, transaction: &mut Transaction<'_, Postgres>) -> sqlx::Result<Data> {
         Ok(sqlx::query_scalar!(r#"SELECT value AS "value: Json<Data>" FROM json_user_data WHERE id = $1"#, i64::from(self.id)).fetch_optional(&mut **transaction).await?.map(|Json(data)| data).unwrap_or_default())
+    }
+}
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for User {
+    type Error = UserFromRequestError;
+
+    async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
+        match req.guard().await {
+            Outcome::Success(DiscordUser { id }) => match req.guard::<&State<PgPool>>().await {
+                Outcome::Success(pool) => {
+                    let mut transaction = guard_try!(pool.begin().await);
+                    if let Some(user) = guard_try!(Self::from_id(&mut transaction, id).await) {
+                        Outcome::Success(user)
+                    } else {
+                        Outcome::Error((Status::Unauthorized, UserFromRequestError::NotInDiscordGuild))
+                    }
+                }
+                Outcome::Error((status, ())) => Outcome::Error((status, UserFromRequestError::Database)),
+                Outcome::Forward(status) => Outcome::Forward(status),
+            },
+            Outcome::Error((status, e)) => Outcome::Error((status, e)),
+            Outcome::Forward(status) => Outcome::Forward(status),
+        }
+    }
+}
+
+#[derive(Deref, Into)]
+pub(crate) struct Mensch(User);
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for Mensch {
+    type Error = UserFromRequestError;
+
+    async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, UserFromRequestError> {
+        req.guard::<User>().await.and_then(|user| if user.is_mensch() {
+            Outcome::Success(Self(user))
+        } else {
+            Outcome::Error((Status::Unauthorized, UserFromRequestError::MenschRequired))
+        })
     }
 }
 
