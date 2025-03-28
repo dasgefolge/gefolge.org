@@ -17,6 +17,12 @@ if (-not $?)
     throw 'Native Failure'
 }
 
+wsl mkdir -p /mnt/c/Users/fenhl/git/github.com/dasgefolge/gefolge.org/stage/target/wsl/release/
+if (-not $?)
+{
+    throw 'Native Failure'
+}
+
 wsl cp /home/fenhl/wslgit/github.com/dasgefolge/gefolge.org/target/x86_64-unknown-linux-musl/release/gefolge-web /mnt/c/Users/fenhl/git/github.com/dasgefolge/gefolge.org/stage/target/wsl/release/gefolge-web
 if (-not $?)
 {
