@@ -101,6 +101,10 @@ footer {
 }
 
 @media (min-width: 768px) {
+    nav.breadcrumbs .logo {
+        width: 64px;
+    }
+
     nav h1 {
         font-size: 64px;
     }
