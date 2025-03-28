@@ -19,7 +19,7 @@ clap = { version = "4.5.34", features = ["derive"] }
 derive_more = { version = "2.0.1", features = ["deref", "into"] }
 futures = "0.3.26"
 gefolge-web-lib = { path = "../lib" }
-itertools = "0.13"
+itertools = "0.14"
 reqwest = { version = "0.12", default-features = false, features = ["charset", "hickory-dns", "http2", "macos-system-configuration", "rustls-tls"] }
 ricochet-robots-websocket = { git = "ssh://git@github.com/dasgefolge/ricochet-robots.git", branch = "main" }
 rocket = { features = ["secrets"], version = "0.5" }
