@@ -23,7 +23,7 @@ pub enum ToMaybeLocalError {
 }
 
 impl MaybeAwareDateTime {
-    pub(crate) fn to_maybe_local(&self, local_timezone: Option<Tz>) -> Result<MaybeLocalDateTime, ToMaybeLocalError> {
+    pub fn to_maybe_local(&self, local_timezone: Option<Tz>) -> Result<MaybeLocalDateTime, ToMaybeLocalError> {
         Ok(if let Some(local_timezone) = local_timezone {
             MaybeLocalDateTime::Local(match self {
                 Self::Naive(naive) => local_timezone.from_local_datetime(naive).single_ok()?,
