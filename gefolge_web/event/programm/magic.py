@@ -58,7 +58,7 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
     def description(self):
         set_code = self.card_set
         if set_code is None:
-            result = 'Wir [draften](https://mtg.fandom.com/wiki/Booster_Draft) ein Custom Magic Set. Um zu bestimmen, welches, kannst du unten abstimmen.'
+            result = 'Wir [draften](https://mtg.wiki/page/Booster_Draft) ein Custom Magic Set. Um zu bestimmen, welches, kannst du unten abstimmen.'
         else:
             set_info_path = LORE_SEEKER_REPO / 'data' / 'sets' / f'{set_code}.json'
             if set_info_path.exists():
@@ -67,9 +67,9 @@ class CustomMagicDraft(gefolge_web.event.programm.Programmpunkt):
                 set_info = lazyjson.PythonFile({})
             set_config = config()['customSets'].get(set_code, {})
             set_name = set_info.get('name', set_config.get('name', set_code))
-            result = 'Wir [draften](https://mtg.fandom.com/wiki/Booster_Draft) [*{}*](https://loreseeker.fenhl.net/set/{}), ein Custom Magic Set.'.format(set_name, set_code.lower())
+            result = 'Wir [draften](https://mtg.wiki/page/Booster_Draft) [*{}*](https://loreseeker.fenhl.net/set/{}), ein Custom Magic Set.'.format(set_name, set_code.lower())
             result += '\r\n\r\n*{}* {}'.format(set_name, set_config.get('blurb', 'hat noch keine Beschreibung :('))
-        return result + '\r\n\r\nWir spielen mit [Proxies](https://mtg.fandom.com/wiki/Proxy_card), der Draft ist also kostenlos. Ihr müsst nichts mitbringen. Es gibt 8 Plätze. Es können gerne alle, die Interesse haben, Plätze reservieren, das ist *keine* verbindliche Anmeldung. Ich selbst spiele nur mit, wenn es ohne mich weniger als 8 Spieler wären. Falls wir am Ende weniger als 5 Menschen sind, spielen wir [Sealed](https://mtg.fandom.com/wiki/Sealed_Deck) statt Draft.'
+        return result + '\r\n\r\nWir spielen mit [Proxies](https://mtg.wiki/page/Proxy_card), der Draft ist also kostenlos. Ihr müsst nichts mitbringen. Es gibt 8 Plätze. Es können gerne alle, die Interesse haben, Plätze reservieren, das ist *keine* verbindliche Anmeldung. Ich selbst spiele nur mit, wenn es ohne mich weniger als 8 Spieler wären. Falls wir am Ende weniger als 5 Menschen sind, spielen wir [Sealed](https://mtg.wiki/page/Sealed_Deck) statt Draft.'
 
     @description.setter
     def description(self, value):
