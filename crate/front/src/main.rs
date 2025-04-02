@@ -199,7 +199,7 @@ async fn page(mut transaction: Transaction<'_, Postgres>, me: impl LoginState, u
         for (segment, display) in path_segments {
             prefix.push(segment);
             " / ".push_html(&mut buf);
-            let mut url = Url::parse("/").unwrap();
+            let mut url = Url::parse(&base_uri().to_string()).expect("failed to parse base URL");
             url.path_segments_mut().unwrap().extend(&prefix);
             html! {
                 a(href = url.to_string()) : display;
