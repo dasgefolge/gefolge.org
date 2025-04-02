@@ -16,7 +16,10 @@ use {
         },
         response::content::RawHtml,
     },
-    rocket_util::html,
+    rocket_util::{
+        ToHtml,
+        html,
+    },
     serde::Deserialize,
     serenity::model::prelude::*,
     sqlx::{
@@ -113,6 +116,21 @@ impl<'r> FromRequest<'r> for User {
     }
 }
 
+impl ToHtml for User {
+    fn to_html(&self) -> RawHtml<String> {
+        let username = if let Some(discriminator) = self.discriminator {
+            format!("{}#{discriminator}", self.username)
+        } else {
+            format!("@{}", self.username)
+        };
+        html! {
+            a(title = username, href = format!("/mensch/{}", self.id)) {
+                : self.nick.as_ref().unwrap_or(&self.username);
+            }
+        }
+    }
+}
+
 #[derive(Deref, Into)]
 pub(crate) struct Mensch(User);
 
@@ -146,26 +164,4 @@ impl Default for Data {
             event_timezone_override: true,
         }
     }
-}
-
-pub(crate) async fn html_mention(transaction: &mut Transaction<'_, Postgres>, user_id: UserId) -> sqlx::Result<RawHtml<String>> {
-    Ok(if let Some(user) = User::from_id(transaction, user_id).await? {
-        let username = if let Some(discriminator) = user.discriminator {
-            format!("{}#{discriminator}", user.username)
-        } else {
-            format!("@{}", user.username)
-        };
-        html! {
-            a(title = username, href = format!("/mensch/{user_id}")) {
-                : user.nick.unwrap_or(user.username);
-            }
-        }
-    } else {
-        //TODO use data from Discord API directly or fetch global Discord username & discrim using serenity
-        html! {
-            : "<@";
-            : user_id.to_string();
-            : ">";
-        }
-    })
 }

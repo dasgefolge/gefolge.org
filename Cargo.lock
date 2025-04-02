@@ -1154,6 +1154,8 @@ dependencies = [
  "gefolge-web-lib",
  "git2",
  "itertools 0.14.0",
+ "lazy-regex",
+ "pulldown-cmark",
  "reqwest 0.12.15",
  "ricochet-robots-websocket",
  "rocket",
@@ -2580,6 +2582,22 @@ checksum = "52c2c1bf36ddb1a1c396b3601a3cec27c2462e45f07c386894ec3ccf5332bd16"
 dependencies = [
  "prost",
 ]
+
+[[package]]
+name = "pulldown-cmark"
+version = "0.13.0"
+source = "git+https://github.com/fenhl/pulldown-cmark?branch=rocket-wiki#22cc23cc434826511263735e615340c5a143b630"
+dependencies = [
+ "bitflags 2.9.0",
+ "memchr",
+ "pulldown-cmark-escape",
+ "unicase",
+]
+
+[[package]]
+name = "pulldown-cmark-escape"
+version = "0.11.0"
+source = "git+https://github.com/fenhl/pulldown-cmark?branch=rocket-wiki#22cc23cc434826511263735e615340c5a143b630"
 
 [[package]]
 name = "quinn"

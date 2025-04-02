@@ -73,7 +73,6 @@ use {
         user::{
             Mensch,
             User,
-            html_mention,
         },
     },
 };
@@ -86,6 +85,13 @@ mod event;
 mod time;
 mod user;
 mod websocket;
+mod wiki;
+
+#[derive(Responder)]
+enum StatusOrError<E> {
+    Status(Status),
+    Err(E),
+}
 
 #[allow(unused)] // variants only constructed under conditional compilation
 #[derive(Default, Clone, Copy)]
@@ -124,7 +130,7 @@ impl LoginState for DiscordUser {
             @let user = User::from_id(&mut *transaction, self.id).await?;
             @let is_mensch_or_guest = user.as_ref().map_or(false, User::is_mensch_or_guest);
             : "Angemeldet als ";
-            : html_mention(&mut *transaction, self.id).await?;
+            : user;
             br;
             @if is_mensch_or_guest {
                 a(href = format!("/mensch/{}/edit", self.id)) : "Einstellungen";
@@ -136,10 +142,10 @@ impl LoginState for DiscordUser {
 }
 
 impl LoginState for User {
-    async fn login_state(self, transaction: &mut Transaction<'_, Postgres>, _: &Origin<'_>) -> Result<RawHtml<String>, PageError> {
+    async fn login_state(self, _: &mut Transaction<'_, Postgres>, _: &Origin<'_>) -> Result<RawHtml<String>, PageError> {
         Ok(html! {
             : "Angemeldet als ";
-            : html_mention(&mut *transaction, self.id).await?;
+            : self;
             br;
             @if self.is_mensch_or_guest() {
                 a(href = format!("/mensch/{}/edit", self.id)) : "Einstellungen";
@@ -751,6 +757,10 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
         auth::discord_login,
         auth::logout,
         websocket::websocket,
+        wiki::index,
+        wiki::main_article,
+        wiki::namespaced_article,
+        wiki::revision,
     ])
     .mount("/static", FileServer::new("assets/static", rocket::fs::Options::None))
     .register("/", rocket::catchers![

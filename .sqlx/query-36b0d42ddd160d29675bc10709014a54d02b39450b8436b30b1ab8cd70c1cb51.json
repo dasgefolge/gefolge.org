@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT text FROM wiki WHERE title = $1 AND namespace = 'wiki' ORDER BY timestamp DESC LIMIT 1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "text",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "36b0d42ddd160d29675bc10709014a54d02b39450b8436b30b1ab8cd70c1cb51"
+}
