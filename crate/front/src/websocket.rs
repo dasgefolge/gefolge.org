@@ -68,7 +68,7 @@ enum SessionPurpose {
 }
 
 async fn client_session(db_pool: PgPool, rr_lobbies: Arc<RwLock<HashMap<u64, ricochet_robots_websocket::Lobby<User>>>>, mut stream: WsStream, sink: WsSink) -> Result<(), Error> {
-    let api_key = String::read_ws(&mut stream).await?;
+    let api_key = String::read_ws021(&mut stream).await?;
     let mut transaction = db_pool.begin().await?;
     let user = User::from_api_key(&mut transaction, &api_key).await?.ok_or(Error::UnknownApiKey)?;
     transaction.commit().await?;
@@ -77,10 +77,10 @@ async fn client_session(db_pool: PgPool, rr_lobbies: Arc<RwLock<HashMap<u64, ric
     tokio::spawn(async move {
         loop {
             sleep(Duration::from_secs(30)).await;
-            if ServerMessage::Ping.write_ws(&mut *ping_sink.lock().await).await.is_err() { break } //TODO better error handling
+            if ServerMessage::Ping.write_ws021(&mut *ping_sink.lock().await).await.is_err() { break } //TODO better error handling
         }
     });
-    match SessionPurpose::read_ws(&mut stream).await? {
+    match SessionPurpose::read_ws021(&mut stream).await? {
         SessionPurpose::RicochetRobots => ricochet_robots_websocket::client_session(&rr_lobbies, user, stream, sink).await?,
         SessionPurpose::CurrentEvent => match crate::event::client_session(&db_pool, sink).await? {},
     }
@@ -113,7 +113,7 @@ pub(crate) fn websocket(db_pool: &State<PgPool>, rr_lobbies: &State<Arc<RwLock<H
         let (sink, stream) = stream.split();
         let sink = Arc::new(Mutex::new(sink));
         if let Err(e) = client_session(db_pool, rr_lobbies, stream, Arc::clone(&sink)).await {
-            let _ = ServerMessage::from_error(e).write_ws(&mut *sink.lock().await).await;
+            let _ = ServerMessage::from_error(e).write_ws021(&mut *sink.lock().await).await;
         }
         Ok(())
     }))

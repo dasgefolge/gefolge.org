@@ -11,10 +11,10 @@ production = []
 local = []
 
 [dependencies]
-async-proto = { version = "0.23", features = ["chrono-tz", "tokio-tungstenite"] }
+async-proto = { version = "0.25", features = ["chrono-tz", "tokio-tungstenite021"] }
 base64 = "0.22"
 chrono = { version = "0.4.24", features = ["serde", "clock"], default-features = false }
-chrono-tz = { version = "0.9", features = ["serde"] }
+chrono-tz = { version = "0.10", features = ["serde"] }
 clap = { version = "4.5.34", features = ["derive"] }
 derive_more = { version = "2.0.1", features = ["deref", "into"] }
 futures = "0.3.26"
@@ -33,7 +33,7 @@ serde = { version = "1.0.152", features = ["derive"] }
 serde_json = "1.0.93"
 serenity = { default-features = false, features = ["model", "rustls_backend"], version = "0.12" }
 sqlx = { version = "0.8", features = ["json", "macros", "postgres", "runtime-tokio-rustls"] }
-thiserror = "1.0.38"
+thiserror = "2"
 tokio = { version = "1.26.0", features = ["process", "sync", "time"] }
 url = "2.3.1"
 wheel = { git = "https://github.com/fenhl/wheel", branch = "main", features = ["chrono", "rocket", "reqwest", "serde", "serde_json"] }
@@ -43,7 +43,7 @@ xdg = "2.4.1"
 
 [build-dependencies]
 futures = "0.3.26"
-git2 = "0.19"
-thiserror = "1.0.38"
+git2 = "0.20"
+thiserror = "2"
 tokio = "1.26.0"
 wheel = { git = "https://github.com/fenhl/wheel", branch = "main" }

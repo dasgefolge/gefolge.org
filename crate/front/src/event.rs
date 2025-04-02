@@ -52,9 +52,9 @@ pub(crate) async fn client_session(db_pool: &PgPool, sink: WsSink) -> Result<Nev
         }
         if prev_state.map_or(true, |prev_state| prev_state != current_event) {
             if let Some((ref id, timezone)) = current_event {
-                ServerMessage::CurrentEvent { id: id.clone(), timezone: timezone.unwrap_or(Europe::Berlin) }.write_ws(&mut *sink.lock().await).await?;
+                ServerMessage::CurrentEvent { id: id.clone(), timezone: timezone.unwrap_or(Europe::Berlin) }.write_ws021(&mut *sink.lock().await).await?;
             } else {
-                ServerMessage::NoEvent.write_ws(&mut *sink.lock().await).await?;
+                ServerMessage::NoEvent.write_ws021(&mut *sink.lock().await).await?;
             }
         }
         prev_state = Some(current_event);
