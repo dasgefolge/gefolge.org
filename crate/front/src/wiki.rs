@@ -144,11 +144,12 @@ pub(crate) async fn main_article(db_pool: &State<PgPool>, me: Mensch, uri: Origi
             : title;
         },
     ]), &format!("{title} — GefoleWiki"), html! {
-        h1 {
-            : title;
-            : " ";
-            a(href = format!("/wiki/{title}/wiki/edit"), class = "btn btn-primary") : "Bearbeiten";
-            a(href = format!("/wiki/{title}/wiki/history"), class = "btn btn-link") : "Versionsgeschichte";
+        div(class = "header-with-buttons") {
+            h1 : title;
+            span(class = "button-row") {
+                a(href = format!("/wiki/{title}/wiki/edit"), class = "button") : "Bearbeiten";
+                a(href = format!("/wiki/{title}/wiki/history"), class = "button") : "Versionsgeschichte";
+            }
         }
         : content;
     }).await?)
@@ -170,13 +171,17 @@ pub(crate) async fn namespaced_article(db_pool: &State<PgPool>, me: Mensch, uri:
             : namespace;
         },
     ]), &format!("{title} ({namespace}) — GefolgeWiki"), html! {
-        h1 {
-            : title;
-            : " (";
-            : namespace;
-            : ") ";
-            a(href = format!("/wiki/{title}/{namespace}/edit"), class = "btn btn-primary") : "Bearbeiten";
-            a(href = format!("/wiki/{title}/{namespace}/history"), class = "btn btn-link") : "Versionsgeschichte";
+        div(class = "header-with-buttons") {
+            h1 {
+                : title;
+                : " (";
+                : namespace;
+                : ")";
+            }
+            span(class = "button-row") {
+                a(href = format!("/wiki/{title}/{namespace}/edit"), class = "button") : "Bearbeiten";
+                a(href = format!("/wiki/{title}/{namespace}/history"), class = "button") : "Versionsgeschichte";
+            }
         }
         : content;
     }).await?)
@@ -205,17 +210,20 @@ pub(crate) async fn revision(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_
             : rev;
         },
     ]), &format!("Version von {title}{} — GefolgeWiki", if namespace == "wiki" { String::default() } else { format!(" ({namespace})") }), html! {
-        h1 {
-            : "Version von ";
-            : title;
-            @if namespace != "wiki" {
-                : " (";
-                : namespace;
-                : ")";
+        div(class = "header-with-buttons") {
+            h1 {
+                : "Version von ";
+                : title;
+                @if namespace != "wiki" {
+                    : " (";
+                    : namespace;
+                    : ")";
+                }
             }
-            : " ";
-            a(href = if namespace == "wiki" { uri!(main_article(title)) } else { uri!(namespaced_article(title, namespace)) }.to_string(), class = "btn btn-primary") : "Neuste Version anzeigen";
-            a(href = format!("/wiki/{title}/{namespace}/history"), class = "btn btn-link") : "Versionsgeschichte";
+            span(class = "button-row") {
+                a(href = if namespace == "wiki" { uri!(main_article(title)) } else { uri!(namespaced_article(title, namespace)) }.to_string(), class = "button") : "Neuste Version anzeigen";
+                a(href = format!("/wiki/{title}/{namespace}/history"), class = "button") : "Versionsgeschichte";
+            }
         }
         : content;
     }).await?)

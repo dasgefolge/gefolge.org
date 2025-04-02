@@ -58,6 +58,15 @@ h6 {
     margin-bottom: -0.25em;
 }
 
+.header-with-buttons h1,
+.header-with-buttons h2,
+.header-with-buttons h3,
+.header-with-buttons h4,
+.header-with-buttons h5,
+.header-with-buttons h6 {
+    display: inline-block;
+}
+
 body > div,
 .splash > main,
 footer {
@@ -77,8 +86,35 @@ a {
 }
 
 a.nav,
+a.button,
 a:hover {
     text-decoration: none;
+}
+
+.button {
+    background-color: white;
+    border: 1px solid black;
+    padding: 8px;
+}
+
+.button {
+    border-inline-start-width: 0;
+}
+
+.button:nth-child(1) {
+    border-inline-start-width: 1px;
+    border-start-start-radius: 8px;
+    border-end-start-radius: 8px;
+}
+
+.button:nth-last-child(1) {
+    border-start-end-radius: 8px;
+    border-end-end-radius: 8px;
+}
+
+.button:hover {
+    background-color: black;
+    color: white;
 }
 
 .daterange:not([data-timezone]) {
@@ -125,5 +161,15 @@ footer {
     img.logo,
     .splash > img {
         filter: invert(1);
+    }
+
+    .button {
+        background-color: black;
+        border-color: white;
+    }
+
+    .button:hover {
+        background-color: white;
+        color: black;
     }
 }

@@ -198,7 +198,7 @@ async fn page(mut transaction: Transaction<'_, Postgres>, me: impl LoginState, u
         let mut buf = RawHtml(String::default());
         for (segment, display) in path_segments {
             prefix.push(segment);
-            " / ".push_html(&mut buf);
+            " / ".push_html(&mut buf);
             let mut url = Url::parse(&base_uri().to_string()).expect("failed to parse base URL");
             url.path_segments_mut().unwrap().extend(&prefix);
             html! {
@@ -207,7 +207,7 @@ async fn page(mut transaction: Transaction<'_, Postgres>, me: impl LoginState, u
         }
         if let Some((segment, display)) = last {
             prefix.push(segment);
-            " / ".push_html(&mut buf);
+            " / ".push_html(&mut buf);
             display.push_html(&mut buf);
         }
         buf
