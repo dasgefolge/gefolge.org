@@ -5,12 +5,12 @@ use {
     },
     chrono::prelude::*,
     chrono_tz::Tz,
-    serde_plain::derive_deserialize_from_fromstr,
+    serde_with::DeserializeFromStr,
     wheel::traits::LocalResultExt as _,
 };
 
-#[derive(Debug, Clone, Copy)]
-pub(crate) enum MaybeAwareDateTime {
+#[derive(Debug, Clone, Copy, DeserializeFromStr)]
+pub enum MaybeAwareDateTime {
     Naive(NaiveDateTime),
     Aware(DateTime<Utc>),
 }
@@ -40,7 +40,7 @@ impl MaybeAwareDateTime {
 
 #[derive(Debug, thiserror::Error)]
 #[error("failed to parse maybe-aware datetime (aware: {e_aware}, naive: {e_naive})")]
-pub(crate) struct MaybeAwareDateTimeParseError {
+pub struct MaybeAwareDateTimeParseError {
     e_aware: chrono::ParseError,
     e_naive: chrono::ParseError,
 }
@@ -58,8 +58,6 @@ impl FromStr for MaybeAwareDateTime {
         }
     }
 }
-
-derive_deserialize_from_fromstr!(MaybeAwareDateTime, "naive or UTC datetime in ISO 8601 format");
 
 #[derive(Clone, Copy)]
 pub enum MaybeLocalDateTime {

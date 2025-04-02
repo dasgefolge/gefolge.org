@@ -13,7 +13,6 @@ rocket = { features = ["secrets"], version = "0.5" }
 rocket-util = { git = "https://github.com/fenhl/rocket-util", branch = "main", features = ["reqwest"] }
 serde = "1.0.204"
 serde_json = { package = "serde_json_path_to_error", version = "0.1" } #TODO which features to use for correct decimal handling? Or use async-json instead?
-serde_plain = "1.0.1"
 serde_with = "3.9.0"
 serenity = { default-features = false, features = ["model", "rustls_backend"], version = "0.12" }
 sqlx = { version = "0.8", features = ["json", "macros", "postgres", "runtime-tokio-rustls"] }
