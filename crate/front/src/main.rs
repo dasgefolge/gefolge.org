@@ -353,13 +353,13 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                 p {
                     a(href = "/api") : "API";
                     : " • ";
-                    a(href = "/event") : "events";
+                    a(href = uri!(event_page)) : "events";
                     : " • ";
                     a(href = "/games") : "Spiele";
                     : " • ";
                     a(href = "/mensch") : "Menschen und Gäste";
                     : " • ";
-                    a(href = "/wiki") : "wiki";
+                    a(href = uri!(wiki::index)) : "wiki";
                 }
                 h1 : "Events";
                 @if !events.ongoing.is_empty() {
