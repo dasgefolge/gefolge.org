@@ -174,7 +174,7 @@ class Event(metaclass=EventMeta):
         })
         self.attendee_data(guest)['signup'] = f'{gefolge_web.util.now(self.timezone):%Y-%m-%dT%H:%M:%S}' #TODO Datum der Überweisung verwenden
         if guest.is_active and 'role' in self.data:
-            peter.add_role(guest, self.data['role'].value())
+            peter.add_role(guest, int(self.data['role'].value()))
         if message:
             peter.channel_msg(self.channel, '<@{proxy_snowflake}>: {guest} ist jetzt für {event} angemeldet. Fülle bitte bei Gelegenheit noch das Profil auf <https://gefolge.org/event/{event_id}/mensch/{guest_snowflake}/edit> aus. Außerdem kannst du {guest} auf <https://gefolge.org/event/{event_id}/programm> für Programmpunkte als interessiert eintragen'.format(
                 proxy_snowflake=self.proxy(guest).snowflake,
@@ -359,7 +359,7 @@ class Event(metaclass=EventMeta):
             person_data['anzahlung'] = anzahlung.value
         self.data['menschen'].append(person_data)
         if 'role' in self.data:
-            peter.add_role(mensch, self.data['role'].value())
+            peter.add_role(mensch, int(self.data['role'].value()))
         if self.orga('Abrechnung').is_treasurer:
             peter.channel_msg(self.channel, '<@{}>: du bist jetzt für {} angemeldet. Du kannst dich auf <https://gefolge.org/event/{}/programm> für Programmpunkte als interessiert eintragen'.format(mensch.snowflake, self, self.event_id))
         else:

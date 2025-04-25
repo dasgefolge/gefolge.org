@@ -243,7 +243,6 @@ async fn page(mut transaction: Transaction<'_, Postgres>, me: impl LoginState, u
                 meta(name = "author", content = "Fenhl & contributors");
                 link(rel = "preconnect", href = "https://fonts.googleapis.com");
                 link(rel = "preconnect", href = "https://fonts.gstatic.com", crossorigin);
-                //TODO at which size should the entire logo be displayed?
                 link(rel = "icon", sizes = "16x16", type = "image/png", href = static_url!("favicon-16.png"));
                 link(rel = "icon", sizes = "32x32", type = "image/png", href = static_url!("favicon-32.png"));
                 link(rel = "icon", sizes = "64x64", type = "image/png", href = static_url!("favicon-64.png"));
