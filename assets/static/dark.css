@@ -9,18 +9,6 @@
         filter: invert(1);
     }
 
-    a:focus,
-    a:hover {
-        color: #43a2f2;
-    }
-
-    .uncolored-links a:focus,
-    a.uncolored-links:focus,
-    .uncolored-links a:hover,
-    a.uncolored-links:hover {
-        color: inherit;
-    }
-
     blockquote {
         border-left: 5px solid #444;
     }
