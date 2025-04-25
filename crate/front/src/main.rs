@@ -671,10 +671,11 @@ async fn internal_server_error(request: &Request<'_>) -> Result<RawHtml<String>,
 
 #[rocket::catch(default)]
 async fn fallback_catcher(status: Status, request: &Request<'_>) -> Result<RawHtml<String>, PageError> {
+    eprintln!("responding with unexpected HTTP status code {} {} to request {request:?}", status.code, status.reason_lossy());
     let db_pool = request.guard::<&State<PgPool>>().await.expect("missing database pool");
     let me = request.guard::<DiscordUser>().await.succeeded();
     let uri = request.guard::<Origin<'_>>().await.succeeded().unwrap_or_else(|| Origin(uri!(index)));
-    let is_reported = wheel::night_report("/net/gefolge/error", Some("responding with unexpected HTTP status code")).await.is_ok();
+    let is_reported = wheel::night_report("/net/gefolge/error", Some(&format!("responding with unexpected HTTP status code: {} {}", status.code, status.reason_lossy()))).await.is_ok();
     page(db_pool.begin().await?, me, &uri, PageKind::Error, &format!("{} — Das Gefolge", status.reason_lossy()), html! {
         h1 {
             : "Fehler ";
