@@ -66,6 +66,7 @@ a.btn,
 a:focus,
 a:hover {
     text-decoration: none;
+    color: inherit;
 }
 
 .table > tbody > tr > td.programm-meta {
