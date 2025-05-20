@@ -631,6 +631,27 @@ async fn bad_request(request: &Request<'_>) -> Result<RawHtml<String>, PageError
     }).await
 }
 
+#[rocket::catch(401)]
+async fn unauthorized(request: &Request<'_>) -> Result<RawHtml<String>, PageError> {
+    let db_pool = request.guard::<&State<PgPool>>().await.expect("missing database pool");
+    let me = request.guard::<DiscordUser>().await.succeeded();
+    let uri = request.guard::<Origin<'_>>().await.succeeded().unwrap_or_else(|| Origin(uri!(index)));
+    let is_signed_in = me.is_some();
+    page(db_pool.begin().await?, me, &uri, PageKind::Error, "Unauthorized — Das Gefolge", html! {
+        h1 : "Fehler 401: Unauthorized";
+        @if is_signed_in {
+            p : "Du bist zwar mit Discord angemeldet, hast aber keinen Zugriff auf diesen Inhalt, weil du nicht im Gefolge Discord server bist oder nicht als Gefolgemensch verifiziert bist.";
+        } else {
+            p : "Du hast keinen Zugriff auf diesen Inhalt, weil du nicht angemeldet bist.";
+            p {
+                : "Wenn du schon auf unserem Discord server bist, kannst du dich ";
+                a(href = uri!(auth::discord_login(Some(&uri)))) : "hier mit Discord anmelden";
+                : ".";
+            }
+        }
+    }).await
+}
+
 #[rocket::catch(404)]
 async fn not_found(request: &Request<'_>) -> Result<RawHtml<String>, PageError> {
     let db_pool = request.guard::<&State<PgPool>>().await.expect("missing database pool");
@@ -765,6 +786,7 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
     .mount("/static", FileServer::new("assets/static", rocket::fs::Options::None))
     .register("/", rocket::catchers![
         bad_request,
+        unauthorized,
         not_found,
         internal_server_error,
         fallback_catcher,
