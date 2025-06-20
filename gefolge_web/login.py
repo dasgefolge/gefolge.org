@@ -340,7 +340,7 @@ def mensch_required(f):
     return wrapper
 
 def setup(index, app):
-    if 'clientID' not in app.config.get('peter', {}) or 'clientSecret' not in app.config.get('peter', {}):
+    if 'clientSecret' not in app.config.get('peter', {}):
         return #TODO mount error messages at /login and /auth
     app.config['SECRET_KEY'] = app.config['peter']['clientSecret']
     app.config['USE_SESSION_FOR_NEXT'] = True

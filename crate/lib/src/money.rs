@@ -12,7 +12,7 @@ use {
     serde_with::SerializeDisplay,
 };
 
-#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, SerializeDisplay)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, SerializeDisplay)]
 pub struct Euro {
     pub cents: i64,
 }
