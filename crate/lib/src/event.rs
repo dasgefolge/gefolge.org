@@ -1,4 +1,5 @@
 use {
+    std::collections::HashSet,
     chrono_tz::Tz,
     rocket::response::content::RawHtml,
     rocket_util::html,
@@ -26,37 +27,13 @@ pub enum Error {
     UnknownLocation, //TODO get rid of this variant using a foreign-key constraint
 }
 
-#[derive(Deserialize)]
-struct Location {
-    timezone: Tz,
-}
-
-impl Location {
-    async fn load(db_pool: impl PgExecutor<'_>, loc_id: &str) -> sqlx::Result<Option<Self>> {
-        Ok(sqlx::query_scalar(r#"SELECT value AS "value: Json<Self>" FROM json_locations WHERE id = $1"#).bind(loc_id).fetch_optional(db_pool).await?.map(|Json(value)| value))
-    }
-}
-
-enum LocationInfo {
-    Unknown,
-    Online,
-    Known(Location),
-}
-
-impl LocationInfo {
-    fn timezone(&self) -> Option<Tz> {
-        match self {
-            Self::Unknown | Self::Online => None,
-            Self::Known(info) => Some(info.timezone),
-        }
-    }
-}
-
 #[derive(Debug, Clone, Deserialize)]
 pub struct Event {
     anzahlung: Option<Euro>,
     end: Option<MaybeAwareDateTime>,
     location: Option<String>,
+    #[serde(default)]
+    menschen: Vec<Attendee>,
     name: Option<String>,
     start: Option<MaybeAwareDateTime>,
     timezone: Option<Tz>,
@@ -68,6 +45,9 @@ impl Event {
     }
 
     pub fn anzahlung(&self) -> Option<Euro> { self.anzahlung }
+
+    /// Returns the list of attendees for this event, including ones with unconfirmed signups.
+    pub fn attendees(&self) -> &[Attendee] { &self.menschen }
 
     async fn location_info(&self, db_pool: impl PgExecutor<'_>) -> Result<LocationInfo, Error> {
         Ok(match self.location.as_deref() {
@@ -106,4 +86,50 @@ impl Event {
             a(href = format!("/event/{id}")) : self.name.as_deref().unwrap_or(id);
         }
     }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct Attendee {
+    #[serde(default)]
+    orga: HashSet<OrgaRole>,
+}
+
+impl Attendee {
+    pub fn orga(&self) -> &HashSet<OrgaRole> { &self.orga }
+}
+
+#[derive(Deserialize)]
+struct Location {
+    timezone: Tz,
+}
+
+impl Location {
+    async fn load(db_pool: impl PgExecutor<'_>, loc_id: &str) -> sqlx::Result<Option<Self>> {
+        Ok(sqlx::query_scalar(r#"SELECT value AS "value: Json<Self>" FROM json_locations WHERE id = $1"#).bind(loc_id).fetch_optional(db_pool).await?.map(|Json(value)| value))
+    }
+}
+
+enum LocationInfo {
+    Unknown,
+    Online,
+    Known(Location),
+}
+
+impl LocationInfo {
+    fn timezone(&self) -> Option<Tz> {
+        match self {
+            Self::Unknown | Self::Online => None,
+            Self::Known(info) => Some(info.timezone),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
+pub enum OrgaRole {
+    Abrechnung,
+    Buchung,
+    Essen,
+    Programm,
+    #[serde(rename = "Schlüssel")]
+    Schluessel,
 }
