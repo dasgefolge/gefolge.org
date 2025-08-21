@@ -55,8 +55,10 @@ use {
     },
     sqlx::{
         PgPool,
-        postgres::PgConnectOptions,
-        postgres::Postgres,
+        postgres::{
+            PgConnectOptions,
+            Postgres,
+        },
         Transaction,
         types::Json,
     },

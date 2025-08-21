@@ -1,11 +1,27 @@
 use {
-    std::collections::HashSet,
+    std::{
+        borrow::Cow,
+        collections::{
+            HashMap,
+            HashSet,
+        },
+        ops::Range,
+    },
+    chrono::prelude::*,
     chrono_tz::Tz,
     rocket::response::content::RawHtml,
     rocket_util::html,
     serde::Deserialize,
+    serde_with::{
+        DisplayFromStr,
+        PickFirst,
+        serde_as,
+    },
+    serenity::model::prelude::*,
     sqlx::{
         PgExecutor,
+        Postgres,
+        Transaction,
         types::Json,
     },
     crate::{
@@ -49,12 +65,29 @@ impl Event {
     /// Returns the list of attendees for this event, including ones with unconfirmed signups.
     pub fn attendees(&self) -> &[Attendee] { &self.menschen }
 
+    /// Shorthand to get the attendee with the given ID, if any.
+    pub fn attendee(&self, id: AttendeeId) -> Option<&Attendee> {
+        self.menschen.iter().find(|attendee| attendee.id == id)
+    }
+
+    pub async fn attendee_nights<'a>(&self, transaction: &mut Transaction<'_, Postgres>, attendee: &'a Attendee) -> Result<Option<impl Iterator<Item = (NaiveDate, Cow<'a, Night>)>>, Error> {
+        let Some(nights) = self.nights(transaction).await? else { return Ok(None) };
+        Ok(Some(nights.start.iter_days().take_while(move |d| *d < nights.end).map(|night| (night, attendee.nights.get(&night).map(Cow::Borrowed).unwrap_or_else(|| Cow::Owned(Night::default()))))))
+    }
+
     async fn location_info(&self, db_pool: impl PgExecutor<'_>) -> Result<LocationInfo, Error> {
         Ok(match self.location.as_deref() {
             Some("online") => LocationInfo::Online,
             Some(name) => LocationInfo::Known(Location::load(db_pool, name).await?.ok_or(Error::UnknownLocation)?),
             None => LocationInfo::Unknown,
         })
+    }
+
+    async fn nights(&self, transaction: &mut Transaction<'_, Postgres>) -> Result<Option<Range<NaiveDate>>, Error> {
+        let Some(start) = self.start(&mut **transaction).await? else { return Ok(None) };
+        let Some(end) = self.end(&mut **transaction).await? else { return Ok(None) };
+        let Some(tz) = self.timezone(&mut **transaction).await? else { return Ok(None) };
+        Ok(Some(start.with_timezone(&tz).date_naive()..end.with_timezone(&tz).date_naive()))
     }
 
     pub async fn timezone(&self, db_pool: impl PgExecutor<'_>) -> Result<Option<Tz>, Error> {
@@ -88,14 +121,60 @@ impl Event {
     }
 }
 
+fn make_true() -> bool { true }
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct Attendee {
+    pub id: AttendeeId,
+    #[serde(rename = "alkohol", default = "make_true")]
+    pub alcohol: bool,
     #[serde(default)]
-    orga: HashSet<OrgaRole>,
+    pub food: FoodPreferences,
+    #[serde(default)]
+    nights: HashMap<NaiveDate, Night>,
+    #[serde(default)]
+    pub orga: HashSet<OrgaRole>,
 }
 
-impl Attendee {
-    pub fn orga(&self) -> &HashSet<OrgaRole> { &self.orga }
+#[serde_as]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(untagged)]
+pub enum AttendeeId {
+    EventGuest(#[serde_as(as = "PickFirst<(_, DisplayFromStr)>")] u8),
+    Discord(UserId),
+}
+
+#[derive(Debug, Default, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FoodPreferences {
+    #[serde(default)]
+    pub animal_products: AnimalProducts,
+    #[serde(default)]
+    pub allergies: String,
+}
+
+#[derive(Debug, Default, Clone, Copy, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum AnimalProducts {
+    #[default]
+    Yes,
+    Vegetarian,
+    Vegan,
+}
+
+#[derive(Debug, Default, Clone, Copy, Deserialize)]
+pub struct Night {
+    #[serde(default)]
+    pub going: Going,
+}
+
+#[derive(Debug, Default, Clone, Copy, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Going {
+    Yes,
+    #[default]
+    Maybe,
+    No,
 }
 
 #[derive(Deserialize)]
