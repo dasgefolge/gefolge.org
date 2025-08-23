@@ -162,7 +162,26 @@ pub enum AnimalProducts {
     Vegan,
 }
 
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum JsonNight {
+    Old(Going),
+    New {
+        going: Going,
+    },
+}
+
+impl From<JsonNight> for Night {
+    fn from(value: JsonNight) -> Self {
+        match value {
+            JsonNight::Old(going) => Self { going },
+            JsonNight::New { going } => Self { going },
+        }
+    }
+}
+
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
+#[serde(from = "JsonNight")]
 pub struct Night {
     #[serde(default)]
     pub going: Going,
