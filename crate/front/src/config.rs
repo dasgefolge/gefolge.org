@@ -25,6 +25,7 @@ pub(crate) enum Error {
 #[serde(rename_all = "camelCase")]
 pub(crate) struct Config {
     pub(crate) discord: ConfigDiscord,
+    pub(crate) github_webhook_secret: String,
     pub(crate) secret_key: String,
 }
 

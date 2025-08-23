@@ -83,7 +83,7 @@ include!(concat!(env!("OUT_DIR"), "/static_files.rs"));
 
 mod auth;
 mod config;
-mod event;
+mod github_webhook;
 mod time;
 mod user;
 mod websocket;
@@ -779,7 +779,10 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
         auth::discord_callback,
         auth::discord_login,
         auth::logout,
-        websocket::websocket,
+        github_webhook::github_webhook,
+        websocket::websocket_legacy,
+        websocket::websocket_v1,
+        websocket::websocket_v2,
         wiki::index,
         wiki::main_article,
         wiki::namespaced_article,
@@ -799,6 +802,7 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
         config.discord.client_secret.to_string(),
         Some(uri!(base_uri(), auth::discord_callback).to_string()),
     )))
+    .manage(config)
     .manage(PgPool::connect_with(PgConnectOptions::default().username("fenhl").database("gefolge").application_name("gefolge-web")).await?)
     .manage(http_client)
     .manage(ProxyHttpClient(proxy_http_client))

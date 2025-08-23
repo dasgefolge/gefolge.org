@@ -2,6 +2,7 @@ use {
     std::{
         collections::BTreeSet,
         fmt,
+        time::Duration,
     },
     chrono_tz::Tz,
     derive_more::*,
@@ -27,6 +28,10 @@ use {
         postgres::Postgres,
         Transaction,
         types::Json,
+    },
+    tokio::time::{
+        Instant,
+        sleep_until,
     },
     crate::{
         auth::{
@@ -70,13 +75,16 @@ impl User {
     }
 
     pub(crate) async fn from_api_key(transaction: &mut Transaction<'_, Postgres>, api_key: &str) -> sqlx::Result<Option<Self>> {
-        Ok(sqlx::query!(r#"SELECT snowflake, discriminator, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users, json_user_data WHERE id = snowflake AND value -> 'apiKey' = $1"#, Json(api_key) as _).fetch_optional(&mut **transaction).await?.map(|row| User {
+        let before_query = Instant::now();
+        let ret = sqlx::query!(r#"SELECT snowflake, discriminator, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users, json_user_data WHERE id = snowflake AND value -> 'apiKey' = $1"#, Json(api_key) as _).fetch_optional(&mut **transaction).await?.map(|row| User {
             id: UserId::from(row.snowflake as u64),
             discriminator: row.discriminator.map(Discriminator),
             nick: row.nick,
             roles: row.roles.0,
             username: row.username,
-        }))
+        });
+        sleep_until(before_query + Duration::from_millis(100)).await; // timing attack protection
+        Ok(ret)
     }
 
     pub(crate) fn is_mensch(&self) -> bool {

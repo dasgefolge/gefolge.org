@@ -6,11 +6,13 @@ edition.workspace = true
 publish = false
 
 [dependencies]
+async-proto = { version = "0.26", features = ["chrono-tz", "semver"] }
 chrono = { version = "0.4.38", features = ["serde"] }
 chrono-tz = { version = "0.10", features = ["serde"] }
 lazy-regex = "3.2.0"
 rocket = { features = ["secrets"], version = "0.5" }
 rocket-util = { git = "https://github.com/fenhl/rocket-util", branch = "main", features = ["reqwest"] }
+semver = "1.0.26"
 serde = "1.0.204"
 serde_json = { package = "serde_json_path_to_error", version = "0.1" } #TODO which features to use for correct decimal handling? Or use async-json instead?
 serde_with = "3.9.0"

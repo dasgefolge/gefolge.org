@@ -5,3 +5,4 @@ pub mod db;
 pub mod event;
 pub mod money;
 pub mod time;
+pub mod websocket;
