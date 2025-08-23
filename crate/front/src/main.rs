@@ -13,6 +13,7 @@ use {
     },
     chrono::prelude::*,
     itertools::Itertools as _,
+    log_lock::*,
     rocket::{
         Responder,
         Rocket,
@@ -62,7 +63,6 @@ use {
         Transaction,
         types::Json,
     },
-    tokio::sync::RwLock,
     url::Url,
     gefolge_web_lib::{
         event::Event,
