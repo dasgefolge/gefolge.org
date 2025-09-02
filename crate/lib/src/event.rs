@@ -75,7 +75,7 @@ impl Event {
         Ok(Some(nights.start.iter_days().take_while(move |d| *d < nights.end).map(|night| (night, attendee.nights.get(&night).map(Cow::Borrowed).unwrap_or_else(|| Cow::Owned(Night::default()))))))
     }
 
-    async fn location_info(&self, db_pool: impl PgExecutor<'_>) -> Result<LocationInfo, Error> {
+    pub async fn location_info(&self, db_pool: impl PgExecutor<'_>) -> Result<LocationInfo, Error> {
         Ok(match self.location.as_deref() {
             Some("online") => LocationInfo::Online,
             Some(name) => LocationInfo::Known(Location::load(db_pool, name).await?.ok_or(Error::UnknownLocation)?),
@@ -197,8 +197,10 @@ pub enum Going {
 }
 
 #[derive(Deserialize)]
-struct Location {
+pub struct Location {
     timezone: Tz,
+    #[serde(default)]
+    pub rooms: HashMap<String, HashMap<String, Room>>,
 }
 
 impl Location {
@@ -207,7 +209,12 @@ impl Location {
     }
 }
 
-enum LocationInfo {
+#[derive(Deserialize)]
+pub struct Room {
+    pub beds: u8,
+}
+
+pub enum LocationInfo {
     Unknown,
     Online,
     Known(Location),
