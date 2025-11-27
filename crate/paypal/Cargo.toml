@@ -12,4 +12,4 @@ gefolge-web = { package = "gefolge-web-lib", path = "../lib" }
 serenity = { default-features = false, features = ["model", "rustls_backend"], version = "0.12" }
 sqlx = { version = "0.8", default-features = false, features = ["json", "macros", "postgres", "runtime-tokio-rustls"] }
 thiserror = "2"
-wheel = { git = "https://github.com/fenhl/wheel", branch = "main" }
+wheel = { git = "https://github.com/fenhl/wheel" }

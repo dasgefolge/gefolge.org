@@ -15,4 +15,4 @@ serde_plain = "1.0.1"
 serenity = { default-features = false, features = ["rustls_backend", "model"], version = "0.12" }
 sqlx = { version = "0.8", default-features = false, features = ["chrono", "json", "macros", "postgres", "runtime-tokio-rustls"] }
 thiserror = "2"
-wheel = { git = "https://github.com/fenhl/wheel", branch = "main" }
+wheel = { git = "https://github.com/fenhl/wheel" }

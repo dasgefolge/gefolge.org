@@ -11,7 +11,10 @@ use {
     },
     async_proto::Protocol,
     chrono::prelude::*,
-    chrono_tz::Europe,
+    chrono_tz::{
+        Europe,
+        Tz,
+    },
     futures::{
         future::FutureExt as _,
         stream::{
@@ -188,6 +191,12 @@ async fn client_session_v2(db_pool: PgPool, mut rocket_shutdown: rocket::Shutdow
                         let db_pool = db_pool.clone();
                         let sink = sink.clone();
                         subscription_join_handles.push(tokio::spawn(async move {
+                            #[derive(PartialEq)]
+                            struct EventData {
+                                id: String,
+                                timezone: Tz,
+                            }
+
                             let mut prev_event = None;
                             loop {
                                 let now = Utc::now();
@@ -195,15 +204,18 @@ async fn client_session_v2(db_pool: PgPool, mut rocket_shutdown: rocket::Shutdow
                                 for row in sqlx::query!(r#"SELECT id, value AS "value: Json<Event>" FROM json_events"#).fetch_all(&db_pool).await? {
                                     if let (Some(start), Some(end)) = (row.value.start(&db_pool).await?, row.value.end(&db_pool).await?) {
                                         if start <= now && now < end {
-                                            if let Some((other_id, _)) = current_event.replace((row.id.clone(), row.value.timezone(&db_pool).await?)) {
-                                                return Err(Error::MultipleCurrentEvents([row.id, other_id]).into())
+                                            if let Some(other) = current_event.replace(EventData {
+                                                id: row.id.clone(),
+                                                timezone: row.value.timezone(&db_pool).await?.unwrap_or(Europe::Berlin),
+                                            }) {
+                                                return Err(Error::MultipleCurrentEvents([row.id, other.id]).into())
                                             }
                                         }
                                     }
                                 }
                                 if prev_event.is_none_or(|prev_state| prev_state != current_event) {
-                                    if let Some((ref id, timezone)) = current_event {
-                                        lock!(sink = sink; ServerMessageV2::CurrentEvent { id: id.clone(), timezone: timezone.unwrap_or(Europe::Berlin) }.write_ws021(&mut *sink).await)?;
+                                    if let Some(EventData { ref id, timezone }) = current_event {
+                                        lock!(sink = sink; ServerMessageV2::CurrentEvent { id: id.clone(), timezone }.write_ws021(&mut *sink).await)?;
                                     } else {
                                         lock!(sink = sink; ServerMessageV2::NoEvent.write_ws021(&mut *sink).await)?;
                                     }

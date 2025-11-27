@@ -23,13 +23,13 @@ hmac = "0.12.1"
 itermore = { version = "0.8.0", features = ["array_chunks"] }
 itertools = "0.14"
 lazy-regex = "3.4.1"
-log-lock = { git = "https://github.com/fenhl/log-lock", branch = "main" }
+log-lock = { git = "https://github.com/fenhl/log-lock" }
 pulldown-cmark = { git = "https://github.com/fenhl/pulldown-cmark", branch = "rocket-wiki", default-features = false, features = ["simd", "html"] }
 reqwest = { version = "0.12", default-features = false, features = ["charset", "hickory-dns", "http2", "macos-system-configuration", "rustls-tls"] }
-ricochet-robots-websocket = { git = "ssh://git@github.com/dasgefolge/ricochet-robots.git", branch = "main" }
+ricochet-robots-websocket = { git = "ssh://git@github.com/dasgefolge/ricochet-robots.git" }
 rocket = { features = ["secrets"], version = "0.5" }
-rocket-basicauth = { git = "https://github.com/fenhl/rocket-basicauth", branch = "master" }
-rocket-util = { git = "https://github.com/fenhl/rocket-util", branch = "main", features = ["reqwest"] }
+rocket-basicauth = { git = "https://github.com/fenhl/rocket-basicauth" }
+rocket-util = { git = "https://github.com/fenhl/rocket-util", features = ["reqwest"] }
 rocket_oauth2 = { version = "0.5" }
 rocket_ws = { version = "0.1" }
 semver = { version = "1.0.26", features = ["serde"] }
@@ -42,7 +42,7 @@ thiserror = "2"
 tokio = { version = "1.26.0", features = ["macros", "process", "sync", "time"] }
 toml = "0.9.5"
 url = "2.3.1"
-wheel = { git = "https://github.com/fenhl/wheel", branch = "main", features = ["chrono", "rocket", "reqwest", "serde", "serde_json"] }
+wheel = { git = "https://github.com/fenhl/wheel", features = ["chrono", "rocket", "reqwest", "serde", "serde_json"] }
 
 [target."cfg(unix)".dependencies]
 xdg = "2.4.1"
@@ -52,4 +52,4 @@ futures = "0.3.26"
 git2 = "0.20"
 thiserror = "2"
 tokio = "1.26.0"
-wheel = { git = "https://github.com/fenhl/wheel", branch = "main" }
+wheel = { git = "https://github.com/fenhl/wheel" }
