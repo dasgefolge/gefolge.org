@@ -165,7 +165,7 @@ def ProgrammForm(event, programmpunkt):
     if programmpunkt is None:
         Form.url_part = gefolge_web.forms.AnnotatedStringField('URL', [
             wtforms.validators.InputRequired(),
-            wtforms.validators.Regexp('^[0-9a-z-]+$', message='Darf nur aus Kleinbuchstaben, Zahlen und „-“ bestehen.'),
+            wtforms.validators.Regexp('^[0-9a-z-]+$', message='Darf nur aus ASCII-Kleinbuchstaben, ASCII-Ziffern und „-“ bestehen.'),
             wtforms.validators.NoneOf([programmpunkt.url_part for programmpunkt in event.programm], message='Es gibt bereits einen Programmpunkt mit diesem Titel.'),
         ], prefix=f'https://gefolge.org/event/{event.event_id}/programm/')
     if programmpunkt is None or programmpunkt.name_editable:
