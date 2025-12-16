@@ -5,31 +5,31 @@ if (-not $?)
 }
 
 # copy the tree to the WSL file system to improve compile times
-wsl rsync --delete -av /mnt/c/Users/fenhl/git/github.com/dasgefolge/gefolge.org/stage/ /home/fenhl/wslgit/github.com/dasgefolge/gefolge.org/ --exclude target
+wsl -d ubuntu-m2 rsync --mkpath --delete -av /mnt/c/Users/fenhl/git/github.com/dasgefolge/gefolge.org/stage/ /home/fenhl/wslgit/github.com/dasgefolge/gefolge.org/ --exclude target
 if (-not $?)
 {
     throw 'Native Failure'
 }
 
-wsl env -C /home/fenhl/wslgit/github.com/dasgefolge/gefolge.org cargo build --release --target=x86_64-unknown-linux-musl --package=gefolge-web --package=gefolge-web-back
+wsl -d ubuntu-m2 env -C /home/fenhl/wslgit/github.com/dasgefolge/gefolge.org /home/fenhl/.cargo/bin/cargo build --release --target=x86_64-unknown-linux-musl --package=gefolge-web --package=gefolge-web-back
 if (-not $?)
 {
     throw 'Native Failure'
 }
 
-wsl mkdir -p /mnt/c/Users/fenhl/git/github.com/dasgefolge/gefolge.org/stage/target/wsl/release/
+wsl -d ubuntu-m2 mkdir -p /mnt/c/Users/fenhl/git/github.com/dasgefolge/gefolge.org/stage/target/wsl/release/
 if (-not $?)
 {
     throw 'Native Failure'
 }
 
-wsl cp /home/fenhl/wslgit/github.com/dasgefolge/gefolge.org/target/x86_64-unknown-linux-musl/release/gefolge-web /mnt/c/Users/fenhl/git/github.com/dasgefolge/gefolge.org/stage/target/wsl/release/gefolge-web
+wsl -d ubuntu-m2 cp /home/fenhl/wslgit/github.com/dasgefolge/gefolge.org/target/x86_64-unknown-linux-musl/release/gefolge-web /mnt/c/Users/fenhl/git/github.com/dasgefolge/gefolge.org/stage/target/wsl/release/gefolge-web
 if (-not $?)
 {
     throw 'Native Failure'
 }
 
-wsl cp /home/fenhl/wslgit/github.com/dasgefolge/gefolge.org/target/x86_64-unknown-linux-musl/release/gefolge-web-back /mnt/c/Users/fenhl/git/github.com/dasgefolge/gefolge.org/stage/target/wsl/release/gefolge-web-back
+wsl -d ubuntu-m2 cp /home/fenhl/wslgit/github.com/dasgefolge/gefolge.org/target/x86_64-unknown-linux-musl/release/gefolge-web-back /mnt/c/Users/fenhl/git/github.com/dasgefolge/gefolge.org/stage/target/wsl/release/gefolge-web-back
 if (-not $?)
 {
     throw 'Native Failure'

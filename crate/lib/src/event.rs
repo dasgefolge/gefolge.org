@@ -75,6 +75,14 @@ impl Event {
         Ok(Some(nights.start.iter_days().take_while(move |d| *d < nights.end).map(|night| (night, attendee.nights.get(&night).map(Cow::Borrowed).unwrap_or_else(|| Cow::Owned(Night::default()))))))
     }
 
+    pub fn location_id(&self) -> LocationId<'_> {
+        match self.location.as_deref() {
+            Some("online") => LocationId::Online,
+            Some(name) => LocationId::Known(name),
+            None => LocationId::Unknown,
+        }
+    }
+
     pub async fn location_info(&self, db_pool: impl PgExecutor<'_>) -> Result<LocationInfo, Error> {
         Ok(match self.location.as_deref() {
             Some("online") => LocationInfo::Online,
@@ -212,6 +220,12 @@ impl Location {
 #[derive(Deserialize)]
 pub struct Room {
     pub beds: u8,
+}
+
+pub enum LocationId<'a> {
+    Unknown,
+    Online,
+    Known(&'a str),
 }
 
 pub enum LocationInfo {
