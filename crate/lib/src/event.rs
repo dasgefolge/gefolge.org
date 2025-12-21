@@ -11,7 +11,10 @@ use {
     chrono_tz::Tz,
     rocket::response::content::RawHtml,
     rocket_util::html,
-    serde::Deserialize,
+    serde::{
+        Deserialize,
+        Serialize,
+    },
     serde_with::{
         DisplayFromStr,
         PickFirst,
@@ -243,7 +246,7 @@ impl LocationInfo {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub enum OrgaRole {
     Abrechnung,
     Buchung,
