@@ -81,6 +81,12 @@ body > div {
     flex-grow: 1;
 }
 
+blockquote {
+    border-left: 5px solid gray;
+    margin-left: 15px;
+    padding-left: 20px;
+}
+
 a {
     color: inherit;
 }
