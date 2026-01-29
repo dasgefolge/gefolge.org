@@ -16,10 +16,6 @@ if [[ x"$(hostname -f)" == x'vendredi.fenhl.net' ]]; then
     echo 'deploying spacealert'
     cd /opt/git/github.com/dasgefolge/spacealert/main
     git --git-dir=/opt/git/github.com/dasgefolge/spacealert/main/.git pull
-    # deploy werewolf_web
-    echo 'deploying werewolf_web'
-    cd /opt/git/localhost/werewolf_web/main
-    git --git-dir=/opt/git/localhost/werewolf_web/main/.git pull
     # deploy gefolge.org
     echo 'deploying gefolge.org'
     cd /opt/git/github.com/dasgefolge/gefolge.org/main
