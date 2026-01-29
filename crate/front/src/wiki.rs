@@ -70,7 +70,7 @@ pub(crate) async fn index(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>) 
                             } else {
                                 @for article in articles {
                                     li {
-                                        a(href = if namespace == "wiki" { uri!(main_article(&article)) } else { uri!(namespaced_article(&article, &namespace)) }.to_string()) : article;
+                                        a(href = if namespace == "wiki" { uri!(main_article(&article)) } else { uri!(namespaced_article(&article, &namespace)) }) : article;
                                     }
                                 }
                             }
@@ -225,7 +225,7 @@ pub(crate) async fn revision(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_
                 }
             }
             span(class = "button-row") {
-                a(href = if namespace == "wiki" { uri!(main_article(title)) } else { uri!(namespaced_article(title, namespace)) }.to_string(), class = "button") : "Neuste Version anzeigen";
+                a(href = if namespace == "wiki" { uri!(main_article(title)) } else { uri!(namespaced_article(title, namespace)) }, class = "button") : "Neuste Version anzeigen";
                 a(href = format!("/wiki/{title}/{namespace}/history"), class = "button") : "Versionsgeschichte";
             }
         }

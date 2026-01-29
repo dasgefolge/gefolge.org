@@ -139,7 +139,7 @@ impl LoginState for DiscordUser {
                 a(href = format!("/mensch/{}/edit", self.id)) : "Einstellungen";
                 : " • ";
             }
-            a(href = uri!(auth::logout).to_string()) : "Abmelden";
+            a(href = uri!(auth::logout)) : "Abmelden";
         })
     }
 }
@@ -154,7 +154,7 @@ impl LoginState for User {
                 a(href = format!("/mensch/{}/edit", self.id)) : "Einstellungen";
                 : " • ";
             }
-            a(href = uri!(auth::logout).to_string()) : "Abmelden";
+            a(href = uri!(auth::logout)) : "Abmelden";
         })
     }
 }
@@ -171,7 +171,7 @@ impl<T: LoginState> LoginState for Option<T> {
             @if let Some(me) = self {
                 : me.login_state(transaction, uri).await?;
             } else {
-                a(href = uri!(auth::discord_login(Some(uri))).to_string()) : "Mit Discord anmelden";
+                a(href = uri!(auth::discord_login(Some(uri)))) : "Mit Discord anmelden";
             }
         })
     }
@@ -205,7 +205,7 @@ async fn page(mut transaction: Transaction<'_, Postgres>, me: impl LoginState, u
             let mut url = Url::parse(&base_uri().to_string()).expect("failed to parse base URL");
             url.path_segments_mut().unwrap().extend(&prefix);
             html! {
-                a(href = url.to_string()) : display;
+                a(href = url) : display;
             }.push_html(&mut buf);
         }
         if let Some((segment, display)) = last {
@@ -422,7 +422,7 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
             }
             p {
                 : "Wenn du schon auf dem Discord server bist, kannst du dich ";
-                a(href = uri!(auth::discord_login(Some(uri!(index)))).to_string()) : "hier mit Discord anmelden";
+                a(href = uri!(auth::discord_login(Some(uri!(index))))) : "hier mit Discord anmelden";
                 : ", um Zugriff auf die internen Bereiche dieser website zu bekommen, z.B. unser wiki und die Anmeldung für Silvester.";
             }
         }).await?
@@ -629,7 +629,7 @@ async fn bad_request(request: &Request<'_>) -> Result<RawHtml<String>, PageError
         h1 : "Fehler 400: Bad Request";
         p : "Anmeldung fehlgeschlagen. Falls du Hilfe brauchst, kannst du auf Discord im #dev nachfragen.";
         p {
-            a(href = uri!(index).to_string()) : "Zurück zur Hauptseite von gefolge.org";
+            a(href = uri!(index)) : "Zurück zur Hauptseite von gefolge.org";
         }
     }).await
 }
@@ -664,7 +664,7 @@ async fn not_found(request: &Request<'_>) -> Result<RawHtml<String>, PageError> 
         h1 : "Fehler 404: Not Found";
         p : "Diese Seite existiert nicht.";
         p {
-            a(href = uri!(index).to_string()) : "Zurück zur Hauptseite von gefolge.org";
+            a(href = uri!(index)) : "Zurück zur Hauptseite von gefolge.org";
         }
     }).await
 }
@@ -688,7 +688,7 @@ async fn internal_server_error(request: &Request<'_>) -> Result<RawHtml<String>,
             }
         }
         p {
-            a(href = uri!(index).to_string()) : "Zurück zur Hauptseite von gefolge.org";
+            a(href = uri!(index)) : "Zurück zur Hauptseite von gefolge.org";
         }
     }).await
 }
@@ -718,7 +718,7 @@ async fn fallback_catcher(status: Status, request: &Request<'_>) -> Result<RawHt
             }
         }
         p {
-            a(href = uri!(index).to_string()) : "Zurück zur Hauptseite von gefolge.org";
+            a(href = uri!(index)) : "Zurück zur Hauptseite von gefolge.org";
         }
     }).await
 }
