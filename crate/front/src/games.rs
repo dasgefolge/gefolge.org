@@ -38,9 +38,15 @@ pub(crate) async fn index(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>) 
     ]), "Spiele — Das Gefolge", html! {
         h1 : "Spiele";
         ul {
-            a(href = "/games/rr") : "Rasende Roboter";
-            a(href = "/games/space-alert") : "Space Alert";
-            a(href = uri!(werewolf_proxy_get_index)) : "Werwölfe";
+            li {
+                a(href = "/games/rr") : "Rasende Roboter";
+            }
+            li {
+                a(href = "/games/space-alert") : "Space Alert";
+            }
+            li {
+                a(href = uri!(werewolf_proxy_get_index)) : "Werwölfe";
+            }
         }
     }).await
 }
