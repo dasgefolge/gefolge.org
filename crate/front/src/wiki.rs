@@ -1,8 +1,8 @@
 use {
+    chrono::prelude::*,
     lazy_regex::regex_captures,
     rocket::{
         State,
-        http::Status,
         response::content::RawHtml,
         uri,
     },
@@ -11,16 +11,18 @@ use {
         ToHtml,
         html,
     },
+    serenity::model::prelude::*,
     sqlx::{
         PgPool,
         Postgres,
         Transaction,
     },
     url::Url,
+    gefolge_web_lib::time::MaybeLocalDateTime,
     crate::{
         PageKind,
-        StatusOrError,
         page,
+        time::format_datetime,
         user::{
             Mensch,
             User,
@@ -34,12 +36,6 @@ pub(crate) enum Error {
     #[error(transparent)] ParseInt(#[from] std::num::ParseIntError),
     #[error(transparent)] Sql(#[from] sqlx::Error),
     #[error(transparent)] Url(#[from] url::ParseError),
-}
-
-impl<E: Into<Error>> From<E> for StatusOrError<Error> {
-    fn from(e: E) -> Self {
-        Self::Err(e.into())
-    }
 }
 
 async fn link_open_tag(transaction: &mut Transaction<'_, Postgres>, article: &str, namespace: &str) -> sqlx::Result<RawHtml<String>> {
@@ -136,11 +132,11 @@ async fn render_wiki_page<'a>(transaction: &mut Transaction<'_, Postgres>, sourc
 }
 
 #[rocket::get("/wiki/<title>")]
-pub(crate) async fn main_article(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>, title: &str) -> Result<RawHtml<String>, StatusOrError<Error>> {
+pub(crate) async fn main_article(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>, title: &str) -> Result<Option<RawHtml<String>>, Error> {
     let mut transaction = db_pool.begin().await?;
-    let source = sqlx::query_scalar!("SELECT text FROM wiki WHERE title = $1 AND namespace = 'wiki' ORDER BY timestamp DESC LIMIT 1", title).fetch_optional(&**db_pool).await?.ok_or_else(|| StatusOrError::Status(Status::NotFound))?;
+    let Some(source) = sqlx::query_scalar!("SELECT text FROM wiki WHERE title = $1 AND namespace = 'wiki' ORDER BY timestamp DESC LIMIT 1", title).fetch_optional(&**db_pool).await? else { return Ok(None) };
     let content = render_wiki_page(&mut transaction, &source).await?;
-    Ok(page(transaction, me, &uri, PageKind::Sub(vec![
+    Ok(Some(page(transaction, me, &uri, PageKind::Sub(vec![
         html! {
             : "wiki";
         },
@@ -152,19 +148,19 @@ pub(crate) async fn main_article(db_pool: &State<PgPool>, me: Mensch, uri: Origi
             h1 : title;
             span(class = "button-row") {
                 a(href = format!("/wiki/{title}/wiki/edit"), class = "button") : "Bearbeiten";
-                a(href = format!("/wiki/{title}/wiki/history"), class = "button") : "Versionsgeschichte";
+                a(href = uri!(history(title, "wiki")), class = "button") : "Versionsgeschichte";
             }
         }
         : content;
-    }).await?)
+    }).await?))
 }
 
 #[rocket::get("/wiki/<title>/<namespace>")]
-pub(crate) async fn namespaced_article(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>, title: &str, namespace: &str) -> Result<RawHtml<String>, StatusOrError<Error>> {
+pub(crate) async fn namespaced_article(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>, title: &str, namespace: &str) -> Result<Option<RawHtml<String>>, Error> {
     let mut transaction = db_pool.begin().await?;
-    let source = sqlx::query_scalar!("SELECT text FROM wiki WHERE title = $1 AND namespace = $2 ORDER BY timestamp DESC LIMIT 1", title, namespace).fetch_optional(&**db_pool).await?.ok_or_else(|| StatusOrError::Status(Status::NotFound))?;
+    let Some(source) = sqlx::query_scalar!("SELECT text FROM wiki WHERE title = $1 AND namespace = $2 ORDER BY timestamp DESC LIMIT 1", title, namespace).fetch_optional(&**db_pool).await? else { return Ok(None) };
     let content = render_wiki_page(&mut transaction, &source).await?;
-    Ok(page(transaction, me, &uri, PageKind::Sub(vec![
+    Ok(Some(page(transaction, me, &uri, PageKind::Sub(vec![
         html! {
             : "wiki";
         },
@@ -184,20 +180,85 @@ pub(crate) async fn namespaced_article(db_pool: &State<PgPool>, me: Mensch, uri:
             }
             span(class = "button-row") {
                 a(href = format!("/wiki/{title}/{namespace}/edit"), class = "button") : "Bearbeiten";
-                a(href = format!("/wiki/{title}/{namespace}/history"), class = "button") : "Versionsgeschichte";
+                a(href = uri!(history(title, namespace)), class = "button") : "Versionsgeschichte";
             }
         }
         : content;
-    }).await?)
+    }).await?))
+}
+
+#[rocket::get("/wiki/<title>/<namespace>/history")]
+pub(crate) async fn history(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>, title: &str, namespace: &str) -> Result<Option<RawHtml<String>>, Error> {
+    let revisions = sqlx::query!(r#"SELECT id, timestamp AS "timestamp: DateTime<Utc>", author, summary FROM wiki WHERE title = $1 AND namespace = $2 ORDER BY timestamp DESC"#, title, namespace).fetch_all(&**db_pool).await?;
+    if revisions.is_empty() { return Ok(None) }
+    let mut transaction = db_pool.begin().await?;
+    let viewer_data = me.data(&mut transaction).await?;
+    let content = html! {
+        h1 {
+            : "Versionsgeschichte von ";
+            : title;
+            @if namespace != "wiki" {
+                : " (";
+                : namespace;
+                : ")";
+            }
+        }
+        table {
+            thead {
+                tr {
+                    th : "Datum";
+                    th : "Autor:in";
+                    th : "Zusammenfassung";
+                }
+            }
+            tbody {
+                @for revision in revisions {
+                    tr {
+                        td {
+                            a(href = uri!(revision(title, namespace, revision.id))) {
+                                : format_datetime(&viewer_data, MaybeLocalDateTime::Nonlocal(revision.timestamp), false);
+                            }
+                        }
+                        td {
+                            @if let Some(author) = revision.author {
+                                @if let Some(author) = User::from_id(&mut transaction, UserId::from(author as u64)).await? {
+                                    : author;
+                                } else {
+                                    : "nicht gefunden";
+                                }
+                            } else {
+                                : "unbekannt";
+                            }
+                        }
+                        td : revision.summary;
+                    }
+                }
+            }
+        }
+    };
+    Ok(Some(page(transaction, me, &uri, PageKind::Sub(vec![
+        html! {
+            : "wiki";
+        },
+        html! {
+            : title;
+        },
+        html! {
+            : namespace;
+        },
+        html! {
+            : "Versionsgeschichte";
+        },
+    ]), &format!("Versionsgeschichte von {title}{} — GefolgeWiki", if namespace == "wiki" { String::default() } else { format!(" ({namespace})") }), content).await?))
 }
 
 #[rocket::get("/wiki/<title>/<namespace>/history/<rev>")]
-pub(crate) async fn revision(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>, title: &str, namespace: &str, rev: Option<i32>) -> Result<RawHtml<String>, StatusOrError<Error>> {
-    let Some(rev) = rev else { return Err(StatusOrError::Status(Status::NotFound)) }; // don't forward to Flask on wrong revision format, prevents an internal server error
+pub(crate) async fn revision(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>, title: &str, namespace: &str, rev: Option<i32>) -> Result<Option<RawHtml<String>>, Error> {
+    let Some(rev) = rev else { return Ok(None) }; // don't forward to Flask on wrong revision format, prevents an internal server error
     let mut transaction = db_pool.begin().await?;
-    let source = sqlx::query_scalar!("SELECT text FROM wiki WHERE title = $1 AND namespace = $2 AND id = $3", title, namespace, rev).fetch_optional(&**db_pool).await?.ok_or_else(|| StatusOrError::Status(Status::NotFound))?;
+    let Some(source) = sqlx::query_scalar!("SELECT text FROM wiki WHERE title = $1 AND namespace = $2 AND id = $3", title, namespace, rev).fetch_optional(&**db_pool).await? else { return Ok(None) };
     let content = render_wiki_page(&mut transaction, &source).await?;
-    Ok(page(transaction, me, &uri, PageKind::Sub(vec![
+    Ok(Some(page(transaction, me, &uri, PageKind::Sub(vec![
         html! {
             : "wiki";
         },
@@ -226,9 +287,9 @@ pub(crate) async fn revision(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_
             }
             span(class = "button-row") {
                 a(href = if namespace == "wiki" { uri!(main_article(title)) } else { uri!(namespaced_article(title, namespace)) }, class = "button") : "Neuste Version anzeigen";
-                a(href = format!("/wiki/{title}/{namespace}/history"), class = "button") : "Versionsgeschichte";
+                a(href = uri!(history(title, namespace)), class = "button") : "Versionsgeschichte";
             }
         }
         : content;
-    }).await?)
+    }).await?))
 }

@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, timestamp AS \"timestamp: DateTime<Utc>\", author, summary FROM wiki WHERE title = $1 AND namespace = $2 ORDER BY timestamp DESC",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "timestamp: DateTime<Utc>",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 2,
+        "name": "author",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "summary",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "618e01d6ec823b5914e593f1da67251cc19e99375c9603e4aecd2bb13d52c39a"
+}

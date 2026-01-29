@@ -90,12 +90,6 @@ mod user;
 mod websocket;
 mod wiki;
 
-#[derive(Responder)]
-enum StatusOrError<E> {
-    Status(Status),
-    Err(E),
-}
-
 #[allow(unused)] // variants only constructed under conditional compilation
 #[derive(Default, Clone, Copy)]
 enum Environment {
@@ -799,6 +793,7 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
         wiki::index,
         wiki::main_article,
         wiki::namespaced_article,
+        wiki::history,
         wiki::revision,
     ])
     .mount("/static", FileServer::new("assets/static", rocket::fs::Options::None))

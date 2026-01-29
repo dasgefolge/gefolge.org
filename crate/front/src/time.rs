@@ -10,6 +10,49 @@ use {
     crate::user,
 };
 
+pub(crate) fn format_datetime(viewer_data: &user::Data, datetime: MaybeLocalDateTime, long: bool) -> RawHtml<String> {
+    fn format_datetime_noscript(datetime: DateTime<Tz>) -> String {
+        datetime.format("%d.%m.%Y %H:%M").to_string()
+    }
+
+    match (viewer_data.timezone, viewer_data.event_timezone_override, datetime) {
+        (None, _, MaybeLocalDateTime::Nonlocal(datetime)) => {
+            let datetime = datetime.with_timezone(&Europe::Berlin);
+            html! {
+                span(class = "datetime", title = Europe::Berlin.name(), data_timestamp = datetime.timestamp_millis(), data_long = long.to_string()) {
+                    : format_datetime_noscript(datetime);
+                }
+            }
+        }
+        (Some(user_timezone), _, MaybeLocalDateTime::Nonlocal(datetime)) => {
+            let datetime = datetime.with_timezone(&user_timezone);
+            html! {
+                span(class = "datetime", title = user_timezone.name(), data_timestamp = datetime.timestamp_millis(), data_long = long.to_string(), data_timezone = user_timezone.name()) {
+                    : format_datetime_noscript(datetime);
+                }
+            }
+        }
+        (None, false, MaybeLocalDateTime::Local(datetime)) => html! {
+            span(class = "datetime", title = datetime.timezone().name(), data_timestamp = datetime.timestamp_millis(), data_long = long.to_string()) {
+                : format_datetime_noscript(datetime);
+            }
+        },
+        (Some(user_timezone), false, MaybeLocalDateTime::Local(datetime)) => {
+            let datetime = datetime.with_timezone(&user_timezone);
+            html! {
+                span(class = "datetime", title = user_timezone.name(), data_timestamp = datetime.timestamp_millis(), data_long = long.to_string(), data_timezone = user_timezone.name()) {
+                    : format_datetime_noscript(datetime);
+                }
+            }
+        }
+        (_, true, MaybeLocalDateTime::Local(datetime)) => html! {
+            span(class = "datetime", title = datetime.timezone().name(), data_timestamp = datetime.timestamp_millis(), data_long = long.to_string(), data_timezone = datetime.timezone().name()) {
+                : format_datetime_noscript(datetime);
+            }
+        },
+    }
+}
+
 pub(crate) fn format_date_range(viewer_data: &user::Data, start: MaybeLocalDateTime, end: MaybeLocalDateTime) -> RawHtml<String> {
     fn format_date_range_noscript(start: DateTime<Tz>, end: DateTime<Tz>) -> String {
         if start.year() != end.year() {
