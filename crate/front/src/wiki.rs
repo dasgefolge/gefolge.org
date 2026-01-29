@@ -59,16 +59,20 @@ pub(crate) async fn index(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>) 
         @if namespaces.is_empty() {
             p : "In diesem wiki sind noch keine Artikel.";
         } else {
-            @for namespace in namespaces {
-                h2 : namespace;
-                ul {
-                    @let articles = sqlx::query_scalar!("SELECT DISTINCT title FROM wiki WHERE namespace = $1 ORDER BY title ASC", namespace).fetch_all(&**db_pool).await?;
-                    @if articles.is_empty() {
-                        li : "(Dieser namespace ist leer.)";
-                    } else {
-                        @for article in articles {
-                            li {
-                                a(href = if namespace == "wiki" { uri!(main_article(&article)) } else { uri!(namespaced_article(&article, &namespace)) }.to_string()) : article;
+            div(class = "section-list") {
+                @for namespace in namespaces {
+                    div {
+                        h2 : namespace;
+                        ul {
+                            @let articles = sqlx::query_scalar!("SELECT DISTINCT title FROM wiki WHERE namespace = $1 ORDER BY title ASC", namespace).fetch_all(&**db_pool).await?;
+                            @if articles.is_empty() {
+                                li : "(Dieser namespace ist leer.)";
+                            } else {
+                                @for article in articles {
+                                    li {
+                                        a(href = if namespace == "wiki" { uri!(main_article(&article)) } else { uri!(namespaced_article(&article, &namespace)) }.to_string()) : article;
+                                    }
+                                }
                             }
                         }
                     }
