@@ -83,6 +83,7 @@ include!(concat!(env!("OUT_DIR"), "/static_files.rs"));
 
 mod auth;
 mod config;
+mod games;
 mod github_webhook;
 mod time;
 mod user;
@@ -356,7 +357,7 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                     : " • ";
                     a(href = uri!(event_page)) : "events";
                     : " • ";
-                    a(href = "/games") : "Spiele";
+                    a(href = uri!(games::index)) : "Spiele";
                     : " • ";
                     a(href = "/mensch") : "Menschen und Gäste";
                     : " • ";
@@ -582,41 +583,6 @@ async fn flask_proxy_get_api_children(proxy_http_client: &State<ProxyHttpClient>
     Ok(ProxyResponse::Proxied(Response(response)))
 }
 
-#[rocket::get("/games/werewolf")]
-async fn werewolf_proxy_get_index(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers) -> Result<ProxyResponse, ProxyError> {
-    let mut url = Url::parse("http://127.0.0.1:18831/games/werewolf")?;
-    url.set_query(origin.0.query().map(|query| query.as_str()));
-    let response = proxy_http_client.0.get(url).headers(proxy_headers(headers, me)?).send().await?;
-    if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR {
-        return Err(ProxyError::InternalServerError(response.text().await?))
-    }
-    Ok(ProxyResponse::Proxied(Response(response)))
-}
-
-#[rocket::get("/games/werewolf/<path..>")]
-async fn werewolf_proxy_get_children(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>) -> Result<ProxyResponse, ProxyError> {
-    let mut url = Url::parse("http://127.0.0.1:18831/games/werewolf")?;
-    url.path_segments_mut().expect("proxy URL is cannot-be-a-base").extend(path);
-    url.set_query(origin.0.query().map(|query| query.as_str()));
-    let response = proxy_http_client.0.get(url).headers(proxy_headers(headers, me)?).send().await?;
-    if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR {
-        return Err(ProxyError::InternalServerError(response.text().await?))
-    }
-    Ok(ProxyResponse::Proxied(Response(response)))
-}
-
-#[rocket::post("/games/werewolf/<path..>", data = "<data>")]
-async fn werewolf_proxy_post(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>, data: Vec<u8>) -> Result<ProxyResponse, ProxyError> {
-    let mut url = Url::parse("http://127.0.0.1:18831/games/werewolf")?;
-    url.path_segments_mut().expect("proxy URL is cannot-be-a-base").extend(path);
-    url.set_query(origin.0.query().map(|query| query.as_str()));
-    let response = proxy_http_client.0.post(url).headers(proxy_headers(headers, me)?).body(data).send().await?;
-    if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR {
-        return Err(ProxyError::InternalServerError(response.text().await?))
-    }
-    Ok(ProxyResponse::Proxied(Response(response)))
-}
-
 #[rocket::get("/<path..>")]
 async fn flask_proxy_get(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>) -> Result<ProxyResponse, ProxyError> {
     if Segments::<Path>::get(&path, 0).map_or(true, |prefix| !matches!(prefix, "event" | "games" | "me" | "mensch" | "wiki")) {
@@ -810,13 +776,14 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
         flask_proxy_get_api,
         flask_proxy_get_api_children,
         flask_proxy_post,
-        werewolf_proxy_get_index,
-        werewolf_proxy_get_children,
-        werewolf_proxy_post,
         robots_txt,
         auth::discord_callback,
         auth::discord_login,
         auth::logout,
+        games::index,
+        games::werewolf_proxy_get_index,
+        games::werewolf_proxy_get_children,
+        games::werewolf_proxy_post,
         github_webhook::github_webhook,
         websocket::websocket_legacy,
         websocket::websocket_v1,
