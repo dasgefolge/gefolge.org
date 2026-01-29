@@ -15,7 +15,6 @@ use {
 pub(crate) enum Error {
     #[error(transparent)] Json(#[from] serde_json::Error),
     #[error(transparent)] Wheel(#[from] wheel::Error),
-    #[cfg(unix)] #[error(transparent)] Xdg(#[from] xdg::BaseDirectoriesError),
     #[cfg(unix)]
     #[error("missing config file")]
     Missing,
@@ -32,7 +31,7 @@ pub(crate) struct Config {
 impl Config {
     pub(crate) async fn load() -> Result<Self, Error> {
         #[cfg(unix)] {
-            if let Some(config_path) = BaseDirectories::new()?.find_config_file("gefolge.json") {
+            if let Some(config_path) = BaseDirectories::new().find_config_file("gefolge.json") {
                 let buf = fs::read(config_path).await?;
                 Ok(serde_json::from_slice(&buf)?)
             } else {

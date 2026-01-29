@@ -748,6 +748,14 @@ enum MainError {
 
 #[wheel::main(rocket)]
 async fn main(Args { port }: Args) -> Result<(), MainError> {
+    let default_panic_hook = std::panic::take_hook();
+    if let Environment::Production = Environment::default() {
+        std::panic::set_hook(Box::new(move |info| {
+            let _ = wheel::night_report_sync("/net/gefolge/error", Some("thread panic"));
+            default_panic_hook(info)
+        }));
+    }
+    let _ = rustls::crypto::ring::default_provider().install_default();
     let config = Config::load().await?;
     let http_client = reqwest::Client::builder()
         .user_agent(concat!("GefolgeWeb/", env!("CARGO_PKG_VERSION")))
