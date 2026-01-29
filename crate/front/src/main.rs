@@ -398,7 +398,7 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                 }
             } else if user.is_some() {
                 p : "Dein Account wurde noch nicht freigeschaltet. Stelle dich doch bitte einmal kurz im ";
-                : "#general"; //TODO link
+                a(href = "https://discord.com/channels/355761290809180170/355761290809180171") : "#general";
                 : " vor und warte, bis ein admin dich bestätigt.";
             } else {
                 p : "Du hast dich erfolgreich mit Discord angemeldet, bist aber nicht im Gefolge Discord server.";
@@ -485,7 +485,7 @@ async fn event_page(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>) -> Res
         html! {
             : "events";
         },
-    ]), "Das Gefolge — Events", content).await?)
+    ]), "Events — Das Gefolge", content).await?)
 }
 
 struct ProxyHttpClient(reqwest::Client);
@@ -494,7 +494,7 @@ struct Headers(reqwest::header::HeaderMap);
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for Headers {
-    type Error = FlaskProxyError;
+    type Error = ProxyError;
 
     async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         let mut reqwest_headers = reqwest::header::HeaderMap::default();
@@ -515,7 +515,7 @@ impl<'r> FromRequest<'r> for Headers {
 }
 
 #[derive(Debug, thiserror::Error, rocket_util::Error)]
-enum FlaskProxyError {
+enum ProxyError {
     #[error(transparent)] InvalidHeaderName(#[from] reqwest::header::InvalidHeaderName),
     #[error(transparent)] InvalidHeaderValue(#[from] reqwest::header::InvalidHeaderValue),
     #[error(transparent)] Reqwest(#[from] reqwest::Error),
@@ -524,7 +524,7 @@ enum FlaskProxyError {
     InternalServerError(String),
 }
 
-fn proxy_headers(headers: Headers, discord_user: Option<DiscordUser>) -> Result<reqwest::header::HeaderMap, FlaskProxyError> {
+fn proxy_headers(headers: Headers, discord_user: Option<DiscordUser>) -> Result<reqwest::header::HeaderMap, ProxyError> {
     let mut headers = headers.0;
     headers.insert(reqwest::header::HOST, reqwest::header::HeaderValue::from_static("gefolge.org"));
     headers.insert(reqwest::header::HeaderName::from_static("x-forwarded-proto"), reqwest::header::HeaderValue::from_static("https"));
@@ -537,7 +537,7 @@ fn proxy_headers(headers: Headers, discord_user: Option<DiscordUser>) -> Result<
 }
 
 #[derive(Responder)]
-enum FlaskProxyResponse {
+enum ProxyResponse {
     Proxied(Response<reqwest::Response>),
     Status(Status),
     #[response(status = 401)]
@@ -548,9 +548,9 @@ enum FlaskProxyResponse {
 }
 
 #[rocket::get("/api")]
-async fn flask_proxy_get_api(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers) -> Result<FlaskProxyResponse, FlaskProxyError> {
+async fn flask_proxy_get_api(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers) -> Result<ProxyResponse, ProxyError> {
     if me.is_none() {
-        return Ok(FlaskProxyResponse::Authenticate {
+        return Ok(ProxyResponse::Authenticate {
             inner: (),
             www_authenticate: Header::new("WWW-Authenticate", "Basic realm=\"Gefolge\", charset=\"UTF-8\""),
         })
@@ -559,15 +559,15 @@ async fn flask_proxy_get_api(proxy_http_client: &State<ProxyHttpClient>, me: Opt
     url.set_query(origin.0.query().map(|query| query.as_str()));
     let response = proxy_http_client.0.get(url).headers(proxy_headers(headers, me)?).send().await?;
     if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR {
-        return Err(FlaskProxyError::InternalServerError(response.text().await?))
+        return Err(ProxyError::InternalServerError(response.text().await?))
     }
-    Ok(FlaskProxyResponse::Proxied(Response(response)))
+    Ok(ProxyResponse::Proxied(Response(response)))
 }
 
 #[rocket::get("/api/<path..>")]
-async fn flask_proxy_get_api_children(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>) -> Result<FlaskProxyResponse, FlaskProxyError> {
+async fn flask_proxy_get_api_children(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>) -> Result<ProxyResponse, ProxyError> {
     if me.is_none() {
-        return Ok(FlaskProxyResponse::Authenticate {
+        return Ok(ProxyResponse::Authenticate {
             inner: (),
             www_authenticate: Header::new("WWW-Authenticate", "Basic realm=\"Gefolge\", charset=\"UTF-8\""),
         })
@@ -577,41 +577,76 @@ async fn flask_proxy_get_api_children(proxy_http_client: &State<ProxyHttpClient>
     url.set_query(origin.0.query().map(|query| query.as_str()));
     let response = proxy_http_client.0.get(url).headers(proxy_headers(headers, me)?).send().await?;
     if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR {
-        return Err(FlaskProxyError::InternalServerError(response.text().await?))
+        return Err(ProxyError::InternalServerError(response.text().await?))
     }
-    Ok(FlaskProxyResponse::Proxied(Response(response)))
+    Ok(ProxyResponse::Proxied(Response(response)))
+}
+
+#[rocket::get("/games/werewolf")]
+async fn werewolf_proxy_get_index(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers) -> Result<ProxyResponse, ProxyError> {
+    let mut url = Url::parse("http://127.0.0.1:18831/games/werewolf")?;
+    url.set_query(origin.0.query().map(|query| query.as_str()));
+    let response = proxy_http_client.0.get(url).headers(proxy_headers(headers, me)?).send().await?;
+    if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR {
+        return Err(ProxyError::InternalServerError(response.text().await?))
+    }
+    Ok(ProxyResponse::Proxied(Response(response)))
+}
+
+#[rocket::get("/games/werewolf/<path..>")]
+async fn werewolf_proxy_get_children(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>) -> Result<ProxyResponse, ProxyError> {
+    let mut url = Url::parse("http://127.0.0.1:18831/games/werewolf")?;
+    url.path_segments_mut().expect("proxy URL is cannot-be-a-base").extend(path);
+    url.set_query(origin.0.query().map(|query| query.as_str()));
+    let response = proxy_http_client.0.get(url).headers(proxy_headers(headers, me)?).send().await?;
+    if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR {
+        return Err(ProxyError::InternalServerError(response.text().await?))
+    }
+    Ok(ProxyResponse::Proxied(Response(response)))
+}
+
+#[rocket::post("/games/werewolf/<path..>", data = "<data>")]
+async fn werewolf_proxy_post(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>, data: Vec<u8>) -> Result<ProxyResponse, ProxyError> {
+    let mut url = Url::parse("http://127.0.0.1:18831/games/werewolf")?;
+    url.path_segments_mut().expect("proxy URL is cannot-be-a-base").extend(path);
+    url.set_query(origin.0.query().map(|query| query.as_str()));
+    let response = proxy_http_client.0.post(url).headers(proxy_headers(headers, me)?).body(data).send().await?;
+    if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR {
+        return Err(ProxyError::InternalServerError(response.text().await?))
+    }
+    Ok(ProxyResponse::Proxied(Response(response)))
 }
 
 #[rocket::get("/<path..>")]
-async fn flask_proxy_get(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>) -> Result<FlaskProxyResponse, FlaskProxyError> {
+async fn flask_proxy_get(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>) -> Result<ProxyResponse, ProxyError> {
     if Segments::<Path>::get(&path, 0).map_or(true, |prefix| !matches!(prefix, "event" | "games" | "me" | "mensch" | "wiki")) {
         // only forward the directories that are actually served by the proxy to prevent internal server errors on malformed requests from spambots
-        return Ok(FlaskProxyResponse::Status(Status::NotFound))
+        return Ok(ProxyResponse::Status(Status::NotFound))
     }
     let mut url = Url::parse("http://127.0.0.1:18822/")?;
     url.path_segments_mut().expect("proxy URL is cannot-be-a-base").extend(path);
     url.set_query(origin.0.query().map(|query| query.as_str()));
     let response = proxy_http_client.0.get(url).headers(proxy_headers(headers, me)?).send().await?;
     if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR {
-        return Err(FlaskProxyError::InternalServerError(response.text().await?))
+        return Err(ProxyError::InternalServerError(response.text().await?))
     }
-    Ok(FlaskProxyResponse::Proxied(Response(response)))
+    Ok(ProxyResponse::Proxied(Response(response)))
 }
 
 #[rocket::post("/<path..>", data = "<data>")]
-async fn flask_proxy_post(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>, data: Vec<u8>) -> Result<FlaskProxyResponse, FlaskProxyError> {
+async fn flask_proxy_post(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>, data: Vec<u8>) -> Result<ProxyResponse, ProxyError> {
     if Segments::<Path>::get(&path, 0).map_or(true, |prefix| !matches!(prefix, "event" | "games" | "me" | "mensch" | "wiki")) {
         // only forward the directories that are actually served by the proxy to prevent internal server errors on malformed requests from spambots
-        return Ok(FlaskProxyResponse::Status(Status::NotFound))
+        return Ok(ProxyResponse::Status(Status::NotFound))
     }
     let mut url = Url::parse("http://127.0.0.1:18822/")?;
     url.path_segments_mut().expect("proxy URL is cannot-be-a-base").extend(path);
     url.set_query(origin.0.query().map(|query| query.as_str()));
     let response = proxy_http_client.0.post(url).headers(proxy_headers(headers, me)?).body(data).send().await?;
     if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR {
-        return Err(FlaskProxyError::InternalServerError(response.text().await?))
+        return Err(ProxyError::InternalServerError(response.text().await?))
     }
-    Ok(FlaskProxyResponse::Proxied(Response(response)))
+    Ok(ProxyResponse::Proxied(Response(response)))
 }
 
 #[rocket::get("/robots.txt")]
@@ -775,6 +810,9 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
         flask_proxy_get_api,
         flask_proxy_get_api_children,
         flask_proxy_post,
+        werewolf_proxy_get_index,
+        werewolf_proxy_get_children,
+        werewolf_proxy_post,
         robots_txt,
         auth::discord_callback,
         auth::discord_login,
