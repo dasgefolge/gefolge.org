@@ -38,62 +38,62 @@
         {% endfor %}
     </ul>
     {% if person is mensch and (g.user is admin or g.user is treasurer or g.user == person) %}
-        <h1>Guthaben</h1>
-        <p>Mit diesem Guthaben kannst du dich z.B. für <a href="{{url_for('events_index')}}">events</a> anmelden oder <a href="{{url_for('werewolf_cards')}}">Werwölfe-Karten sponsern</a>.</p>
-        <p>
-            Aktuelles Guthaben: {{person.balance}}.
-            {% if person.balance.value > 0 %}
-                Wenn du dein Guthaben ausgezahlt haben möchtest, kontaktiere bitte {{g.treasurer}}.
-            {% elif person.balance.value < 0 and person is not treasurer %}
-                Zahle die Schulden bitte möglichst bald zurück.
-            {% endif %}
-        </p>
-        <h2>Aufladen</h2>
-        <p>Du kannst dein Guthaben per Überweisung an {{g.treasurer}} aufladen.</p>
-        {% set num_cols = (1 if 'konto' in g.treasurer.userdata else 0) + (1 if 'payPal' in g.treasurer.userdata else 0) %}
-        <div class="row">
-            {% if 'konto' in g.treasurer.userdata %}
-                <div class="col-md-{{(12 / num_cols) | int}}">
-                    <h3>SEPA-Überweisung</h3>
-                    <p>
-                        Name: {{g.treasurer.userdata['konto']['name']}}<br />
-                        IBAN: {{g.treasurer.userdata['konto']['iban']}}<br />
-                        BIC: {{g.treasurer.userdata['konto']['bic']}}<br />
-                        Verwendungszweck: gefolge.org {{person.snowflake}}
-                    </p>
-                    <p>Falls deine Überweisung wegen wiederholtem Verwendungszweck abgelehnt wird, kannst du noch irgendwas dahinter schreiben (bitte mit Leerzeichen getrennt).</p>
-                </div>
-            {% endif %}
-            {% if 'payPal' in g.treasurer.userdata %}
-                <div class="col-md-{{(12 / num_cols) | int}}">
-                    <h3>PayPal</h3>
-                    <p><a href="https://www.paypal.me/{{g.treasurer.userdata['payPal']}}">paypal.me/{{g.treasurer.userdata['payPal']}}</a></p>
-                    <p>Bitte schreibe „gefolge.org {{person.snowflake}}“ in die Mitteilung.</p>
-                </div>
-            {% endif %}
-        </div>
-        <h2>Übertragen</h2>
-        <p>Du kannst Geld von deinem Guthaben an andere Gefolgemenschen übertragen.</p>
-        {% if g.user is admin or g.user is treasurer or person.balance.value > 0 %}
-            <p>Wenn du Geld an jemand übertragen hast, kann nur diese Person es dir zurück geben. Achte also bitte genau darauf, dass du den richtigen Empfänger wählst!</p>
-            {{gen_form(transfer_money_form, g.view_node.url)}}
-        {% else %}
-            <p>Du hast aber im Moment kein Guthaben.</p>
+        {% if person.transactions | length > 0 %}
+            <h1>Guthaben</h1>
         {% endif %}
-        {% if person.is_wurstmineberg_member %}
-            <h2>Wurstmineberg</h2>
-            <p>Wenn du möchtest, kannst du Geld von deinem Guthaben für die Finanzierung des server verwenden, auf dem Wurstmineberg läuft. Details siehe <a href="https://wurstmineberg.de/about#finance">Wurstmineberg website</a>.</p>
-            {% if g.user is admin or g.user is treasurer or person.balance.value > 0 %}
-                {{gen_form(wurstmineberg_transfer_money_form, g.view_node.url)}}
-            {% else %}
-                <p>Du hast aber im Moment kein Guthaben.</p>
+        {% if person.balance.value != 0 %}
+            <p>
+                Aktuelles Guthaben: {{person.balance}}.
+                {% if person.balance.value > 0 %}
+                    <strong>Wichtig:</strong> Das Guthabensystem wird eingestellt. Bitte kontaktiere {{g.treasurer}} mit der Info, wohin dein Guthaben ausgezahlt werden soll.
+                {% elif person.balance.value < 0 and person is not treasurer %}
+                    Zahle die Schulden bitte möglichst bald zurück.
+                {% endif %}
+            </p>
+            {% if person.balance.value < 0 %}
+                <h2>Aufladen</h2>
+                <p>Du kannst dein Guthaben per Überweisung an {{g.treasurer}} aufladen. <strong>Wichtig:</strong> Das Guthabensystem wird eingestellt, überweise also bitte nur den exakten Betrag, um deine Schulden zu begleichen.</p>
+                {% set num_cols = (1 if 'konto' in g.treasurer.userdata else 0) + (1 if 'payPal' in g.treasurer.userdata else 0) %}
+                <div class="row">
+                    {% if 'konto' in g.treasurer.userdata %}
+                        <div class="col-md-{{(12 / num_cols) | int}}">
+                            <h3>SEPA-Überweisung</h3>
+                            <p>
+                                Name: {{g.treasurer.userdata['konto']['name']}}<br />
+                                IBAN: {{g.treasurer.userdata['konto']['iban']}}<br />
+                                BIC: {{g.treasurer.userdata['konto']['bic']}}<br />
+                                Verwendungszweck: gefolge.org {{person.snowflake}}
+                            </p>
+                            <p>Falls deine Überweisung wegen wiederholtem Verwendungszweck abgelehnt wird, kannst du noch irgendwas dahinter schreiben (bitte mit Leerzeichen getrennt).</p>
+                        </div>
+                    {% endif %}
+                    {% if 'payPal' in g.treasurer.userdata %}
+                        <div class="col-md-{{(12 / num_cols) | int}}">
+                            <h3>PayPal</h3>
+                            <p><a href="https://www.paypal.me/{{g.treasurer.userdata['payPal']}}">paypal.me/{{g.treasurer.userdata['payPal']}}</a></p>
+                            <p>Bitte schreibe „gefolge.org {{person.snowflake}}“ in die Mitteilung.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            {% elif person.balance.value > 0 %}
+                <h2>Übertragen</h2>
+                <p>Du kannst Geld von deinem Guthaben an andere Gefolgemenschen übertragen.</p>
+                <p>Wenn du Geld an jemand übertragen hast, kann nur diese Person es dir zurück geben. Achte also bitte genau darauf, dass du den richtigen Empfänger wählst!</p>
+                {{gen_form(transfer_money_form, g.view_node.url)}}
+                {% if person.is_wurstmineberg_member %}
+                    <h2>Wurstmineberg</h2>
+                    <p>Wenn du möchtest, kannst du Geld von deinem Guthaben für die Finanzierung des server verwenden, auf dem Wurstmineberg läuft. Details siehe <a href="https://wurstmineberg.de/about#finance">Wurstmineberg website</a>.</p>
+                    {{gen_form(wurstmineberg_transfer_money_form, g.view_node.url)}}
+                {% endif %}
             {% endif %}
         {% endif %}
-        <h2>Transaktionen</h2>
-        <ul>
-            {% for transaction in person.transactions | reverse %}
-                <li>{{transaction.time | dmy_hms}}: {{transaction}}, {{transaction.amount}}{{transaction.details}}</li>
-            {% endfor %}
-        </ul>
+        {% if person.transactions | length > 0 %}
+            <h2>Transaktionen</h2>
+            <ul>
+                {% for transaction in person.transactions | reverse %}
+                    <li>{{transaction.time | dmy_hms}}: {{transaction}}, {{transaction.amount}}{{transaction.details}}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
     {% endif %}
 {% endblock %}
