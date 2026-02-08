@@ -353,7 +353,7 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                     : " • ";
                     a(href = uri!(games::index)) : "Spiele";
                     : " • ";
-                    a(href = "/mensch") : "Menschen und Gäste";
+                    a(href = "/mensch") : "Menschen";
                     : " • ";
                     a(href = uri!(wiki::index)) : "wiki";
                 }

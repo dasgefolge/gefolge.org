@@ -52,6 +52,14 @@ class Person:
         return self == gefolge_web.login.Mensch.treasurer()
 
     @property
+    def is_verein(self):
+        return False
+
+    @property
+    def is_vorstand(self):
+        return False
+
+    @property
     def long_name(self):
         return str(self)
 

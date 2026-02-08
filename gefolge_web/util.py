@@ -428,6 +428,14 @@ def setup(app):
     def treasurer(person):
         return person.is_treasurer
 
+    @app.template_test()
+    def verein(person):
+        return person.is_verein
+
+    @app.template_test()
+    def vorstand(person):
+        return person.is_vorstand
+
     @app.before_request
     def current_time():
         flask.g.now = now()

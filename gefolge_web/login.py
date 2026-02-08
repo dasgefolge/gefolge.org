@@ -24,6 +24,8 @@ import gefolge_web.util
 
 GAST = 784929665478557737 # role ID
 MENSCH = 386753710434287626 # role ID
+VEREIN = 1456376693831766057 # role ID
+VORSTAND = 1456376541754953839 # role ID
 
 class User(gefolge_web.person.Person):
     @property
@@ -121,6 +123,14 @@ class DiscordPerson(User, metaclass=DiscordPersonMeta):
     @property
     def is_authenticated(self):
         return True
+
+    @property
+    def is_verein(self):
+        return str(VEREIN) in self.profile_data.get('roles', [])
+
+    @property
+    def is_vorstand(self):
+        return str(VORSTAND) in self.profile_data.get('roles', [])
 
     @property
     def is_wurstmineberg_member(self):
@@ -409,7 +419,7 @@ def setup(index, app):
         else:
             return flask.abort(400)
 
-    @index.child('mensch', 'Menschen und Gäste', decorators=[mensch_required])
+    @index.child('mensch', 'Menschen', decorators=[mensch_required])
     @gefolge_web.util.template('menschen-index')
     def menschen():
         pass
