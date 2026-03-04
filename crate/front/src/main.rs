@@ -15,7 +15,6 @@ use {
     itertools::Itertools as _,
     log_lock::*,
     rocket::{
-        Responder,
         Rocket,
         State,
         config::SecretKey,
@@ -37,9 +36,13 @@ use {
             FromRequest,
             Request,
         },
-        response::content::{
-            RawHtml,
-            RawText,
+        response::{
+            self,
+            Responder,
+            content::{
+                RawHtml,
+                RawText,
+            },
         },
         uri,
     },
@@ -509,7 +512,7 @@ impl<'r> FromRequest<'r> for Headers {
     }
 }
 
-#[derive(Debug, thiserror::Error, rocket_util::Error)]
+#[derive(Debug, thiserror::Error)]
 enum ProxyError {
     #[error(transparent)] InvalidHeaderName(#[from] reqwest::header::InvalidHeaderName),
     #[error(transparent)] InvalidHeaderValue(#[from] reqwest::header::InvalidHeaderValue),
@@ -519,6 +522,20 @@ enum ProxyError {
     FlaskInternalServerError(String),
     #[error("internal server error in proxied werewolf_web application:\n{0}")]
     WerewolfInternalServerError(String),
+}
+
+impl<'r> Responder<'r, 'static> for ProxyError {
+    fn respond_to(self, request: &'r Request<'_>) -> response::Result<'static> {
+        let status = match self {
+            Self::Reqwest(ref e) if e.is_timeout() => Status::GatewayTimeout,
+            Self::Reqwest(ref e) if e.is_connect() => Status::BadGateway,
+            _ => Status::InternalServerError,
+        };
+        eprintln!("responded with {status} to {} request to {}", request.method(), request.uri());
+        eprintln!("display: {self}");
+        eprintln!("debug: {self:?}");
+        Err(status)
+    }
 }
 
 fn proxy_headers(headers: Headers, discord_user: Option<DiscordUser>) -> Result<reqwest::header::HeaderMap, ProxyError> {
@@ -648,6 +665,9 @@ async fn unauthorized(request: &Request<'_>) -> Result<RawHtml<String>, PageErro
                 : ".";
             }
         }
+        p {
+            a(href = uri!(index)) : "Zurück zur Hauptseite von gefolge.org";
+        }
     }).await
 }
 
@@ -683,8 +703,35 @@ async fn internal_server_error(request: &Request<'_>) -> Result<RawHtml<String>,
                 : ".";
             }
         }
+    }).await
+}
+
+#[rocket::catch(502)]
+async fn bad_gateway(request: &Request<'_>) -> Result<RawHtml<String>, PageError> {
+    let db_pool = request.guard::<&State<PgPool>>().await.expect("missing database pool");
+    let me = request.guard::<DiscordUser>().await.succeeded();
+    let uri = request.guard::<Origin<'_>>().await.succeeded().unwrap_or_else(|| Origin(uri!(index)));
+    page(db_pool.begin().await?, me, &uri, PageKind::Error, "Bad Gateway — Das Gefolge", html! {
+        h1 : "Fehler 502: Bad Gateway";
         p {
-            a(href = uri!(index)) : "Zurück zur Hauptseite von gefolge.org";
+            : "Der Server für diese Seite ist aktuell offline. Es wird vermutlich gerade ein Update geladen, in diesem Fall sollte es in ein paar Minuten wieder Funktionieren. Falls dieser Fehler weiterhin auftritt, melde ihn bitte im ";
+            a(href = "https://discord.com/channels/355761290809180170/397832322432499712") : "#dev";
+            : ".";
+        }
+    }).await
+}
+
+#[rocket::catch(504)]
+async fn gateway_timeout(request: &Request<'_>) -> Result<RawHtml<String>, PageError> {
+    let db_pool = request.guard::<&State<PgPool>>().await.expect("missing database pool");
+    let me = request.guard::<DiscordUser>().await.succeeded();
+    let uri = request.guard::<Origin<'_>>().await.succeeded().unwrap_or_else(|| Origin(uri!(index)));
+    page(db_pool.begin().await?, me, &uri, PageKind::Error, "Gateway Timeout — Das Gefolge", html! {
+        h1 : "Fehler 504: Gateway Timeout";
+        p {
+            : "Der Server für diese Seite hat zu lang gebraucht, um die Seite zu senden. Versuche es bitte nochmal. Falls dieser Fehler dann weiterhin auftritt, melde ihn bitte im ";
+            a(href = "https://discord.com/channels/355761290809180170/397832322432499712") : "#dev";
+            : ".";
         }
     }).await
 }
@@ -804,6 +851,8 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
         unauthorized,
         not_found,
         internal_server_error,
+        bad_gateway,
+        gateway_timeout,
         fallback_catcher,
     ])
     .attach(OAuth2::<auth::Discord>::custom(rocket_oauth2::HyperRustlsAdapter::default(), OAuthConfig::new(
