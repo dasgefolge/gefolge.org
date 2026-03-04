@@ -57,7 +57,7 @@ pub(crate) async fn werewolf_proxy_get_index(proxy_http_client: &State<ProxyHttp
     url.set_query(origin.0.query().map(|query| query.as_str()));
     let response = proxy_http_client.0.get(url).headers(proxy_headers(headers, me)?).send().await?;
     if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR {
-        return Err(ProxyError::InternalServerError(response.text().await?))
+        return Err(ProxyError::WerewolfInternalServerError(response.text().await?))
     }
     Ok(ProxyResponse::Proxied(Response(response)))
 }
@@ -69,7 +69,7 @@ pub(crate) async fn werewolf_proxy_get_children(proxy_http_client: &State<ProxyH
     url.set_query(origin.0.query().map(|query| query.as_str()));
     let response = proxy_http_client.0.get(url).headers(proxy_headers(headers, me)?).send().await?;
     if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR {
-        return Err(ProxyError::InternalServerError(response.text().await?))
+        return Err(ProxyError::WerewolfInternalServerError(response.text().await?))
     }
     Ok(ProxyResponse::Proxied(Response(response)))
 }
@@ -81,7 +81,7 @@ pub(crate) async fn werewolf_proxy_post(proxy_http_client: &State<ProxyHttpClien
     url.set_query(origin.0.query().map(|query| query.as_str()));
     let response = proxy_http_client.0.post(url).headers(proxy_headers(headers, me)?).body(data).send().await?;
     if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR {
-        return Err(ProxyError::InternalServerError(response.text().await?))
+        return Err(ProxyError::WerewolfInternalServerError(response.text().await?))
     }
     Ok(ProxyResponse::Proxied(Response(response)))
 }

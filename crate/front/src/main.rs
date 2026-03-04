@@ -516,7 +516,9 @@ enum ProxyError {
     #[error(transparent)] Reqwest(#[from] reqwest::Error),
     #[error(transparent)] Url(#[from] url::ParseError),
     #[error("internal server error in proxied Flask application:\n{0}")]
-    InternalServerError(String),
+    FlaskInternalServerError(String),
+    #[error("internal server error in proxied werewolf_web application:\n{0}")]
+    WerewolfInternalServerError(String),
 }
 
 fn proxy_headers(headers: Headers, discord_user: Option<DiscordUser>) -> Result<reqwest::header::HeaderMap, ProxyError> {
@@ -554,7 +556,7 @@ async fn flask_proxy_get_api(proxy_http_client: &State<ProxyHttpClient>, me: Opt
     url.set_query(origin.0.query().map(|query| query.as_str()));
     let response = proxy_http_client.0.get(url).headers(proxy_headers(headers, me)?).send().await?;
     if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR {
-        return Err(ProxyError::InternalServerError(response.text().await?))
+        return Err(ProxyError::FlaskInternalServerError(response.text().await?))
     }
     Ok(ProxyResponse::Proxied(Response(response)))
 }
@@ -572,7 +574,7 @@ async fn flask_proxy_get_api_children(proxy_http_client: &State<ProxyHttpClient>
     url.set_query(origin.0.query().map(|query| query.as_str()));
     let response = proxy_http_client.0.get(url).headers(proxy_headers(headers, me)?).send().await?;
     if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR {
-        return Err(ProxyError::InternalServerError(response.text().await?))
+        return Err(ProxyError::FlaskInternalServerError(response.text().await?))
     }
     Ok(ProxyResponse::Proxied(Response(response)))
 }
@@ -588,7 +590,7 @@ async fn flask_proxy_get(proxy_http_client: &State<ProxyHttpClient>, me: Option<
     url.set_query(origin.0.query().map(|query| query.as_str()));
     let response = proxy_http_client.0.get(url).headers(proxy_headers(headers, me)?).send().await?;
     if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR {
-        return Err(ProxyError::InternalServerError(response.text().await?))
+        return Err(ProxyError::FlaskInternalServerError(response.text().await?))
     }
     Ok(ProxyResponse::Proxied(Response(response)))
 }
@@ -604,7 +606,7 @@ async fn flask_proxy_post(proxy_http_client: &State<ProxyHttpClient>, me: Option
     url.set_query(origin.0.query().map(|query| query.as_str()));
     let response = proxy_http_client.0.post(url).headers(proxy_headers(headers, me)?).body(data).send().await?;
     if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR {
-        return Err(ProxyError::InternalServerError(response.text().await?))
+        return Err(ProxyError::FlaskInternalServerError(response.text().await?))
     }
     Ok(ProxyResponse::Proxied(Response(response)))
 }
