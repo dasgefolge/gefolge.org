@@ -221,6 +221,8 @@ async fn page(mut transaction: Transaction<'_, Postgres>, me: impl LoginState, u
                 : " • ";
                 a(href = "https://fenhl.net/disc") : "disclaimer";
                 : " • ";
+                a(href = "https://status.gefolge.org/") : "Status";
+                : " • ";
                 a(href = "https://github.com/dasgefolge/gefolge.org") : "source code";
             }
             p {
@@ -759,9 +761,6 @@ async fn fallback_catcher(status: Status, request: &Request<'_>) -> Result<RawHt
                 a(href = "https://discord.com/channels/355761290809180170/397832322432499712") : "#dev";
                 : ".";
             }
-        }
-        p {
-            a(href = uri!(index)) : "Zurück zur Hauptseite von gefolge.org";
         }
     }).await
 }
