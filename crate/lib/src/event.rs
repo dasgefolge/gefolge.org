@@ -130,6 +130,10 @@ impl Event {
         })
     }
 
+    pub fn name(&self) -> Option<&str> {
+        self.name.as_deref()
+    }
+
     pub fn to_html(&self, id: &str) -> RawHtml<String> {
         html! {
             a(href = format!("/event/{id}")) : self.name.as_deref().unwrap_or(id);
