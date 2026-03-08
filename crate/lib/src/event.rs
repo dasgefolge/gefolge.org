@@ -59,6 +59,10 @@ pub struct Event {
 }
 
 impl Event {
+    pub async fn all(db_pool: impl PgExecutor<'_>) -> sqlx::Result<Vec<Self>> { //TODO return stream
+        Ok(sqlx::query_scalar(r#"SELECT value AS "value: Json<Self>" FROM json_events ORDER BY start ASC NULLS LAST"#).fetch_all(db_pool).await?.into_iter().map(|Json(value)| value).collect())
+    }
+
     pub async fn load(db_pool: impl PgExecutor<'_>, event_id: &str) -> sqlx::Result<Option<Self>> {
         Ok(sqlx::query_scalar(r#"SELECT value AS "value: Json<Self>" FROM json_events WHERE id = $1"#).bind(event_id).fetch_optional(db_pool).await?.map(|Json(value)| value))
     }
