@@ -25,6 +25,7 @@ use {
         PgExecutor,
         Postgres,
         Transaction,
+        prelude::*,
         types::Json,
     },
     crate::{
@@ -59,8 +60,8 @@ pub struct Event {
 }
 
 impl Event {
-    pub async fn all(db_pool: impl PgExecutor<'_>) -> sqlx::Result<Vec<Self>> { //TODO return stream
-        Ok(sqlx::query_scalar(r#"SELECT value AS "value: Json<Self>" FROM json_events ORDER BY start ASC NULLS LAST"#).fetch_all(db_pool).await?.into_iter().map(|Json(value)| value).collect())
+    pub async fn all(db_pool: impl PgExecutor<'_>) -> sqlx::Result<Vec<(String, Self)>> { //TODO return stream
+        Ok(sqlx::query(r#"SELECT id, value AS "value: Json<Self>" FROM json_events ORDER BY start ASC NULLS LAST"#).fetch_all(db_pool).await?.into_iter().map(|row| (row.get("id"), row.get::<Json<_>, _>("value").0)).collect())
     }
 
     pub async fn load(db_pool: impl PgExecutor<'_>, event_id: &str) -> sqlx::Result<Option<Self>> {
