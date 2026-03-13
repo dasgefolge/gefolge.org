@@ -1,0 +1,15 @@
+[package]
+name = "peter-python"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+publish = false
+
+[lib]
+name = "peter"
+crate-type = ["cdylib"]
+
+[dependencies]
+peter-ipc = { path = "../peter-ipc" }
+pyo3 = { version = "0.28", features = ["extension-module"] }
+serenity = { version = "0.12", default-features = false, features = ["model", "utils"] }

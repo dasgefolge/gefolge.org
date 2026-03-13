@@ -1,0 +1,11 @@
+[package]
+name = "peter-ipc"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+publish = false
+
+[dependencies]
+gefolge-web-lib = { path = "../lib" }
+serenity = "0.12"
+serenity-utils = { git = "https://github.com/fenhl/serenity-utils" }

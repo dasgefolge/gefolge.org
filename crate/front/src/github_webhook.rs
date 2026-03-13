@@ -26,10 +26,8 @@ use {
             IoResultExt as _,
         },
     },
-    crate::{
-        config::Config,
-        websocket,
-    },
+    gefolge_web_lib::config::Config,
+    crate::websocket,
 };
 
 macro_rules! guard_try {

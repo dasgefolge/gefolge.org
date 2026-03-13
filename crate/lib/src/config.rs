@@ -1,6 +1,17 @@
 use {
+    std::collections::{
+        BTreeMap,
+        BTreeSet,
+    },
     serde::Deserialize,
-    serenity::model::prelude::*,
+    serenity::{
+        model::prelude::*,
+        prelude::*,
+    },
+    crate::peter::{
+        twitch,
+        werewolf,
+    },
 };
 #[cfg(unix)] use {
     xdg::BaseDirectories,
@@ -12,7 +23,7 @@ use {
 };
 
 #[derive(Debug, thiserror::Error)]
-pub(crate) enum Error {
+pub enum Error {
     #[error(transparent)] Json(#[from] serde_json::Error),
     #[error(transparent)] Wheel(#[from] wheel::Error),
     #[cfg(unix)]
@@ -20,16 +31,21 @@ pub(crate) enum Error {
     Missing,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct Config {
-    pub(crate) discord: ConfigDiscord,
-    pub(crate) github_webhook_secret: String,
-    pub(crate) secret_key: String,
+pub struct Config {
+    pub discord: Discord,
+    pub github_webhook_secret: String,
+    pub secret_key: String,
+    pub(crate) twitch: twitch::Config,
+}
+
+impl TypeMapKey for Config {
+    type Value = Self;
 }
 
 impl Config {
-    pub(crate) async fn load() -> Result<Self, Error> {
+    pub async fn load() -> Result<Self, Error> {
         #[cfg(unix)] {
             if let Some(config_path) = BaseDirectories::new().find_config_file("gefolge.json") {
                 let buf = fs::read(config_path).await?;
@@ -46,8 +62,19 @@ impl Config {
 
 #[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct ConfigDiscord {
+pub struct Discord {
+    pub bot_token: String,
+    pub(crate) channels: Channels,
     #[serde(rename = "clientID")]
-    pub(crate) client_id: ApplicationId,
-    pub(crate) client_secret: String,
+    pub client_id: ApplicationId,
+    pub client_secret: String,
+    pub(crate) self_assignable_roles: BTreeSet<RoleId>,
+    pub(crate) werewolf: BTreeMap<GuildId, werewolf::Config>,
+}
+
+#[derive(Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Channels {
+    pub ignored: BTreeSet<ChannelId>,
+    pub voice: ChannelId,
 }

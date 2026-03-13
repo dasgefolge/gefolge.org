@@ -12,6 +12,7 @@ use {
         general_purpose::STANDARD as BASE64,
     },
     chrono::prelude::*,
+    futures::future::FutureExt as _,
     itertools::Itertools as _,
     log_lock::*,
     rocket::{
@@ -68,12 +69,12 @@ use {
     },
     url::Url,
     gefolge_web_lib::{
+        config::Config,
         event::Event,
         time::MaybeLocalDateTime,
     },
     crate::{
         auth::DiscordUser,
-        config::Config,
         time::format_date_range,
         user::{
             Mensch,
@@ -85,7 +86,6 @@ use {
 include!(concat!(env!("OUT_DIR"), "/static_files.rs"));
 
 mod auth;
-mod config;
 mod games;
 mod github_webhook;
 mod time;
@@ -782,10 +782,13 @@ struct Args {
 #[derive(Debug, thiserror::Error)]
 enum MainError {
     #[error(transparent)] Base64(#[from] base64::DecodeError),
-    #[error(transparent)] Config(#[from] config::Error),
+    #[error(transparent)] Config(#[from] gefolge_web_lib::config::Error),
+    #[error(transparent)] Peter(#[from] gefolge_web_lib::peter::Error),
     #[error(transparent)] Reqwest(#[from] reqwest::Error),
     #[error(transparent)] Rocket(#[from] rocket::Error),
+    #[error(transparent)] Serenity(#[from] serenity::Error),
     #[error(transparent)] Sql(#[from] sqlx::Error),
+    #[error(transparent)] Task(#[from] tokio::task::JoinError),
 }
 
 #[wheel::main(rocket)]
@@ -811,7 +814,9 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
         .user_agent(concat!("GefolgeWeb/", env!("CARGO_PKG_VERSION")))
         .timeout(Duration::from_secs(90))
         .build()?;
-    let Rocket { .. } = rocket::custom(rocket::Config {
+    let discord_builder = serenity_utils::builder(config.discord.bot_token.clone()).await?;
+    let db_pool = PgPool::connect_with(PgConnectOptions::default().username("fenhl").database("gefolge").application_name("gefolge-web")).await?;
+    let rocket = rocket::custom(rocket::Config {
         secret_key: SecretKey::from(&BASE64.decode(&config.secret_key)?),
         log_level: rocket::config::LogLevel::Critical,
         port: port.unwrap_or_else(|| if is_dev() { 24816 } else { 24817 }),
@@ -860,11 +865,23 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
         config.discord.client_secret.to_string(),
         Some(uri!(base_uri(), auth::discord_callback).to_string()),
     )))
-    .manage(config)
-    .manage(PgPool::connect_with(PgConnectOptions::default().username("fenhl").database("gefolge").application_name("gefolge-web")).await?)
+    .manage(config.clone())
+    .manage(db_pool.clone())
     .manage(http_client)
     .manage(ProxyHttpClient(proxy_http_client))
     .manage(Arc::<RwLock<HashMap<u64, ricochet_robots_websocket::Lobby<User>>>>::default())
-    .launch().await?;
+    .ignite().await?;
+    let discord_builder = gefolge_web_lib::peter::configure_builder(discord_builder, config, db_pool, rocket.shutdown()).await?;
+    let discord_task = tokio::spawn(discord_builder.run()).map(|res| match res {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(e)) => Err(MainError::from(e)),
+        Err(e) => Err(MainError::from(e)),
+    });
+    let rocket_task = tokio::spawn(rocket.launch()).map(|res| match res {
+        Ok(Ok(Rocket { .. })) => Ok(()),
+        Ok(Err(e)) => Err(MainError::from(e)),
+        Err(e) => Err(MainError::from(e)),
+    });
+    let ((), ()) = tokio::try_join!(discord_task, rocket_task)?;
     Ok(())
 }

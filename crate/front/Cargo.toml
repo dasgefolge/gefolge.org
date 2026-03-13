@@ -10,19 +10,26 @@ dev = []
 production = []
 local = []
 
+[build-dependencies]
+futures = "0.3"
+git2 = "0.20"
+thiserror = "2"
+tokio = "1"
+wheel = { git = "https://github.com/fenhl/wheel" }
+
 [dependencies]
 async-proto = { version = "0.26", features = ["chrono-tz", "tokio-tungstenite021"] }
 base64 = "0.22"
-chrono = { version = "0.4.24", features = ["serde", "clock"], default-features = false }
+chrono = { version = "0.4", features = ["serde", "clock"], default-features = false }
 chrono-tz = { version = "0.10", features = ["serde"] }
-clap = { version = "4.5.34", features = ["derive"] }
-derive_more = { version = "2.0.1", features = ["deref", "into"] }
-futures = "0.3.26"
+clap = { version = "4", features = ["derive"] }
+derive_more = { version = "2", features = ["deref", "into"] }
+futures = "0.3"
 gefolge-web-lib = { path = "../lib" }
-hmac = "0.12.1"
-itermore = { version = "0.8.0", features = ["array_chunks"] }
+hmac = "0.12"
+itermore = { version = "0.8", features = ["array_chunks"] }
 itertools = "0.14"
-lazy-regex = "3.4.1"
+lazy-regex = "3"
 log-lock = { git = "https://github.com/fenhl/log-lock" }
 pulldown-cmark = { git = "https://github.com/fenhl/pulldown-cmark", branch = "rocket-wiki", default-features = false, features = ["simd", "html"] }
 reqwest = { version = "0.13", default-features = false, features = ["charset", "gzip", "hickory-dns", "http2", "rustls-no-provider", "system-proxy", "zstd"] }
@@ -33,24 +40,14 @@ rocket-util = { git = "https://github.com/fenhl/rocket-util", features = ["reqwe
 rocket_oauth2 = { version = "0.5" }
 rocket_ws = { version = "0.1" }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
-semver = { version = "1.0.26", features = ["serde"] }
-serde = { version = "1.0.152", features = ["derive"] }
-serde_json = "1.0.93"
-serenity = { default-features = false, features = ["model", "rustls_backend"], version = "0.12" }
-sha2 = "0.10.9"
+semver = { version = "1", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+serenity = { version = "0.12", default-features = false, features = ["model", "rustls_backend", "temp_cache"] }
+serenity-utils = { git = "https://github.com/fenhl/serenity-utils" }
+sha2 = "0.10"
 sqlx = { version = "0.8", features = ["chrono", "json", "macros", "postgres", "runtime-tokio-rustls"] }
 thiserror = "2"
-tokio = { version = "1.26.0", features = ["macros", "process", "sync", "time"] }
-toml = "0.9.5"
-url = "2.3.1"
+tokio = { version = "1", features = ["macros", "process", "sync", "time"] }
+toml = "0.9"
+url = "2"
 wheel = { git = "https://github.com/fenhl/wheel", features = ["chrono", "rocket", "reqwest", "serde_json"] }
-
-[target."cfg(unix)".dependencies]
-xdg = "3"
-
-[build-dependencies]
-futures = "0.3.26"
-git2 = "0.20"
-thiserror = "2"
-tokio = "1.26.0"
-wheel = { git = "https://github.com/fenhl/wheel" }

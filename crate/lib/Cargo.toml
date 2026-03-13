@@ -9,7 +9,12 @@ publish = false
 async-proto = { version = "0.26", features = ["chrono-tz", "semver"] }
 chrono = { version = "0.4", features = ["serde"] }
 chrono-tz = { version = "0.10", features = ["serde"] }
+futures = "0.3"
+itertools = "0.14"
 lazy-regex = "3"
+num-traits = "0.2"
+quantum-werewolf = { git = "https://github.com/dasgefolge/quantum-werewolf" }
+rand = "0.10"
 rocket = { features = ["secrets"], version = "0.5" }
 rocket-util = { git = "https://github.com/fenhl/rocket-util", features = ["reqwest"] }
 semver = "1"
@@ -17,6 +22,12 @@ serde = "1"
 serde_json = { package = "serde_json_path_to_error", version = "0.1" } #TODO which features to use for correct decimal handling? Or use async-json instead?
 serde_with = "3"
 serenity = { version = "0.12", default-features = false, features = ["model", "rustls_backend"] }
+serenity-utils = { git = "https://github.com/fenhl/serenity-utils" }
 sqlx = { version = "0.8", features = ["json", "macros", "postgres", "runtime-tokio-rustls"] }
 thiserror = "2"
-wheel = { git = "https://github.com/fenhl/wheel", features = ["chrono"] }
+tokio = { version = "1", features = ["time"] }
+twitch_helix = { git = "https://github.com/fenhl/rust-twitch-helix" } #TODO publish to crates.io
+wheel = { git = "https://github.com/fenhl/wheel", features = ["chrono", "tungstenite021"] }
+
+[target."cfg(unix)".dependencies]
+xdg = "3"
