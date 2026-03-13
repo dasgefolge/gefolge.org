@@ -48,6 +48,6 @@ sha2 = "0.10"
 sqlx = { version = "0.8", features = ["chrono", "json", "macros", "postgres", "runtime-tokio-rustls"] }
 thiserror = "2"
 tokio = { version = "1", features = ["macros", "process", "sync", "time"] }
-toml = "0.9"
+toml = "1"
 url = "2"
-wheel = { git = "https://github.com/fenhl/wheel", features = ["chrono", "rocket", "reqwest", "serde_json"] }
+wheel = { git = "https://github.com/fenhl/wheel", features = ["chrono", "night", "rocket", "reqwest", "serde_json"] }
