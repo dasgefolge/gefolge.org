@@ -25,7 +25,7 @@ chrono-tz = { version = "0.10", features = ["serde"] }
 clap = { version = "4", features = ["derive"] }
 derive_more = { version = "2", features = ["deref", "into"] }
 futures = "0.3"
-gefolge-web-lib = { path = "../lib" }
+gefolge-web-lib = { path = "../lib", features = ["peter"] }
 hmac = "0.12"
 itermore = { version = "0.8", features = ["array_chunks"] }
 itertools = "0.14"

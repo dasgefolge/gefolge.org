@@ -1,5 +1,11 @@
 #!/usr/bin/env pwsh
 
+cargo check -p gefolge-web-lib
+if (-not $?)
+{
+    throw 'Native Failure'
+}
+
 cargo check
 if (-not $?)
 {

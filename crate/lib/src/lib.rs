@@ -5,6 +5,6 @@ pub mod config;
 pub mod db;
 pub mod event;
 pub mod money;
-pub mod peter;
+#[cfg(feature = "peter")] pub mod peter;
 pub mod time;
 pub mod websocket;

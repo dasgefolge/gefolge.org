@@ -1,17 +1,7 @@
 use {
-    std::collections::{
-        BTreeMap,
-        BTreeSet,
-    },
+    std::collections::BTreeSet,
     serde::Deserialize,
-    serenity::{
-        model::prelude::*,
-        prelude::*,
-    },
-    crate::peter::{
-        twitch,
-        werewolf,
-    },
+    serenity::model::prelude::*,
 };
 #[cfg(unix)] use {
     xdg::BaseDirectories,
@@ -20,6 +10,14 @@ use {
 #[cfg(windows)] use {
     tokio::process::Command,
     wheel::traits::AsyncCommandOutputExt as _,
+};
+#[cfg(feature = "peter")] use {
+    std::collections::BTreeMap,
+    serenity::prelude::*,
+    crate::peter::{
+        twitch,
+        werewolf,
+    },
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -37,9 +35,10 @@ pub struct Config {
     pub discord: Discord,
     pub github_webhook_secret: String,
     pub secret_key: String,
-    pub(crate) twitch: twitch::Config,
+    #[cfg(feature = "peter")] pub(crate) twitch: twitch::Config,
 }
 
+#[cfg(feature = "peter")]
 impl TypeMapKey for Config {
     type Value = Self;
 }
@@ -64,12 +63,12 @@ impl Config {
 #[serde(rename_all = "camelCase")]
 pub struct Discord {
     pub bot_token: String,
-    pub(crate) channels: Channels,
+    #[cfg(feature = "peter")] pub(crate) channels: Channels,
     #[serde(rename = "clientID")]
     pub client_id: ApplicationId,
     pub client_secret: String,
-    pub(crate) self_assignable_roles: BTreeSet<RoleId>,
-    pub(crate) werewolf: BTreeMap<GuildId, werewolf::Config>,
+    #[cfg(feature = "peter")] pub(crate) self_assignable_roles: BTreeSet<RoleId>,
+    #[cfg(feature = "peter")] pub(crate) werewolf: BTreeMap<GuildId, werewolf::Config>,
 }
 
 #[derive(Clone, Deserialize)]
