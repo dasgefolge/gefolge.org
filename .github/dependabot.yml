@@ -1,0 +1,14 @@
+version: 2
+registries:
+  github:
+    type: git
+    url: ssh://git@github.com
+    username: x-access-token
+    password: ${{secrets.MY_GITHUB_PERSONAL_ACCESS_TOKEN}}
+updates:
+  - package-ecosystem: "cargo"
+    directory: "/"
+    registries:
+      - github
+    schedule:
+      interval: "daily"
