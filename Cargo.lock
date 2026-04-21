@@ -180,11 +180,11 @@ dependencies = [
 
 [[package]]
 name = "async-proto"
-version = "0.26.12"
+version = "0.26.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6cdd6101ab7a15f7406bf5427fbe0c00f70f94a0fbcba666837e0576a7ac75e5"
+checksum = "0fdbf6e7d8365e8efa4d6cc44f96dc8ec5379072be38d79dadb2265a97a8386d"
 dependencies = [
- "async-proto-derive 0.26.12",
+ "async-proto-derive 0.26.14",
  "byteorder",
  "chrono-tz",
  "fallible_collections 0.5.1",
@@ -209,9 +209,9 @@ dependencies = [
 
 [[package]]
 name = "async-proto-derive"
-version = "0.26.12"
+version = "0.26.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36ed38e9b6de72b6f8fcd3bda16007a92b7da2525dd4f7d4c4b493ae1c10b466"
+checksum = "e129a62bd3cadcb3cf9428c1b0ec95f7a138032fa7cf314e31a0fd099688ab8b"
 dependencies = [
  "itertools 0.14.0",
  "proc-macro2",
@@ -1221,7 +1221,7 @@ dependencies = [
 name = "gefolge-web"
 version = "2.0.0"
 dependencies = [
- "async-proto 0.26.12",
+ "async-proto 0.26.14",
  "base64 0.22.1",
  "chrono",
  "chrono-tz",
@@ -1277,7 +1277,7 @@ dependencies = [
 name = "gefolge-web-lib"
 version = "2.0.0"
 dependencies = [
- "async-proto 0.26.12",
+ "async-proto 0.26.14",
  "chrono",
  "chrono-tz",
  "futures",
@@ -5136,7 +5136,7 @@ name = "wheel"
 version = "0.15.3"
 source = "git+https://github.com/fenhl/wheel#012ee8e7dcd4cdfa5e520fb2145b5b275a1ed174"
 dependencies = [
- "async-proto 0.26.12",
+ "async-proto 0.26.14",
  "async-trait",
  "chrono",
  "clap",
