@@ -5134,7 +5134,7 @@ dependencies = [
 [[package]]
 name = "wheel"
 version = "0.15.3"
-source = "git+https://github.com/fenhl/wheel#012ee8e7dcd4cdfa5e520fb2145b5b275a1ed174"
+source = "git+https://github.com/fenhl/wheel#f31dc83cf8b5ac39f825fdaa9c7636ba52ee49b4"
 dependencies = [
  "async-proto 0.26.14",
  "async-trait",
@@ -5160,7 +5160,7 @@ dependencies = [
 [[package]]
 name = "wheel-derive"
 version = "0.15.3"
-source = "git+https://github.com/fenhl/wheel#012ee8e7dcd4cdfa5e520fb2145b5b275a1ed174"
+source = "git+https://github.com/fenhl/wheel#f31dc83cf8b5ac39f825fdaa9c7636ba52ee49b4"
 dependencies = [
  "itertools 0.14.0",
  "proc-macro2",
