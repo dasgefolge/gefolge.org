@@ -11,4 +11,8 @@ updates:
     registries:
       - github
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    groups:
+      all-dependencies:
+        patterns:
+          - "*"
