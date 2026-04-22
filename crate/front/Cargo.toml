@@ -44,7 +44,7 @@ semver = { version = "1", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 serenity = { version = "0.12", default-features = false, features = ["model", "rustls_backend", "temp_cache"] }
 serenity-utils = { git = "https://github.com/fenhl/serenity-utils" }
-sha2 = "0.10"
+sha2 = "0.11"
 sqlx = { version = "0.8", features = ["chrono", "json", "macros", "postgres", "runtime-tokio-rustls"] }
 thiserror = "2"
 tokio = { version = "1", features = ["macros", "process", "sync", "time"] }
