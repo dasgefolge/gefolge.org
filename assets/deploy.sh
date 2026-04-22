@@ -13,7 +13,7 @@ if [[ x"$(hostname -f)" == x'vendredi.fenhl.net' ]]; then
     echo 'deploying gefolge.org'
     rustup update stable
     #TODO cargo sweep (limit to once per Rust version)
-    cargo build --release --package=gefolge-web --package=gefolge-web-back
+    cargo build --jobs=-1 --release --package=gefolge-web --package=gefolge-web-back
     sudo systemctl stop gefolge-web
     env -C /opt/git/github.com/dasgefolge/gefolge.org/main git --git-dir=/opt/git/github.com/dasgefolge/gefolge.org/main/.git pull
     cp target/release/gefolge-web /home/fenhl/bin/gefolge-web

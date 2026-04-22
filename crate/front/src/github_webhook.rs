@@ -1,6 +1,7 @@
 use {
     hmac::{
         Hmac,
+        KeyInit as _,
         Mac as _,
     },
     itermore::IterArrayChunks as _,
