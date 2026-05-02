@@ -1287,14 +1287,14 @@ dependencies = [
  "lazy-regex",
  "log-lock",
  "pulldown-cmark 0.13.0",
- "reqwest 0.13.2",
+ "reqwest 0.13.3",
  "ricochet-robots-websocket",
  "rocket",
  "rocket-basicauth",
  "rocket-util",
  "rocket_oauth2",
  "rocket_ws",
- "rustls 0.23.39",
+ "rustls 0.23.40",
  "semver",
  "serde",
  "serenity",
@@ -1784,7 +1784,7 @@ dependencies = [
  "http 1.4.0",
  "hyper 1.8.1",
  "hyper-util",
- "rustls 0.23.39",
+ "rustls 0.23.40",
  "rustls-pki-types",
  "tokio",
  "tokio-rustls 0.26.4",
@@ -2866,7 +2866,7 @@ dependencies = [
  "quinn-proto",
  "quinn-udp",
  "rustc-hash",
- "rustls 0.23.39",
+ "rustls 0.23.40",
  "socket2 0.6.3",
  "thiserror 2.0.18",
  "tokio",
@@ -2886,7 +2886,7 @@ dependencies = [
  "rand 0.9.2",
  "ring",
  "rustc-hash",
- "rustls 0.23.39",
+ "rustls 0.23.40",
  "rustls-pki-types",
  "slab",
  "thiserror 2.0.18",
@@ -3095,7 +3095,7 @@ dependencies = [
  "percent-encoding",
  "pin-project-lite",
  "quinn",
- "rustls 0.23.39",
+ "rustls 0.23.40",
  "rustls-pki-types",
  "serde",
  "serde_json",
@@ -3117,9 +3117,9 @@ dependencies = [
 
 [[package]]
 name = "reqwest"
-version = "0.13.2"
+version = "0.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab3f43e3283ab1488b624b44b0e988d0acea0b3214e694730a055cb6b2efa801"
+checksum = "62e0021ea2c22aed41653bc7e1419abb2c97e038ff2c33d0e1309e49a97deec0"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -3140,7 +3140,7 @@ dependencies = [
  "once_cell",
  "percent-encoding",
  "pin-project-lite",
- "rustls 0.23.39",
+ "rustls 0.23.40",
  "rustls-pki-types",
  "rustls-platform-verifier",
  "serde",
@@ -3259,10 +3259,10 @@ dependencies = [
 [[package]]
 name = "rocket-util"
 version = "0.2.17"
-source = "git+https://github.com/fenhl/rocket-util#d3e87d359a023fb91bcead38f46d894ffa90d019"
+source = "git+https://github.com/fenhl/rocket-util#55ffc89f332da4618eb2c36ffc586097493d78b5"
 dependencies = [
  "futures",
- "reqwest 0.13.2",
+ "reqwest 0.13.3",
  "rocket",
  "rocket-util-derive",
  "thiserror 2.0.18",
@@ -3273,7 +3273,7 @@ dependencies = [
 [[package]]
 name = "rocket-util-derive"
 version = "0.2.17"
-source = "git+https://github.com/fenhl/rocket-util#d3e87d359a023fb91bcead38f46d894ffa90d019"
+source = "git+https://github.com/fenhl/rocket-util#55ffc89f332da4618eb2c36ffc586097493d78b5"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3428,9 +3428,9 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.23.39"
+version = "0.23.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c2c118cb077cca2822033836dfb1b975355dfb784b5e8da48f7b6c5db74e60e"
+checksum = "ef86cd5876211988985292b91c96a8f2d298df24e75989a43a3c73f2d4d8168b"
 dependencies = [
  "once_cell",
  "ring",
@@ -3494,7 +3494,7 @@ dependencies = [
  "jni",
  "log",
  "once_cell",
- "rustls 0.23.39",
+ "rustls 0.23.40",
  "rustls-native-certs 0.8.3",
  "rustls-platform-verifier-android",
  "rustls-webpki 0.103.9",
@@ -4069,7 +4069,7 @@ dependencies = [
  "memchr",
  "once_cell",
  "percent-encoding",
- "rustls 0.23.39",
+ "rustls 0.23.40",
  "serde",
  "serde_json",
  "sha2 0.10.9",
@@ -4528,7 +4528,7 @@ version = "0.26.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1729aa945f29d91ba541258c8df89027d5792d85a8841fb65e8bf0f4ede4ef61"
 dependencies = [
- "rustls 0.23.39",
+ "rustls 0.23.40",
  "tokio",
 ]
 
@@ -4806,8 +4806,8 @@ dependencies = [
  "chrono",
  "futures",
  "itertools 0.14.0",
- "reqwest 0.13.2",
- "rustls 0.23.39",
+ "reqwest 0.13.3",
+ "rustls 0.23.40",
  "serde",
  "serde_json_path_to_error",
  "thiserror 2.0.18",
@@ -5224,7 +5224,7 @@ dependencies = [
  "futures",
  "itertools 0.14.0",
  "noisy_float",
- "reqwest 0.13.2",
+ "reqwest 0.13.3",
  "rocket",
  "rocket-util",
  "serde",
