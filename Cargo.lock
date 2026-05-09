@@ -180,11 +180,11 @@ dependencies = [
 
 [[package]]
 name = "async-proto"
-version = "0.26.14"
+version = "0.26.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0fdbf6e7d8365e8efa4d6cc44f96dc8ec5379072be38d79dadb2265a97a8386d"
+checksum = "91b31a617c0948c8ce05907b9ae11d4e0238c30b6199b6e1ba83d018082babb0"
 dependencies = [
- "async-proto-derive 0.26.14",
+ "async-proto-derive 0.26.15",
  "byteorder",
  "chrono-tz",
  "fallible_collections 0.5.1",
@@ -209,9 +209,9 @@ dependencies = [
 
 [[package]]
 name = "async-proto-derive"
-version = "0.26.14"
+version = "0.26.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e129a62bd3cadcb3cf9428c1b0ec95f7a138032fa7cf314e31a0fd099688ab8b"
+checksum = "2c63e6252e8d1749e0c675f3c62fc54fdd3f48814b27cd243baa41fee68b19c5"
 dependencies = [
  "itertools 0.14.0",
  "proc-macro2",
@@ -1272,7 +1272,7 @@ dependencies = [
 name = "gefolge-web"
 version = "2.0.0"
 dependencies = [
- "async-proto 0.26.14",
+ "async-proto 0.26.15",
  "base64 0.22.1",
  "chrono",
  "chrono-tz",
@@ -1328,7 +1328,7 @@ dependencies = [
 name = "gefolge-web-lib"
 version = "2.0.0"
 dependencies = [
- "async-proto 0.26.14",
+ "async-proto 0.26.15",
  "chrono",
  "chrono-tz",
  "futures",
@@ -3789,9 +3789,9 @@ dependencies = [
 
 [[package]]
 name = "serde_with"
-version = "3.18.0"
+version = "3.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd5414fad8e6907dbdd5bc441a50ae8d6e26151a03b1de04d89a5576de61d01f"
+checksum = "f05839ce67618e14a09b286535c0d9c94e85ef25469b0e13cb4f844e5593eb19"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -3808,9 +3808,9 @@ dependencies = [
 
 [[package]]
 name = "serde_with_macros"
-version = "3.18.0"
+version = "3.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3db8978e608f1fe7357e211969fd9abdcae80bac1ba7a3369bb7eb6b404eb65"
+checksum = "cf2ebbe86054f9b45bc3881e865683ccfaccce97b9b4cb53f3039d67f355a334"
 dependencies = [
  "darling",
  "proc-macro2",
@@ -4474,9 +4474,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.52.1"
+version = "1.52.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b67dee974fe86fd92cc45b7a95fdd2f99a36a6d7b0d431a231178d3d670bbcc6"
+checksum = "8fc7f01b389ac15039e4dc9531aa973a135d7a4135281b12d7c1bc79fd57fffe"
 dependencies = [
  "bytes",
  "libc",
@@ -5214,9 +5214,9 @@ dependencies = [
 [[package]]
 name = "wheel"
 version = "0.15.3"
-source = "git+https://github.com/fenhl/wheel#f31dc83cf8b5ac39f825fdaa9c7636ba52ee49b4"
+source = "git+https://github.com/fenhl/wheel#0ddb399d73fef637ae890639625fcf0d7704423b"
 dependencies = [
- "async-proto 0.26.14",
+ "async-proto 0.26.15",
  "async-trait",
  "chrono",
  "clap",
@@ -5240,7 +5240,7 @@ dependencies = [
 [[package]]
 name = "wheel-derive"
 version = "0.15.3"
-source = "git+https://github.com/fenhl/wheel#f31dc83cf8b5ac39f825fdaa9c7636ba52ee49b4"
+source = "git+https://github.com/fenhl/wheel#0ddb399d73fef637ae890639625fcf0d7704423b"
 dependencies = [
  "itertools 0.14.0",
  "proc-macro2",
