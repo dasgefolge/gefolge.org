@@ -1,4 +1,4 @@
-import jinja2 # PyPI: Jinja2
+import markupsafe # PyPI: MarkupSafe
 import wtforms # PyPI: WTForms
 import wtforms.validators # PyPI: WTForms
 
@@ -74,4 +74,4 @@ class Wichteln(gefolge_web.event.programm.Programmpunkt):
                 if str(target.snowflake) in self.data.get('addresses', {}):
                     address = self.data['addresses'][str(target.snowflake)].value().replace('\n', '<br />')
                     participant_notes.append(f'\n<p>Anschrift:<br /><span class="spoiler">{address}<span></p>')
-            return jinja2.Markup('\n'.join(participant_notes))
+            return markupsafe.Markup('\n'.join(participant_notes))

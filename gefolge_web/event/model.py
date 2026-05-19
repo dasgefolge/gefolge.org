@@ -5,6 +5,7 @@ import subprocess
 import flask # PyPI: Flask
 import icalendar # PyPI: icalendar
 import jinja2 # PyPI: Jinja2
+import markupsafe # PyPI: MarkupSafe
 import pytz # PyPI: pytz
 
 import class_key # https://github.com/fenhl/python-class-key
@@ -59,7 +60,7 @@ class Event(metaclass=EventMeta):
         self.data.value() # make sure event exists
 
     def __html__(self):
-        return jinja2.Markup('<a href="{}">{}</a>'.format(flask.url_for('event_page', event=self.event_id), self))
+        return markupsafe.Markup('<a href="{}">{}</a>'.format(flask.url_for('event_page', event=self.event_id), self))
 
     @property
     def __key__(self):

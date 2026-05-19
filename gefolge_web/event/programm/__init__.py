@@ -5,6 +5,7 @@ import flask # PyPI: Flask
 import flask_wtf # PyPI: Flask-WTF
 import icalendar # PyPI: icalendar
 import jinja2 # PyPI: Jinja2
+import markupsafe # PyPI: MarkupSafe
 import more_itertools # PyPI: more-itertools
 import pytz # PyPI: pytz
 import wtforms # PyPI: WTForms
@@ -188,7 +189,7 @@ class Programmpunkt:
                 raise ValueError('Es gibt auf {} mehrere Programmpunkte mit dem Namen {}.'.format(event, programmpunkt)) from e
 
     def __html__(self):
-        return jinja2.Markup('<a href="{}">{}</a>'.format(jinja2.escape(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.url_part)), jinja2.escape(str(self))))
+        return markupsafe.Markup('<a href="{}">{}</a>'.format(jinja2.escape(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.url_part)), jinja2.escape(str(self))))
 
     @property
     def __key__(self):
@@ -214,7 +215,7 @@ class Programmpunkt:
                 CalendarEvent(
                     self, uid,
                     text=part.get('name', str(self)),
-                    html=jinja2.Markup(part['html']) if 'html' in part else self.__html__(),
+                    html=markupsafe.Markup(part['html']) if 'html' in part else self.__html__(),
                     start=gefolge_web.util.parse_iso_datetime(part['start'], tz=self.timezone),
                     end=gefolge_web.util.parse_iso_datetime(part['end'], tz=self.timezone),
                 )
@@ -293,11 +294,11 @@ class Programmpunkt:
     def details(self):
         if 'challonge' in self.data:
             try:
-                return jinja2.Markup('<p><a href="https://challonge.com/{}">Bracket und Ergebnisse</a></p>'.format(
+                return markupsafe.Markup('<p><a href="https://challonge.com/{}">Bracket und Ergebnisse</a></p>'.format(
                     challonge.tournaments.show(self.data['challonge'].value())['url']
                 ))
             except Exception:
-                return jinja2.Markup('<p>(Fehler: Bracket konnte nicht geladen werden)</p>')
+                return markupsafe.Markup('<p>(Fehler: Bracket konnte nicht geladen werden)</p>')
         elif 'startgg' in self.data:
             api_data = gefolge_web.util.startgg_api("""
                 query($id: ID!) {
@@ -318,7 +319,7 @@ class Programmpunkt:
             else:
                 # multiple phases or uninitialized bracket, link to event overview
                 url = f'https://start.gg/{api_data["event"]["slug"]}/overview'
-            return jinja2.Markup(f'<p><a href="{url}">Bracket und Ergebnisse</a></p>')
+            return markupsafe.Markup(f'<p><a href="{url}">Bracket und Ergebnisse</a></p>')
 
     @property
     def end(self):
@@ -361,9 +362,9 @@ class Programmpunkt:
             submit_text = self.strings.signup_other_button.format('Gewählte Person' if self.strings.signup_other_button.startswith('{') else 'gewählte Person')
 
         if 'challonge' in self.data:
-            Form.challonge_username = wtforms.TextField(jinja2.Markup('<a href="https://challonge.com/">Challonge</a> username'), [wtforms.validators.Optional(), wtforms.validators.Regexp('^[0-9A-Za-z_]*$')], description={'placeholder': 'optional'})
+            Form.challonge_username = wtforms.TextField(markupsafe.Markup('<a href="https://challonge.com/">Challonge</a> username'), [wtforms.validators.Optional(), wtforms.validators.Regexp('^[0-9A-Za-z_]*$')], description={'placeholder': 'optional'})
         if 'startgg' in self.data:
-            Form.startgg_slug = gefolge_web.forms.AnnotatedStringField(jinja2.Markup('<a href="https://start.gg/">start.gg</a>-Profil'), [wtforms.validators.Optional(), wtforms.validators.Regexp('^[0-9a-f]{8}$')], prefix='https://start.gg/user/', description={'placeholder': 'optional'})
+            Form.startgg_slug = gefolge_web.forms.AnnotatedStringField(markupsafe.Markup('<a href="https://start.gg/">start.gg</a>-Profil'), [wtforms.validators.Optional(), wtforms.validators.Regexp('^[0-9a-f]{8}$')], prefix='https://start.gg/user/', description={'placeholder': 'optional'})
             Form.startgg_slug_notice = gefolge_web.forms.FormText('Die hier gefragte Benutzernummer kannst du auch kopieren, indem du auf deiner start.gg-Profilseite auf sie klickst.')
 
         if self.add_form_details(Form, editor) and submit_text is None:
@@ -434,7 +435,7 @@ class Programmpunkt:
             else:
                 person_to_signup = form.person_to_signup.data
             if not self.can_signup(editor, person_to_signup):
-                flask.flash(jinja2.Markup('Du bist nicht berechtigt, {} für diesen Programmpunkt anzumelden.'.format(person_to_signup.__html__())), 'error')
+                flask.flash(markupsafe.Markup('Du bist nicht berechtigt, {} für diesen Programmpunkt anzumelden.'.format(person_to_signup.__html__())), 'error')
                 return flask.redirect(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.url_part))
             if 'challonge' in self.data:
                 try:
@@ -443,7 +444,7 @@ class Programmpunkt:
                     else:
                         challonge.participants.create(self.data['challonge'], name=person_to_signup.name, misc='id{}'.format(person_to_signup.snowflake))
                 except challonge.api.ChallongeException as e:
-                    flask.flash(jinja2.Markup('Bei der Anmeldung auf Challonge ist ein Fehler aufgetreten. Bitte versuche es nochmal. Falls du Hilfe brauchst, wende dich bitte an {}. Fehlermeldung: {}'.format(gefolge_web.login.Mensch.admin().__html__(), jinja2.escape(e))), 'error')
+                    flask.flash(markupsafe.Markup('Bei der Anmeldung auf Challonge ist ein Fehler aufgetreten. Bitte versuche es nochmal. Falls du Hilfe brauchst, wende dich bitte an {}. Fehlermeldung: {}'.format(gefolge_web.login.Mensch.admin().__html__(), jinja2.escape(e))), 'error')
                     return flask.redirect(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.url_part))
             if 'startgg' in self.data:
                 if form.startgg_slug.data:

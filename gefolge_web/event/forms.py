@@ -4,7 +4,7 @@ import re
 
 import flask # PyPI: Flask
 import flask_wtf # PyPI: Flask-WTF
-import jinja2 # PyPI: Jinja2
+import markupsafe # PyPI: MarkupSafe
 import wtforms # PyPI: WTForms
 import wtforms.validators # PyPI: WTForms
 
@@ -93,11 +93,11 @@ def ProfileForm(event, person):
         ], default='' if event.rooms.get(person) is None else str(event.rooms.get(person)))
 
     Form.section_travel = gefolge_web.forms.FormSection('An-/Abreise')
-    Form.section_travel_intro = gefolge_web.forms.FormText(jinja2.Markup('Um die Infos zu deiner An-/Abreise zu ändern, wende dich bitte an {}.'.format(gefolge_web.login.Mensch.admin().__html__()))) #TODO form
+    Form.section_travel_intro = gefolge_web.forms.FormText(markupsafe.Markup('Um die Infos zu deiner An-/Abreise zu ändern, wende dich bitte an {}.'.format(gefolge_web.login.Mensch.admin().__html__()))) #TODO form
 
     Form.section_food = gefolge_web.forms.FormSection('Essen')
     if person_data.get('selbstversorger', False):
-        Form.section_food_intro = gefolge_web.forms.FormText(jinja2.Markup('Du bist als Selbstversorger eingetragen. Um das zu ändern, wende dich bitte an {}.'.format(gefolge_web.login.Mensch.admin().__html__())))
+        Form.section_food_intro = gefolge_web.forms.FormText(markupsafe.Markup('Du bist als Selbstversorger eingetragen. Um das zu ändern, wende dich bitte an {}.'.format(gefolge_web.login.Mensch.admin().__html__())))
     else:
         Form.section_food_intro = gefolge_web.forms.FormText('Bitte trage hier Informationen zu deiner Ernährung ein. Diese Daten werden nur der Orga angezeigt.')
         Form.animal_products = gefolge_web.forms.HorizontalButtonGroupField(
@@ -113,9 +113,9 @@ def ProfileForm(event, person):
 
     Form.section_programm = gefolge_web.forms.FormSection('Programm')
     if new_signup:
-        Form.section_programm_intro = gefolge_web.forms.FormText(jinja2.Markup('Nachdem du dich angemeldet hast, kannst du dich auf der <a href="{}">Programmseite</a> für Programmpunkte als interessiert eintragen.'.format(flask.url_for('event_programm', event=event.event_id))))
+        Form.section_programm_intro = gefolge_web.forms.FormText(markupsafe.Markup('Nachdem du dich angemeldet hast, kannst du dich auf der <a href="{}">Programmseite</a> für Programmpunkte als interessiert eintragen.'.format(flask.url_for('event_programm', event=event.event_id))))
     else:
-        Form.section_programm_intro = gefolge_web.forms.FormText(jinja2.Markup('Auf der <a href="{}">Programmseite</a> kannst du {} für Programmpunkte als interessiert eintragen.'.format(flask.url_for('event_programm', event=event.event_id), 'dich' if person == flask.g.user else person.__html__()))) #TODO add support for deleting programm signups, then adjust this text
+        Form.section_programm_intro = gefolge_web.forms.FormText(markupsafe.Markup('Auf der <a href="{}">Programmseite</a> kannst du {} für Programmpunkte als interessiert eintragen.'.format(flask.url_for('event_programm', event=event.event_id), 'dich' if person == flask.g.user else person.__html__()))) #TODO add support for deleting programm signups, then adjust this text
 
     if (event.end is None or gefolge_web.util.now(event.timezone) < event.end) and event.data.get('covidTestRequired'):
         if event.data['covidTestRequired'].value() == 'geimpftGenesen':
@@ -149,11 +149,11 @@ def ProfileForm(event, person):
             wtforms.validators.InputRequired(),
             gefolge_web.forms.EuroRange(min=event.anzahlung, message='Die reguläre Anzahlung beträgt {min}. Mindestens soviel musst du bezahlen, um dich anzumelden.'),
             gefolge_web.forms.EuroRange(max=event.ausfall - event.anzahlung_total, message='Wir benötigen nur noch {max}, um die Ausfallgebühr abzudecken.'),
-            gefolge_web.forms.EuroRange(max=person.balance, message=jinja2.Markup(f'Dein aktuelles Guthaben ist {flask.g.user.balance}. Auf <a href="{flask.g.user.profile_url}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.'))
+            gefolge_web.forms.EuroRange(max=person.balance, message=markupsafe.Markup(f'Dein aktuelles Guthaben ist {flask.g.user.balance}. Auf <a href="{flask.g.user.profile_url}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.'))
         ], default=event.anzahlung)
     if (event.end is None or gefolge_web.util.now(event.timezone) < event.end) and person == flask.g.user and event.location is not None and event.location.hausordnung is not None and not person_data.get('hausordnung', False): #TODO track last-changed event and hide if current version has already been accepted. Also show last-changed date
         header_anmeldung()
-        Form.hausordnung = wtforms.BooleanField(jinja2.Markup('Ich habe die <a href="{}">Hausordnung</a> zur Kenntnis genommen.'.format(event.location.hausordnung)), [wtforms.validators.DataRequired()])
+        Form.hausordnung = wtforms.BooleanField(markupsafe.Markup('Ich habe die <a href="{}">Hausordnung</a> zur Kenntnis genommen.'.format(event.location.hausordnung)), [wtforms.validators.DataRequired()])
 
     Form.submit_profile_form = wtforms.SubmitField('Anmelden' if hasattr(Form, 'section_signup') or new_signup else 'Speichern')
     return Form()
@@ -187,7 +187,7 @@ def ProgrammForm(event, programmpunkt):
         else:
             programm_orga = event.orga(programmpunkt.orga_role)
         Form.orga_notice = gefolge_web.forms.FormText(
-            jinja2.Markup('Bitte wende dich an {}, wenn du die Orga für diesen Programmpunkt abgeben möchtest.'.format(programm_orga.__html__())),
+            markupsafe.Markup('Bitte wende dich an {}, wenn du die Orga für diesen Programmpunkt abgeben möchtest.'.format(programm_orga.__html__())),
             display_label='Orga'
         )
     Form.start = gefolge_web.forms.DateTimeField('Beginn', [wtforms.validators.Optional()], tz=event.timezone if programmpunkt is None else programmpunkt.timezone, default=None if programmpunkt is None else programmpunkt.start)

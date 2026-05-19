@@ -8,6 +8,7 @@ import urllib.parse
 
 import flask # PyPI: Flask
 import jinja2 # PyPI: Jinja2
+import markupsafe # PyPI: MarkupSafe
 import more_itertools # PyPI: more-itertools
 import pytz # PyPI: pytz
 
@@ -307,7 +308,7 @@ def setup(index, app):
             if filled_until is not None and filled_until > timestamp:
                 return '' # this cell is already filled
             if timestamp < event.start or timestamp >= event.end:
-                return jinja2.Markup('<td style="background-color: #666666;"></td>')
+                return markupsafe.Markup('<td style="background-color: #666666;"></td>')
             events_starting_now = [
                 calendar_event
                 for calendar_event in calendar
@@ -316,7 +317,7 @@ def setup(index, app):
                 and calendar_event.end < calendar_event.start + datetime.timedelta(hours=24)
             ]
             if len(events_starting_now) == 0:
-                return jinja2.Markup('<td></td>') # nothing planned yet
+                return markupsafe.Markup('<td></td>') # nothing planned yet
             elif len(events_starting_now) == 1:
                 calendar_event = more_itertools.one(events_starting_now)
                 hours = math.ceil((min(calendar_event.end, event.timezone.localize(datetime.datetime.combine(date + datetime.timedelta(days=1), datetime.time()), is_dst=None)) - timestamp) / datetime.timedelta(hours=1))
@@ -331,10 +332,10 @@ def setup(index, app):
                 if snip_end > hour >= 6:
                     # at or after 06:00, must stop snip at start hour
                     snip_end = hour
-                return jinja2.Markup('<td rowspan="{}" class="{}">{}{}</td>'.format(hours, calendar_event.css_class, calendar_event.__html__(), '<br />{}'.format(jinja2.escape(calendar_event.subtitle)) if calendar_event.subtitle else ''))
+                return markupsafe.Markup('<td rowspan="{}" class="{}">{}{}</td>'.format(hours, calendar_event.css_class, calendar_event.__html__(), '<br />{}'.format(jinja2.escape(calendar_event.subtitle)) if calendar_event.subtitle else ''))
             else:
                 #TODO support for events that go past midnight
-                return jinja2.Markup('<td class="danger">{} Programmpunkte</td>'.format(len(events_starting_now)))
+                return markupsafe.Markup('<td class="danger">{} Programmpunkte</td>'.format(len(events_starting_now)))
 
         table = {
             date: {

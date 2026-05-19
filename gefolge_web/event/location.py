@@ -1,6 +1,7 @@
 import dataclasses
 
 import jinja2 # PyPI: Jinja2
+import markupsafe # PyPI: MarkupSafe
 import more_itertools # PyPI: more-itertools
 import pytz # PyPI: pytz
 
@@ -20,17 +21,17 @@ class Location:
         self.loc_id = loc_id
 
     def __html__(self):
-        result = jinja2.Markup()
+        result = markupsafe.Markup()
         if 'host' in self.data:
-            result += jinja2.Markup('bei ')
+            result += markupsafe.Markup('bei ')
             result += gefolge_web.login.Mensch(self.data['host'].value()).__html__()
-            result += jinja2.Markup(' ')
+            result += markupsafe.Markup(' ')
         result += jinja2.escape(self.prefix)
         website = self.data.get('website')
         if website is None:
             result += jinja2.escape(str(self))
         else:
-            result += jinja2.Markup('<a href="{}">{}</a>'.format(jinja2.escape(website), jinja2.escape(str(self))))
+            result += markupsafe.Markup('<a href="{}">{}</a>'.format(jinja2.escape(website), jinja2.escape(str(self))))
         return result
 
     def __repr__(self):

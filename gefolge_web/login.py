@@ -9,6 +9,7 @@ import flask_dance.contrib.discord # PyPI: Flask-Dance
 import flask_dance.contrib.twitch # PyPI: Flask-Dance
 import flask_wtf # PyPI: Flask-WTF
 import jinja2 # PyPI: Jinja2
+import markupsafe # PyPI: MarkupSafe
 import pytz # PyPI: pytz
 import requests # PyPI: requests
 import wtforms # PyPI: WTForms
@@ -76,7 +77,7 @@ class DiscordPerson(User, metaclass=DiscordPersonMeta):
         return hash(self.snowflake)
 
     def __html__(self):
-        return jinja2.Markup(f'<a title="{self}" href="{self.profile_url}">@{jinja2.escape(self.name)}</a>')
+        return markupsafe.Markup(f'<a title="{self}" href="{self.profile_url}">@{jinja2.escape(self.name)}</a>')
 
     def __repr__(self):
         return f'gefolge_web.login.DiscordPerson({self.snowflake!r})'
@@ -285,7 +286,7 @@ class AnonymousUser(User):
         pass
 
     def __html__(self):
-        return jinja2.Markup('<i>anonym</i>')
+        return markupsafe.Markup('<i>anonym</i>')
 
     def __str__(self):
         return 'anonym'
@@ -314,7 +315,7 @@ def TransferMoneyForm(mensch):
             wtforms.validators.InputRequired(),
             gefolge_web.forms.EuroRange(min=gefolge_web.util.Euro('0.01'), message='Nur positive Beträge erlaubt.'),
         ] + ([] if flask.g.user.is_admin or flask.g.user.is_treasurer else [
-            gefolge_web.forms.EuroRange(max=mensch.balance, message=jinja2.Markup('Du kannst maximal dein aktuelles Guthaben übertragen.'))
+            gefolge_web.forms.EuroRange(max=mensch.balance, message=markupsafe.Markup('Du kannst maximal dein aktuelles Guthaben übertragen.'))
         ]))
         comment = wtforms.TextAreaField('Kommentar (optional)')
         submit_transfer_money_form = wtforms.SubmitField('Übertragen')
@@ -327,7 +328,7 @@ def WurstminebergTransferMoneyForm(mensch):
             wtforms.validators.InputRequired(),
             gefolge_web.forms.EuroRange(min=gefolge_web.util.Euro('0.01'), message='Nur positive Beträge erlaubt.'),
         ] + ([] if flask.g.user.is_admin or flask.g.user.is_treasurer else [
-            gefolge_web.forms.EuroRange(max=mensch.balance, message=jinja2.Markup('Du kannst maximal dein aktuelles Guthaben übertragen.'))
+            gefolge_web.forms.EuroRange(max=mensch.balance, message=markupsafe.Markup('Du kannst maximal dein aktuelles Guthaben übertragen.'))
         ]))
         submit_wurstmineberg_transfer_money_form = wtforms.SubmitField('Übertragen')
 
@@ -388,7 +389,7 @@ def setup(index, app):
             else:
                 flask.flash('Dein Account wurde noch nicht freigeschaltet. Stelle dich doch bitte einmal kurz im #general vor und warte, bis ein admin dich bestätigt.', 'error')
                 return flask.redirect(flask.url_for('index'))
-        flask.flash(jinja2.Markup('Hallo {}.'.format(person.__html__())))
+        flask.flash(markupsafe.Markup('Hallo {}.'.format(person.__html__())))
         next_url = flask.session.get('next')
         if next_url is None:
             return flask.redirect(flask.url_for('index'))
@@ -503,7 +504,7 @@ def setup(index, app):
             del person.api_key
             return flask.redirect(flask.url_for('api_index'))
         else:
-            flask.flash(jinja2.Markup('Du bist nicht berechtigt, den API key für {} neu zu generieren.'.format(person.__html__())), 'error')
+            flask.flash(markupsafe.Markup('Du bist nicht berechtigt, den API key für {} neu zu generieren.'.format(person.__html__())), 'error')
             return flask.redirect(flask.url_for('api_index'))
 
     @index.redirect('me', decorators=[mensch_required]) #TODO profile pages for Discord guests?

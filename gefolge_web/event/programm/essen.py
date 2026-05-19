@@ -1,7 +1,7 @@
 import datetime
 import re
 
-import jinja2 # PyPI: Jinja2
+import markupsafe # PyPI: MarkupSafe
 
 import gefolge_web.event.programm
 import gefolge_web.login
@@ -35,7 +35,7 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
         return super().calendar_events + ([gefolge_web.event.programm.CalendarEvent(
             self, 'vorbereitung',
             text='Silvesterbuffet: Vorbereitung',
-            html=jinja2.Markup('{}: Vorbereitung'.format(self.__html__())),
+            html=markupsafe.Markup('{}: Vorbereitung'.format(self.__html__())),
             start=self.start - datetime.timedelta(hours=4),
             end=self.start,
         )] if self.date.month == 12 and self.date.day == 31 else [])
