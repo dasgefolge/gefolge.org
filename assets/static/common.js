@@ -79,11 +79,12 @@ document.querySelectorAll('.markdown-input').forEach((markdownInput) => {
                 break;
             }
         }
-        let previewMarkdownEdit = new Uint8Array(end - start + 17);
+        let previewMarkdownEdit = new Uint8Array(end - start + 25);
         previewMarkdownEdit[0] = 3; // ClientMessageV2::PreviewMarkdownEdit
         new DataView(previewMarkdownEdit).setBigUint64(1, start);
         new DataView(previewMarkdownEdit).setBigUint64(9, end);
-        previewMarkdownEdit.set(newText.slice(start, end), 17);
+        new DataView(previewMarkdownEdit).setBigUint64(17, newText.length);
+        previewMarkdownEdit.set(newText.slice(start, end), 25);
         sock.send(previewMarkdownEdit);
     };
     sock.onmessage = (event) => {
@@ -96,7 +97,7 @@ document.querySelectorAll('.markdown-input').forEach((markdownInput) => {
                 throw event.data; //TODO decode, display in preview element
             }
             case 5: { // ServerMessageV2::MarkdownPreview
-                document.getElementById(markdownInput.id + '-preview').innerHTML = new TextDecoder().decode(event.data.slice(1));
+                document.getElementById(markdownInput.id + '-preview').innerHTML = new TextDecoder().decode(event.data.slice(9));
                 if (needsPreviewRefresh) {
                     needsPreviewRefresh = false;
                     previewMarkdownEdit();
@@ -122,14 +123,16 @@ document.querySelectorAll('.markdown-input').forEach((markdownInput) => {
         gettingPreview = false;
         needsPreviewRefresh = false;
         let apiKey = new TextEncoder().encode(markdownInput.dataset.apikey);
-        let auth = new Uint8Array(apiKey.length + 1);
+        let auth = new Uint8Array(apiKey.length + 9);
         auth[0] = 0; // ClientMessageV2::Auth
-        auth.set(apiKey, 1);
+        new DataView(auth).setBigUint64(1, apiKey.length);
+        auth.set(apiKey, 9);
         sock.send(auth);
         last = new TextEncoder().encode(markdownInput.value);
-        let previewMarkdown = new Uint8Array(last.length + 1);
+        let previewMarkdown = new Uint8Array(last.length + 9);
         previewMarkdown[0] = 2; // ClientMessageV2::PreviewMarkdown
-        previewMarkdown.set(last, 1);
+        new DataView(previewMarkdown).setBigUint64(1, previewMarkdown.length);
+        previewMarkdown.set(last, 9);
         sock.send(previewMarkdown);
     };
     markdownInput.addEventListener('input', (e) => {
