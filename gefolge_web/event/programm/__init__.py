@@ -4,7 +4,6 @@ import challonge # PyPI: pychallonge
 import flask # PyPI: Flask
 import flask_wtf # PyPI: Flask-WTF
 import icalendar # PyPI: icalendar
-import jinja2 # PyPI: Jinja2
 import markupsafe # PyPI: MarkupSafe
 import more_itertools # PyPI: more-itertools
 import pytz # PyPI: pytz
@@ -189,7 +188,7 @@ class Programmpunkt:
                 raise ValueError('Es gibt auf {} mehrere Programmpunkte mit dem Namen {}.'.format(event, programmpunkt)) from e
 
     def __html__(self):
-        return markupsafe.Markup('<a href="{}">{}</a>'.format(jinja2.escape(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.url_part)), jinja2.escape(str(self))))
+        return markupsafe.Markup('<a href="{}">{}</a>'.format(markupsafe.escape(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.url_part)), markupsafe.escape(str(self))))
 
     @property
     def __key__(self):
@@ -444,7 +443,7 @@ class Programmpunkt:
                     else:
                         challonge.participants.create(self.data['challonge'], name=person_to_signup.name, misc='id{}'.format(person_to_signup.snowflake))
                 except challonge.api.ChallongeException as e:
-                    flask.flash(markupsafe.Markup('Bei der Anmeldung auf Challonge ist ein Fehler aufgetreten. Bitte versuche es nochmal. Falls du Hilfe brauchst, wende dich bitte an {}. Fehlermeldung: {}'.format(gefolge_web.login.Mensch.admin().__html__(), jinja2.escape(e))), 'error')
+                    flask.flash(markupsafe.Markup('Bei der Anmeldung auf Challonge ist ein Fehler aufgetreten. Bitte versuche es nochmal. Falls du Hilfe brauchst, wende dich bitte an {}. Fehlermeldung: {}'.format(gefolge_web.login.Mensch.admin().__html__(), markupsafe.escape(e))), 'error')
                     return flask.redirect(flask.url_for('event_programmpunkt', event=self.event.event_id, programmpunkt=self.url_part))
             if 'startgg' in self.data:
                 if form.startgg_slug.data:

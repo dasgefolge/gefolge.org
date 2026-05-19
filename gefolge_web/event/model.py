@@ -4,7 +4,6 @@ import subprocess
 
 import flask # PyPI: Flask
 import icalendar # PyPI: icalendar
-import jinja2 # PyPI: Jinja2
 import markupsafe # PyPI: MarkupSafe
 import pytz # PyPI: pytz
 
@@ -33,7 +32,7 @@ class EventGuest(gefolge_web.person.Guest):
         return hash((self.event, self.snowflake))
 
     def __html__(self):
-        return jinja2.escape(str(self))
+        return markupsafe.escape(str(self))
 
     def __repr__(self):
         return f'gefolge_web.event.model.EventGuest({self.event!r}, {self.snowflake!r})'

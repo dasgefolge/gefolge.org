@@ -7,7 +7,6 @@ import re
 import urllib.parse
 
 import flask # PyPI: Flask
-import jinja2 # PyPI: Jinja2
 import markupsafe # PyPI: MarkupSafe
 import more_itertools # PyPI: more-itertools
 import pytz # PyPI: pytz
@@ -332,7 +331,7 @@ def setup(index, app):
                 if snip_end > hour >= 6:
                     # at or after 06:00, must stop snip at start hour
                     snip_end = hour
-                return markupsafe.Markup('<td rowspan="{}" class="{}">{}{}</td>'.format(hours, calendar_event.css_class, calendar_event.__html__(), '<br />{}'.format(jinja2.escape(calendar_event.subtitle)) if calendar_event.subtitle else ''))
+                return markupsafe.Markup('<td rowspan="{}" class="{}">{}{}</td>'.format(hours, calendar_event.css_class, calendar_event.__html__(), '<br />{}'.format(markupsafe.escape(calendar_event.subtitle)) if calendar_event.subtitle else ''))
             else:
                 #TODO support for events that go past midnight
                 return markupsafe.Markup('<td class="danger">{} Programmpunkte</td>'.format(len(events_starting_now)))

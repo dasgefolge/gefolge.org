@@ -11,7 +11,6 @@ import traceback
 import dateutil.parser # PyPI: python-dateutil
 import flask # PyPI: Flask
 import gql # PyPI: --pre gql[all]
-import jinja2 # PyPI: Jinja2
 import markupsafe # PyPI: MarkupSafe
 import more_itertools # PyPI: more-itertools
 import pytz # PyPI: pytz
@@ -189,9 +188,9 @@ class Transaction:
             try:
                 event = gefolge_web.event.model.Event(self.json_data['event'])
             except FileNotFoundError:
-                event = markupsafe.Markup('abgesagtes event <code>{}</code>'.format(jinja2.escape(self.json_data['event'])))
+                event = markupsafe.Markup('abgesagtes event <code>{}</code>'.format(markupsafe.escape(self.json_data['event'])))
             if 'guest' in self.json_data:
-                return markupsafe.Markup('Abrechnung von {} für {}'.format(event.__html__(), jinja2.escape(event.person(self.json_data['guest']))))
+                return markupsafe.Markup('Abrechnung von {} für {}'.format(event.__html__(), markupsafe.escape(event.person(self.json_data['guest']))))
             else:
                 return markupsafe.Markup('Abrechnung von {}'.format(event.__html__()))
         elif self.json_data['type'] == 'eventAnzahlung':
@@ -200,11 +199,11 @@ class Transaction:
             try:
                 event = gefolge_web.event.model.Event(self.json_data['event'])
                 if 'guest' in self.json_data:
-                    return markupsafe.Markup('Anzahlung für {} für {}'.format(event.__html__(), jinja2.escape(event.person(self.json_data['guest']))))
+                    return markupsafe.Markup('Anzahlung für {} für {}'.format(event.__html__(), markupsafe.escape(event.person(self.json_data['guest']))))
                 else:
                     return markupsafe.Markup('Anzahlung für {}'.format(event.__html__()))
             except FileNotFoundError:
-                event = markupsafe.Markup('abgesagtes event <code>{}</code>'.format(jinja2.escape(self.json_data['event'])))
+                event = markupsafe.Markup('abgesagtes event <code>{}</code>'.format(markupsafe.escape(self.json_data['event'])))
                 if 'guest' in self.json_data:
                     return markupsafe.Markup('Anzahlung für {} für einen Gast'.format(event.__html__()))
                 else:
@@ -215,7 +214,7 @@ class Transaction:
             try:
                 event = gefolge_web.event.model.Event(self.json_data['event'])
             except FileNotFoundError:
-                event = markupsafe.Markup('abgesagtes event <code>{}</code>'.format(jinja2.escape(self.json_data['event'])))
+                event = markupsafe.Markup('abgesagtes event <code>{}</code>'.format(markupsafe.escape(self.json_data['event'])))
             return markupsafe.Markup('{}Rückzahlung der erhöhten Anzahlung für {}{}'.format('Teilweise ' if Euro(self.json_data['extraRemaining']) > Euro() else '', event.__html__(), ' (noch {})'.format(Euro(self.json_data['extraRemaining'])) if Euro(self.json_data['extraRemaining']) > Euro() else ''))
         elif self.json_data['type'] == 'payPal':
             return markupsafe.Markup('PayPal-Überweisung')
@@ -223,9 +222,9 @@ class Transaction:
             try:
                 import werewolf_web # extension for Werewolf games, closed-source to allow the admin to make relevant changes before a game without giving away information to players
             except ImportError:
-                return markupsafe.Markup('<i>Werwölfe</i>-Karte gesponsert: {}'.format(jinja2.escape(self.json_data['role'])))
+                return markupsafe.Markup('<i>Werwölfe</i>-Karte gesponsert: {}'.format(markupsafe.escape(self.json_data['role'])))
             else:
-                return markupsafe.Markup('<a href="{}"><i>Werwölfe</i>-Karte</a> gesponsert: <span style="color: {};">{}</span>'.format(flask.url_for('werewolf_cards'), werewolf_web.FACTION_COLORS.get(self.json_data['faction'], 'inherit'), jinja2.escape(self.json_data['role'])))
+                return markupsafe.Markup('<a href="{}"><i>Werwölfe</i>-Karte</a> gesponsert: <span style="color: {};">{}</span>'.format(flask.url_for('werewolf_cards'), werewolf_web.FACTION_COLORS.get(self.json_data['faction'], 'inherit'), markupsafe.escape(self.json_data['role'])))
         elif self.json_data['type'] == 'transfer':
             import gefolge_web.login
 
@@ -253,7 +252,7 @@ class Transaction:
                 event = gefolge_web.event.model.Event(self.json_data['event'])
                 return markupsafe.Markup(', Details:<br /><ul>\n{}\n</ul>'.format('\n'.join(
                     '<li>{}{}: {}</li>'.format(detail['label'], ' {}'.format(event.person(detail['snowflake']).__html__()) if 'snowflake' in detail else '', {
-                        'flat': lambda detail: ('{} ({})'.format(Euro(detail['amount']), jinja2.escape(detail['note'])) if 'note' in detail else '{}'.format(Euro(detail['amount']))),
+                        'flat': lambda detail: ('{} ({})'.format(Euro(detail['amount']), markupsafe.escape(detail['note'])) if 'note' in detail else '{}'.format(Euro(detail['amount']))),
                         'even': lambda detail: '{} ({} / {} Menschen)'.format(Euro(detail['amount']), Euro(detail['total']), format_number(detail['people'])),
                         'weighted': lambda detail: '{} ({} × {} / {} Übernachtungen)'.format(Euro(detail['amount']), Euro(detail['total']), format_number(detail['nightsAttended']), format_number(detail['nightsTotal']))
                     }[detail['type']](detail))
@@ -261,7 +260,7 @@ class Transaction:
                 )))
         elif self.json_data['type'] == 'transfer':
             if self.json_data.get('comment'):
-                return markupsafe.Markup(', Kommentar:<br /><blockquote style="margin-bottom: 0;"><p>{}</p></blockquote>'.format(jinja2.escape(self.json_data['comment'])))
+                return markupsafe.Markup(', Kommentar:<br /><blockquote style="margin-bottom: 0;"><p>{}</p></blockquote>'.format(markupsafe.escape(self.json_data['comment'])))
         return ''
 
     @property
@@ -388,7 +387,7 @@ def setup(app):
 
     @app.template_filter()
     def natjoin(value):
-        sequence = list(map(jinja2.escape, value))
+        sequence = list(map(markupsafe.escape, value))
         if len(sequence) == 0:
             raise IndexError('Tried to join empty sequence')
         elif len(sequence) == 1:
@@ -410,7 +409,7 @@ def setup(app):
     def nl2br(value): #FROM http://flask.pocoo.org/snippets/28/ (modified)
         return markupsafe.Markup('\n'.join(
             '<p>{}</p>'.format(p.replace('\n', '<br />\n'))
-            for p in PARAGRAPH_RE.split(jinja2.escape(value))
+            for p in PARAGRAPH_RE.split(markupsafe.escape(value))
         ))
 
     @app.template_test()

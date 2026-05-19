@@ -8,7 +8,6 @@ import flask # PyPI: Flask
 import flask_dance.contrib.discord # PyPI: Flask-Dance
 import flask_dance.contrib.twitch # PyPI: Flask-Dance
 import flask_wtf # PyPI: Flask-WTF
-import jinja2 # PyPI: Jinja2
 import markupsafe # PyPI: MarkupSafe
 import pytz # PyPI: pytz
 import requests # PyPI: requests
@@ -77,7 +76,7 @@ class DiscordPerson(User, metaclass=DiscordPersonMeta):
         return hash(self.snowflake)
 
     def __html__(self):
-        return markupsafe.Markup(f'<a title="{self}" href="{self.profile_url}">@{jinja2.escape(self.name)}</a>')
+        return markupsafe.Markup(f'<a title="{self}" href="{self.profile_url}">@{markupsafe.escape(self.name)}</a>')
 
     def __repr__(self):
         return f'gefolge_web.login.DiscordPerson({self.snowflake!r})'
@@ -378,7 +377,7 @@ def setup(index, app):
             return flask.redirect(flask.url_for('index'))
         response = flask_dance.contrib.discord.discord.get('/api/v6/users/@me')
         if not response.ok:
-            return flask.make_response(('Discord meldet Fehler {} auf {}: {}'.format(response.status_code, jinja2.escape(response.url), jinja2.escape(response.text)), response.status_code, []))
+            return flask.make_response(('Discord meldet Fehler {} auf {}: {}'.format(response.status_code, markupsafe.escape(response.url), markupsafe.escape(response.text)), response.status_code, []))
         person = DiscordPerson(response.json()['id'])
         if not person.is_active:
             try:
@@ -409,7 +408,7 @@ def setup(index, app):
             return flask.redirect(flask.url_for('index'))
         response = flask_dance.contrib.twitch.twitch.get('users')
         if not response.ok:
-            return flask.make_response(('Twitch meldet Fehler {} auf {}: {}'.format(response.status_code, jinja2.escape(response.url), jinja2.escape(response.text)), response.status_code, []))
+            return flask.make_response(('Twitch meldet Fehler {} auf {}: {}'.format(response.status_code, markupsafe.escape(response.url), markupsafe.escape(response.text)), response.status_code, []))
         flask.g.user.twitch = response.json()['data'][0]
         flask.flash('Twitch-Konto erfolgreich verknüpft.')
         next_url = flask.session.get('next')
