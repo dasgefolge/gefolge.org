@@ -86,6 +86,7 @@ use {
 include!(concat!(env!("OUT_DIR"), "/static_files.rs"));
 
 mod auth;
+mod form;
 mod games;
 mod github_webhook;
 mod time;
@@ -846,6 +847,8 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
         wiki::index,
         wiki::main_article,
         wiki::namespaced_article,
+        wiki::edit_get,
+        wiki::edit_post,
         wiki::history,
         wiki::revision,
     ])
@@ -867,6 +870,7 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
     )))
     .manage(config.clone())
     .manage(db_pool.clone())
+    .manage(discord_builder.ctx_fut.clone())
     .manage(http_client)
     .manage(ProxyHttpClient(proxy_http_client))
     .manage(Arc::<RwLock<HashMap<u64, ricochet_robots_websocket::Lobby<User>>>>::default())

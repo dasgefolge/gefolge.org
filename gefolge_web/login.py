@@ -149,7 +149,7 @@ class DiscordPerson(User, metaclass=DiscordPersonMeta):
             return '{} ({})'.format(self.nickname, self)
 
     @property
-    def name(self): # used in flask_wiki
+    def name(self):
         if self.nickname is None:
             return self.username
         else:

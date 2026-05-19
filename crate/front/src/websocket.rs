@@ -30,6 +30,7 @@ use {
         response::Redirect,
         uri,
     },
+    rocket_util::ToHtml as _,
     rocket_ws::WebSocket,
     semver::Version,
     serde::Deserialize,
@@ -76,12 +77,19 @@ pub(crate) enum Error {
     #[error(transparent)] Sql(#[from] sqlx::Error),
     #[error(transparent)] Task(#[from] tokio::task::JoinError),
     #[error(transparent)] Toml(#[from] toml::de::Error),
+    #[error(transparent)] TryFromInt(#[from] std::num::TryFromIntError),
+    #[error(transparent)] Utf8(#[from] std::string::FromUtf8Error),
     #[error(transparent)] Wheel(#[from] wheel::Error),
+    #[error(transparent)] Wiki(#[from] crate::wiki::Error),
     #[error(transparent)] Write(#[from] async_proto::WriteError),
+    #[error("this WebSocket message requires sending `PreviewMarkdown` first")]
+    MissingMarkdownBase,
     #[error("there are multiple events currently ongoing (at least {} and {})", .0[0], .0[1])]
     MultipleCurrentEvents([String; 2]),
     #[error("you do not have permission to use this WebSocket message")]
     Permissions,
+    #[error("invalid range")]
+    Range,
     #[error("unknown API key")]
     UnknownApiKey,
 }
@@ -173,6 +181,7 @@ pub(crate) fn websocket_v1(db_pool: &State<PgPool>, rr_lobbies: &State<Arc<RwLoc
 
 async fn client_session_v2(db_pool: PgPool, mut rocket_shutdown: rocket::Shutdown, mut stream: WsStream, sink: WsSink) -> Result<(), Error> {
     let mut user = None;
+    let mut markdown_base = None;
     let mut subscription_join_handles = FuturesUnordered::<tokio::task::JoinHandle<Result<Never, Error>>>::default();
     loop {
         select! {
@@ -246,6 +255,30 @@ async fn client_session_v2(db_pool: PgPool, mut rocket_shutdown: rocket::Shutdow
                             }
                         }
                     }));
+                }
+                ClientMessageV2::PreviewMarkdown(text) => {
+                    let Some(user) = &user else { return Err(Error::Permissions) };
+                    if !user.is_mensch() { return Err(Error::Permissions) }
+                    let mut transaction = db_pool.begin().await?;
+                    let preview = crate::wiki::render_wiki_page(&mut transaction, &text).await?;
+                    transaction.commit().await?;
+                    lock!(sink = sink; ServerMessageV2::MarkdownPreview(preview.to_html().0).write_ws021(&mut *sink).await)?;
+                    markdown_base = Some(text);
+                }
+                ClientMessageV2::PreviewMarkdownEdit { range, text } => {
+                    let Some(user) = &user else { return Err(Error::Permissions) };
+                    if !user.is_mensch() { return Err(Error::Permissions) }
+                    let Some(full_text) = markdown_base.clone() else { return Err(Error::MissingMarkdownBase) };
+                    let range = usize::try_from(range.start)?..range.end.try_into()?;
+                    if range.start > range.end || range.end > full_text.len() { return Err(Error::Range) }
+                    let mut full_text = full_text.into_bytes();
+                    full_text.splice(range, text);
+                    let full_text = String::from_utf8(full_text)?;
+                    let mut transaction = db_pool.begin().await?;
+                    let preview = crate::wiki::render_wiki_page(&mut transaction, &full_text).await?;
+                    transaction.commit().await?;
+                    lock!(sink = sink; ServerMessageV2::MarkdownPreview(preview.to_html().0).write_ws021(&mut *sink).await)?;
+                    markdown_base = Some(full_text);
                 }
             },
         }

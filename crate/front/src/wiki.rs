@@ -2,16 +2,39 @@ use {
     chrono::prelude::*,
     lazy_regex::regex_captures,
     rocket::{
+        FromForm,
+        Responder,
         State,
-        response::content::RawHtml,
+        form::{
+            self,
+            Context,
+            Contextual,
+            Form,
+        },
+        response::{
+            Redirect,
+            content::RawHtml,
+        },
         uri,
     },
+    rocket_csrf::CsrfToken,
     rocket_util::{
+        ContextualExt as _,
+        CsrfForm,
         Origin,
         ToHtml,
         html,
     },
-    serenity::model::prelude::*,
+    serenity::{
+        all::{
+            Context as DiscordCtx,
+            CreateAllowedMentions,
+            CreateMessage,
+            MessageBuilder,
+        },
+        model::prelude::*,
+    },
+    serenity_utils::RwFuture,
     sqlx::{
         PgPool,
         Postgres,
@@ -21,6 +44,11 @@ use {
     gefolge_web_lib::time::MaybeLocalDateTime,
     crate::{
         PageKind,
+        base_uri,
+        form::{
+            form_field,
+            full_form,
+        },
         page,
         time::format_datetime,
         user::{
@@ -30,12 +58,47 @@ use {
     },
 };
 
+const CHANNEL: ChannelId = ChannelId::new(739623881719021728);
+
 #[derive(Debug, thiserror::Error, rocket_util::Error)]
 pub(crate) enum Error {
     #[error(transparent)] Page(#[from] crate::PageError),
     #[error(transparent)] ParseInt(#[from] std::num::ParseIntError),
+    #[error(transparent)] Serenity(#[from] serenity::Error),
     #[error(transparent)] Sql(#[from] sqlx::Error),
     #[error(transparent)] Url(#[from] url::ParseError),
+    //TODO generate new API key instead of erroring
+    #[error("user has no API key")]
+    NoApiKey,
+}
+
+async fn mentions_to_tags(transaction: &mut Transaction<'_, Postgres>, mut text: String) -> Result<String, Error> {
+    while let Some((_, prefix, bang, id, suffix)) = regex_captures!("^(.*?)<@(!?)([0-9]+)>(.*)$", &text) {
+        if let Some(user) = User::from_id(transaction, id.parse()?).await? {
+            let tag = if let Some(discriminator) = user.discriminator {
+                format!("@{}#{discriminator:04}", user.username)
+            } else {
+                format!("@{}#", user.username)
+            };
+            text = format!("{prefix}{tag}{suffix}");
+        } else {
+            // skip this mention but convert the remaining text recursively
+            return Ok(format!("{prefix}<@{bang}{id}>{}", Box::pin(mentions_to_tags(transaction, suffix.to_owned())).await?))
+        }
+    }
+    Ok(text)
+}
+
+async fn tags_to_mentions(transaction: &mut Transaction<'_, Postgres>, mut text: String) -> sqlx::Result<String> {
+    while let Some((_, prefix, username, discriminator, suffix)) = regex_captures!("^(.*?)@([^@#:\n]{2,32})#((?:[0-9]{4})?)(.*)$", &text) { // see https://discord.com/developers/docs/resources/user
+        if let Some(user) = User::from_tag(transaction, username, discriminator.parse().ok()).await? {
+            text = format!("{prefix}<@{}>{suffix}", user.id);
+        } else {
+            // skip this tag but convert the remaining text recursively
+            return Ok(format!("{prefix}@{username}#{discriminator}{}", Box::pin(tags_to_mentions(transaction, suffix.to_owned())).await?))
+        }
+    }
+    Ok(text)
 }
 
 async fn link_open_tag(transaction: &mut Transaction<'_, Postgres>, article: &str, namespace: &str) -> sqlx::Result<RawHtml<String>> {
@@ -78,7 +141,7 @@ pub(crate) async fn index(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>) 
     }).await?)
 }
 
-struct Markdown<'a>(Vec<pulldown_cmark::Event<'a>>);
+pub(crate) struct Markdown<'a>(Vec<pulldown_cmark::Event<'a>>);
 
 impl<'a> ToHtml for Markdown<'a> {
     fn to_html(&self) -> RawHtml<String> {
@@ -92,7 +155,7 @@ impl<'a> ToHtml for Markdown<'a> {
     }
 }
 
-async fn render_wiki_page<'a>(transaction: &mut Transaction<'_, Postgres>, source: &'a str) -> Result<Markdown<'a>, Error> {
+pub(crate) async fn render_wiki_page<'a>(transaction: &mut Transaction<'_, Postgres>, source: &'a str) -> Result<Markdown<'a>, Error> {
     let mut events = Vec::default();
     let mut parser = pulldown_cmark::Parser::new_ext(
         &source,
@@ -185,6 +248,145 @@ pub(crate) async fn namespaced_article(db_pool: &State<PgPool>, me: Mensch, uri:
         }
         : content;
     }).await?))
+}
+
+enum EditFormDefaults<'v> {
+    Context(Context<'v>),
+    Values {
+        source: Option<String>,
+    },
+}
+
+impl<'v> EditFormDefaults<'v> {
+    fn errors(&self) -> Vec<&form::Error<'v>> {
+        match self {
+            Self::Context(ctx) => ctx.errors().collect(),
+            Self::Values { .. } => Vec::default(),
+        }
+    }
+
+    fn field_value(&self, field_name: &str) -> Option<&str> {
+        match self {
+            Self::Context(ctx) => ctx.field_value(field_name),
+            Self::Values { .. } => None,
+        }
+    }
+
+    fn source(&self) -> Option<&str> {
+        match self {
+            Self::Context(ctx) => ctx.field_value("source"),
+            Self::Values { source } => source.as_deref(),
+        }
+    }
+}
+
+async fn edit_form(mut transaction: Transaction<'_, Postgres>, me: Mensch, uri: Origin<'_>, csrf: Option<&CsrfToken>, title: &str, namespace: &str, defaults: EditFormDefaults<'_>) -> Result<RawHtml<String>, Error> {
+    let content = {
+        let api_key = me.data(&mut transaction).await?.api_key.ok_or(Error::NoApiKey)?;
+        let mut errors = defaults.errors();
+        html! {
+            div(class = "header-with-buttons") {
+                h1 {
+                    : "Wiki-Artikel ";
+                    : title;
+                    @if namespace != "wiki" {
+                        : " (";
+                        : namespace;
+                        : ")";
+                    }
+                    @if defaults.source().is_some() {
+                        : " bearbeiten";
+                    } else {
+                        : " erstellen";
+                    }
+                }
+                span(class = "button-row") {
+                    a(href = if namespace == "wiki" { uri!(main_article(title)) } else { uri!(namespaced_article(title, namespace)) }, class = "button") : "Abbrechen";
+                }
+            }
+            : full_form(uri!(edit_post(title, namespace)), csrf, html! {
+                : form_field("source", &mut errors, html! {
+                    label(for = "source") : "Text";
+                    textarea(class = "markdown-input", id = "markdown-wiki", data_apikey = api_key, name = "source") : defaults.source().unwrap_or_default();
+                });
+                div(id = "markdown-wiki-preview") : "Vorschau wird geladen…";
+                : form_field("summary", &mut errors, html! {
+                    label(for = "summary") : "Zusammenfassung";
+                    input(type = "text", name = "summary", placeholder = "optional", value = defaults.field_value("summary"));
+                });
+            }, errors, "Speichern");
+        }
+    };
+    Ok(page(transaction, me, &uri, PageKind::Sub(vec![
+        html! {
+            : "wiki";
+        },
+        html! {
+            : title;
+        },
+        html! {
+            : namespace;
+        },
+        html! {
+            : "bearbeiten";
+        },
+    ]), &format!("bearbeiten — {title}{} — GefolgeWiki", if namespace == "wiki" { String::default() } else { format!(" ({namespace})") }), content).await?)
+}
+
+#[rocket::get("/wiki/<title>/<namespace>/edit")]
+pub(crate) async fn edit_get(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>, csrf: Option<CsrfToken>, title: &str, namespace: &str) -> Result<RawHtml<String>, Error> {
+    let mut transaction = db_pool.begin().await?;
+    let source = if let Some(source) = sqlx::query_scalar!("SELECT text FROM wiki WHERE title = $1 AND namespace = $2 ORDER BY timestamp DESC LIMIT 1", title, namespace).fetch_optional(&**db_pool).await? {
+        Some(mentions_to_tags(&mut transaction, source).await?)
+    } else {
+        None
+    };
+    Ok(edit_form(transaction, me, uri, csrf.as_ref(), title, namespace, EditFormDefaults::Values { source }).await?)
+}
+
+#[derive(FromForm, CsrfForm)]
+pub(crate) struct EditForm {
+    #[field(default = String::new())]
+    csrf: String,
+    source: String,
+    summary: String,
+}
+
+#[derive(Responder)]
+pub(crate) enum RedirectOrContent {
+    Redirect(Redirect),
+    Content(RawHtml<String>),
+}
+
+#[rocket::post("/wiki/<title>/<namespace>/edit", data = "<form>")]
+pub(crate) async fn edit_post(discord_ctx: &State<RwFuture<DiscordCtx>>, db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>, csrf: Option<CsrfToken>, title: &str, namespace: &str, form: Form<Contextual<'_, EditForm>>) -> Result<RedirectOrContent, Error> {
+    let mut form = form.into_inner();
+    form.verify(&csrf);
+    let mut transaction = db_pool.begin().await?;
+    Ok(if let Some(ref value) = form.value {
+        if form.context.errors().next().is_some() {
+            RedirectOrContent::Content(edit_form(transaction, me, uri, csrf.as_ref(), title, namespace, EditFormDefaults::Context(form.context)).await?)
+        } else {
+            let exists = sqlx::query_scalar!(r#"SELECT EXISTS (SELECT 1 FROM wiki WHERE title = $1 AND namespace = $2) AS "exists!""#, title, namespace).fetch_one(&mut *transaction).await?;
+            sqlx::query!("INSERT INTO wiki (title, namespace, text, author, timestamp, summary) VALUES ($1, $2, $3, $4, NOW(), $5)", title, namespace, tags_to_mentions(&mut transaction, value.source.clone()).await?, me.id.get() as i64, value.summary).execute(&mut *transaction).await?;
+            transaction.commit().await?;
+            let url = if namespace == "wiki" { uri!(base_uri(), main_article(title)) } else { uri!(base_uri(), namespaced_article(title, namespace)) };
+            let mut content = MessageBuilder::default();
+            content.push('<');
+            content.push(url.to_string());
+            content.push("> wurde von ");
+            content.mention(&me.id);
+            content.push(if exists { "bearbeitet" } else { "erstellt" });
+            if !value.summary.is_empty() {
+                content.push_line(':');
+                content.push_quote_safe(&value.summary);
+            }
+            CHANNEL.send_message(&*discord_ctx.read().await, CreateMessage::default().content(content.build()).allowed_mentions(CreateAllowedMentions::default())).await?;
+            RedirectOrContent::Redirect(Redirect::to(if namespace == "wiki" { uri!(main_article(title)) } else { uri!(namespaced_article(title, namespace)) }))
+        }
+    } else {
+        RedirectOrContent::Content(edit_form(transaction, me, uri, csrf.as_ref(), title, namespace, EditFormDefaults::Context(form.context)).await?)
+    })
 }
 
 #[rocket::get("/wiki/<title>/<namespace>/history")]

@@ -2,6 +2,7 @@ use {
     std::{
         collections::BTreeSet,
         fmt,
+        num::NonZero,
         time::Duration,
     },
     chrono_tz::Tz,
@@ -87,6 +88,28 @@ impl User {
         Ok(ret)
     }
 
+    pub(crate) async fn from_tag(transaction: &mut Transaction<'_, Postgres>, username: &str, discriminator: Option<NonZero<u16>>) -> sqlx::Result<Option<Self>> {
+        Ok(if let Some(discriminator) = discriminator {
+            sqlx::query!(r#"SELECT snowflake, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users, json_user_data WHERE username = $1 AND discriminator = $2"#, username, discriminator.get() as i16).fetch_optional(&mut **transaction).await?
+            .map(|row| Self {
+                id: UserId::from(row.snowflake as u64),
+                discriminator: Some(Discriminator(discriminator.get() as i16)),
+                nick: row.nick,
+                roles: row.roles.0,
+                username: username.to_owned(),
+            })
+        } else {
+            sqlx::query!(r#"SELECT snowflake, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users, json_user_data WHERE username = $1 AND discriminator IS NULL"#, username).fetch_optional(&mut **transaction).await?
+            .map(|row| Self {
+                id: UserId::from(row.snowflake as u64),
+                discriminator: None,
+                nick: row.nick,
+                roles: row.roles.0,
+                username: username.to_owned(),
+            })
+        })
+    }
+
     pub(crate) fn is_mensch(&self) -> bool {
         self.roles.contains(&MENSCH)
     }
@@ -160,6 +183,7 @@ fn make_true() -> bool { true }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct Data {
+    pub(crate) api_key: Option<String>,
     pub(crate) timezone: Option<Tz>,
     #[serde(default = "make_true")]
     pub(crate) event_timezone_override: bool,
@@ -168,6 +192,7 @@ pub(crate) struct Data {
 impl Default for Data {
     fn default() -> Self {
         Self {
+            api_key: None,
             timezone: None,
             event_timezone_override: true,
         }

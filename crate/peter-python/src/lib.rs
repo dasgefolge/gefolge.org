@@ -7,10 +7,7 @@ use {
         prelude::*,
         wrap_pyfunction,
     },
-    serenity::{
-        model::prelude::*,
-        utils::MessageBuilder,
-    },
+    serenity::model::prelude::*,
 };
 
 create_exception!(peter, CommandError, pyo3::exceptions::PyRuntimeError);
@@ -23,12 +20,6 @@ fn user_to_id(user: Bound<'_, PyAny>) -> PyResult<UserId> {
         // support plain snowflakes
         Ok(UserId::new(user.extract()?))
     }
-}
-
-#[pyfunction] fn escape(text: &str) -> String {
-    let mut builder = MessageBuilder::default();
-    builder.push_safe(text);
-    builder.build()
 }
 
 #[pyfunction] fn add_role(user_id: Bound<'_, PyAny>, role_id: u64) -> PyResult<()> {
@@ -57,7 +48,6 @@ fn user_to_id(user: Bound<'_, PyAny>) -> PyResult<UserId> {
 }
 
 #[pymodule] fn peter(_: Python<'_>, m: Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_wrapped(wrap_pyfunction!(escape))?;
     //TODO make sure that all IPC commands are listed below
     m.add_wrapped(wrap_pyfunction!(add_role))?;
     m.add_wrapped(wrap_pyfunction!(channel_msg))?;

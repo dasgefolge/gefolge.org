@@ -58,3 +58,85 @@ document.querySelectorAll('.daterange').forEach(function(dateRange) {
         dateRange.dataset.timezone = 'local'; // set data-timezone to some value to remove the dotted underline
     }
 });
+
+document.querySelectorAll('.markdown-input').forEach((markdownInput) => {
+    let last = null;
+    let gettingPreview = true;
+    let needsPreviewRefresh = true;
+    let sock = new WebSocket("wss://gefolge.org/api/v2/websocket");
+    let previewMarkdownEdit = () => {
+        let newText = new TextEncoder().encode(markdownInput.value);
+        let start = BigInt(0);
+        for (; start < last.length && start < newText.length; start++) {
+            if (last[start] != newText[start]) {
+                break;
+            }
+        }
+        let end = BigInt(last.length);
+        for (; end > start && end > last.length - newText.length; end--) {
+            if (last[end - 1] != newText[end + newText.length - last.length - 1]) {
+                break;
+            }
+        }
+        let previewMarkdownEdit = new Uint8Array(end - start + 17);
+        previewMarkdownEdit[0] = 3; // ClientMessageV2::PreviewMarkdownEdit
+        new DataView(previewMarkdownEdit).setBigUint64(1, start);
+        new DataView(previewMarkdownEdit).setBigUint64(9, end);
+        previewMarkdownEdit.set(newText.slice(start, end), 17);
+        sock.send(previewMarkdownEdit);
+    };
+    sock.onmessage = (event) => {
+        switch (new event.data[0]) {
+            case 0: { // ServerMessageV2::Ping
+                // ignore
+                break;
+            }
+            case 1: { // ServerMessageV2::Error
+                throw event.data; //TODO decode, display in preview element
+            }
+            case 5: { // ServerMessageV2::MarkdownPreview
+                document.getElementById(markdownInput.id + '-preview').innerHTML = new TextDecoder().decode(event.data.slice(1));
+                if (needsPreviewRefresh) {
+                    needsPreviewRefresh = false;
+                    previewMarkdownEdit();
+                } else {
+                    gettingPreview = false;
+                }
+                break;
+            }
+            default: {
+                throw 'unexpected server message'; //TODO display in preview element
+            }
+        }
+    };
+    sock.onerror = (event) => {
+        console.log(`WebSocket error: ${event}`);
+        throw event; //TODO display in preview element
+    };
+    sock.onclose = (event) => {
+        //TODO reconnect
+        throw event; //TODO display in preview element
+    };
+    sock.onopen = () => {
+        gettingPreview = false;
+        needsPreviewRefresh = false;
+        let apiKey = new TextEncoder().encode(markdownInput.dataset.apikey);
+        let auth = new Uint8Array(apiKey.length + 1);
+        auth[0] = 0; // ClientMessageV2::Auth
+        auth.set(apiKey, 1);
+        sock.send(auth);
+        last = new TextEncoder().encode(markdownInput.value);
+        let previewMarkdown = new Uint8Array(last.length + 1);
+        previewMarkdown[0] = 2; // ClientMessageV2::PreviewMarkdown
+        previewMarkdown.set(last, 1);
+        sock.send(previewMarkdown);
+    };
+    markdownInput.addEventListener('input', (e) => {
+        if (gettingPreview) {
+            needsPreviewRefresh = true;
+        } else {
+            gettingPreview = true;
+            previewMarkdownEdit();
+        }
+    });
+});

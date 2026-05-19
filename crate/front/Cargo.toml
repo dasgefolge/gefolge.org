@@ -6,6 +6,7 @@ edition.workspace = true
 publish = false
 
 [features]
+default = ["ricochet-robots-websocket"]
 dev = []
 production = []
 local = []
@@ -33,10 +34,11 @@ lazy-regex = "3"
 log-lock = { git = "https://github.com/fenhl/log-lock" }
 pulldown-cmark = { git = "https://github.com/fenhl/pulldown-cmark", branch = "rocket-wiki", default-features = false, features = ["simd", "html"] }
 reqwest = { version = "0.13", default-features = false, features = ["charset", "gzip", "hickory-dns", "http2", "rustls-no-provider", "system-proxy", "zstd"] }
-ricochet-robots-websocket = { git = "ssh://git@github.com/dasgefolge/ricochet-robots.git" }
+ricochet-robots-websocket = { git = "ssh://git@github.com/dasgefolge/ricochet-robots.git", optional = true }
 rocket = { features = ["secrets"], version = "0.5" }
 rocket-basicauth = { git = "https://github.com/fenhl/rocket-basicauth" }
-rocket-util = { git = "https://github.com/fenhl/rocket-util", features = ["reqwest"] }
+rocket-util = { git = "https://github.com/fenhl/rocket-util", features = ["reqwest", "rocket_csrf"] }
+rocket_csrf = { git = "https://github.com/fenhl/rocket_csrf", branch = "rocket05" }
 rocket_oauth2 = { version = "0.5" }
 rocket_ws = { version = "0.1" }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }

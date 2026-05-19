@@ -11,6 +11,7 @@ use {
     tokio::process::Command,
     wheel::traits::AsyncCommandOutputExt as _,
 };
+#[cfg(not(windows))] use tokio as _; // unused except with `peter` feature
 #[cfg(feature = "peter")] use {
     std::collections::BTreeMap,
     serenity::prelude::*,
