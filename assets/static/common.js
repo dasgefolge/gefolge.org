@@ -87,7 +87,7 @@ document.querySelectorAll('.markdown-input').forEach((markdownInput) => {
         sock.send(previewMarkdownEdit);
     };
     sock.onmessage = (event) => {
-        switch (event.data[0]) {
+        switch (new DataView(event.data).getUint8(0)) {
             case 0: { // ServerMessageV2::Ping
                 // ignore
                 break;
