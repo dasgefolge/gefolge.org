@@ -64,6 +64,7 @@ document.querySelectorAll('.markdown-input').forEach((markdownInput) => {
     let gettingPreview = true;
     let needsPreviewRefresh = true;
     let sock = new WebSocket("wss://gefolge.org/api/v2/websocket");
+    sock.binaryType = 'arraybuffer';
     let previewMarkdownEdit = () => {
         let newText = new TextEncoder().encode(markdownInput.value);
         let start = BigInt(0);
