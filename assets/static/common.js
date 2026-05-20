@@ -79,7 +79,7 @@ document.querySelectorAll('.markdown-input').forEach((markdownInput) => {
                 break;
             }
         }
-        let previewMarkdownEdit = new Uint8Array(end - start + 25);
+        let previewMarkdownEdit = new Uint8Array(end + newText.length - last.length - start + 25);
         previewMarkdownEdit[0] = 3; // ClientMessageV2::PreviewMarkdownEdit
         new DataView(previewMarkdownEdit.buffer).setBigUint64(1, BigInt(start));
         new DataView(previewMarkdownEdit.buffer).setBigUint64(9, BigInt(end));
