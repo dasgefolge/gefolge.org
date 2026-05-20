@@ -67,13 +67,13 @@ document.querySelectorAll('.markdown-input').forEach((markdownInput) => {
     sock.binaryType = 'arraybuffer';
     let previewMarkdownEdit = () => {
         let newText = new TextEncoder().encode(markdownInput.value);
-        let start = BigInt(0);
+        let start = 0;
         for (; start < last.length && start < newText.length; start++) {
             if (last[start] != newText[start]) {
                 break;
             }
         }
-        let end = BigInt(last.length);
+        let end = last.length;
         for (; end > start && end > last.length - newText.length; end--) {
             if (last[end - 1] != newText[end + newText.length - last.length - 1]) {
                 break;
@@ -81,8 +81,8 @@ document.querySelectorAll('.markdown-input').forEach((markdownInput) => {
         }
         let previewMarkdownEdit = new Uint8Array(end - start + 25);
         previewMarkdownEdit[0] = 3; // ClientMessageV2::PreviewMarkdownEdit
-        new DataView(previewMarkdownEdit.buffer).setBigUint64(1, start);
-        new DataView(previewMarkdownEdit.buffer).setBigUint64(9, end);
+        new DataView(previewMarkdownEdit.buffer).setBigUint64(1, BigInt(start));
+        new DataView(previewMarkdownEdit.buffer).setBigUint64(9, BigInt(end));
         new DataView(previewMarkdownEdit.buffer).setBigUint64(17, BigInt(newText.length));
         previewMarkdownEdit.set(newText.slice(start, end), 25);
         sock.send(previewMarkdownEdit);

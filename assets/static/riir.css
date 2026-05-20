@@ -125,28 +125,31 @@ a:hover {
     text-decoration: none;
 }
 
-.button {
-    background-color: white;
-    border: 1px solid black;
-    padding: 8px;
+input[type="submit"] {
+    font-size: unset;
+    font-family: unset;
 }
 
-.button {
+.button,
+input[type="submit"] {
     border-inline-start-width: 0;
 }
 
-.button:nth-child(1) {
+.button:nth-child(1),
+input[type="submit"]:nth-child(1) {
     border-inline-start-width: 1px;
     border-start-start-radius: 8px;
     border-end-start-radius: 8px;
 }
 
-.button:nth-last-child(1) {
+.button:nth-last-child(1),
+input[type="submit"]:nth-last-child(1) {
     border-start-end-radius: 8px;
     border-end-end-radius: 8px;
 }
 
-.button:hover {
+.button:hover,
+input[type="submit"]:hover {
     background-color: black;
     color: white;
 }
@@ -154,6 +157,38 @@ a:hover {
 .daterange:not([data-timezone]) {
     text-decoration: underline;
     text-decoration-style: dotted;
+}
+
+fieldset {
+    border-width: 0;
+}
+
+label:not(:nth-last-child(1)) {
+    margin-inline-end: 8px;
+}
+
+.error {
+    border: 1px solid #c00000;
+}
+
+p.error {
+    background-color: #ffc0c0;
+    padding: 8px;
+}
+
+input[type="text"],
+input[type="submit"],
+textarea,
+.button {
+    background-color: white;
+    border: 1px solid black;
+    padding: 8px;
+}
+
+textarea {
+    display: block;
+    width: 100%;
+    resize: vertical;
 }
 
 footer {
@@ -212,12 +247,16 @@ footer {
         background-color: rgba(255, 255, 255, 0.1);
     }
 
+    input[type="text"],
+    input[type="submit"],
+    textarea,
     .button {
         background-color: black;
         border-color: white;
     }
 
-    .button:hover {
+    .button:hover,
+    input[type="submit"]:hover {
         background-color: white;
         color: black;
     }
