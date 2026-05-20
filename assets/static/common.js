@@ -74,7 +74,7 @@ document.querySelectorAll('.markdown-input').forEach((markdownInput) => {
             }
         }
         let end = last.length;
-        for (; end > start && end > last.length - newText.length; end--) {
+        for (; end > start && end + newText.length - last.length > start; end--) {
             if (last[end - 1] != newText[end + newText.length - last.length - 1]) {
                 break;
             }
