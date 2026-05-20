@@ -83,8 +83,8 @@ document.querySelectorAll('.markdown-input').forEach((markdownInput) => {
         previewMarkdownEdit[0] = 3; // ClientMessageV2::PreviewMarkdownEdit
         new DataView(previewMarkdownEdit.buffer).setBigUint64(1, BigInt(start));
         new DataView(previewMarkdownEdit.buffer).setBigUint64(9, BigInt(end));
-        new DataView(previewMarkdownEdit.buffer).setBigUint64(17, BigInt(newText.length));
-        previewMarkdownEdit.set(newText.slice(start, end), 25);
+        new DataView(previewMarkdownEdit.buffer).setBigUint64(17, BigInt(end + newText.length - last.length - start));
+        previewMarkdownEdit.set(newText.slice(start, end + newText.length - last.length), 25);
         sock.send(previewMarkdownEdit);
     };
     sock.onmessage = (event) => {
