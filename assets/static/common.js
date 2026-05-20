@@ -83,7 +83,7 @@ document.querySelectorAll('.markdown-input').forEach((markdownInput) => {
         previewMarkdownEdit[0] = 3; // ClientMessageV2::PreviewMarkdownEdit
         new DataView(previewMarkdownEdit.buffer).setBigUint64(1, start);
         new DataView(previewMarkdownEdit.buffer).setBigUint64(9, end);
-        new DataView(previewMarkdownEdit.buffer).setBigUint64(17, newText.length);
+        new DataView(previewMarkdownEdit.buffer).setBigUint64(17, BigInt(newText.length));
         previewMarkdownEdit.set(newText.slice(start, end), 25);
         sock.send(previewMarkdownEdit);
     };
@@ -125,13 +125,13 @@ document.querySelectorAll('.markdown-input').forEach((markdownInput) => {
         let apiKey = new TextEncoder().encode(markdownInput.dataset.apikey);
         let auth = new Uint8Array(apiKey.length + 9);
         auth[0] = 0; // ClientMessageV2::Auth
-        new DataView(auth.buffer).setBigUint64(1, apiKey.length);
+        new DataView(auth.buffer).setBigUint64(1, BigInt(apiKey.length));
         auth.set(apiKey, 9);
         sock.send(auth);
         last = new TextEncoder().encode(markdownInput.value);
         let previewMarkdown = new Uint8Array(last.length + 9);
         previewMarkdown[0] = 2; // ClientMessageV2::PreviewMarkdown
-        new DataView(previewMarkdown.buffer).setBigUint64(1, previewMarkdown.length);
+        new DataView(previewMarkdown.buffer).setBigUint64(1, BigInt(previewMarkdown.length));
         previewMarkdown.set(last, 9);
         sock.send(previewMarkdown);
     };
