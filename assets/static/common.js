@@ -131,7 +131,7 @@ document.querySelectorAll('.markdown-input').forEach((markdownInput) => {
         last = new TextEncoder().encode(markdownInput.value);
         let previewMarkdown = new Uint8Array(last.length + 9);
         previewMarkdown[0] = 2; // ClientMessageV2::PreviewMarkdown
-        new DataView(previewMarkdown.buffer).setBigUint64(1, BigInt(previewMarkdown.length));
+        new DataView(previewMarkdown.buffer).setBigUint64(1, BigInt(last.length));
         previewMarkdown.set(last, 9);
         sock.send(previewMarkdown);
     };
