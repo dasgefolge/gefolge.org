@@ -86,6 +86,7 @@ document.querySelectorAll('.markdown-input').forEach((markdownInput) => {
         new DataView(previewMarkdownEdit.buffer).setBigUint64(17, BigInt(end + newText.length - last.length - start));
         previewMarkdownEdit.set(newText.slice(start, end + newText.length - last.length), 25);
         sock.send(previewMarkdownEdit);
+        last = newText;
     };
     sock.onmessage = (event) => {
         switch (new DataView(event.data).getUint8(0)) {
