@@ -6,7 +6,20 @@ edition.workspace = true
 publish = false
 
 [features]
-peter = ["dep:futures", "dep:itertools", "dep:num-traits", "dep:quantum-werewolf", "dep:rand", "dep:serenity-utils", "dep:twitch_helix", "wheel/tungstenite021"]
+peter = [
+    "dep:futures",
+    "dep:itertools",
+    "dep:num-traits",
+    "dep:quantum-werewolf",
+    "dep:rand",
+    "serenity/model",
+    "serenity/rustls_backend",
+    "dep:serenity-utils",
+    "sqlx/chrono",
+    "dep:twitch_helix",
+    "wheel/reqwest",
+    "wheel/tungstenite021",
+]
 
 [dependencies]
 async-proto = { version = "0.26", features = ["chrono-tz", "semver"] }
@@ -24,7 +37,7 @@ semver = "1"
 serde = "1"
 serde_json = { package = "serde_json_path_to_error", version = "0.1" } #TODO which features to use for correct decimal handling? Or use async-json instead?
 serde_with = "3"
-serenity = { version = "0.12", default-features = false, features = ["model", "rustls_backend"] }
+serenity = { version = "0.12", default-features = false }
 serenity-utils = { git = "https://github.com/fenhl/serenity-utils", optional = true }
 sqlx = { version = "0.8", features = ["json", "macros", "postgres", "runtime-tokio-rustls"] }
 thiserror = "2"
