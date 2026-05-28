@@ -6,7 +6,7 @@ edition.workspace = true
 publish = false
 
 [features]
-peter = ["dep:futures", "dep:itertools", "dep:num-traits", "dep:quantum-werewolf", "dep:rand", "dep:serenity-utils", "dep:twitch_helix"]
+peter = ["dep:futures", "dep:itertools", "dep:num-traits", "dep:quantum-werewolf", "dep:rand", "dep:serenity-utils", "dep:twitch_helix", "wheel/tungstenite021"]
 
 [dependencies]
 async-proto = { version = "0.26", features = ["chrono-tz", "semver"] }
@@ -30,7 +30,7 @@ sqlx = { version = "0.8", features = ["json", "macros", "postgres", "runtime-tok
 thiserror = "2"
 tokio = { version = "1", features = ["time"] }
 twitch_helix = { git = "https://github.com/fenhl/rust-twitch-helix", optional = true } #TODO publish to crates.io
-wheel = { git = "https://github.com/fenhl/wheel", features = ["chrono", "tungstenite021"] }
+wheel = { git = "https://github.com/fenhl/wheel", features = ["chrono"] }
 
 [target."cfg(unix)".dependencies]
 xdg = "3"

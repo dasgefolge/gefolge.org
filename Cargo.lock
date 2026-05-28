@@ -5258,7 +5258,6 @@ name = "wheel"
 version = "0.15.3"
 source = "git+https://github.com/fenhl/wheel#ce3a9750ce21bf9f5435b13d12a6bd18d908bcaa"
 dependencies = [
- "async-proto 0.26.15",
  "async-trait",
  "chrono",
  "clap",
@@ -5275,7 +5274,6 @@ dependencies = [
  "thiserror 2.0.18",
  "tokio",
  "tokio-util",
- "tungstenite",
  "wheel-derive",
 ]
 
