@@ -474,9 +474,9 @@ dependencies = [
 
 [[package]]
 name = "chrono"
-version = "0.4.44"
+version = "0.4.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c673075a2e0e5f4a1dde27ce9dee1ea4558c7ffe648f576438a20ca1d2acc4b0"
+checksum = "1aa79e62e7697b8e29b513a68abacf485adcd1fe8284a4316c5ae868e6633327"
 dependencies = [
  "iana-time-zone",
  "js-sys",
@@ -3308,7 +3308,7 @@ dependencies = [
 [[package]]
 name = "rocket-util"
 version = "0.2.17"
-source = "git+https://github.com/fenhl/rocket-util#55ffc89f332da4618eb2c36ffc586097493d78b5"
+source = "git+https://github.com/fenhl/rocket-util#ff8489253839538594080e744f0baf68dd9779b7"
 dependencies = [
  "futures",
  "reqwest 0.13.4",
@@ -3323,7 +3323,7 @@ dependencies = [
 [[package]]
 name = "rocket-util-derive"
 version = "0.2.17"
-source = "git+https://github.com/fenhl/rocket-util#55ffc89f332da4618eb2c36ffc586097493d78b5"
+source = "git+https://github.com/fenhl/rocket-util#ff8489253839538594080e744f0baf68dd9779b7"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3850,9 +3850,9 @@ dependencies = [
 
 [[package]]
 name = "serde_with"
-version = "3.20.0"
+version = "3.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e72c1c2cb7b223fafb600a619537a871c2818583d619401b785e7c0b746ccde2"
+checksum = "76a5c54c7310e7b8b9577c286d7e399ddd876c3e12b3ed917a8aabc4b96e9e8c"
 dependencies = [
  "base64 0.22.1",
  "bs58",
@@ -3870,9 +3870,9 @@ dependencies = [
 
 [[package]]
 name = "serde_with_macros"
-version = "3.20.0"
+version = "3.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b90c488738ecb4fb0262f41f43bc40efc5868d9fb744319ddf5f5317f417bfac"
+checksum = "84d57bc0c8b9a17920c178daa6bb924850d54a9c97ab45194bb8c17ad66bb660"
 dependencies = [
  "darling",
  "proc-macro2",
