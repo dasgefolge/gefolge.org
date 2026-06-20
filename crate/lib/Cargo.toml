@@ -26,7 +26,7 @@ async-proto = { version = "0.26", features = ["chrono-tz", "semver"] }
 chrono = { version = "0.4", features = ["serde"] }
 chrono-tz = { version = "0.10", features = ["serde"] }
 futures = { version = "0.3", optional = true }
-itertools = { version = "0.14", optional = true }
+itertools = { version = "0.15", optional = true }
 lazy-regex = "3"
 num-traits = { version = "0.2", optional = true }
 quantum-werewolf = { git = "https://github.com/dasgefolge/quantum-werewolf", optional = true }
