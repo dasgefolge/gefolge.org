@@ -29,7 +29,7 @@ futures = "0.3"
 gefolge-web-lib = { path = "../lib", features = ["peter"] }
 hmac = "0.13"
 itermore = { version = "0.8", features = ["array_chunks"] }
-itertools = "0.14"
+itertools = "0.15"
 lazy-regex = "3"
 log-lock = { git = "https://github.com/fenhl/log-lock" }
 pulldown-cmark = { git = "https://github.com/fenhl/pulldown-cmark", branch = "rocket-wiki", default-features = false, features = ["simd", "html"] }
