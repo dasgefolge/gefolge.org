@@ -6,8 +6,10 @@ use {
     },
     rocket::response::content::RawHtml,
     rocket_util::html,
-    gefolge_web_lib::time::MaybeLocalDateTime,
-    crate::user,
+    gefolge_web_lib::{
+        time::MaybeLocalDateTime,
+        user,
+    },
 };
 
 pub(crate) fn format_datetime(viewer_data: &user::Data, datetime: MaybeLocalDateTime, long: bool) -> RawHtml<String> {

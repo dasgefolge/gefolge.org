@@ -50,14 +50,11 @@ use {
     },
     gefolge_web_lib::{
         event::Event,
+        user::User,
         websocket::{
             ClientMessageV2,
             ServerMessageV2,
         },
-    },
-    crate::user::{
-        Discriminator,
-        User,
     },
 };
 
@@ -142,24 +139,6 @@ async fn client_session_v1(db_pool: PgPool, rr_lobbies: Arc<RwLock<HashMap<u64, 
     Ok(())
 }
 
-impl ricochet_robots_websocket::PlayerId for User {
-    fn id(&self) -> Result<u64, ricochet_robots_websocket::Error> {
-        Ok(u64::from(self.id))
-    }
-
-    fn username(&self) -> Result<String, ricochet_robots_websocket::Error> {
-        Ok(self.username.clone())
-    }
-
-    fn discrim(&self) -> Result<u16, ricochet_robots_websocket::Error> {
-        Ok(self.discriminator.map(|Discriminator(discrim)| discrim as u16).unwrap_or_default())
-    }
-
-    fn nickname(&self) -> Result<Option<String>, ricochet_robots_websocket::Error> {
-        Ok(self.nick.clone())
-    }
-}
-
 #[rocket::get("/api/websocket")]
 pub(crate) fn websocket_legacy() -> Redirect {
     Redirect::permanent(uri!(websocket_v1))
@@ -208,14 +187,15 @@ async fn client_session_v2(db_pool: PgPool, mut rocket_shutdown: rocket::Shutdow
 
                             let mut prev_event = None;
                             loop {
+                                let mut transaction = db_pool.begin().await?;
                                 let now = Utc::now();
                                 let mut current_event = None;
-                                for row in sqlx::query!(r#"SELECT id, value AS "value: Json<Event>" FROM json_events"#).fetch_all(&db_pool).await? {
-                                    if let (Some(start), Some(end)) = (row.value.start(&db_pool).await?, row.value.end(&db_pool).await?) {
+                                for row in sqlx::query!(r#"SELECT id, value AS "value: Json<Event>" FROM json_events"#).fetch_all(&mut *transaction).await? {
+                                    if let (Some(start), Some(end)) = (row.value.start(&mut transaction).await?, row.value.end(&mut transaction).await?) {
                                         if start <= now && now < end {
                                             if let Some(other) = current_event.replace(EventData {
                                                 id: row.id.clone(),
-                                                timezone: row.value.timezone(&db_pool).await?.unwrap_or(Europe::Berlin),
+                                                timezone: row.value.timezone(&mut transaction).await?.unwrap_or(Europe::Berlin),
                                             }) {
                                                 return Err(Error::MultipleCurrentEvents([row.id, other.id]).into())
                                             }
@@ -230,6 +210,7 @@ async fn client_session_v2(db_pool: PgPool, mut rocket_shutdown: rocket::Shutdow
                                     }
                                 }
                                 prev_event = Some(current_event);
+                                transaction.commit().await?;
                                 sleep(Duration::from_secs(10)).await;
                             }
                         }));

@@ -41,7 +41,13 @@ use {
         Transaction,
     },
     url::Url,
-    gefolge_web_lib::time::MaybeLocalDateTime,
+    gefolge_web_lib::{
+        time::MaybeLocalDateTime,
+        user::{
+            Mensch,
+            User,
+        },
+    },
     crate::{
         PageKind,
         base_uri,
@@ -51,10 +57,6 @@ use {
         },
         page,
         time::format_datetime,
-        user::{
-            Mensch,
-            User,
-        },
     },
 };
 
@@ -376,7 +378,7 @@ pub(crate) async fn edit_post(discord_ctx: &State<RwFuture<DiscordCtx>>, db_pool
             content.push(url.to_string());
             content.push("> wurde von ");
             content.mention(&me.id);
-            content.push(if exists { "bearbeitet" } else { "erstellt" });
+            content.push(if exists { " bearbeitet" } else { " erstellt" });
             if !value.summary.is_empty() {
                 content.push_line(':');
                 content.push_quote_safe(&value.summary);

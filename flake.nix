@@ -1,8 +1,5 @@
 {
-    inputs = {
-        nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/*.tar.gz";
-        nixpkgs-unstable-small.url = "github:NixOS/nixpkgs/nixos-unstable-small"; #TODO(https://nixpk.gs/pr-tracker.html?pr=524985) ride release train
-    };
+    inputs.nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/*.tar.gz";
     outputs = attrs: let
         supportedSystems = [
             "aarch64-darwin"
@@ -14,15 +11,12 @@
             pkgs = import attrs.nixpkgs {
                 inherit system;
             };
-            pkgs-unstable-small = import attrs.nixpkgs-unstable-small {
-                inherit system;
-            };
         });
     in {
-        packages = forEachSupportedSystem ({ pkgs, pkgs-unstable-small, ... }: let
+        packages = forEachSupportedSystem ({ pkgs, ... }: let
             manifest = (pkgs.lib.importTOML ./Cargo.toml).workspace.package;
         in {
-            default = pkgs-unstable-small.rustPlatform.buildRustPackage {
+            default = pkgs.rustPlatform.buildRustPackage {
                 pname = "gefolge-web";
                 version = manifest.version;
                 buildAndTestSubdir = "crate/front";

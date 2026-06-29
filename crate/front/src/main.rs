@@ -11,7 +11,6 @@ use {
         Engine as _,
         general_purpose::STANDARD as BASE64,
     },
-    chrono::prelude::*,
     futures::future::FutureExt as _,
     itertools::Itertools as _,
     log_lock::*,
@@ -65,32 +64,36 @@ use {
             Postgres,
         },
         Transaction,
-        types::Json,
     },
     url::Url,
     gefolge_web_lib::{
+        auth::{
+            Discord,
+            DiscordUser,
+        },
         config::Config,
-        event::Event,
-        time::MaybeLocalDateTime,
-    },
-    crate::{
-        auth::DiscordUser,
-        time::format_date_range,
         user::{
             Mensch,
             User,
         },
+    },
+    crate::{
+        event::{
+            EventOverview,
+            load_events,
+        },
+        time::format_date_range,
     },
 };
 
 include!(concat!(env!("OUT_DIR"), "/static_files.rs"));
 
 mod auth;
+mod event;
 mod form;
 mod games;
 mod github_webhook;
 mod time;
-mod user;
 mod websocket;
 mod wiki;
 
@@ -119,6 +122,12 @@ fn base_uri() -> rocket::http::uri::Absolute<'static> {
         Environment::Dev => uri!("https://dev.gefolge.org"),
         Environment::Local => uri!("http://localhost:24816"),
     }
+}
+
+#[derive(Responder)]
+enum StatusOrError<E> {
+    Status(Status),
+    Err(E),
 }
 
 trait LoginState {
@@ -302,46 +311,6 @@ enum IndexError {
     #[error(transparent)] Sql(#[from] sqlx::Error),
 }
 
-
-struct EventOverview {
-    id: String,
-    start: Option<MaybeLocalDateTime>,
-    end: Option<MaybeLocalDateTime>,
-    event: Event,
-}
-
-struct EventsOverview {
-    past: Vec<EventOverview>,
-    ongoing: Vec<EventOverview>,
-    upcoming: Vec<EventOverview>,
-}
-
-async fn load_events(transaction: &mut Transaction<'_, Postgres>) -> Result<EventsOverview, IndexError> {
-    let now = Utc::now();
-    let mut past = Vec::default();
-    let mut upcoming = Vec::default();
-    for row in sqlx::query!(r#"SELECT id, value AS "value: Json<Event>" FROM json_events"#).fetch_all(&mut **transaction).await? {
-        let start = row.value.0.start(&mut **transaction).await?;
-        let end = row.value.0.end(&mut **transaction).await?;
-        if end.map_or(true, |end| end > now) { &mut upcoming } else { &mut past }.push(EventOverview { id: row.id, start, end, event: row.value.0 });
-    }
-    upcoming.sort_unstable_by(|EventOverview { id: id1, start: start1, .. }, EventOverview { id: id2, start: start2, ..}|
-        start1.is_none().cmp(&start2.is_none()) // nulls last
-            .then_with(|| start1.cmp(start2))
-            .then_with(|| id1.cmp(id2))
-    );
-    let mut ongoing = Vec::default();
-    for eo in upcoming.drain(..).collect_vec() {
-        if eo.start.map_or(true, |start| start <= now) { &mut ongoing } else { &mut upcoming }.push(eo);
-    }
-    past.sort_unstable_by(|EventOverview { id: id1, end: end1, .. }, EventOverview { id: id2, end: end2, .. }|
-        end2.is_none().cmp(&end1.is_none()) // nulls last
-            .then_with(|| end2.cmp(end1))
-            .then_with(|| id2.cmp(id1))
-    );
-    Ok(EventsOverview { past, ongoing, upcoming })
-}
-
 #[rocket::get("/")]
 async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>) -> Result<RawHtml<String>, IndexError> {
     Ok(if let Some(DiscordUser { id }) = me {
@@ -355,7 +324,7 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                 p {
                     a(href = "/api") : "API";
                     : " • ";
-                    a(href = uri!(event_page)) : "events";
+                    a(href = uri!(event::index)) : "events";
                     : " • ";
                     a(href = uri!(games::index)) : "Spiele";
                     : " • ";
@@ -427,66 +396,6 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
             }
         }).await?
     })
-}
-
-#[rocket::get("/event")]
-async fn event_page(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>) -> Result<RawHtml<String>, IndexError> {
-    let mut transaction = db_pool.begin().await?;
-    let events = load_events(&mut transaction).await?;
-    let content = html! {
-        @let viewer_data = me.data(&mut transaction).await?;
-        h1 : "Events";
-        @if !events.ongoing.is_empty() {
-            h2 : "laufende Events";
-            ul {
-                @for EventOverview { id, start, end, event } in events.ongoing {
-                    li {
-                        : event.to_html(&id);
-                        @if let (Some(start), Some(end)) = (start, end) {
-                            : " (";
-                            : format_date_range(&viewer_data, start, end);
-                            : ")";
-                        }
-                    }
-                }
-            }
-        }
-        @if !events.upcoming.is_empty() {
-            h2 : "zukünftige Events";
-            ul {
-                @for EventOverview { id, start, end, event } in events.upcoming {
-                    li {
-                        : event.to_html(&id);
-                        @if let (Some(start), Some(end)) = (start, end) {
-                            : " (";
-                            : format_date_range(&viewer_data, start, end);
-                            : ")";
-                        }
-                    }
-                }
-            }
-        }
-        @if !events.past.is_empty() {
-            h2 : "vergangene Events";
-            ul {
-                @for EventOverview { id, start, end, event } in events.past {
-                    li {
-                        : event.to_html(&id);
-                        @if let (Some(start), Some(end)) = (start, end) {
-                            : " (";
-                            : format_date_range(&viewer_data, start, end);
-                            : ")";
-                        }
-                    }
-                }
-            }
-        }
-    };
-    Ok(page(transaction, me, &uri, PageKind::Sub(vec![
-        html! {
-            : "events";
-        },
-    ]), "Events — Das Gefolge", content).await?)
 }
 
 struct ProxyHttpClient(reqwest::Client);
@@ -827,15 +736,16 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
     })
     .mount("/", rocket::routes![
         index,
-        event_page,
         flask_proxy_get,
         flask_proxy_get_api,
         flask_proxy_get_api_children,
         flask_proxy_post,
         robots_txt,
-        auth::discord_callback,
         auth::discord_login,
+        auth::discord_callback,
         auth::logout,
+        event::index,
+        event::get,
         games::index,
         games::werewolf_proxy_get_index,
         games::werewolf_proxy_get_children,
@@ -863,7 +773,7 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
         fallback_catcher,
     ])
     .attach(rocket_csrf::Fairing::default())
-    .attach(OAuth2::<auth::Discord>::custom(rocket_oauth2::HyperRustlsAdapter::default(), OAuthConfig::new(
+    .attach(OAuth2::<Discord>::custom(rocket_oauth2::HyperRustlsAdapter::default(), OAuthConfig::new(
         rocket_oauth2::StaticProvider::Discord,
         config.discord.client_id.to_string(),
         config.discord.client_secret.to_string(),

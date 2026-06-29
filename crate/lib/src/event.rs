@@ -10,7 +10,10 @@ use {
     chrono::prelude::*,
     chrono_tz::Tz,
     rocket::response::content::RawHtml,
-    rocket_util::html,
+    rocket_util::{
+        ToHtml,
+        html,
+    },
     serde::{
         Deserialize,
         Serialize,
@@ -28,12 +31,14 @@ use {
         prelude::*,
         types::Json,
     },
+    url::Url,
     crate::{
         money::Euro,
         time::{
             MaybeAwareDateTime,
             MaybeLocalDateTime,
         },
+        user::User,
     },
 };
 
@@ -91,40 +96,40 @@ impl Event {
         }
     }
 
-    pub async fn location_info(&self, db_pool: impl PgExecutor<'_>) -> Result<LocationInfo, Error> {
+    pub async fn location_info(&self, transaction: &mut Transaction<'_, Postgres>) -> Result<LocationInfo, Error> {
         Ok(match self.location.as_deref() {
             Some("online") => LocationInfo::Online,
-            Some(name) => LocationInfo::Known(Location::load(db_pool, name).await?.ok_or(Error::UnknownLocation)?),
+            Some(name) => LocationInfo::Known(Location::load(transaction, name).await?.ok_or(Error::UnknownLocation)?),
             None => LocationInfo::Unknown,
         })
     }
 
     async fn nights(&self, transaction: &mut Transaction<'_, Postgres>) -> Result<Option<Range<NaiveDate>>, Error> {
-        let Some(start) = self.start(&mut **transaction).await? else { return Ok(None) };
-        let Some(end) = self.end(&mut **transaction).await? else { return Ok(None) };
-        let Some(tz) = self.timezone(&mut **transaction).await? else { return Ok(None) };
+        let Some(start) = self.start(&mut *transaction).await? else { return Ok(None) };
+        let Some(end) = self.end(&mut *transaction).await? else { return Ok(None) };
+        let Some(tz) = self.timezone(transaction).await? else { return Ok(None) };
         Ok(Some(start.with_timezone(&tz).date_naive()..end.with_timezone(&tz).date_naive()))
     }
 
-    pub async fn timezone(&self, db_pool: impl PgExecutor<'_>) -> Result<Option<Tz>, Error> {
+    pub async fn timezone(&self, transaction: &mut Transaction<'_, Postgres>) -> Result<Option<Tz>, Error> {
         Ok(if let Some(timezone) = self.timezone {
             Some(timezone)
         } else {
-            self.location_info(db_pool).await?.timezone()
+            self.location_info(transaction).await?.timezone()
         })
     }
 
-    pub async fn start(&self, db_pool: impl PgExecutor<'_>) -> Result<Option<MaybeLocalDateTime>, Error> {
+    pub async fn start(&self, transaction: &mut Transaction<'_, Postgres>) -> Result<Option<MaybeLocalDateTime>, Error> {
         Ok(if let Some(start) = self.start {
-            Some(start.to_maybe_local(self.timezone(db_pool).await?)?)
+            Some(start.to_maybe_local(self.timezone(transaction).await?)?)
         } else {
             None
         })
     }
 
-    pub async fn end(&self, db_pool: impl PgExecutor<'_>) -> Result<Option<MaybeLocalDateTime>, Error> {
+    pub async fn end(&self, transaction: &mut Transaction<'_, Postgres>) -> Result<Option<MaybeLocalDateTime>, Error> {
         Ok(if let Some(end) = self.end {
-            Some(end.to_maybe_local(self.timezone(db_pool).await?)?)
+            Some(end.to_maybe_local(self.timezone(transaction).await?)?)
         } else {
             None
         })
@@ -217,15 +222,58 @@ pub enum Going {
 }
 
 #[derive(Deserialize)]
-pub struct Location {
-    timezone: Tz,
+struct JsonLocation {
+    host: Option<UserId>,
+    name: Option<String>,
+    prefix: Option<String>,
     #[serde(default)]
+    rooms: HashMap<String, HashMap<String, Room>>,
+    timezone: Tz,
+    website: Option<Url>,
+}
+
+pub struct Location {
+    host: Option<User>,
+    name: String,
+    prefix: Cow<'static, str>,
     pub rooms: HashMap<String, HashMap<String, Room>>,
+    timezone: Tz,
+    website: Option<Url>,
 }
 
 impl Location {
-    async fn load(db_pool: impl PgExecutor<'_>, loc_id: &str) -> sqlx::Result<Option<Self>> {
-        Ok(sqlx::query_scalar(r#"SELECT value AS "value: Json<Self>" FROM json_locations WHERE id = $1"#).bind(loc_id).fetch_optional(db_pool).await?.map(|Json(value)| value))
+    async fn load(transaction: &mut Transaction<'_, Postgres>, loc_id: &str) -> sqlx::Result<Option<Self>> {
+        let Some(Json(JsonLocation { host, name, prefix, rooms, timezone, website })) = sqlx::query_scalar(r#"SELECT value AS "value: _" FROM json_locations WHERE id = $1"#).bind(loc_id).fetch_optional(&mut **transaction).await? else { return Ok(None) };
+        Ok(Some(Self {
+            host: if let Some(host) = host { User::from_id(transaction, host).await? } else { None }, //TODO error on nonexistent user instead of setting host to None?
+            name: name.unwrap_or_else(|| loc_id.to_owned()),
+            prefix: prefix.map(Cow::Owned).unwrap_or_else(|| Cow::Borrowed("in ")),
+            timezone, rooms, website,
+        }))
+    }
+}
+
+impl ToHtml for Location {
+    fn to_html(&self) -> RawHtml<String> {
+        let mut buf = RawHtml(String::default());
+        self.push_html(&mut buf);
+        buf
+    }
+
+    fn push_html(&self, buf: &mut RawHtml<String>) {
+        if let Some(host) = &self.host {
+            buf.0.push_str("bei ");
+            host.push_html(buf);
+            buf.0.push(' ');
+        }
+        self.prefix.push_html(buf);
+        if let Some(website) = &self.website {
+            html! {
+                a(href = website) : self.name;
+            }.push_html(buf);
+        } else {
+            self.name.push_html(buf);
+        }
     }
 }
 

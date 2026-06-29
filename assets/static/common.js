@@ -1,15 +1,15 @@
 document.querySelectorAll('.datetime').forEach(function(dateTime) {
     var timestamp = new Date(parseInt(dateTime.dataset.timestamp));
     var longFormat = dateTime.dataset.long == 'true';
-    if ('timezone' in dateRange.dataset) {
+    if ('timezone' in dateTime.dataset) {
         // preserve specified timezone but otherwise format according to user locale
         dateTime.textContent = timestamp.toLocaleString([], {
             dateStyle: longFormat ? 'full' : 'medium',
             timeStyle: longFormat ? 'full' : 'short',
-            timeZone: dateRange.dataset.timezone,
+            timeZone: dateTime.dataset.timezone,
         });
         var timezone = 'unbekannte Zeitzone';
-        Intl.DateTimeFormat([], {timeZoneName: 'long', timeZone: dateRange.dataset.timezone}).formatToParts(timestamp).forEach(function(part) {
+        Intl.DateTimeFormat([], {timeZoneName: 'long', timeZone: dateTime.dataset.timezone}).formatToParts(timestamp).forEach(function(part) {
             if (part.type === 'timeZoneName') {
                 timezone = part.value;
             }

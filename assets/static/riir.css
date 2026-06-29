@@ -188,7 +188,13 @@ textarea,
 textarea {
     display: block;
     width: 100%;
-    resize: vertical;
+    field-sizing: content;
+}
+
+@supports not (field-sizing: content) {
+    textarea {
+        resize: vertical;
+    }
 }
 
 footer {

@@ -6,7 +6,8 @@ edition.workspace = true
 publish = false
 
 [features]
-default = ["ricochet-robots-websocket"]
+default = ["ricochet-robots"]
+ricochet-robots = ["ricochet-robots-websocket", "gefolge-web-lib/ricochet-robots-websocket"]
 dev = []
 production = []
 local = []
@@ -24,7 +25,6 @@ base64 = "0.22"
 chrono = { version = "0.4", features = ["serde", "clock"], default-features = false }
 chrono-tz = { version = "0.10", features = ["serde"] }
 clap = { version = "4", features = ["derive"] }
-derive_more = { version = "2", features = ["deref", "into"] }
 futures = "0.3"
 gefolge-web-lib = { path = "../lib", features = ["peter"] }
 hmac = "0.13"
@@ -36,11 +36,10 @@ pulldown-cmark = { git = "https://github.com/fenhl/pulldown-cmark", branch = "ro
 reqwest = { version = "0.13", default-features = false, features = ["charset", "gzip", "hickory-dns", "http2", "rustls-no-provider", "system-proxy", "zstd"] }
 ricochet-robots-websocket = { git = "ssh://git@github.com/dasgefolge/ricochet-robots.git", optional = true }
 rocket = { features = ["secrets"], version = "0.5" }
-rocket-basicauth = { git = "https://github.com/fenhl/rocket-basicauth" }
 rocket-util = { git = "https://github.com/fenhl/rocket-util", features = ["reqwest", "rocket_csrf"] }
 rocket_csrf = { git = "https://github.com/fenhl/rocket_csrf", branch = "rocket05" }
-rocket_oauth2 = { version = "0.5" }
-rocket_ws = { version = "0.1" }
+rocket_oauth2 = "0.5"
+rocket_ws = "0.1"
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 semver = { version = "1", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }

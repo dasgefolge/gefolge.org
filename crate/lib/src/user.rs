@@ -47,7 +47,7 @@ const MENSCH: RoleId = RoleId::new(386753710434287626);
 const GUEST: RoleId = RoleId::new(784929665478557737);
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub(crate) struct Discriminator(pub(crate) i16);
+pub struct Discriminator(pub i16);
 
 impl fmt::Display for Discriminator {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -56,16 +56,16 @@ impl fmt::Display for Discriminator {
 }
 
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub(crate) struct User {
-    pub(crate) id: UserId,
-    pub(crate) discriminator: Option<Discriminator>,
-    pub(crate) nick: Option<String>,
+pub struct User {
+    pub id: UserId,
+    pub discriminator: Option<Discriminator>,
+    pub nick: Option<String>,
     roles: BTreeSet<RoleId>,
-    pub(crate) username: String,
+    pub username: String,
 }
 
 impl User {
-    pub(crate) async fn from_id(transaction: &mut Transaction<'_, Postgres>, id: UserId) -> sqlx::Result<Option<Self>> {
+    pub async fn from_id(transaction: &mut Transaction<'_, Postgres>, id: UserId) -> sqlx::Result<Option<Self>> {
         Ok(sqlx::query!(r#"SELECT discriminator, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users WHERE snowflake = $1"#, i64::from(id)).fetch_optional(&mut **transaction).await?.map(|row| User {
             discriminator: row.discriminator.map(Discriminator),
             nick: row.nick,
@@ -75,7 +75,7 @@ impl User {
         }))
     }
 
-    pub(crate) async fn from_api_key(transaction: &mut Transaction<'_, Postgres>, api_key: &str) -> sqlx::Result<Option<Self>> {
+    pub async fn from_api_key(transaction: &mut Transaction<'_, Postgres>, api_key: &str) -> sqlx::Result<Option<Self>> {
         let before_query = Instant::now();
         let ret = sqlx::query!(r#"SELECT snowflake, discriminator, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users, json_user_data WHERE id = snowflake AND value -> 'apiKey' = $1"#, Json(api_key) as _).fetch_optional(&mut **transaction).await?.map(|row| User {
             id: UserId::from(row.snowflake as u64),
@@ -88,7 +88,7 @@ impl User {
         Ok(ret)
     }
 
-    pub(crate) async fn from_tag(transaction: &mut Transaction<'_, Postgres>, username: &str, discriminator: Option<NonZero<u16>>) -> sqlx::Result<Option<Self>> {
+    pub async fn from_tag(transaction: &mut Transaction<'_, Postgres>, username: &str, discriminator: Option<NonZero<u16>>) -> sqlx::Result<Option<Self>> {
         Ok(if let Some(discriminator) = discriminator {
             sqlx::query!(r#"SELECT snowflake, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users, json_user_data WHERE username = $1 AND discriminator = $2"#, username, discriminator.get() as i16).fetch_optional(&mut **transaction).await?
             .map(|row| Self {
@@ -110,15 +110,15 @@ impl User {
         })
     }
 
-    pub(crate) fn is_mensch(&self) -> bool {
+    pub fn is_mensch(&self) -> bool {
         self.roles.contains(&MENSCH)
     }
 
-    pub(crate) fn is_mensch_or_guest(&self) -> bool {
+    pub fn is_mensch_or_guest(&self) -> bool {
         self.roles.contains(&MENSCH) || self.roles.contains(&GUEST)
     }
 
-    pub(crate) async fn data(&self, transaction: &mut Transaction<'_, Postgres>) -> sqlx::Result<Data> {
+    pub async fn data(&self, transaction: &mut Transaction<'_, Postgres>) -> sqlx::Result<Data> {
         Ok(sqlx::query_scalar!(r#"SELECT value AS "value: Json<Data>" FROM json_user_data WHERE id = $1"#, i64::from(self.id)).fetch_optional(&mut **transaction).await?.map(|Json(data)| data).unwrap_or_default())
     }
 }
@@ -162,8 +162,27 @@ impl ToHtml for User {
     }
 }
 
+#[cfg(feature = "ricochet-robots-websocket")]
+impl ricochet_robots_websocket::PlayerId for User {
+    fn id(&self) -> Result<u64, ricochet_robots_websocket::Error> {
+        Ok(u64::from(self.id))
+    }
+
+    fn username(&self) -> Result<String, ricochet_robots_websocket::Error> {
+        Ok(self.username.clone())
+    }
+
+    fn discrim(&self) -> Result<u16, ricochet_robots_websocket::Error> {
+        Ok(self.discriminator.map(|Discriminator(discrim)| discrim as u16).unwrap_or_default())
+    }
+
+    fn nickname(&self) -> Result<Option<String>, ricochet_robots_websocket::Error> {
+        Ok(self.nick.clone())
+    }
+}
+
 #[derive(Deref, Into)]
-pub(crate) struct Mensch(User);
+pub struct Mensch(User);
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for Mensch {
@@ -182,11 +201,11 @@ fn make_true() -> bool { true }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct Data {
-    pub(crate) api_key: Option<String>,
-    pub(crate) timezone: Option<Tz>,
+pub struct Data {
+    pub api_key: Option<String>,
+    pub timezone: Option<Tz>,
     #[serde(default = "make_true")]
-    pub(crate) event_timezone_override: bool,
+    pub event_timezone_override: bool,
 }
 
 impl Default for Data {

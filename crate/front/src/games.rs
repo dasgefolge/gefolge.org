@@ -15,6 +15,10 @@ use {
     },
     sqlx::PgPool,
     url::Url,
+    gefolge_web_lib::{
+        auth::DiscordUser,
+        user::Mensch,
+    },
     crate::{
         Headers,
         PageError,
@@ -22,10 +26,8 @@ use {
         ProxyError,
         ProxyHttpClient,
         ProxyResponse,
-        auth::DiscordUser,
         page,
         proxy_headers,
-        user::Mensch,
     },
 };
 
