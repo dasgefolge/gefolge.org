@@ -5,6 +5,7 @@ pub mod auth;
 pub mod config;
 pub mod db;
 pub mod event;
+pub mod lang;
 pub mod money;
 #[cfg(feature = "peter")] pub mod peter;
 pub mod time;

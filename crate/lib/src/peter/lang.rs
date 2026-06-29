@@ -98,22 +98,6 @@ pub fn faction_name_sg(faction: Faction, case: Case) -> &'static str {
     }
 }
 
-pub fn join<D: fmt::Display, I: IntoIterator<Item=D>>(empty: Option<D>, words: I) -> String {
-    let mut words = words.into_iter().map(|word| word.to_string()).collect::<Vec<_>>();
-    match words.len() {
-        0 => empty.expect("tried to join an empty list with no fallback").to_string(),
-        1 => words.swap_remove(0),
-        2 => format!("{} und {}", words.swap_remove(0), words.swap_remove(0)),
-        _ => {
-            let last = words.pop().unwrap();
-            let first = words.remove(0);
-            let builder = words.into_iter()
-                .fold(first, |builder, word| format!("{}, {}", builder, word));
-            format!("{} und {}", builder, last)
-        }
-    }
-}
-
 pub fn role_gender(role: Role) -> Gender {
     match role {
         Role::Detective => M,

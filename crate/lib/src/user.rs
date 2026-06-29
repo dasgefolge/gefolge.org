@@ -26,7 +26,7 @@ use {
     serenity::model::prelude::*,
     sqlx::{
         PgPool,
-        postgres::Postgres,
+        Postgres,
         Transaction,
         types::Json,
     },

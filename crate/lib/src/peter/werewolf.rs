@@ -45,10 +45,13 @@ use {
         utils::MessageBuilder,
     },
     tokio::time::sleep,
-    super::{
-        Error,
+    crate::{
         lang::*,
-        parse,
+        peter::{
+            Error,
+            lang::*,
+            parse,
+        },
     },
 };
 pub use quantum_werewolf::game::state::State;
@@ -554,14 +557,14 @@ pub fn quantum_role_dm(roles: &[Role], num_players: usize, secret_id: usize) -> 
     let mut role_count_list = role_counts.clone().into_iter().collect::<Vec<_>>();
     role_count_list.sort_by_key(|&(role, _)| role_name(role, Nom, false));
     builder.push("Du bist eine ");
-    builder.push_bold_safe(format!("Quantenüberlagerung aus {}", join(None, role_count_list.into_iter().map(|(role, count)| {
+    builder.push_bold_safe(format!("Quantenüberlagerung aus {}", join_opt(role_count_list.into_iter().map(|(role, count)| {
         let card = cardinal(count as u64, Dat, role_gender(role));
         if let Role::Werewolf(_) = role {
             format!("{} {}", card, if count == 1 { "Werwolf" } else { "Werwölfen" })
         } else {
             format!("{} {}", card, role_name(role, Dat, count != 1))
         }
-    }))));
+    })).expect("leere Quantenüberlagerung")));
     builder.push(".");
     // Rollenrang
     builder.push(" Dein Rollenrang ist ");

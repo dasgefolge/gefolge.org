@@ -1,15 +1,11 @@
 use {
-    std::{
-        fmt,
-        str::FromStr,
-    },
     chrono::prelude::*,
-    lazy_regex::regex_captures,
     rocket::{
         State,
         http::Status,
         request::FromParam,
         response::content::RawHtml,
+        uri,
     },
     rocket_util::{
         Origin,
@@ -22,11 +18,15 @@ use {
         types::Json,
     },
     gefolge_web_lib::{
+        config::Config,
         event::{
             AttendeeId,
             Event,
+            Id,
+            IdParseError,
             LocationInfo,
         },
+        lang,
         time::MaybeLocalDateTime,
         user::{
             Mensch,
@@ -141,64 +141,6 @@ pub(crate) async fn index(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>) 
     ]), "Events — Das Gefolge", content).await?)
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
-enum Season {
-    Oster,
-    Sommer,
-    Winter,
-}
-
-impl FromStr for Season {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "osil" => Ok(Self::Oster),
-            "sosil" => Ok(Self::Sommer),
-            "sil" => Ok(Self::Winter),
-            _ => Err(()),
-        }
-    }
-}
-
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
-struct Id {
-    year: i32,
-    season: Season,
-}
-
-#[derive(Debug, thiserror::Error)]
-pub(crate) enum IdParseError {
-    #[error(transparent)] ParseInt(#[from] std::num::ParseIntError),
-    #[error("event ID does not match expected pattern")]
-    Pattern,
-    #[error("unexpected event season")]
-    Season,
-}
-
-impl FromStr for Id {
-    type Err = IdParseError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (_, season, year) = regex_captures!("^(.+?)([0-9]+)$", s).ok_or(IdParseError::Pattern)?;
-        Ok(Self {
-            year: year.parse()?,
-            season: season.parse().map_err(|()| IdParseError::Season)?,
-        })
-    }
-}
-
-impl fmt::Display for Id {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.season {
-            Season::Oster => write!(f, "osil")?,
-            Season::Sommer => write!(f, "sosil")?,
-            Season::Winter => write!(f, "sil")?,
-        }
-        self.year.fmt(f)
-    }
-}
-
 /// Eine ID für ein event, das ab 2026 stattfindet und daher über den Verein organisiert wird.
 ///
 /// For now, we only handle these events in Rust and forward to Python for older events.
@@ -235,16 +177,17 @@ impl<E: Into<GetError>> From<E> for StatusOrError<GetError> {
 }
 
 #[rocket::get("/event/<id>")]
-pub(crate) async fn get(db_pool: &State<PgPool>, me: User, uri: Origin<'_>, id: NewId) -> Result<RawHtml<String>, StatusOrError<GetError>> {
+pub(crate) async fn get(config: &State<Config>, db_pool: &State<PgPool>, me: User, uri: Origin<'_>, id: NewId) -> Result<RawHtml<String>, StatusOrError<GetError>> {
     let now = Utc::now();
-    let id = id.0.to_string();
+    let NewId(id) = id;
     let mut transaction = db_pool.begin().await?;
     let viewer_data = me.data(&mut transaction).await?;
-    let Some(event) = Event::load(&mut *transaction, &id).await? else { return Err(StatusOrError::Status(Status::NotFound)) };
+    let Some(event) = Event::load(&mut *transaction, id).await? else { return Err(StatusOrError::Status(Status::NotFound)) };
     if !me.is_mensch() && event.attendee(AttendeeId::Discord(me.id)).is_none() { return Err(StatusOrError::Status(Status::Unauthorized)) }
+    let location_info = event.location_info(&mut transaction).await?;
     let content = html! {
         p {
-            strong : event.name().unwrap_or(&id);
+            strong : event.name(id);
             @if let Some(start) = event.start(&mut transaction).await? {
                 @if let Some(end) = event.end(&mut transaction).await? {
                     @if end < now {
@@ -255,7 +198,7 @@ pub(crate) async fn get(db_pool: &State<PgPool>, me: User, uri: Origin<'_>, id: 
                     : format_datetime(&viewer_data, start, false);
                     : " bis zum ";
                     : format_datetime(&viewer_data, end, false);
-                    @match event.location_info(&mut transaction).await? {
+                    @match &location_info {
                         LocationInfo::Unknown => : " statt. Der Ort steht noch nicht fest.";
                         LocationInfo::Online => : " online statt.";
                         LocationInfo::Known(loc) => {
@@ -271,7 +214,7 @@ pub(crate) async fn get(db_pool: &State<PgPool>, me: User, uri: Origin<'_>, id: 
                         : " beginnt am ";
                     }
                     : format_datetime(&viewer_data, start, false);
-                    @match event.location_info(&mut transaction).await? {
+                    @match &location_info {
                         LocationInfo::Unknown => : ". Ort und Enddatum stehen noch nicht fest.";
                         LocationInfo::Online => : " und findet online statt. Das Enddatum steht noch nicht fest.";
                         LocationInfo::Known(loc) => {
@@ -285,10 +228,21 @@ pub(crate) async fn get(db_pool: &State<PgPool>, me: User, uri: Origin<'_>, id: 
                 : " ist geplant aber hat noch keinen Termin.";
             }
         }
+        @let orga_unassigned = event.orga_unassigned(id);
+        @if matches!(location_info, LocationInfo::Unknown | LocationInfo::Known(_)) && !orga_unassigned.is_empty() {
+            p {
+                : "Wir suchen noch Orga-Menschen für folgende Aufgaben: ";
+                : lang::join_opt(orga_unassigned).expect("checked above");
+                : ".";
+                @if me.is_mensch() {
+                    : " Wenn du etwas davon übernehmen möchtest, melde dich bitte bei ";
+                    : config.admin(&mut transaction).await?;
+                    : ". ";
+                    a(href = uri!(_, crate::wiki::main_article("sil-faq"), "#orga")) : "Weitere Infos";
+                }
+            }
+        }
         /*
-        {% if (event.location is none or not event.location.is_online) and event.orga_unassigned | length > 0 %}
-            <p>Wir suchen noch Orga-Menschen für folgende Aufgaben: {{event.orga_unassigned | natjoin}}. Wenn du etwas davon übernehmen möchtest, melde dich bitte bei {{g.admin}}. <a href="/wiki/sil-faq#orga">Weitere Infos</a></p>
-        {% endif %}
         <p>
             {% if event.location is not none and event.location.is_online %}
                 {# Programmpunkte #}
@@ -502,7 +456,7 @@ pub(crate) async fn get(db_pool: &State<PgPool>, me: User, uri: Origin<'_>, id: 
             : "events";
         },
         html! {
-            : event.name().unwrap_or(&id);
+            : event.name(id);
         },
-    ]), event.name().unwrap_or(&id), content).await?)
+    ]), &event.name(id), content).await?)
 }

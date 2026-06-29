@@ -2,6 +2,11 @@ use {
     std::collections::BTreeSet,
     serde::Deserialize,
     serenity::model::prelude::*,
+    sqlx::{
+        Postgres,
+        Transaction,
+    },
+    crate::user::User,
 };
 #[cfg(unix)] use {
     xdg::BaseDirectories,
@@ -33,6 +38,7 @@ pub enum Error {
 #[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Config {
+    admin: UserId,
     pub discord: Discord,
     pub github_webhook_secret: String,
     pub secret_key: String,
@@ -57,6 +63,10 @@ impl Config {
         #[cfg(windows)] { // allow testing without having rust-analyzer slow down production
             Ok(serde_json::from_slice(&Command::new("ssh").arg("gefolge.org").arg("cat").arg("/etc/xdg/gefolge.json").check("ssh").await?.stdout)?)
         }
+    }
+
+    pub async fn admin(&self, transaction: &mut Transaction<'_, Postgres>) -> sqlx::Result<User> {
+        Ok(User::from_id(transaction, self.admin).await?.expect("admin user does not exist"))
     }
 }
 

@@ -1,14 +1,19 @@
 use {
     std::{
         borrow::Cow,
-        collections::{
-            HashMap,
-            HashSet,
-        },
+        collections::HashMap,
+        fmt,
         ops::Range,
+        str::FromStr,
     },
     chrono::prelude::*,
     chrono_tz::Tz,
+    enum_iterator::Sequence,
+    enumset::{
+        EnumSet,
+        EnumSetType,
+    },
+    lazy_regex::regex_captures,
     rocket::response::content::RawHtml,
     rocket_util::{
         ToHtml,
@@ -52,6 +57,64 @@ pub enum Error {
     UnknownLocation, //TODO get rid of this variant using a foreign-key constraint
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Season {
+    Oster,
+    Sommer,
+    Winter,
+}
+
+impl FromStr for Season {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "osil" => Ok(Self::Oster),
+            "sosil" => Ok(Self::Sommer),
+            "sil" => Ok(Self::Winter),
+            _ => Err(()),
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Id {
+    pub year: i32,
+    pub season: Season,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum IdParseError {
+    #[error(transparent)] ParseInt(#[from] std::num::ParseIntError),
+    #[error("event ID does not match expected pattern")]
+    Pattern,
+    #[error("unexpected event season")]
+    Season,
+}
+
+impl FromStr for Id {
+    type Err = IdParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (_, season, year) = regex_captures!("^(.+?)([0-9]+)$", s).ok_or(IdParseError::Pattern)?;
+        Ok(Self {
+            year: year.parse()?,
+            season: season.parse().map_err(|()| IdParseError::Season)?,
+        })
+    }
+}
+
+impl fmt::Display for Id {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.season {
+            Season::Oster => write!(f, "osil")?,
+            Season::Sommer => write!(f, "sosil")?,
+            Season::Winter => write!(f, "sil")?,
+        }
+        self.year.fmt(f)
+    }
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct Event {
     anzahlung: Option<Euro>,
@@ -69,8 +132,8 @@ impl Event {
         Ok(sqlx::query(r#"SELECT id, value FROM json_events ORDER BY value -> 'start' ASC NULLS LAST"#).fetch_all(db_pool).await?.into_iter().map(|row| (row.get("id"), row.get::<Json<_>, _>("value").0)).collect())
     }
 
-    pub async fn load(db_pool: impl PgExecutor<'_>, event_id: &str) -> sqlx::Result<Option<Self>> {
-        Ok(sqlx::query_scalar(r#"SELECT value AS "value: Json<Self>" FROM json_events WHERE id = $1"#).bind(event_id).fetch_optional(db_pool).await?.map(|Json(value)| value))
+    pub async fn load(db_pool: impl PgExecutor<'_>, event_id: Id) -> sqlx::Result<Option<Self>> {
+        Ok(sqlx::query_scalar(r#"SELECT value AS "value: Json<Self>" FROM json_events WHERE id = $1"#).bind(event_id.to_string()).fetch_optional(db_pool).await?.map(|Json(value)| value))
     }
 
     pub fn anzahlung(&self) -> Option<Euro> { self.anzahlung }
@@ -111,6 +174,18 @@ impl Event {
         Ok(Some(start.with_timezone(&tz).date_naive()..end.with_timezone(&tz).date_naive()))
     }
 
+    pub fn orga_unassigned(&self, id: Id) -> EnumSet<OrgaRole> {
+        let mut unassigned = EnumSet::all();
+        if id.year >= 2026 {
+            // ab 2026 werden events über den Verein abgerechnet
+            unassigned.remove(OrgaRole::Abrechnung);
+        }
+        for attendee in self.attendees() {
+            unassigned.remove_all(attendee.orga);
+        }
+        unassigned
+    }
+
     pub async fn timezone(&self, transaction: &mut Transaction<'_, Postgres>) -> Result<Option<Tz>, Error> {
         Ok(if let Some(timezone) = self.timezone {
             Some(timezone)
@@ -135,8 +210,8 @@ impl Event {
         })
     }
 
-    pub fn name(&self) -> Option<&str> {
-        self.name.as_deref()
+    pub fn name(&self, id: Id) -> Cow<'_, str> {
+        self.name.as_deref().map(Cow::Borrowed).unwrap_or_else(|| Cow::Owned(id.to_string()))
     }
 
     pub fn to_html(&self, id: &str) -> RawHtml<String> {
@@ -158,7 +233,7 @@ pub struct Attendee {
     #[serde(default)]
     nights: HashMap<NaiveDate, Night>,
     #[serde(default)]
-    pub orga: HashSet<OrgaRole>,
+    pub orga: EnumSet<OrgaRole>,
 }
 
 #[serde_as]
@@ -303,7 +378,8 @@ impl LocationInfo {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, Serialize)]
+#[derive(Debug, Hash, Deserialize, Serialize, EnumSetType, Sequence)]
+#[enumset(serialize_repr = "list")]
 pub enum OrgaRole {
     Abrechnung,
     Buchung,
@@ -311,4 +387,16 @@ pub enum OrgaRole {
     Programm,
     #[serde(rename = "Schlüssel")]
     Schluessel,
+}
+
+impl fmt::Display for OrgaRole {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Abrechnung => write!(f, "Abrechnung"),
+            Self::Buchung => write!(f, "Buchung"),
+            Self::Essen => write!(f, "Essen"),
+            Self::Programm => write!(f, "Programm"),
+            Self::Schluessel => write!(f, "Schlüssel"),
+        }
+    }
 }
