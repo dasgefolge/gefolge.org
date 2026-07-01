@@ -197,6 +197,12 @@ textarea {
     }
 }
 
+@supports (field-sizing: content) {
+    textarea {
+        resize: none;
+    }
+}
+
 footer {
     color: gray;
 }
