@@ -6,7 +6,10 @@ use {
         time::Duration,
     },
     chrono_tz::Tz,
-    derive_more::*,
+    derive_more::{
+        Deref,
+        Into,
+    },
     rocket::{
         State,
         http::Status,
