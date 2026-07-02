@@ -77,7 +77,7 @@ impl FromStr for Season {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Deserialize, Serialize)]
 pub struct Id {
     pub year: i32,
     pub season: Season,
