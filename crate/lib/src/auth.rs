@@ -153,7 +153,7 @@ impl<'r> FromRequest<'r> for DiscordUser {
         };
         if let Outcome::Success(found_user) = outcome {
             match req.guard::<&State<PgPool>>().await {
-                Outcome::Success(pool) => if let Some(id) = guard_try!(sqlx::query_scalar("SELECT view_as FROM view_as WHERE viewer = $1").bind(i64::from(found_user.id)).fetch_optional(&**pool).await) {
+                Outcome::Success(pool) => if let Some(id) = guard_try!(sqlx::query_scalar::<_, i64>("SELECT view_as FROM view_as WHERE viewer = $1").bind(i64::from(found_user.id)).fetch_optional(&**pool).await) {
                     Outcome::Success(Self { id: UserId::from(id as u64) })
                 } else {
                     Outcome::Success(found_user)
