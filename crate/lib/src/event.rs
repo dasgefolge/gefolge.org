@@ -57,7 +57,7 @@ pub enum Error {
     UnknownLocation, //TODO get rid of this variant using a foreign-key constraint
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Deserialize, Serialize, Sequence)]
 pub enum Season {
     Oster,
     Sommer,
