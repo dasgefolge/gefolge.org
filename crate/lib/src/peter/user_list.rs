@@ -24,7 +24,7 @@ use {
 /// Add a Discord account to the list of Gefolge guild members.
 pub async fn add(pool: &PgPool, member: &Member) -> sqlx::Result<()> {
     if member.user.bot { return Ok(()) }
-    let join_date = sqlx::query_scalar(r#"SELECT joined FROM users WHERE snowflake = $1"#)
+    let join_date = sqlx::query_scalar("SELECT joined FROM users WHERE snowflake = $1")
         .bind(member.user.id.get() as i64)
         .fetch_optional(pool).await?
         .and_then(identity);

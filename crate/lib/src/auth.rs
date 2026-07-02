@@ -100,7 +100,7 @@ impl<'r> FromRequest<'r> for DiscordUser {
     async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         let outcome = match req.guard().await {
             Outcome::Success(BasicAuth { username, password }) if username == "api" => match req.guard::<&State<PgPool>>().await {
-                Outcome::Success(pool) => if let Some(id) = guard_try!(sqlx::query_scalar!("SELECT id FROM json_user_data WHERE value -> 'apiKey' = $1", Json(password) as _).fetch_optional(&**pool).await) {
+                Outcome::Success(pool) => if let Some(id) = guard_try!(sqlx::query_scalar::<_, i64>("SELECT id FROM json_user_data WHERE value -> 'apiKey' = $1").bind(Json(password)).fetch_optional(&**pool).await) {
                     Outcome::Success(Self { id: UserId::from(id as u64) })
                 } else {
                     Outcome::Error((Status::Unauthorized, UserFromRequestError::ApiKey))
@@ -112,7 +112,7 @@ impl<'r> FromRequest<'r> for DiscordUser {
             Outcome::Error((status, e)) => Outcome::Error((status, e.into())),
             Outcome::Forward(_) => match req.query_value::<&str>("api_key") {
                 Some(Ok(api_key)) => match req.guard::<&State<PgPool>>().await {
-                    Outcome::Success(pool) => if let Some(id) = guard_try!(sqlx::query_scalar!("SELECT id FROM json_user_data WHERE value -> 'apiKey' = $1", Json(api_key) as _).fetch_optional(&**pool).await) {
+                    Outcome::Success(pool) => if let Some(id) = guard_try!(sqlx::query_scalar::<_, i64>("SELECT id FROM json_user_data WHERE value -> 'apiKey' = $1").bind(Json(api_key)).fetch_optional(&**pool).await) {
                         Outcome::Success(Self { id: UserId::from(id as u64) })
                     } else {
                         Outcome::Error((Status::Unauthorized, UserFromRequestError::ApiKey))
@@ -153,7 +153,7 @@ impl<'r> FromRequest<'r> for DiscordUser {
         };
         if let Outcome::Success(found_user) = outcome {
             match req.guard::<&State<PgPool>>().await {
-                Outcome::Success(pool) => if let Some(id) = guard_try!(sqlx::query_scalar!("SELECT view_as FROM view_as WHERE viewer = $1", i64::from(found_user.id)).fetch_optional(&**pool).await) {
+                Outcome::Success(pool) => if let Some(id) = guard_try!(sqlx::query_scalar("SELECT view_as FROM view_as WHERE viewer = $1").bind(i64::from(found_user.id)).fetch_optional(&**pool).await) {
                     Outcome::Success(Self { id: UserId::from(id as u64) })
                 } else {
                     Outcome::Success(found_user)

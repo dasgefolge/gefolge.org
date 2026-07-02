@@ -28,6 +28,7 @@ use {
         PgPool,
         Postgres,
         Transaction,
+        prelude::*,
         types::Json,
     },
     tokio::time::{
@@ -66,23 +67,23 @@ pub struct User {
 
 impl User {
     pub async fn from_id(transaction: &mut Transaction<'_, Postgres>, id: UserId) -> sqlx::Result<Option<Self>> {
-        Ok(sqlx::query!(r#"SELECT discriminator, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users WHERE snowflake = $1"#, i64::from(id)).fetch_optional(&mut **transaction).await?.map(|row| User {
-            discriminator: row.discriminator.map(Discriminator),
-            nick: row.nick,
-            roles: row.roles.0,
-            username: row.username,
+        Ok(sqlx::query("SELECT discriminator, nick, roles, username FROM users WHERE snowflake = $1").bind(i64::from(id)).fetch_optional(&mut **transaction).await?.map(|row| User {
+            discriminator: row.get::<Option<i16>, _>("discriminator").map(Discriminator),
+            nick: row.get("nick"),
+            roles: row.get::<Json<_>, _>("roles").0,
+            username: row.get("username"),
             id,
         }))
     }
 
     pub async fn from_api_key(transaction: &mut Transaction<'_, Postgres>, api_key: &str) -> sqlx::Result<Option<Self>> {
         let before_query = Instant::now();
-        let ret = sqlx::query!(r#"SELECT snowflake, discriminator, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users, json_user_data WHERE id = snowflake AND value -> 'apiKey' = $1"#, Json(api_key) as _).fetch_optional(&mut **transaction).await?.map(|row| User {
-            id: UserId::from(row.snowflake as u64),
-            discriminator: row.discriminator.map(Discriminator),
-            nick: row.nick,
-            roles: row.roles.0,
-            username: row.username,
+        let ret = sqlx::query("SELECT snowflake, discriminator, nick, roles, username FROM users, json_user_data WHERE id = snowflake AND value -> 'apiKey' = $1").bind(Json(api_key)).fetch_optional(&mut **transaction).await?.map(|row| User {
+            id: UserId::from(row.get::<i64, _>("snowflake") as u64),
+            discriminator: row.get::<Option<i16>, _>("discriminator").map(Discriminator),
+            nick: row.get("nick"),
+            roles: row.get::<Json<_>, _>("roles").0,
+            username: row.get("username"),
         });
         sleep_until(before_query + Duration::from_millis(100)).await; // timing attack protection
         Ok(ret)
@@ -90,21 +91,21 @@ impl User {
 
     pub async fn from_tag(transaction: &mut Transaction<'_, Postgres>, username: &str, discriminator: Option<NonZero<u16>>) -> sqlx::Result<Option<Self>> {
         Ok(if let Some(discriminator) = discriminator {
-            sqlx::query!(r#"SELECT snowflake, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users, json_user_data WHERE username = $1 AND discriminator = $2"#, username, discriminator.get() as i16).fetch_optional(&mut **transaction).await?
+            sqlx::query("SELECT snowflake, nick, roles, username FROM users, json_user_data WHERE username = $1 AND discriminator = $2").bind(username).bind(discriminator.get() as i16).fetch_optional(&mut **transaction).await?
             .map(|row| Self {
-                id: UserId::from(row.snowflake as u64),
+                id: UserId::from(row.get::<i64, _>("snowflake") as u64),
                 discriminator: Some(Discriminator(discriminator.get() as i16)),
-                nick: row.nick,
-                roles: row.roles.0,
+                nick: row.get("nick"),
+                roles: row.get::<Json<_>, _>("roles").0,
                 username: username.to_owned(),
             })
         } else {
-            sqlx::query!(r#"SELECT snowflake, nick, roles AS "roles: sqlx::types::Json<BTreeSet<RoleId>>", username FROM users, json_user_data WHERE username = $1 AND discriminator IS NULL"#, username).fetch_optional(&mut **transaction).await?
+            sqlx::query("SELECT snowflake, nick, roles, username FROM users, json_user_data WHERE username = $1 AND discriminator IS NULL").bind(username).fetch_optional(&mut **transaction).await?
             .map(|row| Self {
-                id: UserId::from(row.snowflake as u64),
+                id: UserId::from(row.get::<i64, _>("snowflake") as u64),
                 discriminator: None,
-                nick: row.nick,
-                roles: row.roles.0,
+                nick: row.get("nick"),
+                roles: row.get::<Json<_>, _>("roles").0,
                 username: username.to_owned(),
             })
         })
@@ -119,7 +120,7 @@ impl User {
     }
 
     pub async fn data(&self, transaction: &mut Transaction<'_, Postgres>) -> sqlx::Result<Data> {
-        Ok(sqlx::query_scalar!(r#"SELECT value AS "value: Json<Data>" FROM json_user_data WHERE id = $1"#, i64::from(self.id)).fetch_optional(&mut **transaction).await?.map(|Json(data)| data).unwrap_or_default())
+        Ok(sqlx::query_scalar("SELECT value FROM json_user_data WHERE id = $1").bind(i64::from(self.id)).fetch_optional(&mut **transaction).await?.map(|Json(data)| data).unwrap_or_default())
     }
 }
 

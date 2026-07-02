@@ -129,11 +129,11 @@ pub struct Event {
 
 impl Event {
     pub async fn all(db_pool: impl PgExecutor<'_>) -> sqlx::Result<Vec<(String, Self)>> { //TODO return stream
-        Ok(sqlx::query(r#"SELECT id, value FROM json_events ORDER BY value -> 'start' ASC NULLS LAST"#).fetch_all(db_pool).await?.into_iter().map(|row| (row.get("id"), row.get::<Json<_>, _>("value").0)).collect())
+        Ok(sqlx::query("SELECT id, value FROM json_events ORDER BY value -> 'start' ASC NULLS LAST").fetch_all(db_pool).await?.into_iter().map(|row| (row.get("id"), row.get::<Json<_>, _>("value").0)).collect())
     }
 
     pub async fn load(db_pool: impl PgExecutor<'_>, event_id: Id) -> sqlx::Result<Option<Self>> {
-        Ok(sqlx::query_scalar(r#"SELECT value AS "value: Json<Self>" FROM json_events WHERE id = $1"#).bind(event_id.to_string()).fetch_optional(db_pool).await?.map(|Json(value)| value))
+        Ok(sqlx::query_scalar("SELECT value FROM json_events WHERE id = $1").bind(event_id.to_string()).fetch_optional(db_pool).await?.map(|Json(value)| value))
     }
 
     pub fn anzahlung(&self) -> Option<Euro> { self.anzahlung }
@@ -318,7 +318,7 @@ pub struct Location {
 
 impl Location {
     async fn load(transaction: &mut Transaction<'_, Postgres>, loc_id: &str) -> sqlx::Result<Option<Self>> {
-        let Some(Json(JsonLocation { host, name, prefix, rooms, timezone, website })) = sqlx::query_scalar(r#"SELECT value AS "value: _" FROM json_locations WHERE id = $1"#).bind(loc_id).fetch_optional(&mut **transaction).await? else { return Ok(None) };
+        let Some(Json(JsonLocation { host, name, prefix, rooms, timezone, website })) = sqlx::query_scalar("SELECT value FROM json_locations WHERE id = $1").bind(loc_id).fetch_optional(&mut **transaction).await? else { return Ok(None) };
         Ok(Some(Self {
             host: if let Some(host) = host { User::from_id(transaction, host).await? } else { None }, //TODO error on nonexistent user instead of setting host to None?
             name: name.unwrap_or_else(|| loc_id.to_owned()),
