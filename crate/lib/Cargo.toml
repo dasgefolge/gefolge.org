@@ -50,7 +50,7 @@ thiserror = "2"
 tokio = { version = "1", features = ["time"] }
 twitch_helix = { git = "https://github.com/fenhl/rust-twitch-helix", optional = true } #TODO publish to crates.io
 url = "2"
-wheel = { git = "https://github.com/fenhl/wheel", branch = "rocket-forms", features = ["chrono", "reqwest", "serde_json"] }
+wheel = { git = "https://github.com/fenhl/wheel", features = ["chrono", "reqwest", "serde_json"] }
 
 [target."cfg(unix)".dependencies]
 xdg = "3"

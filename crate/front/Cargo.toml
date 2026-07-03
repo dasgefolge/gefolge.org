@@ -17,7 +17,7 @@ futures = "0.3"
 git2 = "0.21"
 thiserror = "2"
 tokio = "1"
-wheel = { git = "https://github.com/fenhl/wheel", branch = "rocket-forms" }
+wheel = { git = "https://github.com/fenhl/wheel" }
 
 [dependencies]
 async-proto = { version = "0.26", features = ["chrono-tz", "tokio-tungstenite024"] }
@@ -52,4 +52,4 @@ thiserror = "2"
 tokio = { version = "1", features = ["macros", "process", "sync", "time"] }
 toml = "1"
 url = "2"
-wheel = { git = "https://github.com/fenhl/wheel", branch = "rocket-forms", features = ["chrono", "night", "rocket", "reqwest", "serde_json"] }
+wheel = { git = "https://github.com/fenhl/wheel", features = ["chrono", "night", "rocket", "reqwest", "serde_json"] }

@@ -180,6 +180,15 @@ pub struct Event {
     timezone: Option<Tz>,
 }
 
+#[tokio::test]
+async fn test_deserialize_events() -> sqlx::Result<()> {
+    let db_pool = sqlx::PgPool::connect_with(sqlx::postgres::PgConnectOptions::default().username("fenhl").database("gefolge").application_name("gefolge-web")).await?;
+    for row in sqlx::query!("SELECT id, value FROM json_events ORDER BY id ASC").fetch_all(&db_pool).await? {
+        serde_json::from_value::<Event>(row.value).expect(&row.id);
+    }
+    Ok(())
+}
+
 impl Event {
     pub async fn all(db_pool: impl PgExecutor<'_>) -> sqlx::Result<Vec<(String, Self)>> { //TODO return stream
         Ok(sqlx::query("SELECT id, value FROM json_events ORDER BY value -> 'start' ASC NULLS LAST").fetch_all(db_pool).await?.into_iter().map(|row| (row.get("id"), row.get::<Json<_>, _>("value").0)).collect())
