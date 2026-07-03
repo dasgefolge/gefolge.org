@@ -155,7 +155,7 @@ impl LoginState for DiscordUser {
     async fn login_state(self, transaction: &mut Transaction<'_, Postgres>, _: &Origin<'_>) -> Result<RawHtml<String>, PageError> {
         Ok(html! {
             @let user = User::from_id(&mut *transaction, self.id).await?;
-            @let is_mensch_or_guest = user.as_ref().map_or(false, User::is_mensch_or_guest);
+            @let is_mensch_or_guest = user.as_ref().is_some_and(User::is_mensch_or_guest);
             : "Angemeldet als ";
             : user;
             br;
@@ -335,7 +335,7 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
         let events = load_events(&mut transaction).await?;
         let content = html! {
             @let user = User::from_id(&mut transaction, id).await?;
-            @let is_mensch_or_guest = user.as_ref().map_or(false, User::is_mensch_or_guest);
+            @let is_mensch_or_guest = user.as_ref().is_some_and(User::is_mensch_or_guest);
             @if is_mensch_or_guest {
                 @let viewer_data = user.as_ref().expect("just checked (is_mensch_or_guest)").data(&mut transaction).await?;
                 p {
@@ -527,7 +527,7 @@ async fn flask_proxy_get_api_children(proxy_http_client: &State<ProxyHttpClient>
 
 #[rocket::get("/<path..>")]
 async fn flask_proxy_get(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>) -> Result<ProxyResponse, ProxyError> {
-    if Segments::<Path>::get(&path, 0).map_or(true, |prefix| !matches!(prefix, "event" | "games" | "me" | "mensch" | "wiki")) {
+    if Segments::<Path>::get(&path, 0).is_none_or(|prefix| !matches!(prefix, "event" | "games" | "me" | "mensch" | "wiki")) {
         // only forward the directories that are actually served by the proxy to prevent internal server errors on malformed requests from spambots
         return Ok(ProxyResponse::Status(Status::NotFound))
     }
@@ -543,7 +543,7 @@ async fn flask_proxy_get(proxy_http_client: &State<ProxyHttpClient>, me: Option<
 
 #[rocket::post("/<path..>", data = "<data>")]
 async fn flask_proxy_post(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>, data: Vec<u8>) -> Result<ProxyResponse, ProxyError> {
-    if Segments::<Path>::get(&path, 0).map_or(true, |prefix| !matches!(prefix, "event" | "games" | "me" | "mensch" | "wiki")) {
+    if Segments::<Path>::get(&path, 0).is_none_or(|prefix| !matches!(prefix, "event" | "games" | "me" | "mensch" | "wiki")) {
         // only forward the directories that are actually served by the proxy to prevent internal server errors on malformed requests from spambots
         return Ok(ProxyResponse::Status(Status::NotFound))
     }

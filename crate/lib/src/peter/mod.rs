@@ -393,7 +393,7 @@ pub async fn configure_builder(discord_builder: serenity_utils::Builder, config:
                                     let mut data = ctx.data.write().await;
                                     let conf = *data.get::<Config>().expect("missing config").discord.werewolf.get(&guild).expect("unconfigured guild but check passed");
                                     let state = data.get_mut::<werewolf::GameState>().expect("missing Werewolf game state");
-                                    if state.iter().any(|(&iter_guild, iter_state)| iter_guild != guild && iter_state.state.secret_ids().map_or(false, |secret_ids| secret_ids.contains(&interaction.user.id))) {
+                                    if state.iter().any(|(&iter_guild, iter_state)| iter_guild != guild && iter_state.state.secret_ids().is_some_and(|secret_ids| secret_ids.contains(&interaction.user.id))) {
                                         interaction.create_response(ctx, CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
                                             .ephemeral(true)
                                             .content("du bist schon in einem Spiel auf einem anderen Server")

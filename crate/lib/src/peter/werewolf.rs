@@ -314,7 +314,7 @@ pub async fn handle_action(ctx: &Context, msg: &Message, action: Action) -> Resu
             .get_mut::<GameState>()
             .expect("missing Werewolf game state")
             .iter_mut()
-            .filter(|(_, state)| state.state.secret_ids().map_or(false, |secret_ids| secret_ids.contains(&action.src())))
+            .filter(|(_, state)| state.state.secret_ids().is_some_and(|secret_ids| secret_ids.contains(&action.src())))
             .exactly_one()
             .map_err(|_| Error::GameAction("du spielst nicht mit oder bist in mehreren Spielen gleichzeitig".into()))?;
         match state_ref.state {
@@ -403,7 +403,7 @@ fn handle_game_state<'a>(ctx: &'a Context, state_ref: &'a mut GameState) -> Pin<
                 // unlock channel
                 state_ref.config.text_channel.delete_permission(ctx, PermissionOverwriteType::Role(state_ref.guild.everyone_role())).await?;
                 for member in state_ref.guild.members(ctx, None, None).await? { //TODO make sure all members are checked
-                    if member.roles(ctx).map_or(false, |roles| roles.into_iter().any(|role| role.id == state_ref.config.role)) {
+                    if member.roles(ctx).is_some_and(|roles| roles.into_iter().any(|role| role.id == state_ref.config.role)) {
                         member.remove_role(ctx, state_ref.config.role).await?;
                     }
                 }
@@ -483,7 +483,7 @@ pub async fn parse_action(ctx: &Context, src: UserId, mut msg: &str) -> Option<R
     }
 
     // A simple parser for game actions.
-    let guild = *ctx.data.read().await.get::<GameState>().expect("missing Werewolf game state").iter().filter(|(_, state)| state.state.secret_ids().map_or(false, |secret_ids| secret_ids.contains(&src))).map(|(guild_id, _)| guild_id).exactly_one().ok()?;
+    let guild = *ctx.data.read().await.get::<GameState>().expect("missing Werewolf game state").iter().filter(|(_, state)| state.state.secret_ids().is_some_and(|secret_ids| secret_ids.contains(&src))).map(|(guild_id, _)| guild_id).exactly_one().ok()?;
     if msg.starts_with('!') { msg = &msg[1..] } // remove leading `!`, if any
     let cmd_name = if let Some(cmd_name) = parse::next_word(&msg) { cmd_name } else { return None };
     msg = &msg[cmd_name.len()..]; // consume command name
@@ -533,7 +533,7 @@ pub async fn parse_action(ctx: &Context, src: UserId, mut msg: &str) -> Option<R
 pub async fn player_in_game(ctx: &Context, user_id: UserId, guild_id: GuildId) -> bool {
     let data = ctx.data.read().await;
     let state_ref = data.get::<GameState>().expect("missing Werewolf game state").get(&guild_id);
-    state_ref.map_or(false, |state_ref| state_ref.state.secret_ids().map_or(false, |secret_ids| secret_ids.contains(&user_id)))
+    state_ref.is_some_and(|state_ref| state_ref.state.secret_ids().is_some_and(|secret_ids| secret_ids.contains(&user_id)))
 }
 
 pub fn quantum_role_dm(roles: &[Role], num_players: usize, secret_id: usize) -> String {
