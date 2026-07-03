@@ -186,7 +186,7 @@ impl Event {
     }
 
     pub async fn load(db_pool: impl PgExecutor<'_>, event_id: Id) -> sqlx::Result<Option<Self>> {
-        Ok(sqlx::query_scalar("SELECT value FROM json_events WHERE id = $1").bind(event_id.to_string()).fetch_optional(db_pool).await?.map(|Json(value)| value))
+        Ok(sqlx::query_scalar("SELECT value FROM json_events WHERE id = $1").bind(event_id).fetch_optional(db_pool).await?.map(|Json(value)| value))
     }
 
     pub fn anzahlung(&self) -> Option<Euro> { self.anzahlung }

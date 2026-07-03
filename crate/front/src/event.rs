@@ -205,6 +205,7 @@ pub(crate) enum GetError {
     #[error(transparent)] Page(#[from] crate::PageError),
     #[error(transparent)] Sql(#[from] sqlx::Error),
     #[error(transparent)] ToMaybeLocal(#[from] gefolge_web_lib::time::ToMaybeLocalError),
+    #[error(transparent)] Wiki(#[from] crate::wiki::Error),
 }
 
 impl<E: Into<GetError>> From<E> for StatusOrError<GetError> {
@@ -333,14 +334,12 @@ async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<
                 Aktuell ist noch niemand angemeldet.
             {% endif %}
         </p>
-        {% if g.wiki.exists('event', event.event_id) %}
-            {{ g.wiki.source('event', event.event_id) | markdown }}
-        {% else %}
-            */
-            p : "Eventbeschreibung coming soon™";
-            /*
-        {% endif %}
         */
+        @if let Some(source) = sqlx::query_scalar!("SELECT text FROM wiki WHERE title = $1 AND namespace = 'event' ORDER BY timestamp DESC LIMIT 1", id as _).fetch_optional(&mut *transaction).await? {
+            : crate::wiki::render_wiki_page(&mut transaction, &source).await?;
+        } else {
+            p : "Eventbeschreibung coming soon™";
+        }
         h1(id = "signup") : "Anmeldung";
         @if let Some(attendee) = event.attendee(AttendeeId::Discord(me.id)) {
             @if let Some(via) = attendee.via(&mut transaction).await? {
