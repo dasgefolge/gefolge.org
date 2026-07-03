@@ -383,7 +383,7 @@ async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<
                 : full_form(uri!(post(new_id)), csrf, html! {
                     //TODO lookup user in dolibarr, only ask for email address if not found
                     : form_field("email", &mut errors, html! {
-                        label(for = "email") : "Email-Adresse";
+                        label(for = "email") : "Email-Adresse:";
                         input(type = "email", name = "email", value? = ctx.field_value("email"));
                         label(class = "help") : "(Für die Rechnung.)";
                     });
@@ -391,12 +391,16 @@ async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<
                     @for (night_idx, night) in iter_date_range(nights).enumerate() {
                         @let field_id = format!("nights[{night_idx}]");
                         : form_field(&field_id, &mut errors, html! {
-                            label(for = field_id) : format_date_range(night, night.succ_opt().expect("reached end of time"));
-                            select(name = field_id) {
-                                option(value = "yes", selected? = ctx.field_value(&*field_id).is_some_and(|val| val == "yes")) : "Ja";
-                                option(value = "maybe", selected? = ctx.field_value(&*field_id).is_none_or(|val| val == "maybe")) : "Vielleicht";
-                                option(value = "no", selected? = ctx.field_value(&*field_id).is_some_and(|val| val == "no")) : "Nein";
+                            label(for = field_id) {
+                                : format_date_range(night, night.succ_opt().expect("reached end of time"));
+                                : ":";
                             }
+                            input(id = format!("{field_id}-yes"), type = "radio", name = field_id, value = "yes", checked? = ctx.field_value(&*field_id).is_some_and(|val| val == "yes"));
+                            label(for = format!("{field_id}-yes")) : "Ja";
+                            input(id = format!("{field_id}-maybe"), type = "radio", name = field_id, value = "maybe", checked? = ctx.field_value(&*field_id).is_none_or(|val| val == "maybe"));
+                            label(for = format!("{field_id}-maybe")) : "Vielleicht";
+                            input(id = format!("{field_id}-no"), type = "radio", name = field_id, value = "no", checked? = ctx.field_value(&*field_id).is_some_and(|val| val == "no"));
+                            label(for = format!("{field_id}-no")) : "Nein";
                         });
                     }
                     //TODO include remaining fields from gefolge_web.event.forms.ProfileForm:
@@ -404,15 +408,16 @@ async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<
                     h2 : "Essen";
                     p : "Bitte trage hier Informationen zu deiner Ernährung ein. Diese Daten werden nur der Orga angezeigt.";
                     : form_field("animal_products", &mut errors, html! {
-                        label(for = "animal_products") : "tierische Produkte";
-                        select(name = "animal_products") {
-                            option(value = "yes", selected? = ctx.field_value("animal_products").is_none_or(|val| val == "yes")) : "uneingeschränkt";
-                            option(value = "vegetarian", selected? = ctx.field_value("animal_products").is_some_and(|val| val == "vegetarian")) : "vegetarisch";
-                            option(value = "vegan", selected? = ctx.field_value("animal_products").is_some_and(|val| val == "vegan")) : "vegan";
-                        }
+                        label(for = "animal_products") : "tierische Produkte:";
+                        input(id = "animal_products-yes", type = "radio", name = "animal_products", value = "yes", checked? = ctx.field_value("animal_products").is_none_or(|val| val == "yes"));
+                        label(for = "animal_products-yes") : "uneingeschränkt";
+                        input(id = "animal_products-vegetarian", type = "radio", name = "animal_products", value = "vegetarian", checked? = ctx.field_value("animal_products").is_some_and(|val| val == "vegetarian"));
+                        label(for = "animal_products-vegetarian") : "vegetarisch";
+                        input(id = "animal_products-vegan", type = "radio", name = "animal_products", value = "vegan", checked? = ctx.field_value("animal_products").is_some_and(|val| val == "vegan"));
+                        label(for = "animal_products-vegan") : "vegan";
                     });
                     : form_field("allergies", &mut errors, html! {
-                        label(for = "allergies") : "Allergien, Unverträglichkeiten";
+                        label(for = "allergies") : "Allergien, Unverträglichkeiten:";
                         input(type = "text", name = "allergies", value? = ctx.field_value("allergies"));
                     });
                     //TODO include remaining fields from gefolge_web.event.forms.ProfileForm:

@@ -167,6 +167,10 @@ label:not(:nth-last-child(1)) {
     margin-inline-end: 8px;
 }
 
+label.help {
+    margin-inline-start: 8px;
+}
+
 .error {
     border: 1px solid #c00000;
 }
@@ -176,6 +180,12 @@ p.error {
     padding: 8px;
 }
 
+input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+}
+
+input[type="email"],
 input[type="text"],
 input[type="submit"],
 textarea,
@@ -259,6 +269,7 @@ footer {
         background-color: rgba(255, 255, 255, 0.1);
     }
 
+    input[type="email"],
     input[type="text"],
     input[type="submit"],
     textarea,
