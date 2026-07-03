@@ -66,6 +66,7 @@ use {
         IndexError,
         PageKind,
         RedirectOrContent,
+        SqlResultExt as _,
         StatusOrError,
         form::{
             form_field,
@@ -97,7 +98,7 @@ pub(crate) async fn load_events(transaction: &mut Transaction<'_, Postgres>) -> 
     let now = Utc::now();
     let mut past = Vec::default();
     let mut upcoming = Vec::default();
-    for row in sqlx::query!(r#"SELECT id, value AS "value: Json<Event>" FROM json_events"#).fetch_all(&mut **transaction).await? {
+    for row in sqlx::query!(r#"SELECT id, value AS "value: Json<Event>" FROM json_events"#).fetch_all(&mut **transaction).await.at("load_events")? {
         let start = row.value.0.start(&mut *transaction).await?;
         let end = row.value.0.end(&mut *transaction).await?;
         if end.is_none_or(|end| end > now) { &mut upcoming } else { &mut past }.push(EventOverview { id: row.id, start, end, event: row.value.0 });
@@ -118,10 +119,10 @@ pub(crate) async fn load_events(transaction: &mut Transaction<'_, Postgres>) -> 
 
 #[rocket::get("/event")]
 pub(crate) async fn index(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>) -> Result<RawHtml<String>, IndexError> {
-    let mut transaction = db_pool.begin().await?;
+    let mut transaction = db_pool.begin().await.at("begin (/event)")?;
     let events = load_events(&mut transaction).await?;
     let content = html! {
-        @let viewer_data = me.data(&mut transaction).await?;
+        @let viewer_data = me.data(&mut transaction).await.at("viewer_data (/event)")?;
         h1 : "Events";
         @if !events.ongoing.is_empty() {
             h2 : "laufende Events";

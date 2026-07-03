@@ -325,19 +325,33 @@ async fn page(mut transaction: Transaction<'_, Postgres>, me: impl LoginState, u
 enum IndexError {
     #[error(transparent)] Event(#[from] gefolge_web_lib::event::Error),
     #[error(transparent)] Page(#[from] PageError),
-    #[error(transparent)] Sql(#[from] sqlx::Error),
+    #[error("SQL error at {ctx}: {source}")]
+    Sql {
+        ctx: &'static str,
+        source: sqlx::Error,
+    },
+}
+
+trait SqlResultExt<T> {
+    fn at(self, ctx: &'static str) -> Result<T, IndexError>;
+}
+
+impl<T> SqlResultExt<T> for sqlx::Result<T> {
+    fn at(self, ctx: &'static str) -> Result<T, IndexError> {
+        self.map_err(|source| IndexError::Sql { ctx, source })
+    }
 }
 
 #[rocket::get("/")]
 async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>) -> Result<RawHtml<String>, IndexError> {
     Ok(if let Some(DiscordUser { id }) = me {
-        let mut transaction = db_pool.begin().await?;
+        let mut transaction = db_pool.begin().await.at("begin 1")?;
         let events = load_events(&mut transaction).await?;
         let content = html! {
-            @let user = User::from_id(&mut transaction, id).await?;
+            @let user = User::from_id(&mut transaction, id).await.at("User::from_id")?;
             @let is_mensch_or_guest = user.as_ref().is_some_and(User::is_mensch_or_guest);
             @if is_mensch_or_guest {
-                @let viewer_data = user.as_ref().expect("just checked (is_mensch_or_guest)").data(&mut transaction).await?;
+                @let viewer_data = user.as_ref().expect("just checked (is_mensch_or_guest)").data(&mut transaction).await.at("viewer_data")?;
                 p {
                     a(href = "/api") : "API";
                     : " • ";
@@ -393,7 +407,7 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
         };
         page(transaction, me, &uri, PageKind::Index, "Das Gefolge", content).await?
     } else {
-        page(db_pool.begin().await?, me, &uri, PageKind::Splash, "Das Gefolge", html! {
+        page(db_pool.begin().await.at("begin 2")?, me, &uri, PageKind::Splash, "Das Gefolge", html! {
             p {
                 : "Das ";
                 strong : "Gefolge";
