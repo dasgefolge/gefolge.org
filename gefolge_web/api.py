@@ -124,7 +124,8 @@ def setup(index):
                 'orga': attendee_data.get('orga', [])
             }
             if person == flask.g.user or event.proxy(person) == flask.g.user or event.can_edit(flask.g.user, person):
-                result['alkohol'] = attendee_data.get('alkohol', True)
+                if event.start is not None and event.start.year < 2026:
+                    result['alkohol'] = attendee_data.get('alkohol', True)
                 result['selbstversorger'] = attendee_data.get('selbstversorger', False)
             if (person == flask.g.user or person == event.orga('Abrechnung')):
                 if 'konto' in attendee_data:
