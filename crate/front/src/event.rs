@@ -342,17 +342,25 @@ async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<
         }
         h1(id = "signup") : "Anmeldung";
         @if let Some(attendee) = event.attendee(AttendeeId::Discord(me.id)) {
-            @if let Some(via) = attendee.via(&mut transaction).await? {
-                : via;
-                : " hat";
-            } else {
-                : "Du hast";
+            p {
+                @if let Some(via) = attendee.via(&mut transaction).await? {
+                    : via;
+                    : " hat";
+                } else {
+                    : "Du hast";
+                }
+                : " dich am ";
+                : format_datetime(&viewer_data, attendee.signup.to_maybe_local(event.timezone(&mut transaction).await?)?, false);
+                : " angemeldet.";
             }
-            : " dich am ";
-            : format_datetime(&viewer_data, attendee.signup.to_maybe_local(event.timezone(&mut transaction).await?)?, false);
-            : " angemeldet.";
+            p {
+                : "Du kannst ";
+                a(href = format!("/event/{id}/mensch/{}", me.id)) : "deine Anmeldungsdaten";
+                : " jederzeit ";
+                a(href = format!("/event/{id}/mensch/{}/edit", me.id)) : "bearbeiten";
+                : ". Einige Teile der Eventanmeldung sind noch in Arbeit (z.B. Bettwäsche-Börse). Wenn etwas Neues fertig ist, wirst du auf Discord angepingt."; //TODO
+            }
             /*
-            <p>Du kannst <a href="{{(g.view_node / 'mensch' / g.user).url}}">deine Anmeldungsdaten</a> jederzeit <a href="{{(g.view_node / 'mensch' / g.user / 'edit').url}}">bearbeiten</a>. Einige Teile der Eventanmeldung sind noch in Arbeit (z.B. Bettwäsche-Börse). Wenn etwas Neues fertig ist, wirst du auf Discord angepingt.</p> {#TODO#}
             {% if g.user in event.menschen %}
                 {% if event.guests | selectattr("via", "equalto", g.user) | length > 0 %}
                     <h2>Gäste</h2>
