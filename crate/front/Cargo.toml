@@ -36,7 +36,7 @@ pulldown-cmark = { git = "https://github.com/fenhl/pulldown-cmark", branch = "ro
 reqwest = { version = "0.13", default-features = false, features = ["charset", "gzip", "hickory-dns", "http2", "rustls-no-provider", "system-proxy", "zstd"] }
 ricochet-robots-websocket = { git = "ssh://git@github.com/dasgefolge/ricochet-robots.git", optional = true }
 rocket = { git = "https://github.com/fenhl/Rocket", branch = "forms", features = ["secrets"] }
-rocket-util = { git = "https://github.com/fenhl/rocket-util", branch = "forms", features = ["reqwest", "rocket_csrf"] }
+rocket-util = { git = "https://github.com/fenhl/rocket-util", features = ["reqwest", "rocket_csrf"] }
 rocket_csrf = { git = "https://github.com/fenhl/rocket_csrf", branch = "forms" }
 rocket_oauth2 = { git = "https://github.com/fenhl/rocket_oauth2", branch = "forms" }
 rocket_ws = { git = "https://github.com/fenhl/Rocket", branch = "forms" }

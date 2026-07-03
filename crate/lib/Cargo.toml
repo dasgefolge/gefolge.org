@@ -37,7 +37,7 @@ reqwest = { version = "0.13", default-features = false }
 ricochet-robots-websocket = { git = "ssh://git@github.com/dasgefolge/ricochet-robots.git", optional = true }
 rocket = { git = "https://github.com/fenhl/Rocket", branch = "forms", features = ["secrets"] }
 rocket-basicauth = { git = "https://github.com/fenhl/rocket-basicauth", branch = "forms" }
-rocket-util = { git = "https://github.com/fenhl/rocket-util", branch = "forms", features = ["reqwest"] }
+rocket-util = { git = "https://github.com/fenhl/rocket-util", features = ["reqwest"] }
 rocket_oauth2 = { git = "https://github.com/fenhl/rocket_oauth2", branch = "forms" }
 semver = "1"
 serde = "1"
