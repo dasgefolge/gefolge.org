@@ -120,7 +120,7 @@ enum SessionPurposeV1 {
 struct CurrentEventV1;
 
 async fn client_session_v1(db_pool: PgPool, rr_lobbies: Arc<RwLock<HashMap<u64, ricochet_robots_websocket::Lobby<User>>>>, mut stream: WsStream, sink: WsSink) -> Result<(), Error> {
-    let api_key = String::read_ws021(&mut stream).await?;
+    let api_key = String::read_ws024(&mut stream).await?;
     let mut transaction = db_pool.begin().await?;
     let user = User::from_api_key(&mut transaction, &api_key).await?.ok_or(Error::UnknownApiKey)?;
     transaction.commit().await?;
@@ -129,12 +129,12 @@ async fn client_session_v1(db_pool: PgPool, rr_lobbies: Arc<RwLock<HashMap<u64, 
     tokio::spawn(async move {
         loop {
             sleep(Duration::from_secs(30)).await;
-            if lock!(ping_sink = ping_sink; ServerMessageV1::Ping.write_ws021(&mut *ping_sink).await).is_err() { break } //TODO better error handling
+            if lock!(ping_sink = ping_sink; ServerMessageV1::Ping.write_ws024(&mut *ping_sink).await).is_err() { break } //TODO better error handling
         }
     });
-    match SessionPurposeV1::read_ws021(&mut stream).await? {
+    match SessionPurposeV1::read_ws024(&mut stream).await? {
         SessionPurposeV1::RicochetRobots => ricochet_robots_websocket::client_session(&rr_lobbies, user, stream, sink).await?,
-        SessionPurposeV1::CurrentEvent => lock!(sink = sink; ServerMessageV1::from_error(CurrentEventV1).write_ws021(&mut *sink).await)?,
+        SessionPurposeV1::CurrentEvent => lock!(sink = sink; ServerMessageV1::from_error(CurrentEventV1).write_ws024(&mut *sink).await)?,
     }
     Ok(())
 }
@@ -152,7 +152,7 @@ pub(crate) fn websocket_v1(db_pool: &State<PgPool>, rr_lobbies: &State<Arc<RwLoc
         let (sink, stream) = stream.split();
         let sink = Arc::new(Mutex::new(sink));
         if let Err(e) = client_session_v1(db_pool, rr_lobbies, stream, Arc::clone(&sink)).await {
-            let _ = lock!(sink = sink; ServerMessageV1::from_error(e).write_ws021(&mut *sink).await);
+            let _ = lock!(sink = sink; ServerMessageV1::from_error(e).write_ws024(&mut *sink).await);
         }
         Ok(())
     }.boxed())
@@ -166,7 +166,7 @@ async fn client_session_v2(db_pool: PgPool, mut rocket_shutdown: rocket::Shutdow
         select! {
             Some(res) = subscription_join_handles.next() => match res?? {},
             () = &mut rocket_shutdown => break Ok(()),
-            res = ClientMessageV2::read_ws021(&mut stream) => match res? {
+            res = ClientMessageV2::read_ws024(&mut stream) => match res? {
                 ClientMessageV2::Auth { api_key } => {
                     let mut transaction = db_pool.begin().await?;
                     user = Some(User::from_api_key(&mut transaction, &api_key).await?.ok_or(Error::UnknownApiKey)?);
@@ -204,9 +204,9 @@ async fn client_session_v2(db_pool: PgPool, mut rocket_shutdown: rocket::Shutdow
                                 }
                                 if prev_event.is_none_or(|prev_state| prev_state != current_event) {
                                     if let Some(EventData { ref id, timezone }) = current_event {
-                                        lock!(sink = sink; ServerMessageV2::CurrentEvent { id: id.clone(), timezone }.write_ws021(&mut *sink).await)?;
+                                        lock!(sink = sink; ServerMessageV2::CurrentEvent { id: id.clone(), timezone }.write_ws024(&mut *sink).await)?;
                                     } else {
-                                        lock!(sink = sink; ServerMessageV2::NoEvent.write_ws021(&mut *sink).await)?;
+                                        lock!(sink = sink; ServerMessageV2::NoEvent.write_ws024(&mut *sink).await)?;
                                     }
                                 }
                                 prev_event = Some(current_event);
@@ -226,12 +226,12 @@ async fn client_session_v2(db_pool: PgPool, mut rocket_shutdown: rocket::Shutdow
                             prev_version = sil_version.wait_for(Option::is_some).await.expect("static channel closed").clone();
                         }
                         let mut prev_version = prev_version.expect("checked above");
-                        lock!(sink = sink; ServerMessageV2::LatestSilVersion(prev_version.clone()).write_ws021(&mut *sink).await)?;
+                        lock!(sink = sink; ServerMessageV2::LatestSilVersion(prev_version.clone()).write_ws024(&mut *sink).await)?;
                         loop {
                             sil_version.changed().await.expect("static channel closed");
                             let current_version = sil_version.borrow_and_update().clone().expect("None explicitly written to SIL_VERSION");
                             if prev_version != current_version {
-                                lock!(sink = sink; ServerMessageV2::LatestSilVersion(current_version.clone()).write_ws021(&mut *sink).await)?;
+                                lock!(sink = sink; ServerMessageV2::LatestSilVersion(current_version.clone()).write_ws024(&mut *sink).await)?;
                                 prev_version = current_version;
                             }
                         }
@@ -243,7 +243,7 @@ async fn client_session_v2(db_pool: PgPool, mut rocket_shutdown: rocket::Shutdow
                     let mut transaction = db_pool.begin().await?;
                     let preview = crate::wiki::render_wiki_page(&mut transaction, &text).await?;
                     transaction.commit().await?;
-                    lock!(sink = sink; ServerMessageV2::MarkdownPreview(preview.to_html().0).write_ws021(&mut *sink).await)?;
+                    lock!(sink = sink; ServerMessageV2::MarkdownPreview(preview.to_html().0).write_ws024(&mut *sink).await)?;
                     markdown_base = Some(text);
                 }
                 ClientMessageV2::PreviewMarkdownEdit { range, text } => {
@@ -258,7 +258,7 @@ async fn client_session_v2(db_pool: PgPool, mut rocket_shutdown: rocket::Shutdow
                     let mut transaction = db_pool.begin().await?;
                     let preview = crate::wiki::render_wiki_page(&mut transaction, &full_text).await?;
                     transaction.commit().await?;
-                    lock!(sink = sink; ServerMessageV2::MarkdownPreview(preview.to_html().0).write_ws021(&mut *sink).await)?;
+                    lock!(sink = sink; ServerMessageV2::MarkdownPreview(preview.to_html().0).write_ws024(&mut *sink).await)?;
                     markdown_base = Some(full_text);
                 }
             },
@@ -276,14 +276,14 @@ pub(crate) fn websocket_v2(db_pool: &State<PgPool>, rocket_shutdown: rocket::Shu
         let ping_loop = tokio::spawn(async move {
             loop {
                 sleep(Duration::from_secs(30)).await;
-                if lock!(ping_sink = ping_sink; ServerMessageV2::Ping.write_ws021(&mut *ping_sink).await).is_err() { break } //TODO better error handling
+                if lock!(ping_sink = ping_sink; ServerMessageV2::Ping.write_ws024(&mut *ping_sink).await).is_err() { break } //TODO better error handling
             }
         });
         if let Err(e) = client_session_v2(db_pool, rocket_shutdown, stream, WsSink::clone(&sink)).await {
             let _ = lock!(sink = sink; ServerMessageV2::Error {
                 debug: format!("{e:?}"),
                 display: String::default(),
-            }.write_ws021(&mut *sink).await);
+            }.write_ws024(&mut *sink).await);
         }
         ping_loop.abort();
         Ok(())

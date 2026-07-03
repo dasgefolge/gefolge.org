@@ -62,7 +62,7 @@ pub(crate) mod twitch;
 mod user_list;
 pub(crate) mod werewolf;
 
-const GEFOLGE: GuildId = GuildId::new(355761290809180170);
+pub const GEFOLGE: GuildId = GuildId::new(355761290809180170);
 
 const QUIZMASTER: RoleId = RoleId::new(847443327069454378);
 pub const MENSCH: RoleId = RoleId::new(386753710434287626);

@@ -38,6 +38,7 @@ use {
         },
         response::{
             self,
+            Redirect,
             Responder,
             content::{
                 RawHtml,
@@ -82,7 +83,7 @@ use {
             EventOverview,
             load_events,
         },
-        time::format_date_range,
+        time::format_datetime_range,
     },
 };
 
@@ -125,9 +126,25 @@ fn base_uri() -> rocket::http::uri::Absolute<'static> {
 }
 
 #[derive(Responder)]
+enum RedirectOrContent {
+    Redirect(Redirect),
+    Content(RawHtml<String>),
+}
+
+#[derive(Responder)]
 enum StatusOrError<E> {
     Status(Status),
     Err(E),
+}
+
+impl<E> StatusOrError<E> {
+    fn err_into<F>(self) -> StatusOrError<F>
+    where E: Into<F> {
+        match self {
+            Self::Status(status) => StatusOrError::Status(status),
+            Self::Err(e) => StatusOrError::Err(e.into()),
+        }
+    }
 }
 
 trait LoginState {
@@ -341,7 +358,7 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                                 : event.to_html(&id);
                                 @if let (Some(start), Some(end)) = (start, end) {
                                     : " (";
-                                    : format_date_range(&viewer_data, start, end);
+                                    : format_datetime_range(&viewer_data, start, end);
                                     : ")";
                                 }
                             }
@@ -356,7 +373,7 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                                 : event.to_html(&id);
                                 @if let (Some(start), Some(end)) = (start, end) {
                                     : " (";
-                                    : format_date_range(&viewer_data, start, end);
+                                    : format_datetime_range(&viewer_data, start, end);
                                     : ")";
                                 }
                             }
@@ -726,14 +743,13 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
         .build()?;
     let discord_builder = serenity_utils::builder(config.discord.bot_token.clone()).await?;
     let db_pool = PgPool::connect_with(PgConnectOptions::default().username("fenhl").database("gefolge").application_name("gefolge-web")).await?;
-    let rocket = rocket::custom(rocket::Config {
+    let rocket = rocket::custom(rocket::Config::figment().merge(rocket::Config {
         secret_key: SecretKey::from(&BASE64.decode(&config.secret_key)?),
-        log_level: rocket::config::LogLevel::Critical,
-        port: port.unwrap_or_else(|| if is_dev() { 24816 } else { 24817 }),
+        log_level: Some(rocket::config::Level::ERROR),
         limits: Limits::default()
-            .limit("bytes", 2.mebibytes()), // for proxied wiki edits
+        .limit("bytes", 2.mebibytes()), // for proxied wiki edits
         ..rocket::Config::default()
-    })
+    }).merge(("port", port.unwrap_or_else(|| if is_dev() { 24816 } else { 24817 })))) //TODO report issue for lack of typed interface to set port, see https://github.com/rwf2/Rocket/commit/fd294049c784cb52680a423616fadc29d57fa25b
     .mount("/", rocket::routes![
         index,
         flask_proxy_get,
@@ -746,6 +762,7 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
         auth::logout,
         event::index,
         event::get,
+        event::post,
         games::index,
         games::werewolf_proxy_get_index,
         games::werewolf_proxy_get_children,
@@ -762,7 +779,7 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
         wiki::history,
         wiki::revision,
     ])
-    .mount("/static", FileServer::new("assets/static", rocket::fs::Options::None))
+    .mount("/static", FileServer::without_index("assets/static"))
     .register("/", rocket::catchers![
         bad_request,
         unauthorized,

@@ -17,10 +17,10 @@ futures = "0.3"
 git2 = "0.21"
 thiserror = "2"
 tokio = "1"
-wheel = { git = "https://github.com/fenhl/wheel" }
+wheel = { git = "https://github.com/fenhl/wheel", branch = "rocket-forms" }
 
 [dependencies]
-async-proto = { version = "0.26", features = ["chrono-tz", "tokio-tungstenite021"] }
+async-proto = { version = "0.26", features = ["chrono-tz", "tokio-tungstenite024"] }
 base64 = "0.22"
 chrono = { version = "0.4", features = ["serde", "clock"], default-features = false }
 chrono-tz = { version = "0.10", features = ["serde"] }
@@ -35,14 +35,15 @@ log-lock = { git = "https://github.com/fenhl/log-lock" }
 pulldown-cmark = { git = "https://github.com/fenhl/pulldown-cmark", branch = "rocket-wiki", default-features = false, features = ["simd", "html"] }
 reqwest = { version = "0.13", default-features = false, features = ["charset", "gzip", "hickory-dns", "http2", "rustls-no-provider", "system-proxy", "zstd"] }
 ricochet-robots-websocket = { git = "ssh://git@github.com/dasgefolge/ricochet-robots.git", optional = true }
-rocket = { features = ["secrets"], version = "0.5" }
-rocket-util = { git = "https://github.com/fenhl/rocket-util", features = ["reqwest", "rocket_csrf"] }
-rocket_csrf = { git = "https://github.com/fenhl/rocket_csrf", branch = "rocket05" }
-rocket_oauth2 = "0.5"
-rocket_ws = "0.1"
+rocket = { git = "https://github.com/fenhl/Rocket", branch = "forms", features = ["secrets"] }
+rocket-util = { git = "https://github.com/fenhl/rocket-util", branch = "forms", features = ["reqwest", "rocket_csrf"] }
+rocket_csrf = { git = "https://github.com/fenhl/rocket_csrf", branch = "forms" }
+rocket_oauth2 = { git = "https://github.com/fenhl/rocket_oauth2", branch = "forms" }
+rocket_ws = { git = "https://github.com/fenhl/Rocket", branch = "forms" }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 semver = { version = "1", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
+serde_json = { package = "serde_json_path_to_error", version = "0.1" }
 serenity = { version = "0.12", default-features = false, features = ["model", "rustls_backend", "temp_cache"] }
 serenity-utils = { git = "https://github.com/fenhl/serenity-utils" }
 sha2 = "0.11"
@@ -51,4 +52,4 @@ thiserror = "2"
 tokio = { version = "1", features = ["macros", "process", "sync", "time"] }
 toml = "1"
 url = "2"
-wheel = { git = "https://github.com/fenhl/wheel", features = ["chrono", "night", "rocket", "reqwest", "serde_json"] }
+wheel = { git = "https://github.com/fenhl/wheel", branch = "rocket-forms", features = ["chrono", "night", "rocket", "reqwest", "serde_json"] }

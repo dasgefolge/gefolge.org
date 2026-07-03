@@ -3,7 +3,6 @@ use {
     lazy_regex::regex_captures,
     rocket::{
         FromForm,
-        Responder,
         State,
         form::{
             self,
@@ -50,6 +49,7 @@ use {
     },
     crate::{
         PageKind,
+        RedirectOrContent,
         base_uri,
         form::{
             form_field,
@@ -352,12 +352,6 @@ pub(crate) struct EditForm {
     csrf: String,
     source: String,
     summary: String,
-}
-
-#[derive(Responder)]
-pub(crate) enum RedirectOrContent {
-    Redirect(Redirect),
-    Content(RawHtml<String>),
 }
 
 #[rocket::post("/wiki/<title>/<namespace>/edit", data = "<form>")]

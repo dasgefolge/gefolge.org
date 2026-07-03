@@ -2,7 +2,10 @@ use {
     std::{
         borrow::Cow,
         collections::HashMap,
-        fmt,
+        fmt::{
+            self,
+            Write as _,
+        },
         ops::Range,
         str::FromStr,
     },
@@ -14,7 +17,17 @@ use {
         EnumSetType,
     },
     lazy_regex::regex_captures,
-    rocket::response::content::RawHtml,
+    rocket::{
+        FromFormField,
+        http::uri::{
+            self,
+            fmt::{
+                Path,
+                UriDisplay,
+            },
+        },
+        response::content::RawHtml,
+    },
     rocket_util::{
         ToHtml,
         html,
@@ -30,6 +43,7 @@ use {
     },
     serenity::model::prelude::*,
     sqlx::{
+        Database,
         PgExecutor,
         Postgres,
         Transaction,
@@ -42,6 +56,7 @@ use {
         time::{
             MaybeAwareDateTime,
             MaybeLocalDateTime,
+            iter_date_range,
         },
         user::User,
     },
@@ -111,18 +126,56 @@ impl fmt::Display for Id {
             Season::Sommer => write!(f, "sosil")?,
             Season::Winter => write!(f, "sil")?,
         }
-        self.year.fmt(f)
+        write!(f, "{}", self.year)
+    }
+}
+
+impl UriDisplay<Path> for Id {
+    fn fmt(&self, f: &mut uri::fmt::Formatter<'_, Path>) -> fmt::Result {
+        write!(f, "{self}")
+    }
+}
+
+impl<'q, DB: Database> Encode<'q, DB> for Id
+where String: Encode<'q, DB> {
+    fn encode_by_ref(&self, buf: &mut <DB as Database>::ArgumentBuffer<'q>) -> Result<sqlx::encode::IsNull, Box<dyn std::error::Error + Send + Sync>> {
+        self.to_string().encode(buf)
+    }
+
+    fn encode(self, buf: &mut <DB as Database>::ArgumentBuffer<'q>) -> Result<sqlx::encode::IsNull, Box<dyn std::error::Error + Send + Sync>> {
+        self.to_string().encode(buf)
+    }
+
+    fn produces(&self) -> Option<<DB as Database>::TypeInfo> {
+        self.to_string().produces()
+    }
+
+    fn size_hint(&self) -> usize {
+        Encode::size_hint(&self.to_string())
+    }
+}
+
+impl<DB: Database> Type<DB> for Id
+where String: Type<DB> {
+    fn type_info() -> <DB as Database>::TypeInfo {
+        String::type_info()
+    }
+
+    fn compatible(ty: &<DB as Database>::TypeInfo) -> bool {
+        String::compatible(ty)
     }
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Event {
     anzahlung: Option<Euro>,
+    channel: Option<ChannelId>,
     end: Option<MaybeAwareDateTime>,
     location: Option<String>,
     #[serde(default)]
     menschen: Vec<Attendee>,
     name: Option<String>,
+    role: Option<RoleId>,
     start: Option<MaybeAwareDateTime>,
     timezone: Option<Tz>,
 }
@@ -137,6 +190,11 @@ impl Event {
     }
 
     pub fn anzahlung(&self) -> Option<Euro> { self.anzahlung }
+    pub fn discord_role(&self) -> Option<RoleId> { self.role }
+
+    pub fn discord_channel(&self) -> ChannelId {
+        self.channel.unwrap_or_else(|| ChannelId::new(387264349678338049))
+    }
 
     /// Returns the list of attendees for this event, including ones with unconfirmed signups.
     pub fn attendees(&self) -> &[Attendee] { &self.menschen }
@@ -148,7 +206,7 @@ impl Event {
 
     pub async fn attendee_nights<'a>(&self, transaction: &mut Transaction<'_, Postgres>, attendee: &'a Attendee) -> Result<Option<impl Iterator<Item = (NaiveDate, Cow<'a, Night>)>>, Error> {
         let Some(nights) = self.nights(transaction).await? else { return Ok(None) };
-        Ok(Some(nights.start.iter_days().take_while(move |d| *d < nights.end).map(|night| (night, attendee.nights.get(&night).map(Cow::Borrowed).unwrap_or_else(|| Cow::Owned(Night::default()))))))
+        Ok(Some(iter_date_range(nights).map(|night| (night, attendee.nights.get(&night).map(Cow::Borrowed).unwrap_or_else(|| Cow::Owned(Night::default()))))))
     }
 
     pub fn location_id(&self) -> LocationId<'_> {
@@ -167,7 +225,7 @@ impl Event {
         })
     }
 
-    async fn nights(&self, transaction: &mut Transaction<'_, Postgres>) -> Result<Option<Range<NaiveDate>>, Error> {
+    pub async fn nights(&self, transaction: &mut Transaction<'_, Postgres>) -> Result<Option<Range<NaiveDate>>, Error> {
         let Some(start) = self.start(&mut *transaction).await? else { return Ok(None) };
         let Some(end) = self.end(&mut *transaction).await? else { return Ok(None) };
         let Some(tz) = self.timezone(transaction).await? else { return Ok(None) };
@@ -234,6 +292,18 @@ pub struct Attendee {
     nights: HashMap<NaiveDate, Night>,
     #[serde(default)]
     pub orga: EnumSet<OrgaRole>,
+    pub signup: MaybeAwareDateTime,
+    via: Option<UserId>,
+}
+
+impl Attendee {
+    pub async fn via(&self, transaction: &mut Transaction<'_, Postgres>) -> sqlx::Result<Option<User>> {
+        Ok(if let Some(via) = self.via {
+            Some(User::from_id(transaction, via).await?.expect("guest proxy user does not exist"))
+        } else {
+            None
+        })
+    }
 }
 
 #[serde_as]
@@ -253,7 +323,7 @@ pub struct FoodPreferences {
     pub allergies: String,
 }
 
-#[derive(Debug, Default, Clone, Copy, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, Deserialize, Serialize, FromFormField)]
 #[serde(rename_all = "lowercase")]
 pub enum AnimalProducts {
     #[default]
@@ -287,7 +357,7 @@ pub struct Night {
     pub going: Going,
 }
 
-#[derive(Debug, Default, Clone, Copy, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, Deserialize, Serialize, FromFormField)]
 #[serde(rename_all = "lowercase")]
 pub enum Going {
     Yes,
@@ -298,6 +368,7 @@ pub enum Going {
 
 #[derive(Deserialize)]
 struct JsonLocation {
+    hausordnung: Option<Url>,
     host: Option<UserId>,
     name: Option<String>,
     prefix: Option<String>,
@@ -308,6 +379,7 @@ struct JsonLocation {
 }
 
 pub struct Location {
+    pub hausordnung: Option<Url>,
     host: Option<User>,
     name: String,
     prefix: Cow<'static, str>,
@@ -318,12 +390,12 @@ pub struct Location {
 
 impl Location {
     async fn load(transaction: &mut Transaction<'_, Postgres>, loc_id: &str) -> sqlx::Result<Option<Self>> {
-        let Some(Json(JsonLocation { host, name, prefix, rooms, timezone, website })) = sqlx::query_scalar("SELECT value FROM json_locations WHERE id = $1").bind(loc_id).fetch_optional(&mut **transaction).await? else { return Ok(None) };
+        let Some(Json(JsonLocation { hausordnung, host, name, prefix, rooms, timezone, website })) = sqlx::query_scalar("SELECT value FROM json_locations WHERE id = $1").bind(loc_id).fetch_optional(&mut **transaction).await? else { return Ok(None) };
         Ok(Some(Self {
             host: if let Some(host) = host { User::from_id(transaction, host).await? } else { None }, //TODO error on nonexistent user instead of setting host to None?
             name: name.unwrap_or_else(|| loc_id.to_owned()),
             prefix: prefix.map(Cow::Owned).unwrap_or_else(|| Cow::Borrowed("in ")),
-            timezone, rooms, website,
+            hausordnung, timezone, rooms, website,
         }))
     }
 }

@@ -1,15 +1,20 @@
 use {
     std::{
         cmp::Ordering,
+        fmt,
+        ops::Range,
         str::FromStr,
     },
     chrono::prelude::*,
     chrono_tz::Tz,
-    serde_with::DeserializeFromStr,
+    serde_with::{
+        DeserializeFromStr,
+        SerializeDisplay,
+    },
     wheel::traits::LocalResultExt as _,
 };
 
-#[derive(Debug, Clone, Copy, DeserializeFromStr)]
+#[derive(Debug, Clone, Copy, DeserializeFromStr, SerializeDisplay)]
 pub enum MaybeAwareDateTime {
     Naive(NaiveDateTime),
     Aware(DateTime<Utc>),
@@ -55,6 +60,15 @@ impl FromStr for MaybeAwareDateTime {
                 Ok(naive) => Ok(Self::Naive(naive)),
                 Err(e_naive) => Err(Self::Err { e_aware, e_naive }),
             },
+        }
+    }
+}
+
+impl fmt::Display for MaybeAwareDateTime {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Naive(dt) => dt.format("%Y-%m-%dT%H:%M:%S").fmt(f),
+            Self::Aware(dt) => dt.format("%Y-%m-%dT%H:%M:%SZ").fmt(f),
         }
     }
 }
@@ -116,4 +130,8 @@ impl Ord for MaybeLocalDateTime {
     fn cmp(&self, other: &Self) -> Ordering {
         self.with_timezone(&Utc).cmp(&other.with_timezone(&Utc))
     }
+}
+
+pub fn iter_date_range(range: Range<NaiveDate>) -> impl Iterator<Item = NaiveDate> {
+    range.start.iter_days().take_while(move |d| *d < range.end)
 }

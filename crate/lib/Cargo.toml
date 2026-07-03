@@ -35,10 +35,10 @@ quantum-werewolf = { git = "https://github.com/dasgefolge/quantum-werewolf", opt
 rand = { version = "0.10", optional = true }
 reqwest = { version = "0.13", default-features = false }
 ricochet-robots-websocket = { git = "ssh://git@github.com/dasgefolge/ricochet-robots.git", optional = true }
-rocket = { features = ["secrets"], version = "0.5" }
-rocket-basicauth = { git = "https://github.com/fenhl/rocket-basicauth" }
-rocket-util = { git = "https://github.com/fenhl/rocket-util", features = ["reqwest"] }
-rocket_oauth2 = "0.5"
+rocket = { git = "https://github.com/fenhl/Rocket", branch = "forms", features = ["secrets"] }
+rocket-basicauth = { git = "https://github.com/fenhl/rocket-basicauth", branch = "forms" }
+rocket-util = { git = "https://github.com/fenhl/rocket-util", branch = "forms", features = ["reqwest"] }
+rocket_oauth2 = { git = "https://github.com/fenhl/rocket_oauth2", branch = "forms" }
 semver = "1"
 serde = "1"
 serde_json = { package = "serde_json_path_to_error", version = "0.1" } #TODO which features to use for correct decimal handling? Or use async-json instead?
@@ -50,7 +50,7 @@ thiserror = "2"
 tokio = { version = "1", features = ["time"] }
 twitch_helix = { git = "https://github.com/fenhl/rust-twitch-helix", optional = true } #TODO publish to crates.io
 url = "2"
-wheel = { git = "https://github.com/fenhl/wheel", features = ["chrono", "reqwest", "serde_json"] }
+wheel = { git = "https://github.com/fenhl/wheel", branch = "rocket-forms", features = ["chrono", "reqwest", "serde_json"] }
 
 [target."cfg(unix)".dependencies]
 xdg = "3"
