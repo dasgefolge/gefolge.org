@@ -279,6 +279,13 @@ async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<
                 }
             }
         }
+        p {
+            a(href = format!("/event/{id}/programm")) : "Programm";
+            @if !matches!(location_info, LocationInfo::Online) {
+                : " • ";
+                a(href = format!("/event/{id}/mensch")) : "Menschen";
+            }
+        }
         /*
         <p>
             {% if event.location is not none and event.location.is_online %}
