@@ -213,7 +213,7 @@ impl Event {
         self.menschen.iter().find(|attendee| attendee.id == id)
     }
 
-    pub async fn attendee_nights<'a>(&self, transaction: &mut Transaction<'_, Postgres>, attendee: &'a Attendee) -> Result<Option<impl Iterator<Item = (NaiveDate, Cow<'a, Night>)>>, Error> {
+    pub async fn attendee_nights<'a>(&self, transaction: &mut Transaction<'_, Postgres>, attendee: &'a Attendee) -> Result<Option<impl Iterator<Item = (NaiveDate, Cow<'a, Night>)> + use<'a>>, Error> {
         let Some(nights) = self.nights(transaction).await? else { return Ok(None) };
         Ok(Some(iter_date_range(nights).map(|night| (night, attendee.nights.get(&night).map(Cow::Borrowed).unwrap_or_else(|| Cow::Owned(Night::default()))))))
     }

@@ -761,7 +761,7 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
         secret_key: SecretKey::from(&BASE64.decode(&config.secret_key)?),
         log_level: Some(rocket::config::Level::ERROR),
         limits: Limits::default()
-        .limit("bytes", 2.mebibytes()), // for proxied wiki edits
+            .limit("bytes", 2.mebibytes()), // for proxied wiki edits
         ..rocket::Config::default()
     }).merge(("port", port.unwrap_or_else(|| if is_dev() { 24816 } else { 24817 })))) //TODO report issue for lack of typed interface to set port, see https://github.com/rwf2/Rocket/commit/fd294049c784cb52680a423616fadc29d57fa25b
     .mount("/", rocket::routes![

@@ -337,7 +337,7 @@ pub async fn configure_builder(discord_builder: serenity_utils::Builder, config:
                                 let conf = *data.get::<Config>().expect("missing config").discord.werewolf.get(&guild).expect("unconfigured guild but check passed");
                                 if let Some(voice_channel) = conf.voice_channel {
                                     let voice_states = data.get::<VoiceStates>().expect("missing voice states map");
-                                    let VoiceStates(ref chan_map) = voice_states;
+                                    let VoiceStates(chan_map) = voice_states;
                                     if let Some((_, users)) = chan_map.get(&voice_channel) {
                                         for user in users {
                                             guild.edit_member(ctx, user, EditMember::default().mute(false)).await?;
@@ -442,7 +442,7 @@ pub async fn configure_builder(discord_builder: serenity_utils::Builder, config:
                                 let conf = *data.get::<Config>().expect("missing config").discord.werewolf.get(&guild).expect("unconfigured guild but check passed");
                                 if let Some(voice_channel) = conf.voice_channel {
                                     let voice_states = data.get::<VoiceStates>().expect("missing voice states map");
-                                    let VoiceStates(ref chan_map) = voice_states;
+                                    let VoiceStates(chan_map) = voice_states;
                                     if let Some((_, users)) = chan_map.get(&voice_channel) {
                                         for user in users {
                                             if *user != interaction.user {

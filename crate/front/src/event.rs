@@ -393,6 +393,14 @@ async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<
                 {% endif %}
             {% endif %}
             */
+        } else if let LocationInfo::Online = location_info {
+            p {
+                : "Es gibt keine Anmeldung für das event insgesamt. Du kannst dich einfach für ";
+                a(href = format!("/event/{id}/programm")) : "Programmpunkte";
+                : " als interessiert eintragen.";
+            }
+        } else if event.end(&mut transaction).await?.is_some_and(|end| end < now) {
+            p : "Dieses event ist schon vorbei.";
         } else if me.is_mensch() {
             @if let Some(nights) = event.nights(&mut transaction).await? {
                 @let mut errors = ctx.errors().collect_vec();
@@ -460,57 +468,23 @@ async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<
             : "Als Gast kannst du dich nicht selbst anmelden.";
         }
         /*
-        {% if event.location is not none and event.location.is_online %}
-            <p>Es gibt keine Anmeldung für das event insgesamt. Du kannst dich einfach für <a href="{{(g.view_node / 'programm').url}}">Programmpunkte</a> als interessiert eintragen.</p>
-        {% else %}
-            {% if event.location is none %}
-                <div class="alert alert-warning">
-                    <strong>Achtung:</strong> Das Haus für dieses event steht noch nicht fest. Je nachdem, wie viele Plätze es hat, kommst du auf die Warteliste. Wenn jemand absagt, rückt der erste Mensch auf der Warteliste nach.
-                    {% if event.anzahlung is none or event.anzahlung.value > 0 %}
-                        Falls kein Platz für dich frei wird, bekommst du deine Anzahlung natürlich zurück.
-                    {% endif %}
-                </div>
-            {% elif 'capacity' in event.location.data and event.free() <= 0 %}
-                <div class="alert alert-warning">
-                    <strong>Achtung:</strong> Das Haus ist zumindest zeitweise schon voll. Du kannst dich trotzdem anmelden und kommst dann auf die Warteliste. Wenn jemand absagt, rückt der erste Mensch auf der Warteliste nach. {#TODO check for free nights, adjust message accordingly #}
-                    {% if event.anzahlung is none or event.anzahlung.value > 0 %}
-                        Falls kein Platz für dich frei wird, bekommst du deine Anzahlung natürlich zurück.
-                    {% endif %}
-                </div>
-            {% endif %}
-            {% if event.signup_block_reason is not none %}
-                {{event.signup_block_reason | markdown}}
-            {% elif event.end is none %}
-                <p>Der Termin für dieses event steht noch nicht fest.</p>
-            {% elif event.end < g.now %}
-                <p>Dieses event ist schon vorbei.</p>
-            {% elif event.orga('Abrechnung') is none %}
-                <p>Das Orga-Team ist noch nicht vollständig, wir suchen noch jemanden für die Abrechnung. Wenn du das übernehmen möchtest, melde dich bitte bei {{g.admin}}.</p>
-            {% elif event.anzahlung is none %}
-                <p>{{event.orga('Abrechnung')}} hat die Höhe der Anzahlung noch nicht eingetragen.</p>
-            {% elif event.anzahlung.value == 0 %}
-                {{gen_form(profile_form, g.view_node.url)}}
-            {% elif event.orga('Abrechnung') is treasurer %}
-                <p>Die Anmeldung ist mit einer Anzahlung von {{event.anzahlung}} verbunden, die von deinem Guthaben abgezogen wird.</p>
-                {% if g.user is admin or g.user is treasurer or g.user.balance >= event.anzahlung %}
-                    {{gen_form(profile_form, g.view_node.url)}}
-                {% else %}
-                    <p>Dein aktuelles Guthaben ist {{g.user.balance}}, es fehlen also noch {{event.anzahlung - g.user.balance}} für die Anzahlung. Auf <a href="{{g.user.profile_url}}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.</p>
+        {% if event.location is none %}
+            <div class="alert alert-warning">
+                <strong>Achtung:</strong> Das Haus für dieses event steht noch nicht fest. Je nachdem, wie viele Plätze es hat, kommst du auf die Warteliste. Wenn jemand absagt, rückt der erste Mensch auf der Warteliste nach.
+                {% if event.anzahlung is none or event.anzahlung.value > 0 %}
+                    Falls kein Platz für dich frei wird, bekommst du deine Anzahlung natürlich zurück.
                 {% endif %}
-            {% else %}
-                {% if 'konto' in event.attendee_data(event.orga('Abrechnung')) %}
-                    <p>Um dich anzumelden, überweise bitte die Anzahlung von {{event.anzahlung}} an:</p>
-                    <p>
-                        {{event.attendee_data(event.orga('Abrechnung'))['konto']['name']}}<br />
-                        IBAN: {{event.attendee_data(event.orga('Abrechnung'))['konto']['iban']}}<br />
-                        BIC: {{event.attendee_data(event.orga('Abrechnung'))['konto']['bic']}}<br />
-                        Verwendungszweck: Anzahlung {{event.event_id}} {{g.user.snowflake}}
-                    </p>
-                {% else %}
-                    <p>Um dich anzumelden, gib bitte {{event.orga('Abrechnung')}} die Anzahlung von {{event.anzahlung}}.</p>
+            </div>
+        {% elif 'capacity' in event.location.data and event.free() <= 0 %}
+            <div class="alert alert-warning">
+                <strong>Achtung:</strong> Das Haus ist zumindest zeitweise schon voll. Du kannst dich trotzdem anmelden und kommst dann auf die Warteliste. Wenn jemand absagt, rückt der erste Mensch auf der Warteliste nach. {#TODO check for free nights, adjust message accordingly #}
+                {% if event.anzahlung is none or event.anzahlung.value > 0 %}
+                    Falls kein Platz für dich frei wird, bekommst du deine Anzahlung natürlich zurück.
                 {% endif %}
-                <p>Details zu deiner Anmeldung kannst du eintragen, wenn die Anzahlung angekommen ist. Du wirst dazu auf Discord angepingt.</p> {#TODO reverse signup flow #}
-            {% endif %}
+            </div>
+        {% endif %}
+        {% if event.signup_block_reason is not none %}
+            {{event.signup_block_reason | markdown}}
         {% endif %}
         {% if g.user is admin or (g.user in event.menschen and event.attendee_data(g.user).get('orga', []) | length > 0) %}
             <h1 id="orga">Orga</h1>
