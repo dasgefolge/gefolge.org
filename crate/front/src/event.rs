@@ -414,6 +414,20 @@ async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<
                         input(type = "email", name = "email", value? = ctx.field_value("email"));
                         label(class = "help") : "(Für die Rechnung.)";
                     });
+                    @if let Some(ticket_options) = event.ticket_options() {
+                        : form_field("ticket_option", &mut errors, html! {
+                            label(for = "ticket_option") : "Ticket:";
+                            @for option in ticket_options {
+                                input(id = format!("ticket_option-{}", option.id), type = "radio", name = "ticket_option", value = option.id, checked? = ctx.field_value("ticket_option").map(|val| val == option.id).unwrap_or_else(|| event.default_ticket_option().is_some_and(|default| default == option.id)));
+                                label(for = format!("ticket_option-{}", option.id)) {
+                                    : option.display;
+                                    : " (";
+                                    : option.cost.to_string();
+                                    : ")";
+                                }
+                            }
+                        });
+                    }
                     h2 : "Zeitraum";
                     @for (night_idx, night) in iter_date_range(nights).enumerate() {
                         @let field_id = format!("nights[{night_idx}]");
@@ -592,6 +606,7 @@ pub(crate) struct SignupForm {
     #[field(default = String::new())]
     csrf: String,
     email: String,
+    ticket_option: Option<String>,
     nights: Vec<Going>,
     animal_products: AnimalProducts,
     allergies: String,
@@ -629,6 +644,19 @@ pub(crate) async fn post(config: &State<Config>, discord_ctx: &State<RwFuture<Di
         } else if !regex_is_match!(r"^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$", &value.email) { //FROM https://html.spec.whatwg.org/multipage/input.html#valid-e-mail-address
             form.context.push_error(form::Error::validation("Das ist keine Email-Adresse.").with_name("email"));
         }
+        if let Some(ticket_options) = event.ticket_options() {
+            if let Some(ticket_option) = &value.ticket_option {
+                if !ticket_options.iter().any(|option| option.id == *ticket_option) {
+                    form.context.push_error(form::Error::validation("Unbekanntes Ticket. Bitte melde diesen Fehler im #dev.").with_name("ticket_option"));
+                }
+            } else {
+                form.context.push_error(form::Error::validation("Wähle bitte ein Ticket aus.").with_name("ticket_option"));
+            }
+        } else {
+            if value.ticket_option.is_some() {
+                form.context.push_error(form::Error::validation("Dieses Event hat keine Ticketoptionen. Bitte melde diesen Fehler im #dev.").with_name("ticket_option"));
+            }
+        }
         if let Some(nights) = event.nights(&mut transaction).await? {
             if value.nights.len().try_into().ok().is_none_or(|num_nights| nights.start.checked_add_days(chrono::Days::new(num_nights)).is_none_or(|end| end != nights.end)) {
                 form.context.push_error(form::Error::validation("Falsche Anzahl Übernachtungsinfos im Formular. Bitte melde diesen Fehler im #dev."));
@@ -665,6 +693,7 @@ pub(crate) async fn post(config: &State<Config>, discord_ctx: &State<RwFuture<Di
                     ],
                 }))).collect::<serde_json::Map<_, _>>(),
                 "signup": now,
+                "ticket": value.ticket_option,
             }));
             sqlx::query!("UPDATE json_events SET value = JSONB_SET(value, '{menschen}', $1) WHERE id = $2", Json(menschen) as _, id.0 as _).execute(&mut *transaction).await?;
             if let Some(role) = event.discord_role() {

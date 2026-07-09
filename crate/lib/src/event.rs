@@ -17,6 +17,10 @@ use {
         EnumSetType,
     },
     lazy_regex::regex_captures,
+    nonempty_collections::{
+        NESlice,
+        NEVec,
+    },
     rocket::{
         FromFormField,
         http::uri::{
@@ -167,9 +171,11 @@ where String: Type<DB> {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Event {
     anzahlung: Option<Euro>,
     channel: Option<ChannelId>,
+    default_ticket_option: Option<String>,
     end: Option<MaybeAwareDateTime>,
     location: Option<String>,
     #[serde(default)]
@@ -179,6 +185,7 @@ pub struct Event {
     programm: HashMap<String, Programmpunkt>,
     role: Option<RoleId>,
     start: Option<MaybeAwareDateTime>,
+    ticket_options: Option<NEVec<TicketOption>>,
     timezone: Option<Tz>,
 }
 
@@ -205,6 +212,14 @@ impl Event {
 
     pub fn discord_channel(&self) -> ChannelId {
         self.channel.unwrap_or_else(|| ChannelId::new(387264349678338049))
+    }
+
+    pub fn ticket_options(&self) -> Option<NESlice<'_, TicketOption>> {
+        self.ticket_options.as_ref().map(NEVec::as_nonempty_slice)
+    }
+
+    pub fn default_ticket_option(&self) -> Option<&str> {
+        self.default_ticket_option.as_deref()
     }
 
     /// Returns the list of attendees for this event, including ones with unconfirmed signups.
@@ -297,6 +312,7 @@ impl Event {
 fn make_true() -> bool { true }
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Attendee {
     pub id: AttendeeId,
     #[serde(rename = "alkohol", default = "make_true")]
@@ -308,6 +324,7 @@ pub struct Attendee {
     #[serde(default)]
     pub orga: EnumSet<OrgaRole>,
     pub signup: MaybeAwareDateTime,
+    pub ticket_option: Option<String>,
     via: Option<UserId>,
 }
 
@@ -490,3 +507,10 @@ impl fmt::Display for OrgaRole {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Programmpunkt {}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct TicketOption {
+    pub id: String,
+    pub cost: Euro,
+    pub display: String,
+}
