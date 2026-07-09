@@ -175,6 +175,7 @@ pub struct Event {
     #[serde(default)]
     menschen: Vec<Attendee>,
     name: Option<String>,
+    #[serde(default)]
     programm: HashMap<String, Programmpunkt>,
     role: Option<RoleId>,
     start: Option<MaybeAwareDateTime>,
