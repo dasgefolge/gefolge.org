@@ -777,6 +777,7 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
         event::index,
         event::get,
         event::post,
+        event::programm_post,
         games::index,
         games::werewolf_proxy_get_index,
         games::werewolf_proxy_get_children,

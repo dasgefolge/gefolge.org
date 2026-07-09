@@ -175,6 +175,7 @@ pub struct Event {
     #[serde(default)]
     menschen: Vec<Attendee>,
     name: Option<String>,
+    programm: HashMap<String, Programmpunkt>,
     role: Option<RoleId>,
     start: Option<MaybeAwareDateTime>,
     timezone: Option<Tz>,
@@ -216,6 +217,10 @@ impl Event {
     pub async fn attendee_nights<'a>(&self, transaction: &mut Transaction<'_, Postgres>, attendee: &'a Attendee) -> Result<Option<impl Iterator<Item = (NaiveDate, Cow<'a, Night>)> + use<'a>>, Error> {
         let Some(nights) = self.nights(transaction).await? else { return Ok(None) };
         Ok(Some(iter_date_range(nights).map(|night| (night, attendee.nights.get(&night).map(Cow::Borrowed).unwrap_or_else(|| Cow::Owned(Night::default()))))))
+    }
+
+    pub fn programmpunkt(&self, url_part: &str) -> Option<&Programmpunkt> {
+        self.programm.get(url_part)
     }
 
     pub fn location_id(&self) -> LocationId<'_> {
@@ -481,3 +486,6 @@ impl fmt::Display for OrgaRole {
         }
     }
 }
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct Programmpunkt {}

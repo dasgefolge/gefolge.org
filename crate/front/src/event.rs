@@ -4,6 +4,7 @@ use {
     lazy_regex::regex_is_match,
     rocket::{
         FromForm,
+        FromFormField,
         State,
         UriDisplayPath,
         form::{
@@ -27,6 +28,7 @@ use {
         Origin,
         html,
     },
+    serde::Serialize,
     serde_json::json,
     serenity::{
         all::Context as DiscordCtx,
@@ -49,6 +51,7 @@ use {
             Id,
             IdParseError,
             LocationInfo,
+            OrgaRole,
         },
         lang,
         peter::GEFOLGE,
@@ -180,7 +183,7 @@ pub(crate) async fn index(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>) 
 /// Eine ID für ein event, das ab 2026 stattfindet und daher über den Verein organisiert wird.
 ///
 /// For now, we only handle these events in Rust and forward to Python for older events.
-#[derive(UriDisplayPath)]
+#[derive(Clone, Copy, UriDisplayPath)]
 pub(crate) struct NewId(Id);
 
 #[derive(Debug, thiserror::Error)]
@@ -223,7 +226,7 @@ async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<
     let Some(event) = Event::load(&mut *transaction, id).await? else { return Err(StatusOrError::Status(Status::NotFound)) };
     if !me.is_mensch() && event.attendee(AttendeeId::Discord(me.id)).is_none() { return Err(StatusOrError::Status(Status::Unauthorized)) }
     let location_info = event.location_info(&mut transaction).await?;
-    let content = html! {
+    let content = html! { //TODO translate remaining Jinja code to Horrorshow
         p {
             strong : event.name(id);
             @if let Some(start) = event.start(&mut transaction).await? {
@@ -486,24 +489,10 @@ async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<
         {% if event.signup_block_reason is not none %}
             {{event.signup_block_reason | markdown}}
         {% endif %}
-        {% if g.user is admin or (g.user in event.menschen and event.attendee_data(g.user).get('orga', []) | length > 0) %}
-            <h1 id="orga">Orga</h1>
-            {% if g.user is admin or event.orga('Abrechnung') == g.user %}
-                <h2>Abrechnung</h2>
-                {% if event.orga('Abrechnung') is none %}
-                    <p>Dieses Event hat noch keine Abrechnungsorga.</p>
-                {% elif event.orga('Abrechnung') is treasurer %}
-                    <p>Dieses Event läuft über das Guthabensystem.</p>
-                {% elif 'konto' in event.attendee_data(event.orga('Abrechnung')) %}
-                    <p>Bitte überprüfe regelmäßig dein Konto {{event.attendee_data(g.user)['konto']['iban']}} auf Anzahlungen.</p>
-                    {{gen_form(confirm_signup_form, g.view_node.url)}}
-                {% else %}
-                    <p>Um die Anmeldungen zu eröffnen, gib bitte {{g.admin}} deine Kontodaten.</p>
-                {% endif %}
-                {% if event.end is not none and event.end <= g.now %}
-                    <p>Abrechnungsübersicht coming soon™</p> {#TODO#}
-                {% endif %}
-            {% endif %}
+        */
+        @if let Some(attendee) = event.attendee(AttendeeId::Discord(me.id)) && !attendee.orga.is_empty() {
+            h1(id = "orga") : "Orga";
+            /*
             {% if g.user is admin or event.orga('Buchung') == g.user %}
                 <h2>Buchung</h2>
                 {% if event.ausfall > event.anzahlung_total %}
@@ -535,17 +524,53 @@ async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<
                     {% endfor %}
                 </ul>
             {% endif %}
-            {% if g.user is admin or event.orga('Programm') == g.user %}
-                <h2>Programm</h2>
-                <h3>Programmpunkt erstellen</h3>
-                {{gen_form(programm_form, g.view_node.url)}}
-            {% endif %}
+            */
+            @if attendee.orga.contains(OrgaRole::Programm) {
+                h2 : "Programm";
+                h3 : "Programmpunkt erstellen";
+                @let mut errors = ctx.errors().collect_vec();
+                : full_form(uri!(programm_post(new_id)), csrf, html! {
+                    : form_field("url_part", &mut errors, html! {
+                        label(for = "url_part") {
+                            : "URL: https://gefolge.org/event/";
+                            : id.to_string();
+                            : "/programm/";
+                        }
+                        input(type = "text", name = "url_part", value? = ctx.field_value("url_part"));
+                    });
+                    : form_field("display_name", &mut errors, html! {
+                        label(for = "display_name") : "Titel:";
+                        input(type = "text", name = "display_name", value? = ctx.field_value("display_name"));
+                    });
+                    : form_field("subtitle", &mut errors, html! {
+                        label(for = "subtitle") : "Untertitel:";
+                        input(type = "text", name = "subtitle", value? = ctx.field_value("subtitle"));
+                        label(class = "help") : "(Wird auf dem Info-Beamer und im Zeitplan angezeigt.)";
+                    });
+                    //TODO include remaining fields from gefolge_web.event.forms.ProgrammForm:
+                    // orga, start, end, description
+                    : form_field("css_class", &mut errors, html! {
+                        label(for = "css_class") : "Kategorie:";
+                        input(id = "css_class-meta", type = "radio", name = "css_class", value = "meta", checked? = ctx.field_value("css_class").is_some_and(|val| val == "meta"));
+                        label(for = "css_class-meta") : "Kernprogramm, meta";
+                        input(id = "css_class-essen", type = "radio", name = "css_class", value = "essen", checked? = ctx.field_value("css_class").is_some_and(|val| val == "essen"));
+                        label(for = "css_class-essen") : "Essen";
+                        input(id = "css_class-trip", type = "radio", name = "css_class", value = "trip", checked? = ctx.field_value("css_class").is_some_and(|val| val == "trip"));
+                        label(for = "css_class-trip") : "Ausflug";
+                        input(id = "css_class-reqsignup", type = "radio", name = "css_class", value = "reqsignup", checked? = ctx.field_value("css_class").is_some_and(|val| val == "reqsignup"));
+                        label(for = "css_class-reqsignup") : "Voranmeldung nötig";
+                        input(id = "css_class-other", type = "radio", name = "css_class", value = "other", checked? = ctx.field_value("css_class").is_none_or(|val| val == "other"));
+                        label(for = "css_class-other") : "Sonstiges";
+                    });
+                }, errors, "Programmpunkt erstellen");
+            }
+            /*
             {% if g.user is admin or event.orga('Schlüssel') == g.user %}
                 <h2>Schlüssel</h2>
                 <p>Coming soon™</p> {#TODO#}
             {% endif %}
-        {% endif %}
-        */ //TODO translate to Horrorshow
+            */
+        }
     };
     Ok(page(transaction, me, &uri, PageKind::Sub(vec![
         html! {
@@ -657,6 +682,76 @@ pub(crate) async fn post(config: &State<Config>, discord_ctx: &State<RwFuture<Di
             event.discord_channel().say(&*discord_ctx.read().await, content.build()).await?;
             transaction.commit().await?;
             RedirectOrContent::Redirect(Redirect::to(format!("/event/{}/mensch/{}", id.0, me.id)))
+        }
+    } else {
+        RedirectOrContent::Content(overview_page(config, db_pool, me.into(), uri, csrf.as_ref(), id, &form.context).await.map_err(StatusOrError::err_into)?)
+    })
+}
+
+#[derive(FromForm, CsrfForm)]
+pub(crate) struct ProgrammForm {
+    #[field(default = String::new())]
+    csrf: String,
+    url_part: String,
+    display_name: String,
+    #[field(default = String::new(), validate = len(..=40))]
+    subtitle: String,
+    css_class: ProgrammCssClass,
+}
+
+#[derive(Serialize, FromFormField)]
+enum ProgrammCssClass {
+    #[serde(rename = "programm-meta")]
+    Meta,
+    #[serde(rename = "programm-essen")]
+    Essen,
+    #[serde(rename = "programm-trip")]
+    Trip,
+    #[serde(rename = "programm-reqsignup")]
+    Reqsignup,
+    #[serde(rename = "programm-other")]
+    Other,
+}
+
+#[rocket::post("/event/<id>/programm", data = "<form>")]
+pub(crate) async fn programm_post(config: &State<Config>, discord_ctx: &State<RwFuture<DiscordCtx>>, db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>, csrf: Option<CsrfToken>, id: NewId, form: Form<Contextual<'_, ProgrammForm>>) -> Result<RedirectOrContent, StatusOrError<PostError>> {
+    let mut transaction = db_pool.begin().await?;
+    let Some(event) = Event::load(&mut *transaction, id.0).await? else { return Err(StatusOrError::Status(Status::NotFound)) };
+    let mut form = form.into_inner();
+    form.verify(&csrf);
+    Ok(if let Some(ref value) = form.value {
+        if event.attendee(AttendeeId::Discord(me.id)).is_none_or(|attendee| !attendee.orga.contains(OrgaRole::Programm)) {
+            form.context.push_error(form::Error::validation("Dieses Formular kann nur von der Programmorga verwendet werden."));
+        }
+        if event.programmpunkt(&value.url_part).is_some() {
+            form.context.push_error(form::Error::validation("Es gibt bereits einen Programmpunkt mit dieser URL.").with_name("url_part"));
+        }
+
+        if form.context.errors().next().is_some() {
+            RedirectOrContent::Content(overview_page(config, db_pool, me.into(), uri, csrf.as_ref(), id, &form.context).await.map_err(StatusOrError::err_into)?)
+        } else {
+            sqlx::query!("UPDATE json_events SET value = JSONB_SET(value, ARRAY['programm', $1], $2) WHERE id = $3", value.url_part, json!({
+                "cssClass": value.css_class,
+                "ibSubtitle": value.subtitle,
+                "name": value.display_name,
+            }), id.0 as _).execute(&mut *transaction).await?;
+            let mut content = MessageBuilder::default();
+            content.push("Neuer Programmpunkt auf ");
+            if let Some(role) = event.discord_role() {
+                content.mention(&role);
+            } else {
+                content.push_safe(event.name(id.0));
+            }
+            content.push(": ");
+            content.push_safe(&value.display_name);
+            content.push(" (Orga gesucht, <https://gefolge.org/event/"); //TODO allow assigning Orga
+            content.push(id.0.to_string());
+            content.push("/programm/");
+            content.push(&value.url_part);
+            content.push(">");
+            event.discord_channel().say(&*discord_ctx.read().await, content.build()).await?;
+            transaction.commit().await?;
+            RedirectOrContent::Redirect(Redirect::to(format!("/event/{}/programm/{}", id.0, value.url_part)))
         }
     } else {
         RedirectOrContent::Content(overview_page(config, db_pool, me.into(), uri, csrf.as_ref(), id, &form.context).await.map_err(StatusOrError::err_into)?)
