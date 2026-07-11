@@ -505,7 +505,7 @@ enum ProxyResponse {
     },
 }
 
-#[rocket::get("/api", rank = 100 /* prefer endpoints implemented in Rust */)]
+#[rocket::get("/api", rank = 99 /* prefer endpoints implemented in Rust */)]
 async fn flask_proxy_get_api(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers) -> Result<ProxyResponse, ProxyError> {
     if me.is_none() {
         return Ok(ProxyResponse::Authenticate {
@@ -522,7 +522,7 @@ async fn flask_proxy_get_api(proxy_http_client: &State<ProxyHttpClient>, me: Opt
     Ok(ProxyResponse::Proxied(Response(response)))
 }
 
-#[rocket::get("/api/<path..>", rank = 100 /* prefer endpoints implemented in Rust */)]
+#[rocket::get("/api/<path..>", rank = 99 /* prefer endpoints implemented in Rust */)]
 async fn flask_proxy_get_api_children(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>) -> Result<ProxyResponse, ProxyError> {
     if me.is_none() {
         return Ok(ProxyResponse::Authenticate {
