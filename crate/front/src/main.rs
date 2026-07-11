@@ -505,7 +505,7 @@ enum ProxyResponse {
     },
 }
 
-#[rocket::get("/api")]
+#[rocket::get("/api", rank = 100 /* prefer endpoints implemented in Rust */)]
 async fn flask_proxy_get_api(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers) -> Result<ProxyResponse, ProxyError> {
     if me.is_none() {
         return Ok(ProxyResponse::Authenticate {
@@ -522,7 +522,7 @@ async fn flask_proxy_get_api(proxy_http_client: &State<ProxyHttpClient>, me: Opt
     Ok(ProxyResponse::Proxied(Response(response)))
 }
 
-#[rocket::get("/api/<path..>")]
+#[rocket::get("/api/<path..>", rank = 100 /* prefer endpoints implemented in Rust */)]
 async fn flask_proxy_get_api_children(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>) -> Result<ProxyResponse, ProxyError> {
     if me.is_none() {
         return Ok(ProxyResponse::Authenticate {
@@ -540,7 +540,7 @@ async fn flask_proxy_get_api_children(proxy_http_client: &State<ProxyHttpClient>
     Ok(ProxyResponse::Proxied(Response(response)))
 }
 
-#[rocket::get("/<path..>")]
+#[rocket::get("/<path..>", rank = 100 /* prefer endpoints implemented in Rust */)]
 async fn flask_proxy_get(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>) -> Result<ProxyResponse, ProxyError> {
     if Segments::<Path>::get(&path, 0).is_none_or(|prefix| !matches!(prefix, "event" | "games" | "me" | "mensch" | "wiki")) {
         // only forward the directories that are actually served by the proxy to prevent internal server errors on malformed requests from spambots
@@ -556,7 +556,7 @@ async fn flask_proxy_get(proxy_http_client: &State<ProxyHttpClient>, me: Option<
     Ok(ProxyResponse::Proxied(Response(response)))
 }
 
-#[rocket::post("/<path..>", data = "<data>")]
+#[rocket::post("/<path..>", data = "<data>", rank = 100 /* prefer endpoints implemented in Rust */)]
 async fn flask_proxy_post(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>, data: Vec<u8>) -> Result<ProxyResponse, ProxyError> {
     if Segments::<Path>::get(&path, 0).is_none_or(|prefix| !matches!(prefix, "event" | "games" | "me" | "mensch" | "wiki")) {
         // only forward the directories that are actually served by the proxy to prevent internal server errors on malformed requests from spambots
