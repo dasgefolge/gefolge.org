@@ -99,8 +99,8 @@ pub(crate) async fn doli_attendees(db_pool: &State<PgPool>, me: Mensch, id: even
                 Going::No => false,
             }).count(),
             participation_fee: {
-                let ticket_option = attendee.ticket_option.as_deref().ok_or(DoliAttendeesError::MissingTicketOption)?;
-                let cost = event.ticket_options().ok_or(DoliAttendeesError::NoTicketOptions)?.iter().find(|option| option.id == ticket_option).ok_or(DoliAttendeesError::UnknownTicketOption)?.cost;
+                let ticket = attendee.ticket.as_deref().ok_or(DoliAttendeesError::MissingTicketOption)?;
+                let cost = event.ticket_options().ok_or(DoliAttendeesError::NoTicketOptions)?.iter().find(|option| option.id == ticket).ok_or(DoliAttendeesError::UnknownTicketOption)?.cost;
                 if cost.cents % 100 != 0 { return Err(StatusOrError::Err(DoliAttendeesError::TicketOptionCost)) }
                 (cost.cents / 100).try_into()?
             },

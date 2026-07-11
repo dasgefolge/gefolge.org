@@ -326,7 +326,7 @@ pub struct Attendee {
     #[serde(default)]
     pub orga: EnumSet<OrgaRole>,
     pub signup: MaybeAwareDateTime,
-    pub ticket_option: Option<String>,
+    pub ticket: Option<String>,
     via: Option<UserId>,
 }
 
