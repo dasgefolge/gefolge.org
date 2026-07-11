@@ -89,6 +89,7 @@ use {
 
 include!(concat!(env!("OUT_DIR"), "/static_files.rs"));
 
+mod api;
 mod auth;
 mod event;
 mod form;
@@ -771,6 +772,7 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
         flask_proxy_get_api_children,
         flask_proxy_post,
         robots_txt,
+        api::doli_attendees,
         auth::discord_login,
         auth::discord_callback,
         auth::logout,

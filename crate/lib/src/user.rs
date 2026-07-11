@@ -47,6 +47,7 @@ use {
     },
 };
 
+const VORSTAND: RoleId = RoleId::new(1456376541754953839);
 const MENSCH: RoleId = RoleId::new(386753710434287626);
 const GUEST: RoleId = RoleId::new(784929665478557737);
 
@@ -120,6 +121,10 @@ impl User {
 
     pub fn is_mensch_or_guest(&self) -> bool {
         self.roles.contains(&MENSCH) || self.roles.contains(&GUEST)
+    }
+
+    pub fn is_vorstand(&self) -> bool {
+        self.roles.contains(&VORSTAND)
     }
 
     pub async fn data(&self, transaction: &mut Transaction<'_, Postgres>) -> sqlx::Result<Data> {

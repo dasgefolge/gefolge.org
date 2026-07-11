@@ -184,7 +184,7 @@ pub(crate) async fn index(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>) 
 ///
 /// For now, we only handle these events in Rust and forward to Python for older events.
 #[derive(Clone, Copy, UriDisplayPath)]
-pub(crate) struct NewId(Id);
+pub(crate) struct NewId(pub(crate) Id);
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum NewIdFromParamError {

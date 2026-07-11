@@ -317,8 +317,10 @@ pub struct Attendee {
     pub id: AttendeeId,
     #[serde(rename = "alkohol", default = "make_true")]
     pub alcohol: bool,
+    pub email: Option<String>,
     #[serde(default)]
     pub food: FoodPreferences,
+    pub name: Option<String>,
     #[serde(default)]
     nights: HashMap<NaiveDate, Night>,
     #[serde(default)]
@@ -368,16 +370,21 @@ pub enum AnimalProducts {
 #[serde(untagged)]
 enum JsonNight {
     Old(Going),
+    #[serde(rename_all = "camelCase")]
     New {
         going: Going,
+        last_updated: Option<DateTime<Utc>>,
     },
 }
 
 impl From<JsonNight> for Night {
     fn from(value: JsonNight) -> Self {
         match value {
-            JsonNight::Old(going) => Self { going },
-            JsonNight::New { going } => Self { going },
+            JsonNight::Old(going) => Self {
+                last_updated: None,
+                going,
+            },
+            JsonNight::New { going, last_updated } => Self { going, last_updated },
         }
     }
 }
@@ -387,6 +394,7 @@ impl From<JsonNight> for Night {
 pub struct Night {
     #[serde(default)]
     pub going: Going,
+    pub last_updated: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Default, Clone, Copy, Deserialize, Serialize, FromFormField)]
