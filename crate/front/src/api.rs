@@ -160,7 +160,8 @@ pub(crate) struct DoliAttendee {
     #[serde_as(as = "BoolFromInt")]
     accepted: bool,
     days: usize,
-    participation_fee: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    participation_fee: Option<u64>,
     status_updated_at: DateTime<Utc>,
 }
 
@@ -171,8 +172,6 @@ pub(crate) enum DoliAttendeesError {
     #[error(transparent)] TryFromInt(#[from] std::num::TryFromIntError),
     #[error("missing last-updated data")]
     LastUpdated,
-    #[error("attendee without ticket option")]
-    MissingTicketOption,
     #[error("this endpoint is not yet implemented for events without ticket options")]
     NoTicketOptions,
     #[error("ticket option does not cost a whole number of Euros")]
@@ -217,11 +216,12 @@ pub(crate) async fn doli_attendees(db_pool: &State<PgPool>, me: Mensch, id: even
                 Going::Yes | Going::Maybe => true,
                 Going::No => false,
             }).count(),
-            participation_fee: {
-                let ticket = attendee.ticket.as_deref().ok_or(DoliAttendeesError::MissingTicketOption)?;
+            participation_fee: if let Some(ticket) = attendee.ticket.as_deref() {
                 let cost = event.ticket_options().ok_or(DoliAttendeesError::NoTicketOptions)?.iter().find(|option| option.id == ticket).ok_or(DoliAttendeesError::UnknownTicketOption)?.cost;
                 if cost.cents % 100 != 0 { return Err(StatusOrError::Err(DoliAttendeesError::TicketOptionCost)) }
-                (cost.cents / 100).try_into()?
+                Some((cost.cents / 100).try_into()?)
+            } else {
+                None
             },
             status_updated_at: event.attendee_nights(&mut transaction, attendee).await?.ok_or(StatusOrError::Status(Status::NotFound))?.filter_map(|(_, night)| night.last_updated).max().ok_or(DoliAttendeesError::LastUpdated)?,
         });
