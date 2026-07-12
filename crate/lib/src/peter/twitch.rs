@@ -39,6 +39,17 @@ pub struct Config {
     users: BTreeMap<UserId, twitch_helix::model::UserId>,
 }
 
+impl Config {
+
+    pub fn dummy() -> Self {
+        Self {
+            client_id: String::default(),
+            client_secret: String::default(),
+            users: BTreeMap::default(),
+        }
+    }
+}
+
 async fn client_and_users(ctx_fut: &RwFuture<Context>) -> Result<(Client<'static>, BTreeMap<UserId, twitch_helix::model::UserId>), Error> {
     let ctx = ctx_fut.read().await;
     let ctx_data = (*ctx).data.read().await;

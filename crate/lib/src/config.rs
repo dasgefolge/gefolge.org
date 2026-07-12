@@ -65,6 +65,26 @@ impl Config {
         }
     }
 
+    pub fn dummy() -> Self {
+        Self {
+            admin: UserId::new(1),
+            discord: Discord {
+                bot_token: String::default(),
+                #[cfg(feature = "peter")] channels: Channels {
+                    ignored: BTreeSet::default(),
+                    voice: ChannelId::new(1),
+                },
+                client_id: ApplicationId::new(1),
+                client_secret: String::default(),
+                #[cfg(feature = "peter")] self_assignable_roles: BTreeSet::default(),
+                #[cfg(feature = "peter")] werewolf: BTreeMap::default(),
+            },
+            github_webhook_secret: String::default(),
+            secret_key: format!("t3eK7qRKGPjypcqbFuWIB+KYuH4AZyl4T2YvWEIDSeRyTvotbNcPT87ZoXnMikF4beVEW52kTgmd598k5mgXqA=="),
+            #[cfg(feature = "peter")] twitch: twitch::Config::dummy(),
+        }
+    }
+
     pub async fn admin(&self, transaction: &mut Transaction<'_, Postgres>) -> sqlx::Result<User> {
         Ok(User::from_id(transaction, self.admin).await?.expect("admin user does not exist"))
     }

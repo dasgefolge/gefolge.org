@@ -58,6 +58,7 @@ use {
         ToHtml,
         html,
     },
+    serenity::all::Context as DiscordCtx,
     sqlx::{
         PgPool,
         postgres::{
@@ -354,7 +355,7 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
             @if is_mensch_or_guest {
                 @let viewer_data = user.as_ref().expect("just checked (is_mensch_or_guest)").data(&mut transaction).await.at("viewer_data")?;
                 p {
-                    a(href = "/api") : "API";
+                    a(href = uri!(api::docs)) : "API";
                     : " • ";
                     a(href = uri!(event::index)) : "events";
                     : " • ";
@@ -690,43 +691,7 @@ async fn fallback_catcher(status: Status, request: &Request<'_>) -> Result<RawHt
     }).await
 }
 
-fn parse_port(arg: &str) -> Result<u16, std::num::ParseIntError> {
-    match arg {
-        "production" => Ok(24817),
-        "dev" => Ok(24816),
-        _ => arg.parse(),
-    }
-}
-
-#[derive(clap::Parser)]
-struct Args {
-    #[clap(long, value_parser = parse_port)]
-    port: Option<u16>,
-}
-
-#[derive(Debug, thiserror::Error)]
-enum MainError {
-    #[error(transparent)] Base64(#[from] base64::DecodeError),
-    #[error(transparent)] Config(#[from] gefolge_web_lib::config::Error),
-    #[error(transparent)] Peter(#[from] gefolge_web_lib::peter::Error),
-    #[error(transparent)] Reqwest(#[from] reqwest::Error),
-    #[error(transparent)] Rocket(#[from] rocket::Error),
-    #[error(transparent)] Serenity(#[from] serenity::Error),
-    #[error(transparent)] Sql(#[from] sqlx::Error),
-    #[error(transparent)] Task(#[from] tokio::task::JoinError),
-}
-
-#[wheel::main(rocket)]
-async fn main(Args { port }: Args) -> Result<(), MainError> {
-    let default_panic_hook = std::panic::take_hook();
-    if let Environment::Production = Environment::default() {
-        std::panic::set_hook(Box::new(move |info| {
-            let _ = wheel::night_report_sync("/net/gefolge/error", Some("thread panic"));
-            default_panic_hook(info)
-        }));
-    }
-    let _ = rustls::crypto::ring::default_provider().install_default();
-    let config = Config::load().await?;
+async fn rocket(port: Option<u16>, config: &Config, discord_ctx: serenity_utils::RwFuture<DiscordCtx>, db_pool: &PgPool) -> Result<Rocket<rocket::Ignite>, MainError> {
     let http_client = reqwest::Client::builder()
         .user_agent(concat!("GefolgeWeb/", env!("CARGO_PKG_VERSION")))
         .timeout(Duration::from_secs(30))
@@ -739,9 +704,7 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
         .user_agent(concat!("GefolgeWeb/", env!("CARGO_PKG_VERSION")))
         .timeout(Duration::from_secs(90))
         .build()?;
-    let discord_builder = serenity_utils::builder(config.discord.bot_token.clone()).await?;
-    let db_pool = PgPool::connect_with(PgConnectOptions::default().username("fenhl").database("gefolge").application_name("gefolge-web")).await?;
-    let rocket = rocket::custom(rocket::Config::figment().merge(rocket::Config {
+    Ok(rocket::custom(rocket::Config::figment().merge(rocket::Config {
         secret_key: SecretKey::from(&BASE64.decode(&config.secret_key)?),
         log_level: Some(rocket::config::Level::ERROR),
         limits: Limits::default()
@@ -779,7 +742,7 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
         wiki::history,
         wiki::revision,
     ])
-    .mount("/static", FileServer::without_index("assets/static"))
+    .mount("/static", FileServer::without_index(rocket::fs::relative!("../../assets/static")))
     .register("/", rocket::catchers![
         bad_request,
         unauthorized,
@@ -799,11 +762,67 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
     )))
     .manage(config.clone())
     .manage(db_pool.clone())
-    .manage(discord_builder.ctx_fut.clone())
+    .manage(discord_ctx)
     .manage(http_client)
     .manage(ProxyHttpClient(proxy_http_client))
     .manage(Arc::<RwLock<HashMap<u64, ricochet_robots_websocket::Lobby<User>>>>::default())
-    .ignite().await?;
+    .ignite().await?)
+}
+
+/// Ensures no route collisions
+#[tokio::test]
+async fn test_rocket() -> Result<(), MainError> {
+    let _ = rustls::crypto::ring::default_provider().install_default();
+    let config = Config::dummy();
+    let Rocket { .. } = rocket(
+        None,
+        &config,
+        serenity_utils::RwFuture::new(futures::future::pending()),
+        &PgPool::connect_with(PgConnectOptions::default().username("fenhl").database("gefolge").application_name("gefolge-web")).await?,
+    ).await?;
+    Ok(())
+}
+
+fn parse_port(arg: &str) -> Result<u16, std::num::ParseIntError> {
+    match arg {
+        "production" => Ok(24817),
+        "dev" => Ok(24816),
+        _ => arg.parse(),
+    }
+}
+
+#[derive(clap::Parser)]
+struct Args {
+    #[clap(long, value_parser = parse_port)]
+    port: Option<u16>,
+}
+
+#[derive(Debug, thiserror::Error)]
+enum MainError {
+    #[error(transparent)] Base64(#[from] base64::DecodeError),
+    #[error(transparent)] Config(#[from] gefolge_web_lib::config::Error),
+    #[error(transparent)] Peter(#[from] gefolge_web_lib::peter::Error),
+    #[error(transparent)] Reqwest(#[from] reqwest::Error),
+    #[error(transparent)] Rocket(#[from] rocket::Error),
+    #[error(transparent)] Serenity(#[from] serenity::Error),
+    #[error(transparent)] Sql(#[from] sqlx::Error),
+    #[error(transparent)] Task(#[from] tokio::task::JoinError),
+}
+
+#[wheel::main(rocket)]
+async fn main(Args { port }: Args) -> Result<(), MainError> {
+    let default_panic_hook = std::panic::take_hook();
+    if let Environment::Production = Environment::default() {
+        std::panic::set_hook(Box::new(move |info| {
+            let _ = wheel::night_report_sync("/net/gefolge/error", Some("thread panic"));
+            default_panic_hook(info)
+        }));
+    }
+    let _ = rustls::crypto::ring::default_provider().install_default();
+    let config = Config::load().await?;
+    let discord_builder = serenity_utils::builder(config.discord.bot_token.clone()).await?;
+    let db_pool = PgPool::connect_with(PgConnectOptions::default().username("fenhl").database("gefolge").application_name("gefolge-web")).await?;
+    let rocket = rocket(port, &config, discord_builder.ctx_fut.clone(), &db_pool).await?;
     let discord_builder = gefolge_web_lib::peter::configure_builder(discord_builder, config, db_pool, rocket.shutdown()).await?;
     let discord_task = tokio::spawn(discord_builder.run()).map(|res| match res {
         Ok(Ok(())) => Ok(()),
