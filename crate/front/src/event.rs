@@ -780,7 +780,7 @@ pub(crate) async fn programm_post(config: &State<Config>, discord_ctx: &State<Rw
             content.push(id.0.to_string());
             content.push("/programm/");
             content.push(&value.url_part);
-            content.push(">");
+            content.push(">)");
             event.discord_channel().say(&*discord_ctx.read().await, content.build()).await?;
             transaction.commit().await?;
             RedirectOrContent::Redirect(Redirect::to(format!("/event/{}/programm/{}", id.0, value.url_part)))
