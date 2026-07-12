@@ -759,6 +759,9 @@ pub(crate) async fn programm_post(config: &State<Config>, discord_ctx: &State<Rw
         if form.context.errors().next().is_some() {
             RedirectOrContent::Content(overview_page(config, db_pool, me.into(), uri, csrf.as_ref(), id, &form.context).await.map_err(StatusOrError::err_into)?)
         } else {
+            if sqlx::query_scalar!(r#"SELECT value -> 'programm' IS NULL AS "programm_is_null!" FROM json_events WHERE id = $1"#, id.0 as _).fetch_one(&mut *transaction).await? {
+                sqlx::query!("UPDATE json_events SET value = JSONB_INSERT(value, '{programm}', '[]') WHERE id = $1", id.0 as _).execute(&mut *transaction).await?;
+            }
             sqlx::query!("UPDATE json_events SET value = JSONB_SET(value, ARRAY['programm', $1], $2) WHERE id = $3", value.url_part, json!({
                 "cssClass": value.css_class,
                 "ibSubtitle": value.subtitle,
