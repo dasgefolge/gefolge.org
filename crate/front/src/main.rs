@@ -505,23 +505,6 @@ enum ProxyResponse {
     },
 }
 
-#[rocket::get("/api", rank = 99 /* prefer endpoints implemented in Rust */)]
-async fn flask_proxy_get_api(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers) -> Result<ProxyResponse, ProxyError> {
-    if me.is_none() {
-        return Ok(ProxyResponse::Authenticate {
-            inner: (),
-            www_authenticate: Header::new("WWW-Authenticate", "Basic realm=\"Gefolge\", charset=\"UTF-8\""),
-        })
-    }
-    let mut url = Url::parse("http://127.0.0.1:18822/api")?;
-    url.set_query(origin.0.query().map(|query| query.as_str()));
-    let response = proxy_http_client.0.get(url).headers(proxy_headers(headers, me)?).send().await?;
-    if response.status() == reqwest::StatusCode::INTERNAL_SERVER_ERROR {
-        return Err(ProxyError::FlaskInternalServerError(response.text().await?))
-    }
-    Ok(ProxyResponse::Proxied(Response(response)))
-}
-
 #[rocket::get("/api/<path..>", rank = 99 /* prefer endpoints implemented in Rust */)]
 async fn flask_proxy_get_api_children(proxy_http_client: &State<ProxyHttpClient>, me: Option<DiscordUser>, origin: Origin<'_>, headers: Headers, path: Segments<'_, Path>) -> Result<ProxyResponse, ProxyError> {
     if me.is_none() {
@@ -768,10 +751,10 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
     .mount("/", rocket::routes![
         index,
         flask_proxy_get,
-        flask_proxy_get_api,
         flask_proxy_get_api_children,
         flask_proxy_post,
         robots_txt,
+        api::docs,
         api::doli_attendees,
         auth::discord_login,
         auth::discord_callback,

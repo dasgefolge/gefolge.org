@@ -69,9 +69,6 @@ pub(crate) enum Error {
     #[error(transparent)] Serenity(#[from] serenity::Error),
     #[error(transparent)] Sql(#[from] sqlx::Error),
     #[error(transparent)] Url(#[from] url::ParseError),
-    //TODO generate new API key instead of erroring
-    #[error("user has no API key")]
-    NoApiKey,
 }
 
 async fn mentions_to_tags(transaction: &mut Transaction<'_, Postgres>, mut text: String) -> Result<String, Error> {
@@ -284,7 +281,7 @@ impl<'v> EditFormDefaults<'v> {
 
 async fn edit_form(mut transaction: Transaction<'_, Postgres>, me: Mensch, uri: Origin<'_>, csrf: Option<&CsrfToken>, title: &str, namespace: &str, defaults: EditFormDefaults<'_>) -> Result<RawHtml<String>, Error> {
     let content = {
-        let api_key = me.data(&mut transaction).await?.api_key.ok_or(Error::NoApiKey)?;
+        let api_key = me.api_key(&mut transaction).await?;
         let mut errors = defaults.errors();
         html! {
             div(class = "header-with-buttons") {

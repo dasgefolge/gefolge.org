@@ -3,7 +3,13 @@ use {
     rocket::{
         State,
         http::Status,
+        response::content::RawHtml,
         serde::json::Json,
+        uri,
+    },
+    rocket_util::{
+        Origin,
+        html,
     },
     serde::Serialize,
     serde_with::{
@@ -24,10 +30,123 @@ use {
         },
     },
     crate::{
+        PageError,
         StatusOrError,
         event,
+        page,
+        wiki,
     },
 };
+
+#[rocket::get("/api")]
+pub(crate) async fn docs(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>) -> Result<RawHtml<String>, PageError> {
+    let mut transaction = db_pool.begin().await?;
+    let content = html! {
+        p {
+            : "Die ";
+            strong : "gefolge.org API";
+            : " ist ein Teil der website, der für Nutzung mit apps, die kein web browser sind, gedacht ist. Mit deinem API key kannst du die API auch ohne Anmeldung über Discord verwenden. Falls du nach Anmeldedaten gefragt wirst, verwende ";
+            code : "api";
+            : " als Benutzername und deinen API key als Passwort.";
+        }
+        p {
+            : "Dein API key: ";
+            code(class = "spoiler") : me.api_key(&mut transaction).await?;
+        }
+        p {
+            : "Falls dein API key in falsche Hände gerät, kannst du jederzeit einen ";
+            a(class = "button", href = format!("/mensch/{}/reset-key", me.id)) : "neuen API key generieren";
+            : ". Du musst dich dann überall, wo du dich mit dem alten API key angemeldet hast, mit dem neuen anmelden.";
+        }
+        h1 : "Endpoints";
+        h2 {
+            a(href = "/api/calendar/signups.ics") {
+                code : "/api/calendar/signups.ics";
+            }
+        }
+        p {
+            : "Ein Kalender im ";
+            a(href = "https://en.wikipedia.org/wiki/ICalendar") : "iCalendar";
+            : "-Format mit allen events und Programmpunkten, für die du angemeldet bist.";
+        }
+        p {
+            : "In Mozilla Thunderbird und Apple Calendar muss folgende Adresse verwendet werden, um einen dieser Kalender zu abonnieren: ";
+            code {
+                : "https://api:";
+                i : "apikey";
+                : "@gefolge.org/api/calendar/signups.ics";
+            }
+            : ", wobei ";
+            code {
+                i : "apikey";
+            }
+            : " durch deinen API key ersetzt werden sollte.";
+        }
+        h2 {
+            a(href = "/api/discord/voice-state.json") {
+                code : "/api/discord/voice-state.json";
+            }
+        }
+        p : "Infos, wer gerade in welchen voice channels ist."; //TODO document JSON schema
+        h2 {
+            code {
+                : "/api/event/";
+                i : "event";
+                : "/calendar/all.ics";
+            }
+        }
+        p : "Ein Kalender im iCalendar-Format mit allen Programmpunkten von diesem event.";
+        p {
+            : "In Mozilla Thunderbird und Apple Calendar muss folgende Adresse verwendet werden, um einen dieser Kalender zu abonnieren: ";
+            code {
+                : "https://api:";
+                i : "apikey";
+                : "@gefolge.org/api/event/";
+                i : "event";
+                : "/calendar/all.ics";
+            }
+            : ", wobei ";
+            code {
+                i : "apikey";
+            }
+            : " durch deinen API key ersetzt werden sollte.";
+        }
+        h2 {
+            code {
+                : "/api/event/";
+                i : "event";
+                : "/doli-attendees.json";
+            }
+        }
+        p : "Infos zu den Anmeldungen für dieses Event in einem für die Vereinsdatenbank geeigneten Format. Zugriff nur für den Vorstand.";
+        h2 {
+            code {
+                : "/api/event/";
+                i : "event";
+                : "/overview.json";
+            }
+        }
+        p {
+            : "Infos zu diesem event im auf ";
+            a(href = uri!(wiki::namespaced_article("event-json", "meta"))) : uri!("https://gefolge.org", wiki::namespaced_article("event-json", "meta"));
+            : " dokumentierten Format.";
+        }
+        h2 {
+            a(href = "/api/websocket") {
+                code : "/api/websocket";
+            }
+        }
+        p {
+            : "Ein WebSocket server für länger dauernde Verbindungen. Dokumentation siehe ";
+            a(href = "https://github.com/dasgefolge/gefolge-websocket") : "https://github.com/dasgefolge/gefolge-websocket"; //TODO display docs on endpoint's Bad Request error page
+        }
+    };
+    page(transaction, me, &uri, crate::PageKind::Sub(vec![
+        html! {
+            : "API";
+        },
+    ]), "gefolge.org API", content).await
+}
 
 #[serde_as]
 #[derive(Serialize)]

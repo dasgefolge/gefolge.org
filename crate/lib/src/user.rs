@@ -10,6 +10,10 @@ use {
         Deref,
         Into,
     },
+    rand::{
+        distr::SampleString as _,
+        rng,
+    },
     rocket::{
         State,
         http::Status,
@@ -129,6 +133,16 @@ impl User {
 
     pub async fn data(&self, transaction: &mut Transaction<'_, Postgres>) -> sqlx::Result<Data> {
         Ok(sqlx::query_scalar("SELECT value FROM json_user_data WHERE id = $1").bind(i64::from(self.id)).fetch_optional(&mut **transaction).await?.map(|Json(data)| data).unwrap_or_default())
+    }
+
+    pub async fn api_key(&self, transaction: &mut Transaction<'_, Postgres>) -> sqlx::Result<String> {
+        if let Some(api_key) = self.data(&mut *transaction).await?.api_key { return Ok(api_key) }
+        let api_key = rand::distr::slice::Choose::new(&[
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+        ]).expect("static nonempty slice was empty").sample_string(&mut rng(), 25);
+        sqlx::query("INSERT INTO json_user_data (id, value) VALUES ($1, JSONB_BUILD_OBJECT('api_key', $2)) ON CONFLICT (id) DO UPDATE SET value = JSONB_SET(value, '{api_key}', $2)").bind(i64::from(self.id)).bind(&api_key).execute(&mut **transaction).await?;
+        Ok(api_key)
     }
 }
 

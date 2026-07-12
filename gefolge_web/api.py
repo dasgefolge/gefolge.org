@@ -27,9 +27,8 @@ def json_child(node, name, *args, **kwargs):
 
 def setup(index):
     @index.child('api', 'API', decorators=[gefolge_web.login.mensch_required]) #TODO review endpoints that should be available to guests
-    @gefolge_web.util.template('api-docs')
     def api_index():
-        return {}
+        raise NotImplementedError('Ported to Rust')
 
     @api_index.child('calendar')
     @gefolge_web.util.template('api-dir')

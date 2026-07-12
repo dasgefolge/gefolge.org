@@ -9,7 +9,6 @@ publish = false
 peter = [
     "dep:num-traits",
     "dep:quantum-werewolf",
-    "dep:rand",
     "serenity/model",
     "serenity/rustls_backend",
     "dep:serenity-utils",
@@ -32,7 +31,7 @@ lazy-regex = "3"
 nonempty-collections = { version = "1", features = ["serde"] }
 num-traits = { version = "0.2", optional = true }
 quantum-werewolf = { git = "https://github.com/dasgefolge/quantum-werewolf", optional = true }
-rand = { version = "0.10", optional = true }
+rand = "0.10"
 reqwest = { version = "0.13", default-features = false }
 ricochet-robots-websocket = { git = "ssh://git@github.com/dasgefolge/ricochet-robots.git", optional = true }
 rocket = { git = "https://github.com/fenhl/Rocket", branch = "forms", features = ["secrets"] }
