@@ -806,6 +806,7 @@ async fn main(Args { port }: Args) -> Result<(), MainError> {
         gateway_timeout,
         fallback_catcher,
     ])
+    .attach(rocket::fairing::AdHoc::uri_normalizer())
     .attach(rocket_csrf::Fairing::default())
     .attach(OAuth2::<Discord>::custom(rocket_oauth2::HyperRustlsAdapter::default(), OAuthConfig::new(
         rocket_oauth2::StaticProvider::Discord,
