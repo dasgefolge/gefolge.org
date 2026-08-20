@@ -21,7 +21,7 @@ wheel = { git = "https://github.com/fenhl/wheel" }
 
 [dependencies]
 async-proto = { version = "0.26", features = ["chrono-tz", "tokio-tungstenite024"] }
-base64 = "0.22"
+base64 = "0.23"
 chrono = { version = "0.4", features = ["serde", "clock"], default-features = false }
 chrono-tz = { version = "0.10", features = ["serde"] }
 clap = { version = "4", features = ["derive"] }
