@@ -44,7 +44,7 @@ serde_json = { package = "serde_json_path_to_error", version = "0.1" } #TODO whi
 serde_with = "3"
 serenity = { version = "0.12", default-features = false }
 serenity-utils = { git = "https://github.com/fenhl/serenity-utils", optional = true }
-sqlx = { version = "0.8", features = ["json", "macros", "postgres", "runtime-tokio-rustls"] }
+sqlx = { version = "0.9", features = ["json", "macros", "postgres", "runtime-tokio", "tls-rustls"] }
 thiserror = "2"
 tokio = { version = "1", features = ["time"] }
 twitch_helix = { git = "https://github.com/fenhl/rust-twitch-helix", optional = true } #TODO publish to crates.io

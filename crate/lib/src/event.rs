@@ -149,11 +149,11 @@ where &'r str: Decode<'r, DB> {
 
 impl<'q, DB: Database> Encode<'q, DB> for Id
 where String: Encode<'q, DB> {
-    fn encode_by_ref(&self, buf: &mut <DB as Database>::ArgumentBuffer<'q>) -> Result<sqlx::encode::IsNull, Box<dyn std::error::Error + Send + Sync>> {
+    fn encode_by_ref(&self, buf: &mut <DB as Database>::ArgumentBuffer) -> Result<sqlx::encode::IsNull, Box<dyn std::error::Error + Send + Sync>> {
         self.to_string().encode(buf)
     }
 
-    fn encode(self, buf: &mut <DB as Database>::ArgumentBuffer<'q>) -> Result<sqlx::encode::IsNull, Box<dyn std::error::Error + Send + Sync>> {
+    fn encode(self, buf: &mut <DB as Database>::ArgumentBuffer) -> Result<sqlx::encode::IsNull, Box<dyn std::error::Error + Send + Sync>> {
         self.to_string().encode(buf)
     }
 
