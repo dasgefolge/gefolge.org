@@ -322,10 +322,12 @@ fn make_true() -> bool { true }
 #[serde(rename_all = "camelCase")]
 pub struct Attendee {
     pub id: AttendeeId,
-    pub abreise: Option<Travel>,
+    #[serde(default)]
+    pub abreise: Travel,
     #[serde(rename = "alkohol", default = "make_true")]
     pub alcohol: bool,
-    pub anreise: Option<Travel>,
+    #[serde(default)]
+    pub anreise: Travel,
     pub email: Option<String>,
     #[serde(default)]
     pub food: FoodPreferences,
@@ -367,7 +369,7 @@ impl fmt::Display for AttendeeId {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct Travel {
     #[serde(default)]
     pub ok: bool,
