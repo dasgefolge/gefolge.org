@@ -271,9 +271,13 @@ impl Event {
 
     pub fn orga_unassigned(&self, id: Id) -> EnumSet<OrgaRole> {
         let mut unassigned = EnumSet::all();
-        if id.year >= 2026 {
-            // ab 2026 werden events über den Verein abgerechnet
+        if id >= (Id { year: 2026, season: Season::Sommer }) {
+            // ab SoSil 2026 werden events über den Verein abgerechnet
             unassigned.remove(OrgaRole::Abrechnung);
+            if id >= (Id { year: 2026, season: Season::Winter }) {
+                // ab Sil 2026 werden Häuser vom Verein gebucht
+                unassigned.remove(OrgaRole::Buchung);
+            }
         }
         for attendee in self.attendees() {
             unassigned.remove_all(attendee.orga);
