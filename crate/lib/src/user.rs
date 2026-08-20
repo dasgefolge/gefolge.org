@@ -80,7 +80,7 @@ pub struct User {
 impl User {
     pub fn all(transaction: &mut Transaction<'_, Postgres>) -> impl Stream<Item = sqlx::Result<Self>> {
         sqlx::query("SELECT snowflake, discriminator, nick, roles, username FROM users ORDER BY snowflake ASC").fetch(&mut **transaction).map_ok(|row| Self {
-            id: UserId::new(row.get::<i64, _>("id") as u64),
+            id: UserId::new(row.get::<i64, _>("snowflake") as u64),
             discriminator: row.get::<Option<i16>, _>("discriminator").map(Discriminator),
             nick: row.get("nick"),
             roles: row.get::<Json<_>, _>("roles").0,
