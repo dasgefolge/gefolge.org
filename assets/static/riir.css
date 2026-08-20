@@ -214,6 +214,10 @@ textarea {
     }
 }
 
+code {
+    font-family: monospace, monospace; /* disable the browser-default special case which would render monospace smaller than surrounding text */
+}
+
 footer {
     color: gray;
 }
