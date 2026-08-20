@@ -322,8 +322,10 @@ fn make_true() -> bool { true }
 #[serde(rename_all = "camelCase")]
 pub struct Attendee {
     pub id: AttendeeId,
+    pub abreise: Option<Travel>,
     #[serde(rename = "alkohol", default = "make_true")]
     pub alcohol: bool,
+    pub anreise: Option<Travel>,
     pub email: Option<String>,
     #[serde(default)]
     pub food: FoodPreferences,
@@ -363,6 +365,45 @@ impl fmt::Display for AttendeeId {
             Self::Discord(id) => fmt::Display::fmt(id, f),
         }
     }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct Travel {
+    #[serde(default)]
+    pub ok: bool,
+    #[serde(flatten)]
+    pub kind: Option<TravelKind>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(tag = "type", rename_all = "camelCase")]
+pub enum TravelKind {
+    Car {
+        start: Option<MaybeAwareDateTime>,
+        end: Option<MaybeAwareDateTime>,
+    },
+    Public {
+        #[serde(default)]
+        legs: Vec<TravelLeg>,
+    },
+    With {
+        with: AttendeeId,
+    },
+    Other {
+        note: Option<String>,
+    },
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct TravelLeg {
+    #[serde(rename = "trainID")]
+    pub train_id: Option<String>,
+    pub from: Option<String>,
+    pub to: Option<String>,
+    pub departure: Option<MaybeAwareDateTime>,
+    pub arrival: Option<MaybeAwareDateTime>,
+    pub coach: Option<String>,
+    pub seat: Option<String>,
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
