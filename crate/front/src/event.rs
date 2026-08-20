@@ -811,6 +811,17 @@ async fn signup_guest_form(db_pool: &PgPool, me: Mensch, uri: Origin<'_>, csrf: 
                                     : " einhält.";
                                 }
                             }
+                            @if let Some(ticket_options) = event.ticket_options() {
+                                @if let Some(default) = event.default_ticket_option() {
+                                    @if let Some(default) = ticket_options.iter().find(|iter_option| iter_option.id == default) {
+                                        li {
+                                            : "Gäste zahlen immer den normalen Ticketpreis (";
+                                            : default.cost.to_string();
+                                            : "/Nacht).";
+                                        }
+                                    }
+                                }
+                            }
                         }
                         /*
                         {% if event.anzahlung.value > 0 and event.orga('Abrechnung') is treasurer and g.user is not admin and g.user is not treasurer and g.user.balance < event.anzahlung %}
