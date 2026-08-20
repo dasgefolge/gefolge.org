@@ -157,7 +157,7 @@ impl LoginState for DiscordUser {
     async fn login_state(self, transaction: &mut Transaction<'_, Postgres>, _: &Origin<'_>) -> Result<RawHtml<String>, PageError> {
         Ok(html! {
             @let user = User::from_id(&mut *transaction, self.id).await?;
-            @let is_mensch_or_guest = user.as_ref().is_some_and(User::is_mensch_or_guest);
+            @let is_mensch_or_guest = user.as_ref().is_some_and(|user| user.is_mensch() || user.is_guest());
             : "Angemeldet als ";
             : user;
             br;
@@ -176,7 +176,7 @@ impl LoginState for User {
             : "Angemeldet als ";
             : self;
             br;
-            @if self.is_mensch_or_guest() {
+            @if self.is_mensch() || self.is_guest() {
                 a(href = format!("/mensch/{}/edit", self.id)) : "Einstellungen";
                 : " • ";
             }
@@ -351,7 +351,7 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
         let events = load_events(&mut transaction).await?;
         let content = html! {
             @let user = User::from_id(&mut transaction, id).await.at("User::from_id")?;
-            @let is_mensch_or_guest = user.as_ref().is_some_and(User::is_mensch_or_guest);
+            @let is_mensch_or_guest = user.as_ref().is_some_and(|user| user.is_mensch() || user.is_guest());
             @if is_mensch_or_guest {
                 @let viewer_data = user.as_ref().expect("just checked (is_mensch_or_guest)").data(&mut transaction).await.at("viewer_data")?;
                 p {
@@ -371,7 +371,7 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                     ul {
                         @for EventOverview { id, start, end, event } in events.ongoing {
                             li {
-                                : event.to_html(&id);
+                                : event.to_html(id);
                                 @if let (Some(start), Some(end)) = (start, end) {
                                     : " (";
                                     : format_datetime_range(&viewer_data, start, end);
@@ -386,7 +386,7 @@ async fn index(db_pool: &State<PgPool>, me: Option<DiscordUser>, uri: Origin<'_>
                     ul {
                         @for EventOverview { id, start, end, event } in events.upcoming {
                             li {
-                                : event.to_html(&id);
+                                : event.to_html(id);
                                 @if let (Some(start), Some(end)) = (start, end) {
                                     : " (";
                                     : format_datetime_range(&viewer_data, start, end);
@@ -725,6 +725,8 @@ async fn rocket(port: Option<u16>, config: &Config, discord_ctx: serenity_utils:
         event::index,
         event::get,
         event::post,
+        event::signup_guest_get,
+        event::signup_guest_post,
         event::programm_post,
         games::index,
         games::werewolf_proxy_get_index,

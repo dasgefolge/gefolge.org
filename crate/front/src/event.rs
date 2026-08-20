@@ -1,7 +1,12 @@
 use {
     chrono::prelude::*,
+    futures::stream::TryStreamExt as _,
     itertools::Itertools as _,
     lazy_regex::regex_is_match,
+    rand::{
+        prelude::*,
+        rng,
+    },
     rocket::{
         FromForm,
         FromFormField,
@@ -32,6 +37,7 @@ use {
     serde_json::json,
     serenity::{
         all::Context as DiscordCtx,
+        model::prelude::*,
         utils::MessageBuilder,
     },
     serenity_utils::RwFuture,
@@ -72,6 +78,7 @@ use {
         SqlResultExt as _,
         StatusOrError,
         form::{
+            FormUserId,
             form_field,
             full_form,
         },
@@ -85,7 +92,7 @@ use {
 };
 
 pub(crate) struct EventOverview {
-    pub(crate) id: String,
+    pub(crate) id: Id,
     pub(crate) start: Option<MaybeLocalDateTime>,
     pub(crate) end: Option<MaybeLocalDateTime>,
     pub(crate) event: Event,
@@ -101,7 +108,7 @@ pub(crate) async fn load_events(transaction: &mut Transaction<'_, Postgres>) -> 
     let now = Utc::now();
     let mut past = Vec::default();
     let mut upcoming = Vec::default();
-    for row in sqlx::query!(r#"SELECT id, value AS "value: Json<Event>" FROM json_events"#).fetch_all(&mut **transaction).await.at("load_events")? {
+    for row in sqlx::query!(r#"SELECT id AS "id: Id", value AS "value: Json<Event>" FROM json_events"#).fetch_all(&mut **transaction).await.at("load_events")? {
         let start = row.value.0.start(&mut *transaction).await?;
         let end = row.value.0.end(&mut *transaction).await?;
         if end.is_none_or(|end| end > now) { &mut upcoming } else { &mut past }.push(EventOverview { id: row.id, start, end, event: row.value.0 });
@@ -132,7 +139,7 @@ pub(crate) async fn index(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>) 
             ul {
                 @for EventOverview { id, start, end, event } in events.ongoing {
                     li {
-                        : event.to_html(&id);
+                        : event.to_html(id);
                         @if let (Some(start), Some(end)) = (start, end) {
                             : " (";
                             : format_datetime_range(&viewer_data, start, end);
@@ -147,7 +154,7 @@ pub(crate) async fn index(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>) 
             ul {
                 @for EventOverview { id, start, end, event } in events.upcoming {
                     li {
-                        : event.to_html(&id);
+                        : event.to_html(id);
                         @if let (Some(start), Some(end)) = (start, end) {
                             : " (";
                             : format_datetime_range(&viewer_data, start, end);
@@ -162,7 +169,7 @@ pub(crate) async fn index(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>) 
             ul {
                 @for EventOverview { id, start, end, event } in events.past {
                     li {
-                        : event.to_html(&id);
+                        : event.to_html(id);
                         @if let (Some(start), Some(end)) = (start, end) {
                             : " (";
                             : format_datetime_range(&viewer_data, start, end);
@@ -184,13 +191,12 @@ pub(crate) async fn index(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>) 
 ///
 /// For now, we only handle these events in Rust and forward to Python for older events.
 #[derive(Clone, Copy, UriDisplayPath)]
-pub(crate) struct NewId(pub(crate) Id);
+pub(crate) struct NewId(Id);
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum NewIdFromParamError {
+    #[error(transparent)] Old(#[from] OldIdError),
     #[error(transparent)] Parse(#[from] IdParseError),
-    #[error("events that started in 2025 or earlier are not yet handled in Rust")]
-    Old,
 }
 
 impl FromParam<'_> for NewId {
@@ -198,7 +204,25 @@ impl FromParam<'_> for NewId {
 
     fn from_param(param: &str) -> Result<Self, Self::Error> {
         let id = param.parse::<Id>()?;
-        if id.year < 2026 { return Err(NewIdFromParamError::Old) }
+        Ok(id.try_into()?)
+    }
+}
+
+impl From<NewId> for Id {
+    fn from(NewId(id): NewId) -> Self {
+        id
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+#[error("events that started in 2025 or earlier are not yet handled in Rust")]
+pub(crate) struct OldIdError;
+
+impl TryFrom<Id> for NewId {
+    type Error = OldIdError;
+
+    fn try_from(id: Id) -> Result<Self, Self::Error> {
+        if id.year < 2026 { return Err(OldIdError) }
         Ok(Self(id))
     }
 }
@@ -220,7 +244,7 @@ impl<E: Into<GetError>> From<E> for StatusOrError<GetError> {
 
 async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<'_>, csrf: Option<&CsrfToken>, new_id: NewId, ctx: &Context<'_>) -> Result<RawHtml<String>, StatusOrError<GetError>> {
     let now = Utc::now();
-    let NewId(id) = new_id;
+    let id = Id::from(new_id);
     let mut transaction = db_pool.begin().await?;
     let viewer_data = me.data(&mut transaction).await?;
     let Some(event) = Event::load(&mut *transaction, id).await? else { return Err(StatusOrError::Status(Status::NotFound)) };
@@ -353,8 +377,9 @@ async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<
         }
         h1(id = "signup") : "Anmeldung";
         @if let Some(attendee) = event.attendee(AttendeeId::Discord(me.id)) {
+            @let via = attendee.via(&mut transaction).await?;
             p {
-                @if let Some(via) = attendee.via(&mut transaction).await? {
+                @if let Some(via) = &via {
                     : via;
                     : " hat";
                 } else {
@@ -371,8 +396,8 @@ async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<
                 a(href = format!("/event/{id}/mensch/{}/edit", me.id)) : "bearbeiten";
                 : ". Einige Teile der Eventanmeldung sind noch in Arbeit (z.B. Bettwäsche-Börse). Wenn etwas Neues fertig ist, wirst du auf Discord angepingt."; //TODO
             }
-            /*
-            {% if g.user in event.menschen %}
+            @if via.is_none() {
+                /*
                 {% if event.guests | selectattr("via", "equalto", g.user) | length > 0 %}
                     <h2>Gäste</h2>
                     <ul>
@@ -391,11 +416,17 @@ async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<
                     {% endif %}
                 {% elif event.guest_signup_block_reason is not none %}
                     {{event.guest_signup_block_reason | markdown}}
-                {% elif g.user is admin or (event.end is not none and event.end > g.now) %}
-                    <p><a href="{{(g.view_node / 'guest').url}}">Gast anmelden</a></p>
+                {% else %}
+                    */
+                    @if event.end(&mut transaction).await?.is_none_or(|end| end >= now) {
+                        p {
+                            a(href = uri!(signup_guest_get(new_id))) : "Gast anmelden";
+                        }
+                    }
+                    /*
                 {% endif %}
-            {% endif %}
-            */
+                */
+            }
         } else if let LocationInfo::Online = location_info {
             p {
                 : "Es gibt keine Anmeldung für das event insgesamt. Du kannst dich einfach für ";
@@ -423,7 +454,7 @@ async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<
                                     : option.display;
                                     : " (";
                                     : option.cost.to_string();
-                                    : ")";
+                                    : "/Nacht)";
                                 }
                             }
                         });
@@ -619,6 +650,8 @@ pub(crate) enum PostError {
     #[error(transparent)] Form(#[from] GetError),
     #[error(transparent)] Serenity(#[from] serenity::Error),
     #[error(transparent)] Sql(#[from] sqlx::Error),
+    #[error("failed to allocate event guest ID")]
+    EventGuestId,
 }
 
 impl<E: Into<PostError>> From<E> for StatusOrError<PostError> {
@@ -714,6 +747,284 @@ pub(crate) async fn post(config: &State<Config>, discord_ctx: &State<RwFuture<Di
         }
     } else {
         RedirectOrContent::Content(overview_page(config, db_pool, me.into(), uri, csrf.as_ref(), id, &form.context).await.map_err(StatusOrError::err_into)?)
+    })
+}
+
+async fn signup_guest_form(db_pool: &PgPool, me: Mensch, uri: Origin<'_>, csrf: Option<&CsrfToken>, new_id: NewId, ctx: &Context<'_>) -> Result<RawHtml<String>, StatusOrError<GetError>> {
+    let now = Utc::now();
+    let id = Id::from(new_id);
+    let mut transaction = db_pool.begin().await?;
+    let Some(event) = Event::load(&mut *transaction, id).await? else { return Err(StatusOrError::Status(Status::NotFound)) };
+    let location_info = event.location_info(&mut transaction).await?;
+    let content = html! { //TODO translate remaining Jinja code to Horrorshow
+        @if let LocationInfo::Online = location_info {
+            p : "Für online events können keine Gäste angemeldet werden.";
+        } else if event.end(&mut transaction).await?.is_some_and(|end| end < now) {
+            p {
+                @let any_guests_invited = event.attendees().iter().any(|attendee| attendee.via_id.is_some_and(|via_id| via_id == me.id));
+                : "Hier ";
+                @if any_guests_invited {
+                    : "konntest";
+                } else {
+                    : "hättest";
+                }
+                : " du Gäste für ";
+                : event.to_html(id);
+                : " anmelden";
+                @if any_guests_invited {
+                    : " können";
+                }
+                : ". Das event ist aber schon vorbei.";
+            }
+        } else {
+            p {
+                : "Hier kannst du Gäste für ";
+                : event.to_html(id);
+                : " anmelden. Das können entweder Leute auf unserem Discord-Server mit der Rolle „Gast“ sein, die ihre Anmeldung auch selbst verwalten können, oder andere Leute, deren Anmeldung nur du verwaltest.";
+            }
+            @if let Some(nights) = event.nights(&mut transaction).await? {
+                /*
+                {% if 'capacity' in event.location.data and event.free() <= 0 %}
+                    <div class="alert alert-warning">
+                        <strong>Achtung:</strong> Das Haus ist zumindest zeitweise schon voll. Du kannst den Gast trotzdem anmelden. Er kommt dann auf die Warteliste. Wenn jemand absagt, rückt der erste Mensch auf der Warteliste nach. {#TODO check for free nights, adjust message accordingly #}
+                        {% if event.anzahlung is none or event.anzahlung.value > 0 %}
+                            Falls kein Platz frei wird, {% if event.orga('Abrechnung') is treasurer %}bekommst du{% else %}bekommt der Gast{% endif %} die Anzahlung natürlich zurück.
+                        {% endif %}
+                    </div>
+                {% endif %}
+                {% if event.guest_signup_block_reason is not none %}
+                    {{event.guest_signup_block_reason | markdown}}
+                {% else %}
+                    */
+                    @if event.attendee(AttendeeId::Discord(me.id)).is_some() {
+                        p : "Beachte vorher bitte Folgendes:";
+                        ul {
+                            li {
+                                : "Du bist dafür verantwortlich, die Anmeldedaten für den Gast aktuell zu halten und ihn über wichtige Dinge, die im ";
+                                a(href = "https://discord.com/channels/355761290809180170/387264349678338049") : "#silvester"; //TODO use channel from event data
+                                : " besprochen werden, zu informieren.";
+                            }
+                            @if let LocationInfo::Known(loc) = &location_info && let Some(hausordnung) = &loc.hausordnung {
+                                li {
+                                    : "Du bist dafür verantwortlich, dass der Gast die ";
+                                    a(href = hausordnung) : "Hausordnung";
+                                    : " einhält.";
+                                }
+                            }
+                        }
+                        /*
+                        {% if event.anzahlung.value > 0 and event.orga('Abrechnung') is treasurer and g.user is not admin and g.user is not treasurer and g.user.balance < event.anzahlung %}
+                            <p>Dein aktuelles Guthaben ist {{g.user.balance}}, es fehlen also noch {{event.anzahlung - g.user.balance}} für die Anzahlung. Auf <a href="{{g.user.profile_url}}">deiner Profilseite</a> steht, wie du Guthaben aufladen kannst.</p>
+                        {% else %}
+                            */
+                            @let mut errors = ctx.errors().collect_vec();
+                            : full_form(uri!(signup_guest_post(new_id)), csrf, html! {
+                                : form_field("person", &mut errors, html! {
+                                    label(for = "person") : "Discord-Account:";
+                                    select(name = "person") {
+                                        option(value = "", selected? = ctx.field_value("person").is_none_or(|val| val.is_empty())) : "(nicht im Gefolge-Discord)";
+                                        @let mut users = User::all(&mut transaction);
+                                        @while let Some(user) = users.try_next().await? {
+                                            @if user.is_guest() && event.attendee(AttendeeId::Discord(user.id)).is_none() {
+                                                option(value = user.id.to_string(), selected? = ctx.field_value("person").is_some_and(|val| val.parse::<UserId>().is_ok_and(|val| val == user.id))) : user.long_name();
+                                            }
+                                        }
+                                    }
+                                });
+                                : form_field("name", &mut errors, html! {
+                                    label(for = "name") : "Name:";
+                                    input(type = "text", name = "name", value? = ctx.field_value("name"));
+                                    label(class = "help") : "(Nur bei Gästen ohne Discord-Account.)";
+                                });
+                                : form_field("email", &mut errors, html! {
+                                    label(for = "email") : "Email-Adresse:";
+                                    input(type = "email", name = "email", value? = ctx.field_value("email"));
+                                    label(class = "help") : "(Für die Rechnung.)";
+                                });
+                                h2 : "Zeitraum";
+                                @for (night_idx, night) in iter_date_range(nights).enumerate() {
+                                    @let field_id = format!("nights[{night_idx}]");
+                                    : form_field(&field_id, &mut errors, html! {
+                                        label(for = field_id) {
+                                            : format_date_range(night, night.succ_opt().expect("reached end of time"));
+                                            : ":";
+                                        }
+                                        input(id = format!("{field_id}-yes"), type = "radio", name = field_id, value = "yes", checked? = ctx.field_value(&*field_id).is_some_and(|val| val == "yes"));
+                                        label(for = format!("{field_id}-yes")) : "Ja";
+                                        input(id = format!("{field_id}-maybe"), type = "radio", name = field_id, value = "maybe", checked? = ctx.field_value(&*field_id).is_none_or(|val| val == "maybe"));
+                                        label(for = format!("{field_id}-maybe")) : "Vielleicht";
+                                        input(id = format!("{field_id}-no"), type = "radio", name = field_id, value = "no", checked? = ctx.field_value(&*field_id).is_some_and(|val| val == "no"));
+                                        label(for = format!("{field_id}-no")) : "Nein";
+                                    });
+                                }
+                                //TODO include remaining fields from gefolge_web.event.forms.ProfileForm:
+                                // section_room, section_room_intro, room, section_travel, section_travel_intro
+                                h2 : "Essen";
+                                p : "Bitte trage hier Informationen zur Ernährung des Gastes ein. Diese Daten werden nur der Orga angezeigt.";
+                                : form_field("animal_products", &mut errors, html! {
+                                    label(for = "animal_products") : "tierische Produkte:";
+                                    input(id = "animal_products-yes", type = "radio", name = "animal_products", value = "yes", checked? = ctx.field_value("animal_products").is_none_or(|val| val == "yes"));
+                                    label(for = "animal_products-yes") : "uneingeschränkt";
+                                    input(id = "animal_products-vegetarian", type = "radio", name = "animal_products", value = "vegetarian", checked? = ctx.field_value("animal_products").is_some_and(|val| val == "vegetarian"));
+                                    label(for = "animal_products-vegetarian") : "vegetarisch";
+                                    input(id = "animal_products-vegan", type = "radio", name = "animal_products", value = "vegan", checked? = ctx.field_value("animal_products").is_some_and(|val| val == "vegan"));
+                                    label(for = "animal_products-vegan") : "vegan";
+                                });
+                                : form_field("allergies", &mut errors, html! {
+                                    label(for = "allergies") : "Allergien, Unverträglichkeiten:";
+                                    input(type = "text", name = "allergies", value? = ctx.field_value("allergies"));
+                                });
+                                //TODO include remaining fields from gefolge_web.event.forms.ProfileForm:
+                                // section_programm, section_programm_intro
+                            }, errors, "Anmelden");
+                            /*
+                        {% endif %}
+                        */
+                    } else {
+                        p {
+                            : "Bevor du das tun kannst, musst du dich erst ";
+                            a(href = uri!(_, get(new_id), "#signup")) : "selbst anmelden";
+                            : ".";
+                        }
+                    }
+                    /*
+                {% endif %}
+                */
+            } else {
+                p : "Coming soon™";
+            }
+        }
+    };
+    Ok(page(transaction, me, &uri, PageKind::Sub(vec![
+        html! {
+            : "events";
+        },
+        html! {
+            : event.name(id);
+        },
+        html! {
+            : "Gast anmelden";
+        },
+    ]), &format!("Gast anmelden — {}", event.name(id)), content).await?)
+}
+
+#[rocket::get("/event/<id>/guest")]
+pub(crate) async fn signup_guest_get(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>, csrf: Option<CsrfToken>, id: NewId) -> Result<RawHtml<String>, StatusOrError<GetError>> {
+    signup_guest_form(db_pool, me, uri, csrf.as_ref(), id, &Context::default()).await
+}
+
+#[derive(FromForm, CsrfForm)]
+pub(crate) struct SignupGuestForm {
+    #[field(default = String::new())]
+    csrf: String,
+    person: Option<FormUserId>,
+    #[field(default = String::new())]
+    name: String,
+    email: String,
+    nights: Vec<Going>,
+    animal_products: AnimalProducts,
+    allergies: String,
+}
+
+#[rocket::post("/event/<id>/guest", data = "<form>")]
+pub(crate) async fn signup_guest_post(discord_ctx: &State<RwFuture<DiscordCtx>>, db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>, csrf: Option<CsrfToken>, id: NewId, form: Form<Contextual<'_, SignupGuestForm>>) -> Result<RedirectOrContent, StatusOrError<PostError>> {
+    let mut transaction = db_pool.begin().await?;
+    let Some(event) = Event::load(&mut *transaction, id.0).await? else { return Err(StatusOrError::Status(Status::NotFound)) };
+    let mut form = form.into_inner();
+    form.verify(&csrf);
+    Ok(if let Some(ref value) = form.value {
+        if event.attendee(AttendeeId::Discord(me.id)).is_none() {
+            form.context.push_error(form::Error::validation("Du musst selbst angemeldet sein, um einen Gast anzumelden."));
+        }
+        //TODO port more validation from Python
+        match (value.person, value.name.trim().is_empty()) {
+            (None, false) => if event.attendees().iter().any(|attendee| attendee.name.as_ref().is_some_and(|name| name == value.name.trim())) {
+                form.context.push_error(form::Error::validation("Ein Gast mit diesem Namen ist bereits angemeldet.").with_name("name"));
+            },
+            (None, true) => form.context.push_error(form::Error::validation("Bitte entweder hier einen Namen angeben oder oben einen Discord-Account auswählen.").with_name("name")),
+            (Some(_), false) => form.context.push_error(form::Error::validation("Dieses Feld ist dazu da, Leute ohne Discord-Account anzumelden. Für Discord-Gäste sollte es leer gelassen werden. Seinen Anzeigenamen kann ein Discord-Gast selbst ändern, entweder in Discord im Servermenü oder in den Einstellungen auf gefolge.org.").with_name("name")),
+            (Some(FormUserId(person)), true) => {
+                if let Some(person) = User::from_id(&mut transaction, person).await? {
+                    if !person.is_guest() {
+                        form.context.push_error(form::Error::validation(if person.is_mensch() {
+                            "Diese:r Discord-Nutzer:in ist kein Gast, sondern ein Gefolgemensch, und sollte sich selbst anmelden."
+                        } else {
+                            "Diese:r Discord-Nutzer:in wurde noch nicht als Gast freigeschaltet. Bitte ihn:sie, sich einmal kurz im #general vorzustellen und warte, bis ein admin ihn:sie bestätigt."
+                        }).with_name("person"));
+                    }
+                    if event.attendee(AttendeeId::Discord(person.id)).is_some() {
+                        form.context.push_error(form::Error::validation("Dieser Gast ist bereits für dieses Event angemeldet.").with_name("person"));
+                    }
+                } else {
+                    form.context.push_error(form::Error::validation("Scheinbar hat diese:r Discord-Nutzer:in den Gefolge-Server mittlerweile verlassen.").with_name("person"));
+                }
+            }
+        }
+        if value.email.is_empty() {
+            form.context.push_error(form::Error::validation("Wir benötigen die Email-Adresse des Gastes für die Rechnung.").with_name("email"));
+        } else if !regex_is_match!(r"^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$", &value.email) { //FROM https://html.spec.whatwg.org/multipage/input.html#valid-e-mail-address
+            form.context.push_error(form::Error::validation("Das ist keine Email-Adresse.").with_name("email"));
+        }
+        if let Some(nights) = event.nights(&mut transaction).await? {
+            if value.nights.len().try_into().ok().is_none_or(|num_nights| nights.start.checked_add_days(chrono::Days::new(num_nights)).is_none_or(|end| end != nights.end)) {
+                form.context.push_error(form::Error::validation("Falsche Anzahl Übernachtungsinfos im Formular. Bitte melde diesen Fehler im #dev."));
+            }
+        } else {
+            form.context.push_error(form::Error::validation("Die Anmeldungen für dieses Event sind noch nicht offen, weil der Zeitraum noch nicht fest steht."));
+        }
+        if form.context.errors().next().is_some() {
+            RedirectOrContent::Content(signup_guest_form(db_pool, me, uri, csrf.as_ref(), id, &form.context).await.map_err(StatusOrError::err_into)?)
+        } else {
+            let guest_id = if let Some(FormUserId(person)) = value.person {
+                AttendeeId::Discord(person)
+            } else {
+                AttendeeId::EventGuest((1..100).filter(|id| event.attendee(AttendeeId::EventGuest(*id)).is_none()).choose(&mut rng()).ok_or(PostError::EventGuestId)?)
+            };
+            let now = MaybeAwareDateTime::Aware(Utc::now());
+            let mut menschen = sqlx::query_scalar!(r#"SELECT value -> 'menschen' AS "menschen: Json<Vec<serde_json::Value>>" FROM json_events WHERE id = $1"#, id.0 as _).fetch_one(&mut *transaction).await?.map(|Json(menschen)| menschen).unwrap_or_default();
+            menschen.push(json!({ // using untyped JSON here to avoid deleting any data that's not yet deserialized into the Attendee struct
+                "id": guest_id,
+                "name": value.name.trim(),
+                "via": me.id,
+                "email": value.email,
+                "food": {
+                    "allergies": value.allergies,
+                    "animalProducts": value.animal_products,
+                },
+                "hausordnung": true,
+                "nights": iter_date_range(event.nights(&mut transaction).await?.expect("validated")).zip_eq(&value.nights).map(|(night, going)| (night.format("%Y-%m-%d").to_string(), json!({
+                    "going": going,
+                    "lastUpdated": now,
+                    "log": [
+                        {
+                            "time": now,
+                            "going": going,
+                        },
+                    ],
+                }))).collect::<serde_json::Map<_, _>>(),
+                "signup": now,
+                "ticket": event.default_ticket_option(),
+            }));
+            sqlx::query!("UPDATE json_events SET value = JSONB_SET(value, '{menschen}', $1) WHERE id = $2", Json(menschen) as _, id.0 as _).execute(&mut *transaction).await?;
+            if let AttendeeId::Discord(guest_id) = guest_id && let Some(role) = event.discord_role() {
+                GEFOLGE.member(&*discord_ctx.read().await, guest_id).await?.add_role(&*discord_ctx.read().await, role).await?;
+            }
+            let mut content = MessageBuilder::default();
+            content.mention(&me.id);
+            content.push(" hat ");
+            match guest_id {
+                AttendeeId::Discord(guest_id) => { content.mention(&guest_id); }
+                AttendeeId::EventGuest(_) => { content.push_safe(value.name.trim()); }
+            }
+            content.push(" für ");
+            content.push(event.name(id.0));
+            content.push(" angemeldet.");
+            event.discord_channel().say(&*discord_ctx.read().await, content.build()).await?;
+            transaction.commit().await?;
+            RedirectOrContent::Redirect(Redirect::to(format!("/event/{}/mensch/{}", id.0, guest_id)))
+        }
+    } else {
+        RedirectOrContent::Content(signup_guest_form(db_pool, me, uri, csrf.as_ref(), id, &form.context).await.map_err(StatusOrError::err_into)?)
     })
 }
 

@@ -140,6 +140,13 @@ impl UriDisplay<Path> for Id {
     }
 }
 
+impl<'r, DB: Database> Decode<'r, DB> for Id
+where &'r str: Decode<'r, DB> {
+    fn decode(value: <DB as Database>::ValueRef<'r>) -> Result<Self, Box<dyn std::error::Error + 'static + Send + Sync>> {
+        <&'r str>::decode(value).and_then(|id| id.parse().map_err(|e| Box::new(e) as Box<_>))
+    }
+}
+
 impl<'q, DB: Database> Encode<'q, DB> for Id
 where String: Encode<'q, DB> {
     fn encode_by_ref(&self, buf: &mut <DB as Database>::ArgumentBuffer<'q>) -> Result<sqlx::encode::IsNull, Box<dyn std::error::Error + Send + Sync>> {
@@ -302,9 +309,9 @@ impl Event {
         self.name.as_deref().map(Cow::Borrowed).unwrap_or_else(|| Cow::Owned(id.to_string()))
     }
 
-    pub fn to_html(&self, id: &str) -> RawHtml<String> {
+    pub fn to_html(&self, id: Id) -> RawHtml<String> {
         html! {
-            a(href = format!("/event/{id}")) : self.name.as_deref().unwrap_or(id);
+            a(href = format!("/event/{id}")) : self.name.as_deref().map(Cow::Borrowed).unwrap_or_else(|| Cow::Owned(id.to_string()));
         }
     }
 }
@@ -327,12 +334,13 @@ pub struct Attendee {
     pub orga: EnumSet<OrgaRole>,
     pub signup: MaybeAwareDateTime,
     pub ticket: Option<String>,
-    via: Option<UserId>,
+    #[serde(rename = "via")]
+    pub via_id: Option<UserId>,
 }
 
 impl Attendee {
     pub async fn via(&self, transaction: &mut Transaction<'_, Postgres>) -> sqlx::Result<Option<User>> {
-        Ok(if let Some(via) = self.via {
+        Ok(if let Some(via) = self.via_id {
             Some(User::from_id(transaction, via).await?.expect("guest proxy user does not exist"))
         } else {
             None
@@ -341,11 +349,20 @@ impl Attendee {
 }
 
 #[serde_as]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum AttendeeId {
     EventGuest(#[serde_as(as = "PickFirst<(_, DisplayFromStr)>")] u8),
     Discord(UserId),
+}
+
+impl fmt::Display for AttendeeId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::EventGuest(id) => fmt::Display::fmt(id, f),
+            Self::Discord(id) => fmt::Display::fmt(id, f),
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]

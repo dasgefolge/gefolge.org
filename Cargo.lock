@@ -1371,6 +1371,7 @@ dependencies = [
  "lazy-regex",
  "log-lock",
  "pulldown-cmark 0.13.0",
+ "rand 0.10.2",
  "reqwest 0.13.4",
  "ricochet-robots-websocket",
  "rocket",

@@ -23,6 +23,7 @@ use {
             AttendeeId,
             Event,
             Going,
+            Id as EventId,
         },
         user::{
             Mensch,
@@ -189,7 +190,7 @@ impl<E: Into<DoliAttendeesError>> From<E> for StatusOrError<DoliAttendeesError> 
 #[rocket::get("/api/event/<id>/doli-attendees.json")]
 pub(crate) async fn doli_attendees(db_pool: &State<PgPool>, me: Mensch, id: event::NewId) -> Result<Json<Vec<DoliAttendee>>, StatusOrError<DoliAttendeesError>> {
     if !me.is_vorstand() { return Err(StatusOrError::Status(Status::Unauthorized)) };
-    let event::NewId(id) = id;
+    let id = EventId::from(id);
     let mut transaction = db_pool.begin().await?;
     let Some(event) = Event::load(&mut *transaction, id).await? else { return Err(StatusOrError::Status(Status::NotFound)) };
     let mut buf = Vec::with_capacity(event.attendees().len());

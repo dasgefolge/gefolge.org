@@ -10,6 +10,10 @@ use {
         Deref,
         Into,
     },
+    futures::stream::{
+        Stream,
+        TryStreamExt as _,
+    },
     rand::{
         distr::SampleString as _,
         rng,
@@ -74,8 +78,18 @@ pub struct User {
 }
 
 impl User {
+    pub fn all(transaction: &mut Transaction<'_, Postgres>) -> impl Stream<Item = sqlx::Result<Self>> {
+        sqlx::query("SELECT snowflake, discriminator, nick, roles, username FROM users ORDER BY snowflake ASC").fetch(&mut **transaction).map_ok(|row| Self {
+            id: UserId::new(row.get::<i64, _>("id") as u64),
+            discriminator: row.get::<Option<i16>, _>("discriminator").map(Discriminator),
+            nick: row.get("nick"),
+            roles: row.get::<Json<_>, _>("roles").0,
+            username: row.get("username"),
+        })
+    }
+
     pub async fn from_id(transaction: &mut Transaction<'_, Postgres>, id: UserId) -> sqlx::Result<Option<Self>> {
-        Ok(sqlx::query("SELECT discriminator, nick, roles, username FROM users WHERE snowflake = $1").bind(i64::from(id)).fetch_optional(&mut **transaction).await?.map(|row| User {
+        Ok(sqlx::query("SELECT discriminator, nick, roles, username FROM users WHERE snowflake = $1").bind(i64::from(id)).fetch_optional(&mut **transaction).await?.map(|row| Self {
             discriminator: row.get::<Option<i16>, _>("discriminator").map(Discriminator),
             nick: row.get("nick"),
             roles: row.get::<Json<_>, _>("roles").0,
@@ -86,7 +100,7 @@ impl User {
 
     pub async fn from_api_key(transaction: &mut Transaction<'_, Postgres>, api_key: &str) -> sqlx::Result<Option<Self>> {
         let before_query = Instant::now();
-        let ret = sqlx::query("SELECT snowflake, discriminator, nick, roles, username FROM users, json_user_data WHERE id = snowflake AND value -> 'apiKey' = $1").bind(Json(api_key)).fetch_optional(&mut **transaction).await?.map(|row| User {
+        let ret = sqlx::query("SELECT snowflake, discriminator, nick, roles, username FROM users, json_user_data WHERE id = snowflake AND value -> 'apiKey' = $1").bind(Json(api_key)).fetch_optional(&mut **transaction).await?.map(|row| Self {
             id: UserId::from(row.get::<i64, _>("snowflake") as u64),
             discriminator: row.get::<Option<i16>, _>("discriminator").map(Discriminator),
             nick: row.get("nick"),
@@ -123,8 +137,8 @@ impl User {
         self.roles.contains(&MENSCH)
     }
 
-    pub fn is_mensch_or_guest(&self) -> bool {
-        self.roles.contains(&MENSCH) || self.roles.contains(&GUEST)
+    pub fn is_guest(&self) -> bool {
+        self.roles.contains(&GUEST)
     }
 
     pub fn is_vorstand(&self) -> bool {
@@ -143,6 +157,10 @@ impl User {
         ]).expect("static nonempty slice was empty").sample_string(&mut rng(), 25);
         sqlx::query("INSERT INTO json_user_data (id, value) VALUES ($1, JSONB_BUILD_OBJECT('api_key', $2)) ON CONFLICT (id) DO UPDATE SET value = JSONB_SET(value, '{api_key}', $2)").bind(i64::from(self.id)).bind(&api_key).execute(&mut **transaction).await?;
         Ok(api_key)
+    }
+
+    pub fn long_name(&self) -> String {
+        format!("{} (@{})", self.nick.as_ref().unwrap_or(&self.username), self.username)
     }
 }
 

@@ -1,7 +1,10 @@
 use {
     std::mem,
     rocket::{
-        form,
+        form::{
+            self,
+            FromFormField,
+        },
         http::uri::Origin,
         response::content::RawHtml,
     },
@@ -10,7 +13,18 @@ use {
         ToHtml,
         html,
     },
+    serenity::model::prelude::*,
 };
+
+#[derive(Clone, Copy)]
+pub(crate) struct FormUserId(pub(crate) UserId);
+
+#[rocket::async_trait]
+impl<'r> FromFormField<'r> for FormUserId {
+    fn from_value(field: form::ValueField<'r>) -> form::Result<'r, Self> {
+        Ok(Self(field.value.parse()?))
+    }
+}
 
 pub(crate) fn render_form_error(error: &form::Error<'_>) -> RawHtml<String> {
     html! {

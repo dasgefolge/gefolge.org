@@ -33,6 +33,7 @@ itertools = "0.15"
 lazy-regex = "3"
 log-lock = { git = "https://github.com/fenhl/log-lock" }
 pulldown-cmark = { git = "https://github.com/fenhl/pulldown-cmark", branch = "rocket-wiki", default-features = false, features = ["simd", "html"] }
+rand = { version = "0.10", features = ["thread_rng"] }
 reqwest = { version = "0.13", default-features = false, features = ["charset", "gzip", "hickory-dns", "http2", "rustls-no-provider", "system-proxy", "zstd"] }
 ricochet-robots-websocket = { git = "ssh://git@github.com/dasgefolge/ricochet-robots.git", optional = true }
 rocket = { git = "https://github.com/fenhl/Rocket", branch = "forms", features = ["json", "secrets"] }
