@@ -220,19 +220,8 @@ class Mensch(DiscordPerson, metaclass=MenschMeta):
 
     @property
     def balance(self):
-        import gefolge_web.event.model
-
         if self.is_treasurer:
             return sum((
-                # Anzahlungen für noch nicht abgerechnete events
-                -event.anzahlung_total
-                for event in gefolge_web.event.model.Event
-                if event.anzahlung is not None and not any(
-                    transaction.json_data['type'] == 'eventAbrechnung' and transaction.json_data['event'] == event.event_id
-                    for mensch in event.menschen
-                    for transaction in mensch.transactions
-                )
-            ), gefolge_web.util.Euro()) + sum((
                 # Guthaben aller anderen Menschen (ohne Schulden)
                 -mensch.balance
                 for mensch in Mensch
