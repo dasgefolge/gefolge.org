@@ -3,9 +3,14 @@ name = "peter-ipc"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 publish = false
 
+[lints]
+workspace = true
+
 [dependencies]
-gefolge-web-lib = { path = "../lib" }
+gefolge-web-lib = { path = "../lib", features = ["peter"] }
 serenity = "0.12"
 serenity-utils = { git = "https://github.com/fenhl/serenity-utils" }
+thiserror = "2"

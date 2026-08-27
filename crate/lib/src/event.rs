@@ -357,7 +357,7 @@ impl Attendee {
 }
 
 #[serde_as]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum AttendeeId {
     EventGuest(#[serde_as(as = "PickFirst<(_, DisplayFromStr)>")] u8),

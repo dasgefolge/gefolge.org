@@ -3,7 +3,11 @@ name = "gefolge-web"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 publish = false
+
+[lints]
+workspace = true
 
 [features]
 default = ["ricochet-robots"]
