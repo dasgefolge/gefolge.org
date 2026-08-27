@@ -1440,6 +1440,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "gefolge-room-signs"
+version = "2.0.0"
+dependencies = [
+ "base64 0.23.1",
+ "futures",
+ "gefolge-web-lib",
+ "rocket",
+ "rocket-util",
+ "serenity",
+ "sqlx",
+ "thiserror 2.0.20",
+ "tokio",
+ "wheel",
+]
+
+[[package]]
 name = "gefolge-web"
 version = "2.0.0"
 dependencies = [

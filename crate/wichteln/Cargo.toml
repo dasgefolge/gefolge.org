@@ -18,7 +18,7 @@ heliocron = { git = "https://github.com/fenhl/heliocron" }
 itertools = "0.15"
 peter-ipc = { path = "../peter-ipc" }
 rand = { version = "0.10", features = ["thread_rng"] }
-serenity = { version = "0.12", default-features = false, features = ["model", "rustls_backend"] }
+serenity = { version = "0.12", default-features = false }
 sqlx = { version = "0.9", features = ["postgres", "runtime-tokio", "tls-rustls"] }
 thiserror = "2"
 wheel = { git = "https://github.com/fenhl/wheel", features = ["chrono"] }

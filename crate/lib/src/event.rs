@@ -340,6 +340,7 @@ pub struct Attendee {
     nights: HashMap<NaiveDate, Night>,
     #[serde(default)]
     pub orga: EnumSet<OrgaRole>,
+    pub room: Option<String>,
     pub signup: MaybeAwareDateTime,
     pub ticket: Option<String>,
     #[serde(rename = "via")]
