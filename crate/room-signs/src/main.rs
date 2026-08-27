@@ -91,9 +91,17 @@ async fn index(db_pool: &State<PgPool>) -> Result<Option<RawHtml<String>>, Index
                     border-bottom: 1pt solid black;
                 }
 
+                img {
+                    margin: auto auto;
+                }
+
                 h2 {
                     font-weight: normal;
                     margin-top: auto;
+                }
+
+                h2.xor {
+                    margin-top: 0;
                 }
             ");
         }
@@ -127,10 +135,11 @@ async fn index(db_pool: &State<PgPool>) -> Result<Option<RawHtml<String>>, Index
                                 }
                             }
                         }
-                        @if room.beds == 1 && event.attendees().iter().filter(|attendee| attendee.room.as_ref().is_some_and(|room| *room == name)).all(|attendee| attendee.id == AttendeeId::Discord(UserId::new(148148020259717120))) {
-                            //TODO xor_approves image
+                        @let is_xor = room.beds == 1 && event.attendees().iter().filter(|attendee| attendee.room.as_ref().is_some_and(|room| *room == name)).all(|attendee| attendee.id == AttendeeId::Discord(UserId::new(148148020259717120)));
+                        @if is_xor {
+                            img(src = "https://gefolge.org/static/xor_approves.png"); //TODO use static_uri macro
                         }
-                        h2 {
+                        h2(class? = is_xor.then_some("xor")) {
                             : event.name(event_id);
                         }
                     }
