@@ -3531,7 +3531,7 @@ dependencies = [
 [[package]]
 name = "rocket-util"
 version = "0.2.17"
-source = "git+https://github.com/fenhl/rocket-util#e7e891ba61cc2dd2996e7c55a7f9efee144e445c"
+source = "git+https://github.com/fenhl/rocket-util#2580d66cf7db0e760782a6590a593fb7a8195833"
 dependencies = [
  "futures",
  "reqwest 0.13.4",
@@ -3546,7 +3546,7 @@ dependencies = [
 [[package]]
 name = "rocket-util-derive"
 version = "0.2.17"
-source = "git+https://github.com/fenhl/rocket-util#e7e891ba61cc2dd2996e7c55a7f9efee144e445c"
+source = "git+https://github.com/fenhl/rocket-util#2580d66cf7db0e760782a6590a593fb7a8195833"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -5633,7 +5633,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
