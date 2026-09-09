@@ -1,11 +1,11 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, value AS \"value: Json<Event>\" FROM json_events",
+  "query": "SELECT id AS \"id: Id\", value AS \"value: Json<Event>\" FROM json_events",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "id",
+        "name": "id: Id",
         "type_info": "Varchar",
         "origin": {
           "Table": {
@@ -34,5 +34,5 @@
       false
     ]
   },
-  "hash": "a565eecdf01045db638b949ebb929265f7dba208a6a41edd66061832ac1bc040"
+  "hash": "e6c8f928a23c83110d7ee764a3a95a436336a9aab2e53be44870b96bc7c37085"
 }

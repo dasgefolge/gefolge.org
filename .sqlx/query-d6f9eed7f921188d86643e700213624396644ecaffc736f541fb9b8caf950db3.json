@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT value -> 'menschen' AS \"menschen: Json<Vec<serde_json::Value>>\" FROM json_events WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "menschen: Json<Vec<serde_json::Value>>",
+        "type_info": "Jsonb",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "d6f9eed7f921188d86643e700213624396644ecaffc736f541fb9b8caf950db3"
+}

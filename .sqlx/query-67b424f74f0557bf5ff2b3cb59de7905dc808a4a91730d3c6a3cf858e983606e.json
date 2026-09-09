@@ -1,18 +1,17 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT EXISTS (SELECT 1 FROM wiki WHERE title = $1 AND namespace = $2) AS \"exists!\"",
+  "query": "SELECT value -> 'programm' IS NULL AS \"programm_is_null!\" FROM json_events WHERE id = $1",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "exists!",
+        "name": "programm_is_null!",
         "type_info": "Bool",
         "origin": "Expression"
       }
     ],
     "parameters": {
       "Left": [
-        "Text",
         "Text"
       ]
     },
@@ -20,5 +19,5 @@
       null
     ]
   },
-  "hash": "5b0c1f171de1816e338acebff70f3a66b0e7f7677cb9fede860d6fe4c74d3a3b"
+  "hash": "67b424f74f0557bf5ff2b3cb59de7905dc808a4a91730d3c6a3cf858e983606e"
 }

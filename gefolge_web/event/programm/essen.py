@@ -168,3 +168,11 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
     @start.deleter
     def start(self):
         raise TypeError('Abendessenzeiten können nicht gelöscht werden')
+
+    @property
+    def subtitle(self):
+        return self.description
+
+    @subtitle.setter
+    def subtitle(self, value):
+        self.description = value

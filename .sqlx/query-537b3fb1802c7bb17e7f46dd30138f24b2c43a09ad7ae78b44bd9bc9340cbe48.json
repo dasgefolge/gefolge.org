@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE json_events SET value = JSONB_SET(value, ARRAY['programm', $1], $2) WHERE id = $3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Jsonb",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "537b3fb1802c7bb17e7f46dd30138f24b2c43a09ad7ae78b44bd9bc9340cbe48"
+}

@@ -6,22 +6,46 @@
       {
         "ordinal": 0,
         "name": "id",
-        "type_info": "Int4"
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "wiki",
+            "name": "id"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "timestamp: DateTime<Utc>",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "wiki",
+            "name": "timestamp"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "author",
-        "type_info": "Int8"
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "wiki",
+            "name": "author"
+          }
+        }
       },
       {
         "ordinal": 3,
         "name": "summary",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "wiki",
+            "name": "summary"
+          }
+        }
       }
     ],
     "parameters": {
