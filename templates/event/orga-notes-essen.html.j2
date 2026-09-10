@@ -7,7 +7,7 @@
         {% if animal_products == 'yes' and allergies == '' %}
             uneingeschränkt
         {% elif animal_products == 'yes' %}
-            Allergien/Unverträglichkeiten: {{allergies}}
+            tierische Produkte uneingeschränkt, Allergien/Unverträglichkeiten: {{allergies}}
         {% else %}
             {% if animal_products == 'vegetarian' %}
                 vegetarisch
