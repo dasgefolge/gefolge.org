@@ -70,6 +70,10 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
     def description(self):
         return self.data.get('dinner', '')
 
+    @property
+    def description_editable(self):
+        return False
+
     @description.setter
     def description(self, value):
         if 'essen' not in self.event.data:
