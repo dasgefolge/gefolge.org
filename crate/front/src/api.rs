@@ -26,6 +26,8 @@ use {
             Id as EventId,
         },
         user::{
+            self,
+            Discriminator,
             Mensch,
             User,
         },
@@ -228,4 +230,25 @@ pub(crate) async fn doli_attendees(db_pool: &State<PgPool>, me: Mensch, id: even
         });
     }
     Ok(Json(buf))
+}
+
+#[derive(Serialize)]
+pub(crate) struct Profile {
+    discriminator: Option<Discriminator>,
+    nick: Option<String>,
+    username: String,
+}
+
+#[rocket::get("/api/mensch/<id>/profile.json")]
+pub(crate) async fn profile(db_pool: &State<PgPool>, me: Mensch, id: user::Id) -> Result<Option<Json<Profile>>, rocket_util::Error<sqlx::Error>> {
+    let _ = me; // auth only
+    let user::Id(id) = id;
+    let mut transaction = db_pool.begin().await?;
+    let Some(user) = User::from_id(&mut transaction, id).await? else { return Ok(None) };
+    transaction.commit().await?;
+    Ok(Some(Json(Profile {
+        discriminator: user.discriminator,
+        nick: user.nick,
+        username: user.username,
+    })))
 }

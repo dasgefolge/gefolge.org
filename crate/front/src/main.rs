@@ -716,6 +716,7 @@ async fn rocket(port: Option<u16>, config: &Config, discord_ctx: serenity_utils:
         robots_txt,
         api::docs,
         api::doli_attendees,
+        api::profile,
         auth::discord_login,
         auth::discord_callback,
         auth::logout,

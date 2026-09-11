@@ -3,6 +3,7 @@ use {
         collections::BTreeSet,
         fmt,
         num::NonZero,
+        str::FromStr,
         time::Duration,
     },
     chrono_tz::Tz,
@@ -24,6 +25,7 @@ use {
         outcome::Outcome,
         request::{
             self,
+            FromParam,
             FromRequest,
             Request,
         },
@@ -33,7 +35,10 @@ use {
         ToHtml,
         html,
     },
-    serde::Deserialize,
+    serde::{
+        Deserialize,
+        Serialize,
+    },
     serenity::model::prelude::*,
     sqlx::{
         PgPool,
@@ -59,7 +64,18 @@ const VORSTAND: RoleId = RoleId::new(1456376541754953839);
 const MENSCH: RoleId = RoleId::new(386753710434287626);
 const GUEST: RoleId = RoleId::new(784929665478557737);
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+/// Wrapper type with trait implementations
+pub struct Id(pub UserId);
+
+impl<'a> FromParam<'a> for Id {
+    type Error = <u64 as FromStr>::Err;
+
+    fn from_param(param: &'a str) -> Result<Self, Self::Error> {
+        Ok(Self(param.parse()?))
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize)]
 pub struct Discriminator(pub i16);
 
 impl fmt::Display for Discriminator {
