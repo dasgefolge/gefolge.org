@@ -96,6 +96,38 @@ impl<'de> Deserialize<'de> for Euro {
             fn visit_str<E: Error>(self, v: &str) -> Result<Euro, E> {
                 v.parse().map_err(|_| E::invalid_value(Unexpected::Str(v), &self))
             }
+
+            fn visit_map<A: MapAccess<'de>>(self, mut v: A) -> Result<Euro, A::Error> {
+                struct DecimalKey;
+
+                impl<'de> Deserialize<'de> for DecimalKey {
+                    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+                        struct FieldVisitor;
+
+                        impl<'de> Visitor<'de> for FieldVisitor {
+                            type Value = ();
+
+                            fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                                write!(f, "a valid decimal field")
+                            }
+
+                            fn visit_str<E: Error>(self, s: &str) -> Result<(), E> {
+                                if s == "$serde_json::private::Number" {
+                                    Ok(())
+                                } else {
+                                    Err(Error::custom("expected field with custom name"))
+                                }
+                            }
+                        }
+
+                        deserializer.deserialize_identifier(FieldVisitor)?;
+                        Ok(DecimalKey)
+                    }
+                }
+
+                let (DecimalKey, value) = v.next_entry::<DecimalKey, &str>()?.ok_or_else(|| Error::invalid_type(Unexpected::Map, &self))?;
+                value.parse().map_err(|_| Error::invalid_value(Unexpected::Str(value), &self))
+            }
         }
 
         deserializer.deserialize_any(EuroVisitor)
