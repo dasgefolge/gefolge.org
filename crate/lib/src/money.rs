@@ -125,8 +125,8 @@ impl<'de> Deserialize<'de> for Euro {
                     }
                 }
 
-                let (DecimalKey, value) = v.next_entry::<DecimalKey, &str>()?.ok_or_else(|| Error::invalid_type(Unexpected::Map, &self))?;
-                value.parse().map_err(|_| Error::invalid_value(Unexpected::Str(value), &self))
+                let (DecimalKey, value) = v.next_entry::<DecimalKey, String>()?.ok_or_else(|| Error::invalid_type(Unexpected::Map, &self))?;
+                value.parse().map_err(|_| Error::invalid_value(Unexpected::Str(&value), &self))
             }
         }
 
