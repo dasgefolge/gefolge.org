@@ -36,7 +36,7 @@ impl FromStr for Euro {
     type Err = EuroParseError;
 
     fn from_str(s: &str) -> Result<Self, EuroParseError> {
-        let (_, sign, euros, cents) = regex_captures!("^([+−-]?)([0-9]+)(?:[.,]([0-9]{2}))?€?$", s).ok_or(EuroParseError::Format)?;
+        let (_, sign, euros, cents) = regex_captures!("^([+−-]?)([0-9]+)(?:[.,]([0-9]{0,2}))?€?$", s).ok_or(EuroParseError::Format)?;
         let sign = match sign {
             "" | "+" => 1,
             "−" | "-" => -1,
