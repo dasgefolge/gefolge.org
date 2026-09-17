@@ -188,12 +188,12 @@ def setup(index, app):
             event.data['programm'][programm_form.url_part.data] = {}
             programmpunkt = gefolge_web.event.programm.Programmpunkt(event, programm_form.url_part.data)
             handle_programm_edit(programmpunkt, programm_form, True)
-            peter.channel_msg(event.channel, 'Neuer Programmpunkt auf {}: {} ({}, <https://gefolge.org/event/{}/programm/{}>)'.format(
+            peter.channel_msg(event.channel, 'Neuer Programmpunkt auf {}: [{}](<https://gefolge.org/event/{}/programm/{}>) (von {})'.format(
                 '<@&{}>'.format(event.data['role']) if 'role' in event.data else event,
                 programmpunkt,
-                'Orga gesucht' if programmpunkt.orga is None else f'Orga: <@{programmpunkt.orga.snowflake}>',
                 event.event_id,
-                urllib.parse.quote(programmpunkt.url_part)
+                urllib.parse.quote(programmpunkt.url_part),
+                'Orga gesucht' if programmpunkt.orga is None else f'Orga: <@{programmpunkt.orga.snowflake}>'
             ))
             return flask.redirect((flask.g.view_node / 'programm' / programmpunkt.url_part).url)
         return {
