@@ -188,7 +188,7 @@ def setup(index, app):
             event.data['programm'][programm_form.url_part.data] = {}
             programmpunkt = gefolge_web.event.programm.Programmpunkt(event, programm_form.url_part.data)
             handle_programm_edit(programmpunkt, programm_form, True)
-            peter.channel_msg(event.channel, 'Neuer Programmpunkt auf {}: [{}](<https://gefolge.org/event/{}/programm/{}>) (von {})'.format(
+            peter.channel_msg(event.channel, 'Neuer Programmpunkt auf {}: [{}](<https://gefolge.org/event/{}/programm/{}>) ({})'.format(
                 '<@&{}>'.format(event.data['role']) if 'role' in event.data else event,
                 programmpunkt,
                 event.event_id,
