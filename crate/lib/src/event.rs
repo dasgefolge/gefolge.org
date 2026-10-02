@@ -210,7 +210,7 @@ async fn test_deserialize_events() -> sqlx::Result<()> {
 }
 
 impl Event {
-    pub async fn all(db_pool: impl PgExecutor<'_>) -> impl Stream<Item = sqlx::Result<(Id, Self)>> {
+    pub fn all<'a>(db_pool: impl PgExecutor<'a>) -> impl Stream<Item = sqlx::Result<(Id, Self)>> {
         sqlx::query("SELECT id, value FROM json_events ORDER BY value -> 'start' ASC NULLS LAST").fetch(db_pool).map_ok(|row| (row.get("id"), row.get::<Json<_>, _>("value").0))
     }
 
