@@ -50,8 +50,6 @@ class Abendessen(gefolge_web.event.programm.Programmpunkt):
         return self.orga == editor or self.event.orga('Essen') == editor
 
     def can_signup(self, editor, person):
-        if editor.is_admin:
-            return True # always allow the admin to edit since they have write access to the database anyway
         return False
 
     @property

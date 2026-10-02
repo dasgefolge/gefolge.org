@@ -241,8 +241,6 @@ class Programmpunkt:
         return self.orga == editor
 
     def can_signup(self, editor, person):
-        if editor.is_admin:
-            return True # always allow the admin to edit since they have write access to the database anyway
         if self.event.end < gefolge_web.util.now(self.event.timezone):
             return False # event frozen
         return (

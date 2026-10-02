@@ -16,6 +16,10 @@ use {
         EnumSet,
         EnumSetType,
     },
+    futures::stream::{
+        Stream,
+        TryStreamExt as _,
+    },
     lazy_regex::regex_captures,
     nonempty_collections::{
         NESlice,
@@ -206,8 +210,8 @@ async fn test_deserialize_events() -> sqlx::Result<()> {
 }
 
 impl Event {
-    pub async fn all(db_pool: impl PgExecutor<'_>) -> sqlx::Result<Vec<(String, Self)>> { //TODO return stream
-        Ok(sqlx::query("SELECT id, value FROM json_events ORDER BY value -> 'start' ASC NULLS LAST").fetch_all(db_pool).await?.into_iter().map(|row| (row.get("id"), row.get::<Json<_>, _>("value").0)).collect())
+    pub async fn all(db_pool: impl PgExecutor<'_>) -> impl Stream<Item = sqlx::Result<(Id, Self)>> {
+        sqlx::query("SELECT id, value FROM json_events ORDER BY value -> 'start' ASC NULLS LAST").fetch(db_pool).map_ok(|row| (row.get("id"), row.get::<Json<_>, _>("value").0))
     }
 
     pub async fn load(db_pool: impl PgExecutor<'_>, event_id: Id) -> sqlx::Result<Option<Self>> {
