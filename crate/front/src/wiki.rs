@@ -21,6 +21,7 @@ use {
         ContextualExt as _,
         CsrfForm,
         Origin,
+        RedirectOrContent,
         ToHtml,
         html,
     },
@@ -49,7 +50,6 @@ use {
     },
     crate::{
         PageKind,
-        RedirectOrContent,
         base_uri,
         form::{
             form_field,

@@ -35,7 +35,6 @@ use {
         },
         response::{
             self,
-            Redirect,
             Responder,
             content::{
                 RawHtml,
@@ -121,28 +120,6 @@ fn base_uri() -> rocket::http::uri::Absolute<'static> {
         Environment::Production => uri!("https://gefolge.org"),
         Environment::Dev => uri!("https://dev.gefolge.org"),
         Environment::Local => uri!("http://localhost:24816"),
-    }
-}
-
-#[derive(Responder)]
-enum RedirectOrContent {
-    Redirect(Redirect),
-    Content(RawHtml<String>),
-}
-
-#[derive(Responder)]
-enum StatusOrError<E> {
-    Status(Status),
-    Err(E),
-}
-
-impl<E> StatusOrError<E> {
-    fn err_into<F>(self) -> StatusOrError<F>
-    where E: Into<F> {
-        match self {
-            Self::Status(status) => StatusOrError::Status(status),
-            Self::Err(e) => StatusOrError::Err(e.into()),
-        }
     }
 }
 

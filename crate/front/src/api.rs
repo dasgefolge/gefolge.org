@@ -9,6 +9,8 @@ use {
     },
     rocket_util::{
         Origin,
+        ResultExt as _,
+        StatusOrError,
         html,
     },
     serde::Serialize,
@@ -34,7 +36,6 @@ use {
     },
     crate::{
         PageError,
-        StatusOrError,
         event,
         page,
         wiki,
@@ -183,25 +184,19 @@ pub(crate) enum DoliAttendeesError {
     UnknownTicketOption,
 }
 
-impl<E: Into<DoliAttendeesError>> From<E> for StatusOrError<DoliAttendeesError> {
-    fn from(e: E) -> Self {
-        Self::Err(e.into())
-    }
-}
-
 #[rocket::get("/api/event/<id>/doli-attendees.json")]
 pub(crate) async fn doli_attendees(db_pool: &State<PgPool>, me: Mensch, id: event::NewId) -> Result<Json<Vec<DoliAttendee>>, StatusOrError<DoliAttendeesError>> {
     if !me.is_vorstand() { return Err(StatusOrError::Status(Status::Unauthorized)) };
     let id = EventId::from(id);
-    let mut transaction = db_pool.begin().await?;
-    let Some(event) = Event::load(&mut *transaction, id).await? else { return Err(StatusOrError::Status(Status::NotFound)) };
+    let mut transaction = db_pool.begin().await.soe()?;
+    let Some(event) = Event::load(&mut *transaction, id).await.soe()? else { return Err(StatusOrError::Status(Status::NotFound)) };
     let mut buf = Vec::with_capacity(event.attendees().len());
     for attendee in event.attendees() {
         buf.push(DoliAttendee {
             full_name: match attendee.id {
                 AttendeeId::EventGuest(_) => attendee.name.clone().unwrap(),
                 AttendeeId::Discord(user_id) => {
-                    let user = User::from_id(&mut transaction, user_id).await?.expect("nonexistent attendee");
+                    let user = User::from_id(&mut transaction, user_id).await.soe()?.expect("nonexistent attendee");
                     user.nick.unwrap_or(user.username)
                 }
             },
@@ -215,18 +210,18 @@ pub(crate) async fn doli_attendees(db_pool: &State<PgPool>, me: Mensch, id: even
                 AttendeeId::Discord(user_id) => format!("{id}-{user_id}"),
             },
             accepted: true,
-            days: event.attendee_nights(&mut transaction, attendee).await?.ok_or(StatusOrError::Status(Status::NotFound))?.filter(|(_, night)| match night.going {
+            days: event.attendee_nights(&mut transaction, attendee).await.soe()?.ok_or(StatusOrError::Status(Status::NotFound))?.filter(|(_, night)| match night.going {
                 Going::Yes | Going::Maybe => true,
                 Going::No => false,
             }).count(),
             participation_fee: if let Some(ticket) = attendee.ticket.as_deref() {
-                let cost = event.ticket_options().ok_or(DoliAttendeesError::NoTicketOptions)?.iter().find(|option| option.id == ticket).ok_or(DoliAttendeesError::UnknownTicketOption)?.cost;
+                let cost = event.ticket_options().ok_or(DoliAttendeesError::NoTicketOptions).soe()?.iter().find(|option| option.id == ticket).ok_or(DoliAttendeesError::UnknownTicketOption).soe()?.cost;
                 if cost.cents % 100 != 0 { return Err(StatusOrError::Err(DoliAttendeesError::TicketOptionCost)) }
-                Some((cost.cents / 100).try_into()?)
+                Some((cost.cents / 100).try_into().soe()?)
             } else {
                 None
             },
-            status_updated_at: event.attendee_nights(&mut transaction, attendee).await?.ok_or(StatusOrError::Status(Status::NotFound))?.filter_map(|(_, night)| night.last_updated).max().ok_or(DoliAttendeesError::LastUpdated)?,
+            status_updated_at: event.attendee_nights(&mut transaction, attendee).await.soe()?.ok_or(StatusOrError::Status(Status::NotFound))?.filter_map(|(_, night)| night.last_updated).max().ok_or(DoliAttendeesError::LastUpdated).soe()?,
         });
     }
     Ok(Json(buf))
