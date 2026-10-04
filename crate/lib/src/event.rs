@@ -352,6 +352,13 @@ pub struct Attendee {
 }
 
 impl Attendee {
+    pub async fn to_html(&self, transaction: &mut Transaction<'_, Postgres>) -> sqlx::Result<RawHtml<String>> {
+        Ok(match self.id {
+            AttendeeId::Discord(user_id) => User::from_id(transaction, user_id).await?.expect("attendee user does not exist").to_html(),
+            AttendeeId::EventGuest(_) => self.name.as_deref().expect("event guest without name").to_html(),
+        })
+    }
+
     pub async fn via(&self, transaction: &mut Transaction<'_, Postgres>) -> sqlx::Result<Option<User>> {
         Ok(if let Some(via) = self.via_id {
             Some(User::from_id(transaction, via).await?.expect("guest proxy user does not exist"))
