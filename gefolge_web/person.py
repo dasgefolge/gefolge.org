@@ -21,6 +21,9 @@ class Person:
     def api_key_inner(self, *, create, exclude=None):
         return None
 
+    def has_role(self, role):
+        return False
+
     @property
     def is_active(self):
         return False # wer weder als Mensch noch als Gast verifiziert wurde, wird wie anonym behandelt

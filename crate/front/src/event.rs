@@ -602,6 +602,10 @@ async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<
                         input(id = "css_class-other", type = "radio", name = "css_class", value = "other", checked? = ctx.field_value("css_class").is_none_or(|val| val == "other"));
                         label(for = "css_class-other") : "Sonstiges";
                     });
+                    : form_field("verein", &mut errors, html! {
+                        input(type = "checkbox", id = "verein", name = "verein", checked? = ctx.field_value("verein").map_or(false, |value| value == "on"));
+                        label(for = "verein") : "nur für Vereinsmitglieder";
+                    });
                 }, errors, "Programmpunkt erstellen");
             }
             /*
@@ -1037,6 +1041,7 @@ pub(crate) struct ProgrammForm {
     #[field(default = String::new(), validate = len(..=40))]
     subtitle: String,
     css_class: ProgrammCssClass,
+    verein: bool,
 }
 
 #[derive(Serialize, FromFormField)]
@@ -1077,6 +1082,7 @@ pub(crate) async fn programm_post(config: &State<Config>, discord_ctx: &State<Rw
                 "cssClass": value.css_class,
                 "ibSubtitle": value.subtitle,
                 "name": value.display_name,
+                "requiredRole": value.verein.then_some(gefolge_web_lib::user::VEREIN),
             }), id.0 as _).execute(&mut *transaction).await.soe()?;
             let mut content = MessageBuilder::default();
             content.push("Neuer Programmpunkt auf ");

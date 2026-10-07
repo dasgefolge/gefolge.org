@@ -120,26 +120,20 @@ class DiscordPerson(User, metaclass=DiscordPersonMeta):
         """Returns the Discord discriminator, if any, as a string with leading zeroes."""
         return self.profile_data['discriminator']
 
+    def has_role(self, role):
+        return str(role) in self.profile_data.get('roles', [])
+
     @property
     def is_authenticated(self):
         return True
 
     @property
     def is_verein(self):
-        return str(VEREIN) in self.profile_data.get('roles', [])
+        return self.has_role(VEREIN)
 
     @property
     def is_vorstand(self):
-        return str(VORSTAND) in self.profile_data.get('roles', [])
-
-    @property
-    def is_wurstmineberg_member(self):
-        try:
-            response = requests.get('https://wurstmineberg.de/api/v3/people.json')
-            response.raise_for_status()
-            return str(self.snowflake) in response.json()['people']
-        except requests.RequestException:
-            return False
+        return self.has_role(VORSTAND)
 
     @property
     def long_name(self):
@@ -310,18 +304,6 @@ def TransferMoneyForm(mensch):
 
     return Form()
 
-def WurstminebergTransferMoneyForm(mensch):
-    class Form(flask_wtf.FlaskForm):
-        amount = gefolge_web.forms.EuroField('Betrag', [
-            wtforms.validators.InputRequired(),
-            gefolge_web.forms.EuroRange(min=gefolge_web.util.Euro('0.01'), message='Nur positive Beträge erlaubt.'),
-        ] + ([] if flask.g.user.is_admin or flask.g.user.is_treasurer else [
-            gefolge_web.forms.EuroRange(max=mensch.balance, message=markupsafe.Markup('Du kannst maximal dein aktuelles Guthaben übertragen.'))
-        ]))
-        submit_wurstmineberg_transfer_money_form = wtforms.SubmitField('Übertragen')
-
-    return Form()
-
 def is_safe_url(target):
     ref_url = urllib.parse.urlparse(flask.request.host_url)
     test_url = urllib.parse.urlparse(urllib.parse.urljoin(flask.request.host_url, target))
@@ -431,24 +413,12 @@ def setup(index, app):
                 if flask.g.user != recipient:
                     peter.msg(recipient, '<@{}> ({}) hat {} an dich übertragen. {}: <https://gefolge.org/me>'.format(person.snowflake, person, transfer_money_form.amount.data, 'Kommentar und weitere Infos' if transfer_money_form.comment.data else 'Weitere Infos'))
                 return flask.redirect(flask.g.view_node.url)
-            wurstmineberg_transfer_money_form = WurstminebergTransferMoneyForm(person)
-            if wurstmineberg_transfer_money_form.submit_wurstmineberg_transfer_money_form.data and wurstmineberg_transfer_money_form.validate():
-                transaction = gefolge_web.util.Transaction.wurstmineberg(wurstmineberg_transfer_money_form.amount.data)
-                person.add_transaction(transaction)
-                gefolge_web.util.cached_json(lazyjson.File('/opt/wurstmineberg/money.json'))['transactions'].append({
-                    'amount': wurstmineberg_transfer_money_form.amount.data.value,
-                    'currency': 'EUR',
-                    'time': '{:%Y-%m-%dT%H:%M:%SZ}'.format(transaction.time.astimezone(pytz.utc)),
-                    'type': 'gefolge'
-                })
         else:
             transfer_money_form = None
-            wurstmineberg_transfer_money_form = None
         return {
             'events': [event for event in gefolge_web.event.model.Event if person in event.signups],
             'person': person,
             'transfer_money_form': transfer_money_form,
-            'wurstmineberg_transfer_money_form': wurstmineberg_transfer_money_form
         }
 
     @profile.catch_init(ValueError)

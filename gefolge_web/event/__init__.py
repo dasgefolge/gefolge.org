@@ -82,7 +82,7 @@ def handle_programm_edit(programmpunkt, programm_form, is_new):
         'orga': programm_form.orga.data.snowflake if hasattr(programm_form, 'orga') and programm_form.orga.data is not None else '(unchanged)',
         'start': (None if programm_form.start.data is None else '{:%Y-%m-%dT%H:%M:%S}'.format(programm_form.start.data)),
         'end': (None if programm_form.end.data is None else '{:%Y-%m-%dT%H:%M:%S}'.format(programm_form.end.data)),
-        'description': programm_form.description.data if hasattr(programm_form, 'description') else None
+        'description': programm_form.description.data if hasattr(programm_form, 'description') else None,
     })
     if programmpunkt.name_editable and hasattr(programm_form, 'display_name'):
         programmpunkt.name = programm_form.display_name.data
@@ -105,6 +105,8 @@ def handle_programm_edit(programmpunkt, programm_form, is_new):
         programmpunkt.description = programm_form.description.data
     if hasattr(programm_form, 'css_class'):
         programmpunkt.css_class = programm_form.css_class.data
+    if hasattr(programm_form, 'verein'):
+        programmpunkt.required_role = gefolge_web.login.VEREIN if programm_form.verein else None
 
 def mensch_or_signup_required(f):
     @functools.wraps(f)
@@ -200,7 +202,7 @@ def setup(index, app):
             'event': event,
             'confirm_signup_form': confirm_signup_form,
             'profile_form': profile_form,
-            'programm_form': programm_form
+            'programm_form': programm_form,
         }
 
     @event_page.catch_init(FileNotFoundError)

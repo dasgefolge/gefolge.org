@@ -65,8 +65,6 @@ pub(crate) mod werewolf;
 pub const GEFOLGE: GuildId = GuildId::new(355761290809180170);
 
 const QUIZMASTER: RoleId = RoleId::new(847443327069454378);
-pub const MENSCH: RoleId = RoleId::new(386753710434287626);
-pub const GUEST: RoleId = RoleId::new(784929665478557737);
 
 const FENHL: UserId = UserId::new(86841168427495424);
 

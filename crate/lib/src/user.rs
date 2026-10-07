@@ -60,9 +60,10 @@ use {
     },
 };
 
-const VORSTAND: RoleId = RoleId::new(1456376541754953839);
-const MENSCH: RoleId = RoleId::new(386753710434287626);
-const GUEST: RoleId = RoleId::new(784929665478557737);
+pub const VORSTAND: RoleId = RoleId::new(1456376541754953839);
+pub const VEREIN: RoleId = RoleId::new(1456376693831766057);
+pub const MENSCH: RoleId = RoleId::new(386753710434287626);
+pub const GUEST: RoleId = RoleId::new(784929665478557737);
 
 /// Wrapper type with trait implementations
 pub struct Id(pub UserId);

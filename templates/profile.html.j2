@@ -80,11 +80,6 @@
                 <p>Du kannst Geld von deinem Guthaben an andere Gefolgemenschen übertragen.</p>
                 <p>Wenn du Geld an jemand übertragen hast, kann nur diese Person es dir zurück geben. Achte also bitte genau darauf, dass du den richtigen Empfänger wählst!</p>
                 {{gen_form(transfer_money_form, g.view_node.url)}}
-                {% if person.is_wurstmineberg_member %}
-                    <h2>Wurstmineberg</h2>
-                    <p>Wenn du möchtest, kannst du Geld von deinem Guthaben für die Finanzierung des server verwenden, auf dem Wurstmineberg läuft. Details siehe <a href="https://wurstmineberg.de/about#finance">Wurstmineberg website</a>.</p>
-                    {{gen_form(wurstmineberg_transfer_money_form, g.view_node.url)}}
-                {% endif %}
             {% endif %}
         {% endif %}
         {% if person.transactions | length > 0 %}

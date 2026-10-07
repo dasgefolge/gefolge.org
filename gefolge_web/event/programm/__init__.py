@@ -249,6 +249,7 @@ class Programmpunkt:
             and person not in self.signups
             and len(self.signups) < self.signup_limit
             and not self.closed
+            and (self.required_role is None or person.has_role(self.required_role))
         )
 
     @property
@@ -457,6 +458,14 @@ class Programmpunkt:
             self.signup(person_to_signup)
 
         self.process_form_details(form, editor)
+
+    @property
+    def required_role(self):
+        return self.data.get('requiredRole')
+
+    @required_role.setter
+    def required_role(self, value):
+        self.data['requiredRole'] = str(value)
 
     def signup(self, person):
         gefolge_web.util.log('eventProgrammSignup', {

@@ -207,6 +207,7 @@ def ProgrammForm(event, programmpunkt):
             ],
             default='programm-other' if programmpunkt is None else programmpunkt.css_class
         )
+        Form.verein = wtforms.BooleanField('nur für Vereinsmitglieder')
     Form.submit_programm_form = wtforms.SubmitField('Programmpunkt erstellen' if programmpunkt is None else 'Speichern')
 
     return Form()
