@@ -3551,7 +3551,7 @@ dependencies = [
 [[package]]
 name = "rocket-util"
 version = "0.2.17"
-source = "git+https://github.com/fenhl/rocket-util#1431498f11eb9b72af2cb20d2cc571b6dd5c733d"
+source = "git+https://github.com/fenhl/rocket-util#6817f6b71e273af84e9ef080e8679998c05158ac"
 dependencies = [
  "futures",
  "reqwest 0.13.5",
@@ -3566,7 +3566,7 @@ dependencies = [
 [[package]]
 name = "rocket-util-derive"
 version = "0.2.17"
-source = "git+https://github.com/fenhl/rocket-util#1431498f11eb9b72af2cb20d2cc571b6dd5c733d"
+source = "git+https://github.com/fenhl/rocket-util#6817f6b71e273af84e9ef080e8679998c05158ac"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -5577,7 +5577,7 @@ dependencies = [
 [[package]]
 name = "wheel"
 version = "0.15.3"
-source = "git+https://github.com/fenhl/wheel#bd63d925c082ca1542935bb3b17000fd0a953987"
+source = "git+https://github.com/fenhl/wheel#f9b83b3b015ef61fa26b64254ae1730156842c10"
 dependencies = [
  "async-proto",
  "async-trait",
@@ -5603,7 +5603,7 @@ dependencies = [
 [[package]]
 name = "wheel-derive"
 version = "0.15.3"
-source = "git+https://github.com/fenhl/wheel#bd63d925c082ca1542935bb3b17000fd0a953987"
+source = "git+https://github.com/fenhl/wheel#f9b83b3b015ef61fa26b64254ae1730156842c10"
 dependencies = [
  "itertools 0.15.0",
  "proc-macro2",
@@ -5645,7 +5645,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
