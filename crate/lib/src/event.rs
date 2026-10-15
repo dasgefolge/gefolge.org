@@ -34,6 +34,7 @@ use {
                 UriDisplay,
             },
         },
+        request::FromParam,
         response::content::RawHtml,
     },
     rocket_util::{
@@ -135,6 +136,14 @@ impl fmt::Display for Id {
             Season::Winter => write!(f, "sil")?,
         }
         write!(f, "{}", self.year)
+    }
+}
+
+impl FromParam<'_> for Id {
+    type Error = IdParseError;
+
+    fn from_param(param: &str) -> Result<Self, IdParseError> {
+        param.parse()
     }
 }
 
