@@ -27,11 +27,14 @@ use {
     },
     rocket::{
         FromFormField,
-        http::uri::{
-            self,
-            fmt::{
-                Path,
-                UriDisplay,
+        http::{
+            impl_from_uri_param_identity,
+            uri::{
+                self,
+                fmt::{
+                    Path,
+                    UriDisplay,
+                },
             },
         },
         request::FromParam,
@@ -152,6 +155,8 @@ impl UriDisplay<Path> for Id {
         write!(f, "{self}")
     }
 }
+
+impl_from_uri_param_identity!([Path] Id);
 
 impl<'r, DB: Database> Decode<'r, DB> for Id
 where &'r str: Decode<'r, DB> {
