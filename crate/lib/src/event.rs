@@ -333,7 +333,7 @@ impl Event {
 
     pub fn to_html(&self, id: Id) -> RawHtml<String> {
         html! {
-            a(href = format!("/event/{id}")) : self.name.as_deref().map(Cow::Borrowed).unwrap_or_else(|| Cow::Owned(id.to_string()));
+            a(href = format!("/event/{id}")) : self.name(id);
         }
     }
 }
