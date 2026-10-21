@@ -13,8 +13,12 @@ use {
         Role
     },
     serenity::{
+        all::Content,
         model::user::User,
-        utils::MessageBuilder
+        utils::{
+            EmbedMessageBuilding as _,
+            MessageBuilder
+        },
     }
 };
 
@@ -26,6 +30,7 @@ pub use self::Case::*;
 
 pub trait MessageBuilderExt {
     fn dm_mention(&mut self, user: &User) -> &mut Self;
+    fn push_named_link_safe_no_preview(&mut self, name: impl Into<Content>, url: impl Into<Content>) -> &mut Self;
 }
 
 impl MessageBuilderExt for MessageBuilder {
@@ -36,6 +41,10 @@ impl MessageBuilderExt for MessageBuilder {
         } else {
             self.push_safe(format!(" (@{})", user.name))
         }
+    }
+
+    fn push_named_link_safe_no_preview(&mut self, name: impl Into<Content>, url: impl Into<Content>) -> &mut Self {
+        self.push_named_link_safe(name, format!("<{}>", url.into()))
     }
 }
 

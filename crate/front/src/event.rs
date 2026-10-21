@@ -63,7 +63,10 @@ use {
             OrgaRole,
         },
         lang,
-        peter::GEFOLGE,
+        peter::{
+            GEFOLGE,
+            lang::MessageBuilderExt as _,
+        },
         time::{
             MaybeAwareDateTime,
             MaybeLocalDateTime,
@@ -1092,12 +1095,8 @@ pub(crate) async fn programm_post(config: &State<Config>, discord_ctx: &State<Rw
                 content.push_safe(event.name(id.0));
             }
             content.push(": ");
-            content.push_safe(&value.display_name);
-            content.push(" (Orga gesucht, <https://gefolge.org/event/"); //TODO allow assigning Orga
-            content.push(id.0.to_string());
-            content.push("/programm/");
-            content.push(&value.url_part);
-            content.push(">)");
+            content.push_named_link_safe_no_preview(&value.display_name, format!("https://gefolge.org/event/{}/programm/{}", id.0, value.url_part));
+            content.push(" (Orga gesucht)"); //TODO allow assigning Orga
             event.discord_channel().say(&*discord_ctx.read().await, content.build()).await.soe()?;
             transaction.commit().await.soe()?;
             RedirectOrContent::Redirect(Redirect::to(format!("/event/{}/programm/{}", id.0, value.url_part)))

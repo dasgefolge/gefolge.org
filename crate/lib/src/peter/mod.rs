@@ -56,7 +56,7 @@ use {
 };
 
 mod ipc;
-mod lang;
+pub mod lang;
 mod parse;
 pub(crate) mod twitch;
 mod user_list;
