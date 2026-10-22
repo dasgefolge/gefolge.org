@@ -461,11 +461,11 @@ class Programmpunkt:
 
     @property
     def required_role(self):
-        return self.data.get('requiredRole')
+        return int(self.data.get('requiredRole'))
 
     @required_role.setter
     def required_role(self, value):
-        self.data['requiredRole'] = str(value)
+        self.data['requiredRole'] = None if value is None else str(value)
 
     def signup(self, person):
         gefolge_web.util.log('eventProgrammSignup', {
