@@ -107,7 +107,7 @@ def handle_programm_edit(programmpunkt, programm_form, is_new):
     if hasattr(programm_form, 'css_class'):
         programmpunkt.css_class = programm_form.css_class.data
     if hasattr(programm_form, 'verein'):
-        programmpunkt.required_role = gefolge_web.login.VEREIN if programm_form.verein else None
+        programmpunkt.required_role = gefolge_web.login.VEREIN if programm_form.verein.data else None
 
 def mensch_or_signup_required(f):
     @functools.wraps(f)
