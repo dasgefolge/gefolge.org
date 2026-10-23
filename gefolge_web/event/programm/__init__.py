@@ -461,7 +461,7 @@ class Programmpunkt:
 
     @property
     def required_role(self):
-        return int(self.data.get('requiredRole'))
+        return None if (data := self.data.get('requiredRole')) is None else int(data)
 
     @required_role.setter
     def required_role(self, value):
