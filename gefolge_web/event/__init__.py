@@ -83,7 +83,7 @@ def handle_programm_edit(programmpunkt, programm_form, is_new):
         'start': (None if programm_form.start.data is None else '{:%Y-%m-%dT%H:%M:%S}'.format(programm_form.start.data)),
         'end': (None if programm_form.end.data is None else '{:%Y-%m-%dT%H:%M:%S}'.format(programm_form.end.data)),
         'description': programm_form.description.data if hasattr(programm_form, 'description') else None,
-        'verein': getattr(programm_form, 'verein', None),
+        'verein': programm_form.verein.data if hasattr(programm_form, 'verein') else None,
     })
     if programmpunkt.name_editable and hasattr(programm_form, 'display_name'):
         programmpunkt.name = programm_form.display_name.data
