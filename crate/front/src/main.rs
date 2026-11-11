@@ -195,7 +195,7 @@ enum PageError {
 
 async fn page(mut transaction: Transaction<'_, Postgres>, me: impl LoginState, uri: &Origin<'_>, kind: PageKind, title: &str, content: impl ToHtml) -> Result<RawHtml<String>, PageError> {
     fn breadcrumbs(uri: &Origin<'_>, display: Vec<RawHtml<String>>) -> RawHtml<String> {
-        let mut path_segments = uri.0.path().segments().zip_eq(display).collect_vec();
+        let mut path_segments = uri.0.path().segments().zip(display).collect_vec();
         let last = path_segments.pop();
         let mut prefix = Vec::default();
         let mut buf = RawHtml(String::default());
