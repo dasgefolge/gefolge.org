@@ -125,7 +125,7 @@
                         {% for aufgabe in event.attendee_data(person).get('orga', []) %} {#TODO display Hauptorga when implicitly assigned #}
                             {% if aufgabe == 'Haupt' %}
                                 (Hauptorga) {#TODO icon #}
-                            {% if aufgabe == 'Abrechnung' %}
+                            {% elif aufgabe == 'Abrechnung' %}
                                 <i title="Orga: Abrechnung" class="fa fa-fw fa-euro"></i>
                             {% elif aufgabe == 'Buchung' %}
                                 <i title="Orga: Buchung" class="fa fa-fw fa-home"></i>
