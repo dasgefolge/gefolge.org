@@ -248,6 +248,7 @@ async fn overview_page(db_pool: &PgPool, me: User, uri: Origin<'_>, csrf: Option
     let viewer_data = me.data(&mut transaction).await.soe()?;
     let Some(event) = Event::load(&mut *transaction, id).await.soe()? else { return Err(StatusOrError::Status(Status::NotFound)) };
     if !me.is_mensch() && event.attendee(AttendeeId::Discord(me.id)).is_none() { return Err(StatusOrError::Status(Status::Unauthorized)) }
+    let hauptorga = event.hauptorga(&mut transaction).await.soe()?;
     let location_info = event.location_info(&mut transaction).await.soe()?;
     let content = html! { //TODO translate remaining Jinja code to Horrorshow
         p {
@@ -300,7 +301,7 @@ async fn overview_page(db_pool: &PgPool, me: User, uri: Origin<'_>, csrf: Option
                 : ".";
                 @if me.is_mensch() {
                     : " Wenn du etwas davon übernehmen möchtest, melde dich bitte bei ";
-                    : event.hauptorga(&mut transaction).await.soe()?;
+                    : hauptorga;
                     : ". ";
                     a(href = uri!(_, crate::wiki::main_article("sil-faq"), "#orga")) : "Weitere Infos";
                 }
@@ -534,10 +535,10 @@ async fn overview_page(db_pool: &PgPool, me: User, uri: Origin<'_>, csrf: Option
             {{event.signup_block_reason | markdown}}
         {% endif %}
         */
-        @if event.hauptorga(&mut transaction).await.soe()? == me || event.attendee(AttendeeId::Discord(me.id)).is_some_and(|attendee| !attendee.orga.is_empty()) {
+        @if hauptorga == me || event.attendee(AttendeeId::Discord(me.id)).is_some_and(|attendee| !attendee.orga.is_empty()) {
             h1(id = "orga") : "Orga";
         }
-        @if event.hauptorga(&mut transaction).await.soe()? == me {
+        @if hauptorga == me {
             h2 : "Hauptorga";
             p : "Hier kannst du die Hauptorga abgeben oder die anderen Orga-Aufgaben zuweisen.";
             @let mut errors = ctx.errors().collect_vec();
@@ -547,13 +548,24 @@ async fn overview_page(db_pool: &PgPool, me: User, uri: Origin<'_>, csrf: Option
                     : form_field(&field_id, &mut errors, html! {
                         label(for = &field_id) : role.to_string();
                         select(name = &field_id) {
+                            @let selected_id = ctx.field_value(&*field_id).and_then(|val| if val.is_empty() {
+                                Some(None)
+                            } else {
+                                val.parse::<UserId>().map(Some).ok()
+                            }).unwrap_or_else(|| if let OrgaRole::Haupt = role {
+                                Some(hauptorga.id)
+                            } else {
+                                event.attendees().iter()
+                                    .find(|attendee| attendee.orga.contains(role))
+                                    .map(|attendee| if let AttendeeId::Discord(id) = attendee.id { id } else { panic!("EventGuest als Orga") })
+                            });
                             @if role != OrgaRole::Haupt {
-                                option(value = "", selected? = ctx.field_value(&*field_id).is_none_or(|val| val.is_empty())) : "(nicht zugewiesen)";
+                                option(value = "", selected? = selected_id.is_none()) : "(nicht zugewiesen)";
                             }
                             @let mut users = User::all(&mut transaction);
                             @while let Some(user) = users.try_next().await.soe()? {
                                 @if role == OrgaRole::Haupt && user.roles.contains(&gefolge_web_lib::user::VORSITZ) || event.attendee(AttendeeId::Discord(user.id)).is_some() {
-                                    option(value = user.id.to_string(), selected? = ctx.field_value(&*field_id).is_some_and(|val| val.parse::<UserId>().is_ok_and(|val| val == user.id))) : user.long_name();
+                                    option(value = user.id.to_string(), selected? = selected_id == Some(user.id)) : user.long_name();
                                 }
                             }
                         }
