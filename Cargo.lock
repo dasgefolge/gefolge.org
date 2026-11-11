@@ -1498,7 +1498,6 @@ dependencies = [
  "semver",
  "serde",
  "serde_json_path_to_error",
- "serde_plain",
  "serde_with",
  "serenity",
  "serenity-utils",

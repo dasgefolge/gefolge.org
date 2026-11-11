@@ -544,7 +544,7 @@ async fn overview_page(db_pool: &PgPool, me: User, uri: Origin<'_>, csrf: Option
             @let mut errors = ctx.errors().collect_vec();
             : full_form(uri!(orga_post(new_id)), csrf, html! {
                 @for role in event.orga_roles(id) {
-                    @let field_id = format!("orga[{}]", serde_plain::to_string(&role).expect("failed to serialize OrgaRole"));
+                    @let field_id = format!("orga[{role:?}]");
                     : form_field(&field_id, &mut errors, html! {
                         label(for = &field_id) : role.to_string();
                         select(name = &field_id) {
