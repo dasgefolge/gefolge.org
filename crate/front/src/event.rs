@@ -1,5 +1,7 @@
 use {
+    std::collections::HashMap,
     chrono::prelude::*,
+    enumset::EnumSet,
     futures::stream::TryStreamExt as _,
     itertools::Itertools as _,
     lazy_regex::regex_is_match,
@@ -51,7 +53,6 @@ use {
         types::Json,
     },
     gefolge_web_lib::{
-        config::Config,
         event::{
             AnimalProducts,
             AttendeeId,
@@ -240,7 +241,7 @@ pub(crate) enum GetError {
     #[error(transparent)] Wiki(#[from] crate::wiki::Error),
 }
 
-async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<'_>, csrf: Option<&CsrfToken>, new_id: NewId, ctx: &Context<'_>) -> Result<RawHtml<String>, StatusOrError<GetError>> {
+async fn overview_page(db_pool: &PgPool, me: User, uri: Origin<'_>, csrf: Option<&CsrfToken>, new_id: NewId, ctx: &Context<'_>) -> Result<RawHtml<String>, StatusOrError<GetError>> {
     let now = Utc::now();
     let id = Id::from(new_id);
     let mut transaction = db_pool.begin().await.soe()?;
@@ -299,7 +300,7 @@ async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<
                 : ".";
                 @if me.is_mensch() {
                     : " Wenn du etwas davon übernehmen möchtest, melde dich bitte bei ";
-                    : config.admin(&mut transaction).await.soe()?;
+                    : event.hauptorga(&mut transaction).await.soe()?;
                     : ". ";
                     a(href = uri!(_, crate::wiki::main_article("sil-faq"), "#orga")) : "Weitere Infos";
                 }
@@ -533,21 +534,35 @@ async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<
             {{event.signup_block_reason | markdown}}
         {% endif %}
         */
-        @if let Some(attendee) = event.attendee(AttendeeId::Discord(me.id)) && !attendee.orga.is_empty() {
+        @if event.hauptorga(&mut transaction).await.soe()? == me || event.attendee(AttendeeId::Discord(me.id)).is_some_and(|attendee| !attendee.orga.is_empty()) {
             h1(id = "orga") : "Orga";
+        }
+        @if event.hauptorga(&mut transaction).await.soe()? == me {
+            h2 : "Hauptorga";
+            p : "Hier kannst du die Hauptorga abgeben oder die anderen Orga-Aufgaben zuweisen.";
+            @let mut errors = ctx.errors().collect_vec();
+            : full_form(uri!(orga_post(new_id)), csrf, html! {
+                @for role in event.orga_roles(id) {
+                    @let field_id = format!("orga[{}]", serde_plain::to_string(&role).expect("failed to serialize OrgaRole"));
+                    : form_field(&field_id, &mut errors, html! {
+                        label(for = &field_id) : role.to_string();
+                        select(name = &field_id) {
+                            @if role != OrgaRole::Haupt {
+                                option(value = "", selected? = ctx.field_value(&*field_id).is_none_or(|val| val.is_empty())) : "(nicht zugewiesen)";
+                            }
+                            @let mut users = User::all(&mut transaction);
+                            @while let Some(user) = users.try_next().await.soe()? {
+                                @if role == OrgaRole::Haupt && user.roles.contains(&gefolge_web_lib::user::VORSITZ) || event.attendee(AttendeeId::Discord(user.id)).is_some() {
+                                    option(value = user.id.to_string(), selected? = ctx.field_value(&*field_id).is_some_and(|val| val.parse::<UserId>().is_ok_and(|val| val == user.id))) : user.long_name();
+                                }
+                            }
+                        }
+                    });
+                }
+            }, errors, "Speichern");
+        }
+        @if let Some(attendee) = event.attendee(AttendeeId::Discord(me.id)) && !attendee.orga.is_empty() {
             /*
-            {% if g.user is admin or event.orga('Buchung') == g.user %}
-                <h2>Buchung</h2>
-                {% if event.ausfall > event.anzahlung_total %}
-                    {% if event.ausfall_date is none %}
-                        <p>Wir können erst buchen, wenn die Ausfallgebühr von {{event.ausfall}} gesichert ist. Dazu fehlen noch {{event.ausfall - event.anzahlung_total}}, also {{((event.ausfall - event.anzahlung_total).value / event.anzahlung.value) | round(0, 'ceil') | int}} Anmeldungen.</p>
-                    {% else %}
-                        <p>Bis zum {{event.ausfall_date | dmy(event.timezone)}} müssen wir die Ausfallgebühr von {{event.ausfall}} abdecken. Dazu fehlen noch {{event.ausfall - event.anzahlung_total}}, also {{((event.ausfall - event.anzahlung_total).value / event.anzahlung.value) | round(0, 'ceil') | int}} Anmeldungen.</p>
-                    {% endif %}
-                {% else %}
-                    <p>Die Ausfallgebühr von {{event.ausfall}} ist jetzt durch die Anzahlungen abgedeckt. Das Haus kann also gebucht werden.</p>
-                {% endif %}
-            {% endif %}
             {% if g.user is admin or event.orga('Essen') == g.user %}
                 <h2>Essen</h2>
                 <p>Trage bitte jeweils als Programmpunktbeschreibung ein, was es an dem Abend gibt.</p>
@@ -630,8 +645,8 @@ async fn overview_page(config: &Config, db_pool: &PgPool, me: User, uri: Origin<
 }
 
 #[rocket::get("/event/<id>")]
-pub(crate) async fn get(config: &State<Config>, db_pool: &State<PgPool>, me: User, uri: Origin<'_>, csrf: Option<CsrfToken>, id: NewId) -> Result<RawHtml<String>, StatusOrError<GetError>> {
-    overview_page(config, db_pool, me, uri, csrf.as_ref(), id, &Context::default()).await
+pub(crate) async fn get(db_pool: &State<PgPool>, me: User, uri: Origin<'_>, csrf: Option<CsrfToken>, id: NewId) -> Result<RawHtml<String>, StatusOrError<GetError>> {
+    overview_page(db_pool, me, uri, csrf.as_ref(), id, &Context::default()).await
 }
 
 #[derive(FromForm, CsrfForm)]
@@ -657,7 +672,7 @@ pub(crate) enum PostError {
 }
 
 #[rocket::post("/event/<id>", data = "<form>")]
-pub(crate) async fn post(config: &State<Config>, discord_ctx: &State<RwFuture<DiscordCtx>>, db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>, csrf: Option<CsrfToken>, id: NewId, form: Form<Contextual<'_, SignupForm>>) -> Result<RedirectOrContent, StatusOrError<PostError>> {
+pub(crate) async fn post(discord_ctx: &State<RwFuture<DiscordCtx>>, db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>, csrf: Option<CsrfToken>, id: NewId, form: Form<Contextual<'_, SignupForm>>) -> Result<RedirectOrContent, StatusOrError<PostError>> {
     let mut transaction = db_pool.begin().await.soe()?;
     let Some(event) = Event::load(&mut *transaction, id.0).await.soe()? else { return Err(StatusOrError::Status(Status::NotFound)) };
     let location_info = event.location_info(&mut transaction).await.soe()?;
@@ -699,7 +714,7 @@ pub(crate) async fn post(config: &State<Config>, discord_ctx: &State<RwFuture<Di
             }
         }
         if form.context.errors().next().is_some() {
-            RedirectOrContent::Content(overview_page(config, db_pool, me.into(), uri, csrf.as_ref(), id, &form.context).await.map_err(StatusOrError::err_into)?)
+            RedirectOrContent::Content(overview_page(db_pool, me.into(), uri, csrf.as_ref(), id, &form.context).await.map_err(StatusOrError::err_into)?)
         } else {
             let now = MaybeAwareDateTime::Aware(Utc::now());
             let mut menschen = sqlx::query_scalar!(r#"SELECT value -> 'menschen' AS "menschen: Json<Vec<serde_json::Value>>" FROM json_events WHERE id = $1"#, id.0 as _).fetch_one(&mut *transaction).await.soe()?.map(|Json(menschen)| menschen).unwrap_or_default();
@@ -742,7 +757,7 @@ pub(crate) async fn post(config: &State<Config>, discord_ctx: &State<RwFuture<Di
             RedirectOrContent::Redirect(Redirect::to(format!("/event/{}/mensch/{}", id.0, me.id)))
         }
     } else {
-        RedirectOrContent::Content(overview_page(config, db_pool, me.into(), uri, csrf.as_ref(), id, &form.context).await.map_err(StatusOrError::err_into)?)
+        RedirectOrContent::Content(overview_page(db_pool, me.into(), uri, csrf.as_ref(), id, &form.context).await.map_err(StatusOrError::err_into)?)
     })
 }
 
@@ -1036,6 +1051,41 @@ pub(crate) async fn signup_guest_post(discord_ctx: &State<RwFuture<DiscordCtx>>,
 }
 
 #[derive(FromForm, CsrfForm)]
+pub(crate) struct OrgaForm {
+    #[field(default = String::new())]
+    csrf: String,
+    orga: HashMap<OrgaRole, Option<FormUserId>>,
+}
+
+#[rocket::post("/event/<id>/orga", data = "<form>")]
+pub(crate) async fn orga_post(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>, csrf: Option<CsrfToken>, id: NewId, form: Form<Contextual<'_, OrgaForm>>) -> Result<RedirectOrContent, StatusOrError<PostError>> {
+    let mut transaction = db_pool.begin().await.soe()?;
+    let Some(event) = Event::load(&mut *transaction, id.0).await.soe()? else { return Err(StatusOrError::Status(Status::NotFound)) };
+    let mut form = form.into_inner();
+    form.verify(&csrf);
+    Ok(if let Some(ref value) = form.value {
+        if event.hauptorga(&mut transaction).await.soe()? != *me {
+            form.context.push_error(form::Error::validation("Dieses Formular kann nur von der Hauptorga verwendet werden."));
+        }
+        if !(event.orga_roles(id.0) - value.orga.keys().collect::<EnumSet<_>>()).is_empty() {
+            form.context.push_error(form::Error::validation("Fehlende Orga-Aufgaben. Bitte melde diesen Fehler im #dev."));
+        }
+        if form.context.errors().next().is_some() {
+            RedirectOrContent::Content(overview_page(db_pool, me.into(), uri, csrf.as_ref(), id, &form.context).await.map_err(StatusOrError::err_into)?)
+        } else {
+            for (idx, attendee) in event.attendees().iter().enumerate() {
+                let roles = value.orga.iter().filter(|(_, orga)| orga.is_some_and(|FormUserId(orga)| if let AttendeeId::Discord(attendee) = attendee.id { orga == attendee } else { false })).map(|(role, _)| role).collect_vec();
+                sqlx::query!("UPDATE json_events SET value = JSONB_SET(value, ARRAY['menschen', $1, 'orga'], $2) WHERE id = $3", idx.to_string(), Json(roles) as _, id.0 as _).execute(&mut *transaction).await.soe()?;
+            }
+            transaction.commit().await.soe()?;
+            RedirectOrContent::Redirect(Redirect::to(format!("/event/{}/mensch", id.0)))
+        }
+    } else {
+        RedirectOrContent::Content(overview_page(db_pool, me.into(), uri, csrf.as_ref(), id, &form.context).await.map_err(StatusOrError::err_into)?)
+    })
+}
+
+#[derive(FromForm, CsrfForm)]
 pub(crate) struct ProgrammForm {
     #[field(default = String::new())]
     csrf: String,
@@ -1062,7 +1112,7 @@ enum ProgrammCssClass {
 }
 
 #[rocket::post("/event/<id>/programm", data = "<form>")]
-pub(crate) async fn programm_post(config: &State<Config>, discord_ctx: &State<RwFuture<DiscordCtx>>, db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>, csrf: Option<CsrfToken>, id: NewId, form: Form<Contextual<'_, ProgrammForm>>) -> Result<RedirectOrContent, StatusOrError<PostError>> {
+pub(crate) async fn programm_post(discord_ctx: &State<RwFuture<DiscordCtx>>, db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>, csrf: Option<CsrfToken>, id: NewId, form: Form<Contextual<'_, ProgrammForm>>) -> Result<RedirectOrContent, StatusOrError<PostError>> {
     let mut transaction = db_pool.begin().await.soe()?;
     let Some(event) = Event::load(&mut *transaction, id.0).await.soe()? else { return Err(StatusOrError::Status(Status::NotFound)) };
     let mut form = form.into_inner();
@@ -1074,9 +1124,8 @@ pub(crate) async fn programm_post(config: &State<Config>, discord_ctx: &State<Rw
         if event.programmpunkt(&value.url_part).is_some() {
             form.context.push_error(form::Error::validation("Es gibt bereits einen Programmpunkt mit dieser URL.").with_name("url_part"));
         }
-
         if form.context.errors().next().is_some() {
-            RedirectOrContent::Content(overview_page(config, db_pool, me.into(), uri, csrf.as_ref(), id, &form.context).await.map_err(StatusOrError::err_into)?)
+            RedirectOrContent::Content(overview_page(db_pool, me.into(), uri, csrf.as_ref(), id, &form.context).await.map_err(StatusOrError::err_into)?)
         } else {
             if sqlx::query_scalar!(r#"SELECT value -> 'programm' IS NULL AS "programm_is_null!" FROM json_events WHERE id = $1"#, id.0 as _).fetch_one(&mut *transaction).await.soe()? {
                 sqlx::query!("UPDATE json_events SET value = JSONB_INSERT(value, '{programm}', '{}') WHERE id = $1", id.0 as _).execute(&mut *transaction).await.soe()?;
@@ -1102,6 +1151,6 @@ pub(crate) async fn programm_post(config: &State<Config>, discord_ctx: &State<Rw
             RedirectOrContent::Redirect(Redirect::to(format!("/event/{}/programm/{}", id.0, value.url_part)))
         }
     } else {
-        RedirectOrContent::Content(overview_page(config, db_pool, me.into(), uri, csrf.as_ref(), id, &form.context).await.map_err(StatusOrError::err_into)?)
+        RedirectOrContent::Content(overview_page(db_pool, me.into(), uri, csrf.as_ref(), id, &form.context).await.map_err(StatusOrError::err_into)?)
     })
 }

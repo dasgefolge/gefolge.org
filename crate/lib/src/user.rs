@@ -2,6 +2,10 @@ use {
     std::{
         collections::BTreeSet,
         fmt,
+        hash::{
+            Hash,
+            Hasher,
+        },
         num::NonZero,
         str::FromStr,
         time::Duration,
@@ -60,6 +64,7 @@ use {
     },
 };
 
+pub const VORSITZ: RoleId = RoleId::new(1570063038411702342);
 pub const VORSTAND: RoleId = RoleId::new(1456376541754953839);
 pub const VEREIN: RoleId = RoleId::new(1456376693831766057);
 pub const MENSCH: RoleId = RoleId::new(386753710434287626);
@@ -85,12 +90,12 @@ impl fmt::Display for Discriminator {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone)]
 pub struct User {
     pub id: UserId,
     pub discriminator: Option<Discriminator>,
     pub nick: Option<String>,
-    roles: BTreeSet<RoleId>,
+    pub roles: BTreeSet<RoleId>,
     pub username: String,
 }
 
@@ -202,6 +207,20 @@ impl<'r> FromRequest<'r> for User {
             Outcome::Error((status, e)) => Outcome::Error((status, e)),
             Outcome::Forward(status) => Outcome::Forward(status),
         }
+    }
+}
+
+impl PartialEq for User {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl Eq for User {}
+
+impl Hash for User {
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
+        self.id.hash(hasher);
     }
 }
 

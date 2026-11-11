@@ -16,9 +16,12 @@ use {
         EnumSet,
         EnumSetType,
     },
-    futures::stream::{
-        Stream,
-        TryStreamExt as _,
+    futures::{
+        future,
+        stream::{
+            Stream,
+            TryStreamExt as _,
+        },
     },
     lazy_regex::regex_captures,
     nonempty_collections::{
@@ -287,16 +290,35 @@ impl Event {
         Ok(Some(start.with_timezone(&tz).date_naive()..end.with_timezone(&tz).date_naive()))
     }
 
-    pub fn orga_unassigned(&self, id: Id) -> EnumSet<OrgaRole> {
-        let mut unassigned = EnumSet::all();
+    pub async fn hauptorga(&self, transaction: &mut Transaction<'_, Postgres>) -> sqlx::Result<User> {
+        Ok(if let Some(attendee) = self.attendees().iter().find(|attendee| attendee.orga.contains(OrgaRole::Haupt)) {
+            let AttendeeId::Discord(id) = attendee.id else { panic!("EventGuest als Hauptorga") };
+            User::from_id(transaction, id).await?.expect("attendee user does not exist")
+        } else {
+            User::all(transaction)
+                .try_filter(|user| future::ready(user.roles.contains(&crate::user::VORSITZ)))
+                .try_next().await?
+                .expect("Kein Discord-Mitglied mit Vorsitz-Rolle gefunden")
+        })
+    }
+
+    pub fn orga_roles(&self, id: Id) -> EnumSet<OrgaRole> {
+        let mut roles = EnumSet::all();
         if id >= (Id { year: 2026, season: Season::Sommer }) {
             // ab SoSil 2026 werden events über den Verein abgerechnet
-            unassigned.remove(OrgaRole::Abrechnung);
+            roles.remove(OrgaRole::Abrechnung);
             if id >= (Id { year: 2026, season: Season::Winter }) {
                 // ab Sil 2026 werden Häuser vom Verein gebucht
-                unassigned.remove(OrgaRole::Buchung);
+                roles.remove(OrgaRole::Buchung);
             }
         }
+        roles
+    }
+
+    pub fn orga_unassigned(&self, id: Id) -> EnumSet<OrgaRole> {
+        let mut unassigned = self.orga_roles(id);
+        // Vereinsvorsitzende:r ist automatisch Hauptorga, falls nicht anders vergeben
+        unassigned.remove(OrgaRole::Haupt);
         for attendee in self.attendees() {
             unassigned.remove_all(attendee.orga);
         }
@@ -580,9 +602,10 @@ impl LocationInfo {
     }
 }
 
-#[derive(Debug, Hash, Deserialize, Serialize, EnumSetType, Sequence)]
+#[derive(Debug, Hash, Deserialize, Serialize, FromFormField, EnumSetType, Sequence)]
 #[enumset(serialize_repr = "list")]
 pub enum OrgaRole {
+    Haupt,
     Abrechnung,
     Buchung,
     Essen,
@@ -594,6 +617,7 @@ pub enum OrgaRole {
 impl fmt::Display for OrgaRole {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::Haupt => write!(f, "Hauptorga"),
             Self::Abrechnung => write!(f, "Abrechnung"),
             Self::Buchung => write!(f, "Buchung"),
             Self::Essen => write!(f, "Essen"),

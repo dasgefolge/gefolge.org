@@ -702,6 +702,7 @@ async fn rocket(port: Option<u16>, config: &Config, discord_ctx: serenity_utils:
         event::post,
         event::signup_guest_get,
         event::signup_guest_post,
+        event::orga_post,
         event::programm_post,
         games::index,
         games::werewolf_proxy_get_index,

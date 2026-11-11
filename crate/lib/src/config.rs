@@ -2,11 +2,6 @@ use {
     std::collections::BTreeSet,
     serde::Deserialize,
     serenity::model::prelude::*,
-    sqlx::{
-        Postgres,
-        Transaction,
-    },
-    crate::user::User,
 };
 #[cfg(unix)] use {
     xdg::BaseDirectories,
@@ -38,7 +33,6 @@ pub enum Error {
 #[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Config {
-    admin: UserId,
     pub discord: Discord,
     pub github_webhook_secret: String,
     pub secret_key: String,
@@ -67,7 +61,6 @@ impl Config {
 
     pub fn dummy() -> Self {
         Self {
-            admin: UserId::new(1),
             discord: Discord {
                 bot_token: String::default(),
                 #[cfg(feature = "peter")] channels: Channels {
@@ -83,10 +76,6 @@ impl Config {
             secret_key: format!("t3eK7qRKGPjypcqbFuWIB+KYuH4AZyl4T2YvWEIDSeRyTvotbNcPT87ZoXnMikF4beVEW52kTgmd598k5mgXqA=="),
             #[cfg(feature = "peter")] twitch: twitch::Config::dummy(),
         }
-    }
-
-    pub async fn admin(&self, transaction: &mut Transaction<'_, Postgres>) -> sqlx::Result<User> {
-        Ok(User::from_id(transaction, self.admin).await?.expect("admin user does not exist"))
     }
 }
 
