@@ -65,6 +65,8 @@ use {
 };
 
 pub const VORSITZ: RoleId = RoleId::new(1570063038411702342);
+pub const STELLV_VORSITZ: RoleId = RoleId::new(1570063198269476954);
+pub const TREASURER: RoleId = RoleId::new(1570063269471850679);
 pub const VORSTAND: RoleId = RoleId::new(1456376541754953839);
 pub const VEREIN: RoleId = RoleId::new(1456376693831766057);
 pub const MENSCH: RoleId = RoleId::new(386753710434287626);
