@@ -23,8 +23,8 @@ use {
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error(transparent)] Io(#[from] wheel::io::Error),
     #[error(transparent)] Json(#[from] serde_json::Error),
-    #[error(transparent)] Wheel(#[from] wheel::Error),
     #[cfg(unix)]
     #[error("missing config file")]
     Missing,

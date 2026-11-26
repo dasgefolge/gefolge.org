@@ -10,8 +10,6 @@ publish = false
 workspace = true
 
 [dependencies]
-chrono = "0.4"
-chrono-tz = "0.10"
 clap = { version = "4", features = ["derive"] }
 gefolge-web-lib = { path = "../lib" }
 heliocron = { git = "https://github.com/fenhl/heliocron" }
@@ -21,4 +19,4 @@ rand = { version = "0.10", features = ["thread_rng"] }
 serenity = { version = "0.12", default-features = false }
 sqlx = { version = "0.9", features = ["postgres", "runtime-tokio", "tls-rustls"] }
 thiserror = "2"
-wheel = { git = "https://github.com/fenhl/wheel", features = ["chrono"] }
+wheel = { git = "https://github.com/fenhl/wheel" }

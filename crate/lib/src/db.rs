@@ -1,25 +1,43 @@
 use {
-    chrono::prelude::*,
+    jiff::Timestamp,
     serde::{
         Deserialize,
-        Deserializer,
         Serialize,
-        de::Error as _,
     },
     serenity::model::id::UserId,
     crate::money::Euro,
 };
 
-fn implicit_utc<'de, D: Deserializer<'de>>(deserializer: D) -> Result<DateTime<Utc>, D::Error> {
-    let datetime = <&str>::deserialize(deserializer)?;
-    if let Ok(aware) = DateTime::parse_from_rfc3339(datetime) {
-        Ok(aware.with_timezone(&Utc))
-    } else if let Ok(naive) = NaiveDateTime::parse_from_str(datetime, "%Y-%m-%dT%H:%M:%S").or_else(|_| NaiveDateTime::parse_from_str(datetime, "%Y-%m-%d %H:%M:%SZ")) {
-        Ok(Utc.from_utc_datetime(&naive))
-    } else if let Ok(naive) = NaiveDateTime::parse_from_str(datetime, "%Y-%m-%d %H:%M:%S").or_else(|_| NaiveDateTime::parse_from_str(datetime, "%Y-%m-%d %H:%M:%SZ")) {
-        Ok(Utc.from_utc_datetime(&naive))
-    } else {
-        Err(D::Error::invalid_value(serde::de::Unexpected::Str(datetime), &"Gefolge JSON datetime"))
+mod implicit_utc {
+    use {
+        jiff::{
+            Timestamp,
+            ZonedDateTime,
+            civil,
+            tz::TimeZone,
+        },
+        serde::{
+            Deserialize as _,
+            Deserializer,
+            Serialize as _,
+            Serializer,
+            de::Error as _,
+        },
+    };
+
+    pub(super) fn deserialize<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Timestamp, D::Error> {
+        let datetime = <&str>::deserialize(deserializer)?;
+        if let Ok(aware) = datetime.parse::<ZonedDateTime>() {
+            Ok(aware.timestamp())
+        } else if let Some(naive) = ["%FT%TZ", "%FT%T", "%F %TZ", "%F %T"].into_iter().find_map(|format| civil::DateTime::strptime(format, datetime).ok()) {
+            Ok(naive.to_zoned_datetime(TimeZone::UTC).map_err(D::Error::custom)?.timestamp())
+        } else {
+            Err(D::Error::invalid_value(serde::de::Unexpected::Str(datetime), &"Gefolge JSON datetime"))
+        }
+    }
+
+    pub(super) fn serialize<S: Serializer>(timestamp: &Timestamp, serializer: S) -> Result<S::Ok, S::Error> {
+        timestamp.to_zoned_datetime(TimeZone::UTC).strftime("%FT%TZ").to_string().serialize(serializer)
     }
 }
 
@@ -64,60 +82,61 @@ pub enum EventPersonId {
 pub enum Transaction {
     BankTransfer {
         amount: Euro,
-        #[serde(deserialize_with = "implicit_utc")]
-        time: DateTime<Utc>,
+        #[serde(with = "implicit_utc")]
+        time: Timestamp,
         #[serde(rename = "transactionID")]
         transaction_id: String,
     },
     Bar {
         amount: Euro,
-        #[serde(deserialize_with = "implicit_utc")]
-        time: DateTime<Utc>,
+        #[serde(with = "implicit_utc")]
+        time: Timestamp,
     },
     EventAnzahlung {
         amount: Euro,
         default: Option<Euro>,
         event: String,
         guest: Option<EventPersonId>,
-        #[serde(deserialize_with = "implicit_utc")]
-        time: DateTime<Utc>,
+        #[serde(with = "implicit_utc")]
+        time: Timestamp,
     },
     #[serde(rename_all = "camelCase")]
     EventAnzahlungReturn {
         amount: Euro,
         event: String,
         extra_remaining: Euro,
-        #[serde(deserialize_with = "implicit_utc")]
-        time: DateTime<Utc>,
+        #[serde(with = "implicit_utc")]
+        time: Timestamp,
     },
     EventAbrechnung {
         amount: Euro,
         details: Vec<AbrechnungDetail>,
         event: String,
         guest: Option<EventPersonId>,
-        #[serde(deserialize_with = "implicit_utc")]
-        time: DateTime<Utc>,
+        #[serde(with = "implicit_utc")]
+        time: Timestamp,
     },
     #[serde(rename_all = "camelCase")]
     PayPal {
         amount: Euro,
         email: String,
-        #[serde(deserialize_with = "implicit_utc")]
-        time: DateTime<Utc>,
+        #[serde(with = "implicit_utc")]
+        time: Timestamp,
         transaction_code: String,
     },
     SponsorWerewolfCard {
         amount: Euro,
         faction: String, //TODO Faction enum or Option<Faction>?
         role: String,
-        time: DateTime<Utc>,
+        #[serde(with = "implicit_utc")]
+        time: Timestamp,
     },
     Transfer {
         amount: Euro,
         comment: Option<String>,
         mensch: UserId,
-        #[serde(deserialize_with = "implicit_utc")]
-        time: DateTime<Utc>,
+        #[serde(with = "implicit_utc")]
+        time: Timestamp,
     },
 }
 

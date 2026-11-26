@@ -23,14 +23,13 @@ peter = [
 ]
 
 [dependencies]
-async-proto = { version = "0.26", features = ["chrono-tz", "semver"] }
-chrono = { version = "0.4", features = ["serde"] }
-chrono-tz = { version = "0.10", features = ["serde"] }
+async-proto = { version = "0.26", features = ["jiff", "semver"] }
 derive_more = { version = "2", features = ["deref", "into"] }
 enum-iterator = "2"
 enumset = { version = "1", features = ["serde"] }
 futures = "0.3"
 itertools = "0.15"
+jiff = { version = "1", features = ["serde"] }
 lazy-regex = "3"
 nonempty-collections = { version = "1", features = ["serde"] }
 num-traits = { version = "0.2", optional = true }
@@ -53,7 +52,7 @@ thiserror = "2"
 tokio = { version = "1", features = ["time"] }
 twitch_helix = { git = "https://github.com/fenhl/rust-twitch-helix", optional = true } #TODO publish to crates.io
 url = "2"
-wheel = { git = "https://github.com/fenhl/wheel", features = ["chrono", "reqwest", "serde_json"] }
+wheel = { git = "https://github.com/fenhl/wheel", features = ["reqwest", "serde_json"] }
 
 [target."cfg(unix)".dependencies]
 xdg = "3"

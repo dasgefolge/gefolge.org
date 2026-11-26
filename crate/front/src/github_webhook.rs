@@ -22,10 +22,8 @@ use {
     tokio::process::Command,
     wheel::{
         fs,
-        traits::{
-            AsyncCommandOutputExt as _,
-            IoResultExt as _,
-        },
+        io::Annotate as _,
+        process::AsyncCommandOutputExt as _,
     },
     gefolge_web_lib::config::Config,
     crate::websocket,
@@ -62,7 +60,7 @@ fn test_invalid_signature() {
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum PayloadError {
-    #[error(transparent)] Wheel(#[from] wheel::Error),
+    #[error(transparent)] Io(#[from] wheel::io::Error),
     #[error("config guard forwarded")]
     ConfigForward,
     #[error("value of X-Hub-Signature-256 header is not valid")]
@@ -97,8 +95,9 @@ impl<'r> FromData<'r> for SignedPayload {
 
 #[derive(Debug, thiserror::Error, rocket_util::Error)]
 pub(crate) enum WebhookError {
+    #[error(transparent)] Io(#[from] wheel::io::Error),
+    #[error(transparent)] Process(#[from] wheel::process::Error),
     #[error(transparent)] Toml(#[from] toml::de::Error),
-    #[error(transparent)] Wheel(#[from] wheel::Error),
 }
 
 #[rocket::post("/api/github-webhook", data = "<payload>")]

@@ -1,9 +1,12 @@
 use {
     std::collections::HashMap,
-    chrono::prelude::*,
     enumset::EnumSet,
     futures::stream::TryStreamExt as _,
     itertools::Itertools as _,
+    jiff::{
+        Span,
+        Timestamp,
+    },
     lazy_regex::regex_is_match,
     rand::{
         prelude::*,
@@ -110,20 +113,20 @@ pub(crate) struct EventsOverview {
 }
 
 pub(crate) async fn load_events(transaction: &mut Transaction<'_, Postgres>) -> Result<EventsOverview, IndexError> {
-    let now = Utc::now();
+    let now = Timestamp::now();
     let mut past = Vec::default();
     let mut upcoming = Vec::default();
     for row in sqlx::query!(r#"SELECT id AS "id: Id", value AS "value: Json<Event>" FROM json_events"#).fetch_all(&mut **transaction).await.at("load_events")? {
         let start = row.value.0.start(&mut *transaction).await?;
         let end = row.value.0.end(&mut *transaction).await?;
-        if end.is_none_or(|end| end > now) { &mut upcoming } else { &mut past }.push(EventOverview { id: row.id, start, end, event: row.value.0 });
+        if end.as_ref().is_none_or(|end| *end > now) { &mut upcoming } else { &mut past }.push(EventOverview { id: row.id, start, end, event: row.value.0 });
     }
     upcoming.sort_unstable_by(|EventOverview { id: id1, start: start1, .. }, EventOverview { id: id2, start: start2, ..}|
         start1.is_none().cmp(&start2.is_none()) // nulls last
             .then_with(|| start1.cmp(start2))
             .then_with(|| id1.cmp(id2))
     );
-    let ongoing = upcoming.extract_if(.., |eo| eo.start.is_some_and(|start| start <= now)).collect();
+    let ongoing = upcoming.extract_if(.., |eo| eo.start.as_ref().is_some_and(|start| *start <= now)).collect();
     past.sort_unstable_by(|EventOverview { id: id1, end: end1, .. }, EventOverview { id: id2, end: end2, .. }|
         end2.is_none().cmp(&end1.is_none()) // nulls last
             .then_with(|| end2.cmp(end1))
@@ -242,7 +245,7 @@ pub(crate) enum GetError {
 }
 
 async fn overview_page(db_pool: &PgPool, me: User, uri: Origin<'_>, csrf: Option<&CsrfToken>, new_id: NewId, ctx: &Context<'_>) -> Result<RawHtml<String>, StatusOrError<GetError>> {
-    let now = Utc::now();
+    let now = Timestamp::now();
     let id = Id::from(new_id);
     let mut transaction = db_pool.begin().await.soe()?;
     let viewer_data = me.data(&mut transaction).await.soe()?;
@@ -464,7 +467,7 @@ async fn overview_page(db_pool: &PgPool, me: User, uri: Origin<'_>, csrf: Option
                         @let field_id = format!("nights[{night_idx}]");
                         : form_field(&field_id, &mut errors, html! {
                             label(for = field_id) {
-                                : format_date_range(night, night.succ_opt().expect("reached end of time"));
+                                : format_date_range(night, night.tomorrow().expect("reached end of time"));
                                 : ":";
                             }
                             input(id = format!("{field_id}-yes"), type = "radio", name = field_id, value = "yes", checked? = ctx.field_value(&*field_id).is_some_and(|val| val == "yes"));
@@ -589,7 +592,7 @@ async fn overview_page(db_pool: &PgPool, me: User, uri: Origin<'_>, csrf: Option
                                 {{date_info.description}}
                             {% endif %}
                             (Orga: {% if date_info.orga is none %}noch nicht eingetragen{% else %}{{date_info.orga}}{% endif %})
-                            — <a href="{{url_for('event_programmpunkt_edit', event=event.event_id, programmpunkt='abendessen{:%Y-%m-%d}'.format(date))}}">bearbeiten</a>
+                            — <a href="{{url_for('event_programmpunkt_edit', event=event.event_id, programmpunkt='abendessen{:%F}'.format(date))}}">bearbeiten</a>
                         </li>
                     {% endfor %}
                 </ul>
@@ -714,7 +717,7 @@ pub(crate) async fn post(discord_ctx: &State<RwFuture<DiscordCtx>>, db_pool: &St
             }
         }
         if let Some(nights) = event.nights(&mut transaction).await.soe()? {
-            if value.nights.len().try_into().ok().is_none_or(|num_nights| nights.start.checked_add_days(chrono::Days::new(num_nights)).is_none_or(|end| end != nights.end)) {
+            if i64::try_from(value.nights.len()).ok().is_none_or(|num_nights| nights.start.checked_add(Span::new().days(num_nights)).ok().is_none_or(|end| end != nights.end)) {
                 form.context.push_error(form::Error::validation("Falsche Anzahl Übernachtungsinfos im Formular. Bitte melde diesen Fehler im #dev."));
             }
         } else {
@@ -728,7 +731,7 @@ pub(crate) async fn post(discord_ctx: &State<RwFuture<DiscordCtx>>, db_pool: &St
         if form.context.errors().next().is_some() {
             RedirectOrContent::Content(overview_page(db_pool, me.into(), uri, csrf.as_ref(), id, &form.context).await.map_err(StatusOrError::err_into)?)
         } else {
-            let now = MaybeAwareDateTime::Aware(Utc::now());
+            let now = MaybeAwareDateTime::Aware(Timestamp::now());
             let mut menschen = sqlx::query_scalar!(r#"SELECT value -> 'menschen' AS "menschen: Json<Vec<serde_json::Value>>" FROM json_events WHERE id = $1"#, id.0 as _).fetch_one(&mut *transaction).await.soe()?.map(|Json(menschen)| menschen).unwrap_or_default();
             menschen.push(json!({ // using untyped JSON here to avoid deleting any data that's not yet deserialized into the Attendee struct
                 "id": me.id,
@@ -738,7 +741,7 @@ pub(crate) async fn post(discord_ctx: &State<RwFuture<DiscordCtx>>, db_pool: &St
                     "animalProducts": value.animal_products,
                 },
                 "hausordnung": value.hausordnung,
-                "nights": iter_date_range(event.nights(&mut transaction).await.soe()?.expect("validated")).zip_eq(&value.nights).map(|(night, going)| (night.format("%Y-%m-%d").to_string(), json!({
+                "nights": iter_date_range(event.nights(&mut transaction).await.soe()?.expect("validated")).zip_eq(&value.nights).map(|(night, going)| (night.strftime("%F").to_string(), json!({
                     "going": going,
                     "lastUpdated": now,
                     "log": [
@@ -774,7 +777,7 @@ pub(crate) async fn post(discord_ctx: &State<RwFuture<DiscordCtx>>, db_pool: &St
 }
 
 async fn signup_guest_form(db_pool: &PgPool, me: Mensch, uri: Origin<'_>, csrf: Option<&CsrfToken>, new_id: NewId, ctx: &Context<'_>) -> Result<RawHtml<String>, StatusOrError<GetError>> {
-    let now = Utc::now();
+    let now = Timestamp::now();
     let id = Id::from(new_id);
     let mut transaction = db_pool.begin().await.soe()?;
     let Some(event) = Event::load(&mut *transaction, id).await.soe()? else { return Err(StatusOrError::Status(Status::NotFound)) };
@@ -880,7 +883,7 @@ async fn signup_guest_form(db_pool: &PgPool, me: Mensch, uri: Origin<'_>, csrf: 
                                     @let field_id = format!("nights[{night_idx}]");
                                     : form_field(&field_id, &mut errors, html! {
                                         label(for = field_id) {
-                                            : format_date_range(night, night.succ_opt().expect("reached end of time"));
+                                            : format_date_range(night, night.tomorrow().expect("reached end of time"));
                                             : ":";
                                         }
                                         input(id = format!("{field_id}-yes"), type = "radio", name = field_id, value = "yes", checked? = ctx.field_value(&*field_id).is_some_and(|val| val == "yes"));
@@ -1000,7 +1003,7 @@ pub(crate) async fn signup_guest_post(discord_ctx: &State<RwFuture<DiscordCtx>>,
             form.context.push_error(form::Error::validation("Das ist keine Email-Adresse.").with_name("email"));
         }
         if let Some(nights) = event.nights(&mut transaction).await.soe()? {
-            if value.nights.len().try_into().ok().is_none_or(|num_nights| nights.start.checked_add_days(chrono::Days::new(num_nights)).is_none_or(|end| end != nights.end)) {
+            if i64::try_from(value.nights.len()).ok().is_none_or(|num_nights| nights.start.checked_add(Span::new().days(num_nights)).ok().is_none_or(|end| end != nights.end)) {
                 form.context.push_error(form::Error::validation("Falsche Anzahl Übernachtungsinfos im Formular. Bitte melde diesen Fehler im #dev."));
             }
         } else {
@@ -1014,7 +1017,7 @@ pub(crate) async fn signup_guest_post(discord_ctx: &State<RwFuture<DiscordCtx>>,
             } else {
                 AttendeeId::EventGuest((1..100).filter(|id| event.attendee(AttendeeId::EventGuest(*id)).is_none()).choose(&mut rng()).ok_or(PostError::EventGuestId).soe()?)
             };
-            let now = MaybeAwareDateTime::Aware(Utc::now());
+            let now = MaybeAwareDateTime::Aware(Timestamp::now());
             let mut menschen = sqlx::query_scalar!(r#"SELECT value -> 'menschen' AS "menschen: Json<Vec<serde_json::Value>>" FROM json_events WHERE id = $1"#, id.0 as _).fetch_one(&mut *transaction).await.soe()?.map(|Json(menschen)| menschen).unwrap_or_default();
             menschen.push(json!({ // using untyped JSON here to avoid deleting any data that's not yet deserialized into the Attendee struct
                 "id": guest_id,
@@ -1026,7 +1029,7 @@ pub(crate) async fn signup_guest_post(discord_ctx: &State<RwFuture<DiscordCtx>>,
                     "animalProducts": value.animal_products,
                 },
                 "hausordnung": true,
-                "nights": iter_date_range(event.nights(&mut transaction).await.soe()?.expect("validated")).zip_eq(&value.nights).map(|(night, going)| (night.format("%Y-%m-%d").to_string(), json!({
+                "nights": iter_date_range(event.nights(&mut transaction).await.soe()?.expect("validated")).zip_eq(&value.nights).map(|(night, going)| (night.strftime("%F").to_string(), json!({
                     "going": going,
                     "lastUpdated": now,
                     "log": [

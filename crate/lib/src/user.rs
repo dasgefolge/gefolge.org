@@ -10,7 +10,6 @@ use {
         str::FromStr,
         time::Duration,
     },
-    chrono_tz::Tz,
     derive_more::{
         Deref,
         Into,
@@ -19,6 +18,7 @@ use {
         Stream,
         TryStreamExt as _,
     },
+    jiff::tz::TimeZone,
     rand::{
         distr::SampleString as _,
         rng,
@@ -282,7 +282,8 @@ fn make_true() -> bool { true }
 #[serde(rename_all = "camelCase")]
 pub struct Data {
     pub api_key: Option<String>,
-    pub timezone: Option<Tz>,
+    #[serde(default, with = "jiff::fmt::serde::tz::optional")]
+    pub timezone: Option<TimeZone>,
     #[serde(default = "make_true")]
     pub event_timezone_override: bool,
 }

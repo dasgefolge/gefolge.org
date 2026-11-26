@@ -19,4 +19,4 @@ serenity = { version = "0.12", default-features = false }
 sqlx = { version = "0.9", features = ["json", "macros", "postgres", "runtime-tokio", "tls-rustls"] }
 thiserror = "2"
 tokio = { version = "1", features = ["rt-multi-thread"] }
-wheel = { git = "https://github.com/fenhl/wheel", features = ["chrono", "rocket", "reqwest", "serde_json"] }
+wheel = { git = "https://github.com/fenhl/wheel", features = ["rocket", "reqwest", "serde_json"] }

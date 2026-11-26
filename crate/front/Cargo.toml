@@ -24,10 +24,8 @@ tokio = "1"
 wheel = { git = "https://github.com/fenhl/wheel" }
 
 [dependencies]
-async-proto = { version = "0.26", features = ["chrono-tz", "tokio-tungstenite024"] }
+async-proto = { version = "0.26", features = ["tokio-tungstenite030"] }
 base64 = "0.23"
-chrono = { version = "0.4", features = ["serde", "clock"], default-features = false }
-chrono-tz = { version = "0.10", features = ["serde"] }
 clap = { version = "4", features = ["derive"] }
 enumset = "1"
 futures = "0.3"
@@ -35,6 +33,8 @@ gefolge-web-lib = { path = "../lib", features = ["peter"] }
 hmac = "0.13"
 itermore = { version = "0.8", features = ["array_chunks"] }
 itertools = "0.15"
+jiff = "1"
+jiff-sqlx = { version = "1", features = ["postgres"] }
 lazy-regex = "3"
 log-lock = { git = "https://github.com/fenhl/log-lock" }
 pulldown-cmark = { git = "https://github.com/fenhl/pulldown-cmark", branch = "rocket-wiki", default-features = false, features = ["simd", "html"] }
@@ -59,4 +59,4 @@ thiserror = "2"
 tokio = { version = "1", features = ["macros", "process", "sync", "time"] }
 toml = "1"
 url = "2"
-wheel = { git = "https://github.com/fenhl/wheel", features = ["chrono", "night", "rocket", "reqwest", "serde_json"] }
+wheel = { git = "https://github.com/fenhl/wheel", features = ["night", "rocket", "reqwest", "serde_json"] }

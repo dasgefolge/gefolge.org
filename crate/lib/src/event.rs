@@ -9,8 +9,6 @@ use {
         ops::Range,
         str::FromStr,
     },
-    chrono::prelude::*,
-    chrono_tz::Tz,
     enum_iterator::Sequence,
     enumset::{
         EnumSet,
@@ -22,6 +20,10 @@ use {
             Stream,
             TryStreamExt as _,
         },
+    },
+    jiff::{
+        civil,
+        tz::TimeZone,
     },
     lazy_regex::regex_captures,
     nonempty_collections::{
@@ -214,7 +216,8 @@ pub struct Event {
     role: Option<RoleId>,
     start: Option<MaybeAwareDateTime>,
     ticket_options: Option<NEVec<TicketOption>>,
-    timezone: Option<Tz>,
+    #[serde(default, with = "jiff::fmt::serde::tz::optional")]
+    timezone: Option<TimeZone>,
 }
 
 #[tokio::test]
@@ -258,7 +261,7 @@ impl Event {
         self.menschen.iter().find(|attendee| attendee.id == id)
     }
 
-    pub async fn attendee_nights<'a>(&self, transaction: &mut Transaction<'_, Postgres>, attendee: &'a Attendee) -> Result<Option<impl Iterator<Item = (NaiveDate, Cow<'a, Night>)> + use<'a>>, Error> {
+    pub async fn attendee_nights<'a>(&self, transaction: &mut Transaction<'_, Postgres>, attendee: &'a Attendee) -> Result<Option<impl Iterator<Item = (civil::Date, Cow<'a, Night>)> + use<'a>>, Error> {
         let Some(nights) = self.nights(transaction).await? else { return Ok(None) };
         Ok(Some(iter_date_range(nights).map(|night| (night, attendee.nights.get(&night).map(Cow::Borrowed).unwrap_or_else(|| Cow::Owned(Night::default()))))))
     }
@@ -283,11 +286,11 @@ impl Event {
         })
     }
 
-    pub async fn nights(&self, transaction: &mut Transaction<'_, Postgres>) -> Result<Option<Range<NaiveDate>>, Error> {
+    pub async fn nights(&self, transaction: &mut Transaction<'_, Postgres>) -> Result<Option<Range<civil::Date>>, Error> {
         let Some(start) = self.start(&mut *transaction).await? else { return Ok(None) };
         let Some(end) = self.end(&mut *transaction).await? else { return Ok(None) };
         let Some(tz) = self.timezone(transaction).await? else { return Ok(None) };
-        Ok(Some(start.with_timezone(&tz).date_naive()..end.with_timezone(&tz).date_naive()))
+        Ok(Some(start.with_timezone(tz.clone()).date()..end.with_timezone(tz).date()))
     }
 
     pub async fn hauptorga(&self, transaction: &mut Transaction<'_, Postgres>) -> sqlx::Result<User> {
@@ -325,11 +328,11 @@ impl Event {
         unassigned
     }
 
-    pub async fn timezone(&self, transaction: &mut Transaction<'_, Postgres>) -> Result<Option<Tz>, Error> {
-        Ok(if let Some(timezone) = self.timezone {
+    pub async fn timezone(&self, transaction: &mut Transaction<'_, Postgres>) -> Result<Option<TimeZone>, Error> {
+        Ok(if let Some(timezone) = self.timezone.clone() {
             Some(timezone)
         } else {
-            self.location_info(transaction).await?.timezone()
+            self.location_info(transaction).await?.timezone().cloned()
         })
     }
 
@@ -377,7 +380,7 @@ pub struct Attendee {
     pub food: FoodPreferences,
     pub name: Option<String>,
     #[serde(default)]
-    nights: HashMap<NaiveDate, Night>,
+    nights: HashMap<civil::Date, Night>,
     #[serde(default)]
     pub orga: EnumSet<OrgaRole>,
     pub room: Option<String>,
@@ -485,7 +488,7 @@ enum JsonNight {
     #[serde(rename_all = "camelCase")]
     New {
         going: Going,
-        last_updated: Option<DateTime<Utc>>,
+        last_updated: Option<Timestamp>,
     },
 }
 
@@ -506,7 +509,7 @@ impl From<JsonNight> for Night {
 pub struct Night {
     #[serde(default)]
     pub going: Going,
-    pub last_updated: Option<DateTime<Utc>>,
+    pub last_updated: Option<Timestamp>,
 }
 
 #[derive(Debug, Default, Clone, Copy, Deserialize, Serialize, FromFormField)]
@@ -526,7 +529,8 @@ struct JsonLocation {
     prefix: Option<String>,
     #[serde(default)]
     rooms: HashMap<String, HashMap<String, Room>>,
-    timezone: Tz,
+    #[serde(with = "jiff::fmt::serde::tz::required")]
+    timezone: TimeZone,
     website: Option<Url>,
 }
 
@@ -536,7 +540,7 @@ pub struct Location {
     name: String,
     prefix: Cow<'static, str>,
     pub rooms: HashMap<String, HashMap<String, Room>>,
-    timezone: Tz,
+    timezone: TimeZone,
     website: Option<Url>,
 }
 
@@ -594,10 +598,10 @@ pub enum LocationInfo {
 }
 
 impl LocationInfo {
-    fn timezone(&self) -> Option<Tz> {
+    fn timezone(&self) -> Option<&TimeZone> {
         match self {
             Self::Unknown | Self::Online => None,
-            Self::Known(info) => Some(info.timezone),
+            Self::Known(info) => Some(&info.timezone),
         }
     }
 }

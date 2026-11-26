@@ -1,6 +1,6 @@
 use {
     async_proto::Protocol,
-    chrono_tz::Tz,
+    jiff::tz::TimeZone,
     semver::Version,
     std::ops::Range,
 };
@@ -15,7 +15,7 @@ pub enum ServerMessageV2 {
     NoEvent,
     CurrentEvent {
         id: String,
-        timezone: Tz,
+        timezone: TimeZone,
     },
     LatestSilVersion(Version),
     MarkdownPreview(String),

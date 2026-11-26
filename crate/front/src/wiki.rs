@@ -1,5 +1,4 @@
 use {
-    chrono::prelude::*,
     lazy_regex::regex_captures,
     rocket::{
         FromForm,
@@ -384,7 +383,7 @@ pub(crate) async fn edit_post(discord_ctx: &State<RwFuture<DiscordCtx>>, db_pool
 
 #[rocket::get("/wiki/<title>/<namespace>/history")]
 pub(crate) async fn history(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>, title: &str, namespace: &str) -> Result<Option<RawHtml<String>>, Error> {
-    let revisions = sqlx::query!(r#"SELECT id, timestamp AS "timestamp: DateTime<Utc>", author, summary FROM wiki WHERE title = $1 AND namespace = $2 ORDER BY timestamp DESC"#, title, namespace).fetch_all(&**db_pool).await?;
+    let revisions = sqlx::query!(r#"SELECT id, timestamp AS "timestamp: jiff_sqlx::Timestamp", author, summary FROM wiki WHERE title = $1 AND namespace = $2 ORDER BY timestamp DESC"#, title, namespace).fetch_all(&**db_pool).await?;
     if revisions.is_empty() { return Ok(None) }
     let mut transaction = db_pool.begin().await?;
     let viewer_data = me.data(&mut transaction).await?;
@@ -411,7 +410,7 @@ pub(crate) async fn history(db_pool: &State<PgPool>, me: Mensch, uri: Origin<'_>
                     tr {
                         td {
                             a(href = uri!(revision(title, namespace, revision.id))) {
-                                : format_datetime(&viewer_data, MaybeLocalDateTime::Nonlocal(revision.timestamp), false);
+                                : format_datetime(&viewer_data, MaybeLocalDateTime::Nonlocal(revision.timestamp.into()), false);
                             }
                         }
                         td {

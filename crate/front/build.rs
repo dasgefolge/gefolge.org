@@ -18,18 +18,20 @@ use {
         Repository,
     },
     tokio::pin,
-    wheel::fs::{
-        self,
-        File,
+    wheel::{
+        fs::{
+            self,
+            File,
+        },
+        io::Annotate as _,
     },
 };
 
 #[derive(Debug, thiserror::Error)]
 enum Error {
     #[error(transparent)] Git(#[from] git2::Error),
-    #[error(transparent)] Io(#[from] tokio::io::Error),
+    #[error(transparent)] Io(#[from] wheel::io::Error),
     #[error(transparent)] PathStripPrefix(#[from] std::path::StripPrefixError),
-    #[error(transparent)] Wheel(#[from] wheel::Error),
 }
 
 fn check_static_file(cache: &mut HashMap<PathBuf, Oid>, workspace: &Path, repo: &Repository, relative_path: &Path, path: PathBuf) -> Result<(), Error> {
@@ -57,7 +59,7 @@ fn check_static_dir<'a>(cache: &'a mut HashMap<PathBuf, Oid>, workspace: &'a Pat
             let entries = fs::read_dir(&path);
         }
         while let Some(entry) = entries.try_next().await? {
-            if entry.file_type().await?.is_dir() {
+            if entry.file_type().await.at(entry.path())?.is_dir() {
                 check_static_dir(cache, workspace, repo, &relative_path.join(entry.file_name()), entry.path()).await?;
             } else {
                 check_static_file(cache, workspace, repo, &relative_path.join(entry.file_name()), entry.path())?;
@@ -78,22 +80,23 @@ async fn main() -> Result<(), Error> {
         let entries = fs::read_dir(&static_dir);
     }
     while let Some(entry) = entries.try_next().await? {
-        if entry.file_type().await?.is_dir() {
+        if entry.file_type().await.at(entry.path())?.is_dir() {
             check_static_dir(&mut cache, &workspace, &repo, entry.file_name().as_ref(), entry.path()).await?;
         } else {
             check_static_file(&mut cache, &workspace, &repo, entry.file_name().as_ref(), entry.path())?;
         }
     }
-    let mut out_f = File::create(Path::new(&env::var_os("OUT_DIR").unwrap()).join("static_files.rs")).await?.into_std().await;
-    writeln!(&mut out_f, "#[allow(unused)]")?; //TODO remove after Rust migration is completed
-    writeln!(&mut out_f, "macro_rules! static_url {{")?;
+    let out_path = Path::new(&env::var_os("OUT_DIR").unwrap()).join("static_files.rs");
+    let mut out_f = File::create(&out_path).await?.into_std().await;
+    writeln!(&mut out_f, "#[allow(unused)]").at(&out_path)?; //TODO remove after Rust migration is completed
+    writeln!(&mut out_f, "macro_rules! static_url {{").at(&out_path)?;
     for (path, commit_id) in cache {
         let unix_path = path.to_str().expect("non-UTF-8 static file path").replace('\\', "/");
         let uri = format!("/static/{unix_path}?v={commit_id}");
-        writeln!(&mut out_f, "    ({unix_path:?}) => {{")?;
-        writeln!(&mut out_f, "        ::rocket_util::Origin(::rocket::uri!({uri:?}))")?;
-        writeln!(&mut out_f, "    }};")?;
+        writeln!(&mut out_f, "    ({unix_path:?}) => {{").at(&out_path)?;
+        writeln!(&mut out_f, "        ::rocket_util::Origin(::rocket::uri!({uri:?}))").at(&out_path)?;
+        writeln!(&mut out_f, "    }};").at(&out_path)?;
     }
-    writeln!(&mut out_f, "}}")?;
+    writeln!(&mut out_f, "}}").at(out_path)?;
     Ok(())
 }

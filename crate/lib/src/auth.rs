@@ -47,10 +47,11 @@ pub enum UserFromRequestError {
     #[error(transparent)] BasicAuth(#[from] rocket_basicauth::BasicAuthError),
     #[error(transparent)] OAuth(#[from] rocket_oauth2::Error),
     #[error(transparent)] Reqwest(#[from] reqwest::Error),
+    #[error(transparent)] ResponseJson(#[from] wheel::traits::ResponseJsonError),
+    #[error(transparent)] ResponseStatus(#[from] wheel::traits::ResponseStatusError),
     #[error(transparent)] Sql(#[from] sqlx::Error),
     #[error(transparent)] Time(#[from] rocket::time::error::ConversionRange),
     #[error(transparent)] TryFromInt(#[from] std::num::TryFromIntError),
-    #[error(transparent)] Wheel(#[from] wheel::Error),
     #[error("invalid API key")]
     ApiKey,
     #[error("HTTP Basic auth with username not matching \"api\"")]

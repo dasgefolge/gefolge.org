@@ -5,34 +5,38 @@ use {
         ops::Range,
         str::FromStr,
     },
-    chrono::prelude::*,
-    chrono_tz::Tz,
+    jiff::{
+        Span,
+        Timestamp,
+        ZonedDateTime,
+        civil,
+        tz::TimeZone,
+    },
     serde_with::{
         DeserializeFromStr,
         SerializeDisplay,
     },
-    wheel::traits::LocalResultExt as _,
 };
 
 #[derive(Debug, Clone, Copy, DeserializeFromStr, SerializeDisplay)]
 pub enum MaybeAwareDateTime {
-    Naive(NaiveDateTime),
-    Aware(DateTime<Utc>),
+    Naive(civil::DateTime),
+    Aware(Timestamp),
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum ToMaybeLocalError {
-    #[error(transparent)] FromLocal(#[from] wheel::traits::TimeFromLocalError<DateTime<Tz>>),
-    #[error("tried to combine naive datetime {} with nonlocal context", .0.format("%Y-%m-%dT%H:%M:%S"))]
-    NaiveNonlocal(NaiveDateTime),
+    #[error(transparent)] Jiff(#[from] jiff::Error),
+    #[error("tried to combine naive datetime {} with nonlocal context", .0.strftime("%FT%T"))]
+    NaiveNonlocal(civil::DateTime),
 }
 
 impl MaybeAwareDateTime {
-    pub fn to_maybe_local(&self, local_timezone: Option<Tz>) -> Result<MaybeLocalDateTime, ToMaybeLocalError> {
+    pub fn to_maybe_local(&self, local_timezone: Option<TimeZone>) -> Result<MaybeLocalDateTime, ToMaybeLocalError> {
         Ok(if let Some(local_timezone) = local_timezone {
             MaybeLocalDateTime::Local(match self {
-                Self::Naive(naive) => local_timezone.from_local_datetime(naive).single_ok()?,
-                Self::Aware(aware) => aware.with_timezone(&local_timezone),
+                Self::Naive(naive) => naive.to_zoned_datetime(local_timezone)?,
+                Self::Aware(aware) => aware.to_zoned_datetime(local_timezone),
             })
         } else {
             MaybeLocalDateTime::Nonlocal(match self {
@@ -46,17 +50,17 @@ impl MaybeAwareDateTime {
 #[derive(Debug, thiserror::Error)]
 #[error("failed to parse maybe-aware datetime (aware: {e_aware}, naive: {e_naive})")]
 pub struct MaybeAwareDateTimeParseError {
-    e_aware: chrono::ParseError,
-    e_naive: chrono::ParseError,
+    e_aware: jiff::Error,
+    e_naive: jiff::Error,
 }
 
 impl FromStr for MaybeAwareDateTime {
     type Err = MaybeAwareDateTimeParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%SZ") {
-            Ok(aware) => Ok(Self::Aware(aware.and_utc())),
-            Err(e_aware) => match NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%S") {
+        match civil::DateTime::strptime("%FT%TZ", s) {
+            Ok(aware) => Ok(Self::Aware(aware.to_zoned_datetime(TimeZone::UTC).unwrap().timestamp())),
+            Err(e_aware) => match civil::DateTime::strptime("%FT%T", s) {
                 Ok(naive) => Ok(Self::Naive(naive)),
                 Err(e_naive) => Err(Self::Err { e_aware, e_naive }),
             },
@@ -67,54 +71,54 @@ impl FromStr for MaybeAwareDateTime {
 impl fmt::Display for MaybeAwareDateTime {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Naive(dt) => dt.format("%Y-%m-%dT%H:%M:%S").fmt(f),
-            Self::Aware(dt) => dt.format("%Y-%m-%dT%H:%M:%SZ").fmt(f),
+            Self::Naive(dt) => dt.strftime("%FT%T").fmt(f),
+            Self::Aware(dt) => dt.strftime("%FT%TZ").fmt(f),
         }
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub enum MaybeLocalDateTime {
-    Nonlocal(DateTime<Utc>),
-    Local(DateTime<Tz>),
+    Nonlocal(Timestamp),
+    Local(ZonedDateTime),
 }
 
 impl MaybeLocalDateTime {
-    pub fn with_timezone<Z: TimeZone>(&self, tz: &Z) -> DateTime<Z> {
+    pub fn with_timezone(&self, tz: TimeZone) -> ZonedDateTime {
         match self {
-            Self::Nonlocal(nonlocal) => nonlocal.with_timezone(tz),
-            Self::Local(local) => local.with_timezone(tz),
+            Self::Nonlocal(nonlocal) => nonlocal.to_zoned_datetime(tz),
+            Self::Local(local) => local.with_time_zone(tz),
         }
     }
 }
 
-impl<Z: TimeZone> PartialEq<DateTime<Z>> for MaybeLocalDateTime {
-    fn eq(&self, other: &DateTime<Z>) -> bool {
-        self.with_timezone(&Utc) == *other
+impl From<MaybeLocalDateTime> for Timestamp {
+    fn from(value: MaybeLocalDateTime) -> Self {
+        match value {
+            MaybeLocalDateTime::Nonlocal(timestamp) => timestamp,
+            MaybeLocalDateTime::Local(date_time) => date_time.timestamp(),
+        }
     }
 }
 
-impl<Z: TimeZone> PartialOrd<DateTime<Z>> for MaybeLocalDateTime {
-    fn partial_cmp(&self, other: &DateTime<Z>) -> Option<Ordering> {
-        self.with_timezone(&Utc).partial_cmp(other)
-    }
-}
-
-impl<Z: TimeZone> PartialEq<MaybeLocalDateTime> for DateTime<Z> {
-    fn eq(&self, other: &MaybeLocalDateTime) -> bool {
-        *other == self.with_timezone(&Utc)
-    }
-}
-
-impl<Z: TimeZone> PartialOrd<MaybeLocalDateTime> for DateTime<Z> {
-    fn partial_cmp(&self, other: &MaybeLocalDateTime) -> Option<Ordering> {
-        other.partial_cmp(&self.with_timezone(&Utc)).map(Ordering::reverse)
+impl<'a> From<&'a MaybeLocalDateTime> for Timestamp {
+    fn from(value: &MaybeLocalDateTime) -> Self {
+        match value {
+            MaybeLocalDateTime::Nonlocal(timestamp) => *timestamp,
+            MaybeLocalDateTime::Local(date_time) => date_time.timestamp(),
+        }
     }
 }
 
 impl PartialEq for MaybeLocalDateTime {
     fn eq(&self, other: &Self) -> bool {
-        self.with_timezone(&Utc) == other.with_timezone(&Utc)
+        Timestamp::from(self) == Timestamp::from(other)
+    }
+}
+
+impl PartialEq<Timestamp> for MaybeLocalDateTime {
+    fn eq(&self, other: &Timestamp) -> bool {
+        Timestamp::from(self) == *other
     }
 }
 
@@ -122,16 +126,22 @@ impl Eq for MaybeLocalDateTime {}
 
 impl PartialOrd for MaybeLocalDateTime {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
+        Some(Timestamp::from(self).cmp(&other.into()))
+    }
+}
+
+impl PartialOrd<Timestamp> for MaybeLocalDateTime {
+    fn partial_cmp(&self, other: &Timestamp) -> Option<Ordering> {
+        Some(Timestamp::from(self).cmp(other))
     }
 }
 
 impl Ord for MaybeLocalDateTime {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.with_timezone(&Utc).cmp(&other.with_timezone(&Utc))
+        Timestamp::from(self).cmp(&other.into())
     }
 }
 
-pub fn iter_date_range(range: Range<NaiveDate>) -> impl Iterator<Item = NaiveDate> {
-    range.start.iter_days().take_while(move |d| *d < range.end)
+pub fn iter_date_range(range: Range<civil::Date>) -> impl Iterator<Item = civil::Date> {
+    range.start.series(Span::new().days(1)).take_while(move |d| *d < range.end)
 }

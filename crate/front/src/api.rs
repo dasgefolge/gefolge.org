@@ -1,5 +1,4 @@
 use {
-    chrono::prelude::*,
     rocket::{
         State,
         http::Status,
@@ -166,7 +165,7 @@ pub(crate) struct DoliAttendee {
     days: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
     participation_fee: Option<u64>,
-    status_updated_at: DateTime<Utc>,
+    status_updated_at: Timestamp,
 }
 
 #[derive(Debug, thiserror::Error, rocket_util::Error)]
