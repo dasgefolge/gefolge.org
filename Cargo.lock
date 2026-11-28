@@ -5420,7 +5420,7 @@ dependencies = [
 [[package]]
 name = "wheel"
 version = "0.16.0"
-source = "git+https://github.com/fenhl/wheel#4576391ba33f0bc0e04c933b02c827997020d3ae"
+source = "git+https://github.com/fenhl/wheel#66902456ddc1a077fdd615fce76d0ef81a19baa6"
 dependencies = [
  "async-proto",
  "clap 4.6.10",
@@ -5443,7 +5443,7 @@ dependencies = [
 [[package]]
 name = "wheel-derive"
 version = "0.16.0"
-source = "git+https://github.com/fenhl/wheel#4576391ba33f0bc0e04c933b02c827997020d3ae"
+source = "git+https://github.com/fenhl/wheel#66902456ddc1a077fdd615fce76d0ef81a19baa6"
 dependencies = [
  "itertools 0.15.0",
  "proc-macro2",
@@ -5491,7 +5491,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
